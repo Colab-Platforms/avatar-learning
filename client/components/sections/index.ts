@@ -5,3 +5,4 @@ export { QuizBanner } from "./QuizBanner";
 export { HackathonBanner } from "./HackathonBanner";
 export { WhyChooseUs } from "./WhyChooseUs";
 export { AdvisorCTA } from "./AdvisorCTA";
+export { WebinarsSection } from "./WebinarsSection";

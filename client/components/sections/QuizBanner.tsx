@@ -1,17 +1,19 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button, ScrollReveal } from "@/components/ui";
 import { QUIZ_BANNER } from "@/data/quiz";
 import { Brain, ArrowRight, Sparkles } from "lucide-react";
 
 export function QuizBanner() {
   return (
-    <section className="relative bg-ink-950 pb-28 overflow-hidden">
+    <section className="relative bg-ink-950 pb-28  overflow-hidden">
 
       {/* Top divider */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
 
-      <div className="container-x">
+      <div className="container-x mt-6">
         <ScrollReveal animation="zoom-in" duration={800} threshold={0.08}>
+                    
           <div
             className="group/quiz relative overflow-hidden rounded-3xl bg-ink-800 text-white cursor-default
                         border border-white/6 transition-all duration-600
@@ -78,13 +80,15 @@ export function QuizBanner() {
                     ))}
                   </div>
 
-                  <Button
-                    variant="primary" size="md"
-                    className="mt-8 self-start group/btn w-fit btn-glow"
-                  >
-                    {QUIZ_BANNER.ctaLabel}
-                    <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform duration-250" />
-                  </Button>
+                  <Link href="/quiz">
+                    <Button
+                      variant="primary" size="md"
+                      className="mt-8 self-start group/btn w-fit btn-glow"
+                    >
+                      {QUIZ_BANNER.ctaLabel}
+                      <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform duration-250" />
+                    </Button>
+                  </Link>
                 </ScrollReveal>
               </div>
 

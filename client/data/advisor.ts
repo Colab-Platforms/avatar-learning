@@ -6,5 +6,5 @@ export const ADVISOR_CTA: AdvisorCtaData = {
   description:
     "Our learning advisors are here to understand your background, goals, and constraints — and help you choose the program that actually fits. No pressure, just clarity.",
   ctaLabel: "Speak with an Advisor",
-  image: "/landingpage-images/world-map.jpg",
+  image: "/landingpage-images/ind-map.png",
 };

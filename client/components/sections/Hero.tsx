@@ -68,7 +68,7 @@ export function Hero() {
         <div className="container-x pt-36 pb-20 md:pt-44 md:pb-28 w-full">
 
           {/* ── Eyebrow pill ── */}
-          <div className="anim-fade-up stagger-1">
+          {/* <div className="anim-fade-up stagger-1">
             <span className="pill-tag border-brand-500/35 bg-brand-500/10 text-brand-300 backdrop-blur-sm">
               <span className="relative flex h-2 w-2 shrink-0">
                 <span className="live-dot text-emerald-400 h-full w-full" />
@@ -77,7 +77,7 @@ export function Hero() {
               <Sparkles className="h-3 w-3 text-brand-400" />
               {slide.eyebrow}
             </span>
-          </div>
+          </div> */}
 
           {/* ── Heading ── */}
           <h1 className="h-display mt-7 max-w-[700px] anim-fade-up stagger-2">
