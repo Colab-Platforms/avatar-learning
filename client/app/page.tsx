@@ -10,7 +10,7 @@ import {
 
 export default function Page() {
   return (
-    <main className="bg-white">
+    <main className="bg-ink-950">
       <Navbar />
       <Hero />
       <CoursesSection />

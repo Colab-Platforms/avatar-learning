@@ -2,20 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
-import { SITE } from "@/data/site";
 import { buttonVariants } from "@/components/ui";
 import { Menu, X } from "lucide-react";
-
-function AvatarLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" className={cn("h-7 w-7", className)} fill="none" aria-hidden="true">
-      <path d="M16 3 L29 27 H3 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M11 22 H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -35,25 +26,30 @@ export function Navbar() {
           "fixed top-0 inset-x-0 z-50 anim-slide-down",
           "transition-all duration-400 ease-out",
           scrolled
-            ? "bg-ink-950/88 backdrop-blur-2xl border-b border-white/[0.055] shadow-[0_8px_40px_rgba(0,0,0,0.3)]"
+            ? "bg-ink-950/90 backdrop-blur-2xl border-b border-white/5 shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
             : "bg-transparent"
         )}
       >
-        {/* Subtle top glow line */}
+        {/* Steel-blue top accent line on scroll */}
         {scrolled && (
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent" />
+          <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-brand-500/25 to-transparent" />
         )}
 
         <div className="container-x flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 text-white group shrink-0">
-            <span className="transition-all duration-350 group-hover:scale-110 group-hover:rotate-3 text-white">
-              <AvatarLogo />
-            </span>
-            <span className="font-bold tracking-[0.2em] text-[13px] text-white/90 group-hover:text-white transition-colors duration-250">
-              {SITE.name}
-            </span>
+          <Link
+            href="/"
+            className="group shrink-0 flex items-center transition-opacity duration-250 hover:opacity-80"
+            aria-label="Avatar India home"
+          >
+            <Image
+              src="/landingpage-images/Avatar_logo_Light.svg"
+              alt="Avatar-India Logo"
+              width={119}
+              height={32}
+              className="h-7 w-auto transition-transform duration-350 group-hover:scale-[1.02]"
+              priority
+            />
           </Link>
 
           {/* Desktop nav */}
@@ -62,11 +58,12 @@ export function Navbar() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="relative px-4 py-2 text-[13px] font-medium text-white/60 hover:text-white transition-colors duration-250 rounded-lg hover:bg-white/[0.05] group"
+                className="relative px-4 py-2 text-[13px] font-medium text-white/55 hover:text-white
+                           transition-colors duration-250 rounded-lg hover:bg-white/4 group"
               >
                 {item.label}
-                {/* Underline sweep */}
-                <span className="absolute bottom-1 left-4 right-4 h-px bg-brand-400/70 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
+                <span className="absolute bottom-1 left-4 right-4 h-px bg-brand-300/60
+                                 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
               </Link>
             ))}
           </nav>
@@ -75,22 +72,21 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <Link
               href="#login"
-              className="hidden sm:inline-block text-[13px] font-medium text-white/55 hover:text-white transition-colors duration-250 px-3 py-2"
+              className="hidden sm:inline-block text-[13px] font-medium text-white/45 hover:text-white
+                         transition-colors duration-250 px-3 py-2"
             >
               Log in
             </Link>
             <Link
               href="#demo"
-              className={cn(
-                buttonVariants({ variant: "primary", size: "sm" }),
-                "text-[13px]"
-              )}
+              className={cn(buttonVariants({ variant: "primary", size: "sm" }), "text-[13px]")}
             >
               Book a Demo
             </Link>
-            {/* Mobile burger */}
             <button
-              className="md:hidden ml-1 flex items-center justify-center h-9 w-9 rounded-lg border border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.08] transition-all duration-250"
+              className="md:hidden ml-1 flex items-center justify-center h-9 w-9 rounded-lg
+                         border border-white/8 bg-white/4 text-white
+                         hover:bg-white/8 hover:border-white/15 transition-all duration-250"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -104,7 +100,7 @@ export function Navbar() {
       <div
         className={cn(
           "fixed inset-x-0 top-16 z-40 md:hidden",
-          "bg-ink-950/96 backdrop-blur-2xl border-b border-white/[0.08]",
+          "bg-ink-950/96 backdrop-blur-2xl border-b border-white/6",
           "transition-all duration-350 ease-out",
           mobileOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"
         )}
@@ -115,13 +111,16 @@ export function Navbar() {
               key={item.label}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className="px-4 py-2.5 text-[14px] font-medium text-white/65 hover:text-white hover:bg-white/[0.04] rounded-xl transition-all duration-200"
+              className="px-4 py-2.5 text-[14px] font-medium text-white/60 hover:text-white
+                         hover:bg-white/4 rounded-xl transition-all duration-200"
             >
               {item.label}
             </Link>
           ))}
-          <div className="mt-3 pt-3 border-t border-white/[0.07] flex flex-col gap-2">
-            <Link href="#login" className="px-4 py-2.5 text-[14px] text-white/65 hover:text-white transition-colors duration-200">Log in</Link>
+          <div className="mt-3 pt-3 border-t border-white/6 flex flex-col gap-2">
+            <Link href="#login" className="px-4 py-2.5 text-[14px] text-white/60 hover:text-white transition-colors duration-200">
+              Log in
+            </Link>
             <Link href="#demo" className={cn(buttonVariants({ variant: "primary", size: "sm" }), "w-full justify-center")}>
               Book a Demo
             </Link>
