@@ -1,9 +1,9 @@
 import type { NavItem, FooterColumn, SocialLink } from "@/types";
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "About", href: "#about" },
-  { label: "Solutions", href: "#solutions" },
-  { label: "Learning", href: "#learning" },
+  { label: "About",       href: "#about" },
+  { label: "Solutions",   href: "#solutions" },
+  { label: "Learning",    href: "#learning" },
   { label: "Marketplace", href: "#marketplace" },
 ];
 

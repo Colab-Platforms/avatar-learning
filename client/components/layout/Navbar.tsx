@@ -83,6 +83,14 @@ export function Navbar() {
             >
               Book a Demo
             </Link>
+            <Link
+              href="/quiz"
+              className="hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
+                         border border-brand-500/40 text-brand-300 hover:bg-brand-500/10 hover:border-brand-500/70
+                         transition-all duration-250"
+            >
+              Take Career Quiz
+            </Link>
             <button
               className="md:hidden ml-1 flex items-center justify-center h-9 w-9 rounded-lg
                          border border-white/8 bg-white/4 text-white
@@ -123,6 +131,14 @@ export function Navbar() {
             </Link>
             <Link href="#demo" className={cn(buttonVariants({ variant: "primary", size: "sm" }), "w-full justify-center")}>
               Book a Demo
+            </Link>
+            <Link
+              href="/quiz"
+              onClick={() => setMobileOpen(false)}
+              className="w-full py-3 rounded-xl border border-brand-500/40 text-brand-300 text-[14px] font-medium
+                         text-center hover:bg-brand-500/10 hover:border-brand-500/60 transition-all duration-200"
+            >
+              Take Career Quiz
             </Link>
           </div>
         </nav>

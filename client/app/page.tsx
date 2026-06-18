@@ -2,6 +2,7 @@ import { Navbar, Footer } from "@/components/layout";
 import {
   Hero,
   CoursesSection,
+  WebinarsSection,
   QuizBanner,
   HackathonBanner,
   WhyChooseUs,
@@ -13,8 +14,9 @@ export default function Page() {
     <main className="bg-ink-950">
       <Navbar />
       <Hero />
-      <CoursesSection />
       <QuizBanner />
+      <CoursesSection />
+      <WebinarsSection />
       <HackathonBanner />
       <WhyChooseUs />
       <AdvisorCTA />
