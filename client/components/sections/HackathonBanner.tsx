@@ -4,19 +4,21 @@ import { HACKATHON } from "@/data/hackathon";
 
 export function HackathonBanner() {
   return (
-    <section className="relative bg-ink-950 text-white py-32 overflow-hidden">
+    <section className="relative bg-ink-900 text-white py-32 overflow-hidden">
 
       {/* ── Background ── */}
+      {/* Primary orb — steel blue */}
       <div
-        className="orb w-[800px] h-[800px] -top-80 -right-80 opacity-[0.10]"
-        style={{ background: "radial-gradient(circle, #7c5fff 0%, transparent 60%)", filter: "blur(110px)" }}
+        className="orb w-200 h-200 -top-80 -right-80 opacity-[0.08]"
+        style={{ background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)", filter: "blur(110px)" }}
       />
+      {/* Secondary orb — electric blue */}
       <div
-        className="orb w-[600px] h-[600px] bottom-0 -left-32 opacity-[0.10]"
-        style={{ background: "radial-gradient(circle, #2F7BFF 0%, transparent 60%)", filter: "blur(90px)", animationDelay: "3s" }}
+        className="orb w-150 h-150 bottom-0 -left-32 opacity-[0.10]"
+        style={{ background: "radial-gradient(circle, #0080FF 0%, transparent 60%)", filter: "blur(90px)", animationDelay: "3s" }}
       />
       <div className="absolute inset-0 line-grid" />
-      <div className="absolute inset-0 noise-overlay opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 noise-overlay opacity-25 pointer-events-none" />
 
       {/* Top / bottom dividers */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
@@ -49,23 +51,23 @@ export function HackathonBanner() {
             </ScrollReveal>
 
             <ScrollReveal animation="fade-up" delay={170}>
-              <p className="mt-6 max-w-lg text-white/42 text-[15px] leading-[1.85]">
+              <p className="mt-6 max-w-lg text-white/40 text-[15px] leading-[1.85]">
                 {HACKATHON.description}
               </p>
             </ScrollReveal>
 
             <ScrollReveal animation="fade-up" delay={240}>
               <div className="mt-8 flex flex-wrap gap-3">
-                <div className="inline-flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/[0.035] px-4 py-2.5 text-sm text-white/60
-                                hover:border-white/15 hover:bg-white/[0.06] hover:text-white transition-all duration-300 cursor-default">
+                <div className="inline-flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/4 px-4 py-2.5 text-sm text-white/55
+                                hover:border-white/14 hover:bg-white/6 hover:text-white transition-all duration-300 cursor-default">
                   <span className="flex items-center justify-center h-6 w-6 rounded-lg bg-brand-500/15 border border-brand-500/20">
                     <Calendar className="h-3 w-3 text-brand-400" />
                   </span>
                   {HACKATHON.date}
                 </div>
-                <div className="inline-flex items-center gap-2.5 rounded-xl border border-brand-500/20 bg-brand-500/[0.07] px-4 py-2.5 text-sm text-brand-300
-                                hover:border-brand-500/40 hover:bg-brand-500/[0.12] transition-all duration-300 cursor-default">
-                  <span className="flex items-center justify-center h-6 w-6 rounded-lg bg-brand-500/20 border border-brand-500/30">
+                <div className="inline-flex items-center gap-2.5 rounded-xl border border-brand-500/20 bg-brand-500/8 px-4 py-2.5 text-sm text-brand-300
+                                hover:border-brand-500/35 hover:bg-brand-500/12 transition-all duration-300 cursor-default">
+                  <span className="flex items-center justify-center h-6 w-6 rounded-lg bg-brand-500/20 border border-brand-500/28">
                     <Trophy className="h-3 w-3 text-brand-400" />
                   </span>
                   {HACKATHON.prizeText}
@@ -87,16 +89,16 @@ export function HackathonBanner() {
           {/* ── Right: countdown card ── */}
           <ScrollReveal animation="fade-left" delay={200} duration={750}>
             <div
-              className="rounded-3xl border border-white/[0.07] bg-white/[0.03] p-7 backdrop-blur-sm
-                          hover:border-white/[0.12] transition-border duration-500"
-              style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 30px 60px -15px rgba(0,0,0,0.4)" }}
+              className="rounded-3xl border border-white/6 bg-ink-800/80 p-7 backdrop-blur-sm
+                          hover:border-brand-500/20 transition-all duration-500"
+              style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 30px 60px -15px rgba(0,0,0,0.5)" }}
             >
               {/* Card header */}
               <div className="flex items-center gap-2 mb-6">
                 <span className="flex items-center justify-center h-7 w-7 rounded-lg bg-brand-500/15 border border-brand-500/20">
                   <Zap className="h-3.5 w-3.5 text-brand-400" />
                 </span>
-                <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-white/35">
+                <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-white/30">
                   Starts In
                 </p>
               </div>
@@ -105,20 +107,20 @@ export function HackathonBanner() {
                 {HACKATHON.countdown.map((item, i) => (
                   <div
                     key={item.label}
-                    className="group/cnt relative rounded-2xl border border-white/[0.07] bg-white/[0.04] p-4 text-center overflow-hidden
-                                hover:border-brand-500/30 hover:bg-brand-500/[0.06] transition-all duration-350"
+                    className="group/cnt relative rounded-2xl border border-white/6 bg-ink-900/80 p-4 text-center overflow-hidden
+                                hover:border-brand-500/25 hover:bg-brand-500/6 transition-all duration-350"
                     style={{ transitionDelay: `${i * 40}ms` }}
                   >
                     {/* Inner hover glow */}
                     <div
                       className="absolute inset-0 rounded-2xl opacity-0 group-hover/cnt:opacity-100 transition-opacity duration-400 pointer-events-none"
-                      style={{ background: "radial-gradient(circle at 50% 0%, rgba(47,123,255,0.1) 0%, transparent 70%)" }}
+                      style={{ background: "radial-gradient(circle at 50% 0%, rgba(0,200,255,0.10) 0%, transparent 70%)" }}
                     />
                     <div className="relative">
                       <div className="text-[32px] font-semibold tracking-tight text-shimmer tabular-nums leading-none">
                         {item.value}
                       </div>
-                      <div className="mt-2 text-[10px] uppercase tracking-[0.16em] text-white/30">
+                      <div className="mt-2 text-[10px] uppercase tracking-[0.16em] text-white/28">
                         {item.label}
                       </div>
                     </div>
@@ -129,7 +131,7 @@ export function HackathonBanner() {
               {/* Separator */}
               <div className="my-5 divider-glow" />
 
-              <p className="text-center text-[12px] text-white/30 font-medium">
+              <p className="text-center text-[12px] text-white/28 font-medium">
                 Limited spots available
               </p>
             </div>

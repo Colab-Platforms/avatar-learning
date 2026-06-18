@@ -6,49 +6,49 @@ const CARDS = [
   {
     icon: Briefcase,
     tag: "Career",
-    orbColor: "rgba(47,123,255,0.5)",
-    hoverBg: "rgba(47,123,255,0.05)",
-    iconCls: "text-brand-400 bg-brand-500/10 border-brand-500/20",
-    accentLine: "via-brand-500/40",
+    orbColor: "rgba(0,200,255,0.55)",
+    hoverBg: "rgba(0,200,255,0.06)",
+    iconCls: "text-brand-400 bg-brand-500/10 border-brand-500/25",
+    accentLine: "via-brand-500/50",
   },
   {
     icon: Layers,
     tag: "Projects",
     orbColor: "rgba(16,185,129,0.5)",
     hoverBg: "rgba(16,185,129,0.05)",
-    iconCls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    accentLine: "via-emerald-500/40",
+    iconCls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+    accentLine: "via-emerald-500/50",
   },
   {
     icon: Clock,
     tag: "Flexible",
-    orbColor: "rgba(249,115,22,0.5)",
-    hoverBg: "rgba(249,115,22,0.05)",
-    iconCls: "text-orange-400 bg-orange-500/10 border-orange-500/20",
-    accentLine: "via-orange-500/40",
+    orbColor: "rgba(0,128,255,0.55)",
+    hoverBg: "rgba(0,128,255,0.06)",
+    iconCls: "text-blue-300 bg-blue-500/10 border-blue-500/25",
+    accentLine: "via-blue-400/50",
   },
   {
     icon: Award,
     tag: "Certified",
-    orbColor: "rgba(168,85,247,0.5)",
-    hoverBg: "rgba(168,85,247,0.05)",
-    iconCls: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-    accentLine: "via-purple-500/40",
+    orbColor: "rgba(56,217,255,0.5)",
+    hoverBg: "rgba(56,217,255,0.06)",
+    iconCls: "text-brand-300 bg-brand-400/10 border-brand-400/25",
+    accentLine: "via-brand-400/50",
   },
 ] as const;
 
 export function WhyChooseUs() {
   return (
-    <section className="relative bg-white py-28 sm:py-36 overflow-hidden">
+    <section className="relative bg-ink-950 py-28 sm:py-36 overflow-hidden">
 
-      {/* Section dividers */}
+      {/* Dividers */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
       <div className="absolute bottom-0 inset-x-0 divider-glow" />
 
-      {/* Subtle radial */}
+      {/* Ambient neon orb */}
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at center bottom, rgba(47,123,255,0.03) 0%, transparent 65%)" }}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-250 h-125 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at center bottom, rgba(0,200,255,0.07) 0%, transparent 65%)" }}
       />
 
       <div className="container-x">
@@ -56,11 +56,11 @@ export function WhyChooseUs() {
         {/* ── Header ── */}
         <ScrollReveal animation="fade-up">
           <p className="eyebrow">Why Choose Us</p>
-          <h2 className="h-display mt-4 max-w-2xl">
+          <h2 className="h-display mt-4 max-w-2xl text-white">
             Learn Today.{" "}
             <span className="text-gradient-brand">Lead Tomorrow.</span>
           </h2>
-          <p className="mt-6 max-w-xl text-ink-900/48 text-[15px] leading-[1.85]">
+          <p className="mt-6 max-w-xl text-white/40 text-[15px] leading-[1.85]">
             Every program is designed with one goal — turning beginners into capable
             AI professionals through live sessions, hands-on projects, and real career outcomes.
           </p>
@@ -71,18 +71,13 @@ export function WhyChooseUs() {
           {WHY_FEATURES.map((feature, i) => {
             const { icon: Icon, tag, orbColor, hoverBg, iconCls, accentLine } = CARDS[i];
             return (
-              <ScrollReveal
-                key={feature.title}
-                animation="fade-up"
-                delay={i * 90}
-                duration={720}
-              >
+              <ScrollReveal key={feature.title} animation="fade-up" delay={i * 90} duration={720}>
                 <div
-                  className="group/feat relative overflow-hidden rounded-2xl bg-ink-950 text-white p-8 sm:p-9
-                              min-h-[280px] flex flex-col justify-between border border-white/[0.055]
+                  className="group/feat relative overflow-hidden rounded-2xl bg-ink-800 text-white p-8 sm:p-9
+                              min-h-70 flex flex-col justify-between border border-white/6
                               card-lift-dark cursor-default"
                 >
-                  {/* Hover background orb */}
+                  {/* Neon hover orb */}
                   <div
                     className="absolute -top-12 -right-12 w-60 h-60 rounded-full pointer-events-none
                                 opacity-0 group-hover/feat:opacity-100 transition-opacity duration-600"
@@ -95,8 +90,8 @@ export function WhyChooseUs() {
                     style={{ background: `radial-gradient(ellipse at 85% 20%, ${hoverBg} 0%, transparent 65%)` }}
                   />
 
-                  {/* Top accent line — grows on hover */}
-                  <div className={`absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${accentLine} to-transparent
+                  {/* Top neon accent line */}
+                  <div className={`absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent ${accentLine} to-transparent
                                   scale-x-0 group-hover/feat:scale-x-100 transition-transform duration-500 origin-left`} />
 
                   {/* ── Top row ── */}
@@ -107,21 +102,21 @@ export function WhyChooseUs() {
                     >
                       <Icon className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/18 border border-white/[0.08] rounded-full px-3 py-1">
+                    <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/18 border border-white/8 rounded-full px-3 py-1">
                       {tag}
                     </span>
                   </div>
 
                   {/* ── Bottom text ── */}
                   <div className="relative">
-                    <h4 className="text-[17px] font-semibold leading-snug">{feature.title}</h4>
-                    <p className="mt-3 text-[14px] text-white/42 leading-[1.85] group-hover/feat:text-white/60 transition-colors duration-400">
+                    <h4 className="text-[17px] font-semibold leading-snug text-white">{feature.title}</h4>
+                    <p className="mt-3 text-[14px] text-white/38 leading-[1.85] group-hover/feat:text-white/60 transition-colors duration-400">
                       {feature.body}
                     </p>
                   </div>
 
-                  {/* Bottom shine line on hover */}
-                  <div className={`absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent ${accentLine} to-transparent
+                  {/* Bottom neon line */}
+                  <div className={`absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent ${accentLine} to-transparent
                                   scale-x-0 group-hover/feat:scale-x-100 transition-transform duration-700 delay-100 origin-right`} />
                 </div>
               </ScrollReveal>

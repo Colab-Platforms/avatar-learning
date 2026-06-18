@@ -21,7 +21,7 @@ export const COURSES: Course[] = [
   },
   {
     id: "prompt-engineering",
-    title: "Prompt Engineering Pro",
+    title: "Prompt Engineering Advanced",
     level: "Beginner",
     free: true,
     tools: ["ChatGPT API", "Claude API", "PromptBase", "LangChain basics"],

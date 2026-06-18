@@ -7,9 +7,9 @@ export const badgeVariants = cva(
   {
     variants: {
       variant: {
-        free: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-        "level-dark": "bg-white/10 text-white/80 border border-white/15",
-        "level-light": "bg-ink-900/5 text-ink-900/70 border border-ink-900/10",
+        free: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+        "level-dark": "bg-white/8 text-white/70 border border-white/12",
+        "level-light": "bg-brand-500/10 text-brand-300 border border-brand-500/20",
       },
     },
     defaultVariants: {

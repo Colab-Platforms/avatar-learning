@@ -15,15 +15,15 @@ export function AdvisorCTA() {
 
       {/* ── Background ── */}
       <div
-        className="orb w-[700px] h-[700px] top-1/2 -translate-y-1/2 -left-56 opacity-[0.16]"
-        style={{ background: "radial-gradient(circle, #2F7BFF 0%, transparent 60%)", filter: "blur(100px)" }}
+        className="orb w-175 h-175 top-1/2 -translate-y-1/2 -left-56 opacity-[0.14]"
+        style={{ background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)", filter: "blur(100px)" }}
       />
       <div
-        className="orb w-[500px] h-[500px] -bottom-32 right-1/4 opacity-[0.08]"
-        style={{ background: "radial-gradient(circle, #7c5fff 0%, transparent 60%)", filter: "blur(80px)", animationDelay: "3s" }}
+        className="orb w-125 h-125 -bottom-32 right-1/4 opacity-[0.07]"
+        style={{ background: "radial-gradient(circle, #0080FF 0%, transparent 60%)", filter: "blur(80px)", animationDelay: "3s" }}
       />
       <div className="absolute inset-0 dot-grid-dark" />
-      <div className="absolute inset-0 noise-overlay opacity-25 pointer-events-none" />
+      <div className="absolute inset-0 noise-overlay opacity-20 pointer-events-none" />
 
       {/* Top separator */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
@@ -34,7 +34,7 @@ export function AdvisorCTA() {
           {/* ── Left: copy ── */}
           <div>
             <ScrollReveal animation="fade-up">
-              <div className="pill-tag border-brand-500/25 bg-brand-500/10 text-brand-300 mb-7">
+              <div className="pill-tag border-brand-500/25 bg-brand-500/8 text-brand-300 mb-7">
                 <Users className="h-3.5 w-3.5 text-brand-400" />
                 {ADVISOR_CTA.eyebrow}
               </div>
@@ -55,7 +55,7 @@ export function AdvisorCTA() {
             </ScrollReveal>
 
             <ScrollReveal animation="fade-up" delay={170}>
-              <p className="mt-6 max-w-md text-white/42 text-[15px] leading-[1.85]">
+              <p className="mt-6 max-w-md text-white/40 text-[15px] leading-[1.85]">
                 {ADVISOR_CTA.description}
               </p>
             </ScrollReveal>
@@ -65,14 +65,14 @@ export function AdvisorCTA() {
                 {TRUST_ITEMS.map((item, i) => (
                   <li
                     key={item}
-                    className="flex items-center gap-3 text-[14px] text-white/55 group/item cursor-default"
+                    className="flex items-center gap-3 text-[14px] text-white/50 group/item cursor-default"
                     style={{ transitionDelay: `${i * 50}ms` }}
                   >
-                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 shrink-0
-                                     group-hover/item:bg-emerald-500/25 transition-colors duration-300">
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500/12 border border-emerald-500/22 shrink-0
+                                     group-hover/item:bg-emerald-500/22 transition-colors duration-300">
                       <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                     </span>
-                    <span className="group-hover/item:text-white/75 transition-colors duration-300">{item}</span>
+                    <span className="group-hover/item:text-white/72 transition-colors duration-300">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -86,7 +86,7 @@ export function AdvisorCTA() {
                     <Star key={i} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
                   ))}
                 </div>
-                <span className="text-[13px] text-white/45">4.9 · 500+ sessions completed</span>
+                <span className="text-[13px] text-white/38">4.9 · 500+ sessions completed</span>
               </div>
             </ScrollReveal>
 
@@ -109,7 +109,7 @@ export function AdvisorCTA() {
               <div
                 className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover/img:opacity-100 transition-opacity duration-600 pointer-events-none"
                 style={{
-                  background: "linear-gradient(135deg, rgba(47,123,255,0.35) 0%, rgba(124,95,255,0.25) 50%, rgba(47,123,255,0.1) 100%)",
+                  background: "linear-gradient(135deg, rgba(0,200,255,0.30) 0%, rgba(0,128,255,0.22) 50%, rgba(0,200,255,0.08) 100%)",
                   filter: "blur(10px)",
                 }}
               />
@@ -122,26 +122,25 @@ export function AdvisorCTA() {
                   className="object-cover transition-transform duration-700 group-hover/img:scale-[1.04]"
                 />
                 {/* Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/65 via-transparent to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-ink-950/25 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-ink-950/65 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-r from-ink-950/20 to-transparent" />
 
                 {/* Floating badge */}
                 <div
-                  className="absolute bottom-5 left-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-ink-950/75 backdrop-blur-lg px-4 py-3
-                              transition-all duration-350 hover:border-brand-500/30 hover:bg-ink-950/85"
-                  style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}
+                  className="absolute bottom-5 left-5 flex items-center gap-3 rounded-2xl border border-white/8 bg-ink-950/80 backdrop-blur-lg px-4 py-3
+                              transition-all duration-350 hover:border-brand-500/25 hover:bg-ink-950/90"
+                  style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
                 >
-                  <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/20 border border-brand-500/30">
+                  <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/18 border border-brand-500/28">
                     <Users className="h-4 w-4 text-brand-400" />
-                    {/* Pulse ring */}
                     <span
-                      className="absolute inset-0 rounded-full border border-brand-400/40"
+                      className="absolute inset-0 rounded-full border border-brand-400/35"
                       style={{ animation: "pulse-ring 2.5s ease-out infinite" }}
                     />
                   </span>
                   <div>
                     <div className="text-[13px] font-semibold leading-tight">500+ sessions booked</div>
-                    <div className="text-[11px] text-white/42 mt-0.5">This month alone</div>
+                    <div className="text-[11px] text-white/38 mt-0.5">This month alone</div>
                   </div>
                 </div>
               </div>
