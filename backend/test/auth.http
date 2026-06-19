@@ -1,0 +1,171 @@
+@baseUrl = http://localhost:5000/api
+@email = testuser@example.com
+@password = Test@1234
+@otp = 123456
+
+####
+# REGISTER — Step 1: Submit registration (triggers OTP email)
+####
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "vinayak",
+  "lastName": "Potdar",
+  "email": "vinayak.233434109@vcet.edu.in",
+  "phoneNumber": "1234567890",
+  "state": "Maharashtra",
+  "country": "India",
+  "password": "Vinayak@9"
+}
+
+###
+# REGISTER — Step 2: Verify OTP (completes registration, returns JWT)
+####
+# @name verifyRegister
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "vinayak.233434109@vcet.edu.in",
+  "otp": "594853",
+  "type": "REGISTER"
+}
+
+###
+# REGISTER — Resend OTP (if not received or expired)
+####
+POST {{baseUrl}}/auth/resend-otp
+Content-Type: application/json
+
+{
+  "email": "vinayak.233434109@vcet.edu.in",
+  "type": "REGISTER"
+}
+
+####
+# LOGIN — Verified account → returns JWT directly
+####
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "vinayak.233434109@vcet.edu.in",
+  "password": "Vinayak@9"
+}
+
+###
+# LOGIN — Unverified account → requiresVerification: true + sends OTP
+####
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "unverified@example.com",
+  "password": "Test@1234"
+}
+
+###
+# LOGIN — Verify OTP after unverified login
+####
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "unverified@example.com",
+  "otp": "{{otp}}",
+  "type": "LOGIN"
+}
+
+###
+# LOGIN — Resend OTP for login flow
+####
+POST {{baseUrl}}/auth/resend-otp
+Content-Type: application/json
+
+{
+  "email": "unverified@example.com",
+  "type": "LOGIN"
+}
+
+####
+# SESSION — Refresh access token using refresh token
+####
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "PASTE_REFRESH_TOKEN_HERE"
+}
+
+###
+# SESSION — Logout current device
+####
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "PASTE_REFRESH_TOKEN_HERE"
+}
+
+###
+# SESSION — Logout all devices (requires Authorization: Bearer <accessToken>)
+####
+POST {{baseUrl}}/auth/logout-all
+Content-Type: application/json
+Authorization: Bearer PASTE_ACCESS_TOKEN_HERE
+
+####
+# FORGOT PASSWORD — sends reset link to email
+####
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+###
+# RESET PASSWORD — use token from reset email link
+####
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "PASTE_RESET_TOKEN_HERE",
+  "password": "NewPass@456"
+}
+
+####
+# VALIDATION ERROR CASES
+####
+
+### Invalid email + weak password
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "bad-email",
+  "password": "weak"
+}
+
+### Wrong OTP
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "otp": "000000",
+  "type": "REGISTER"
+}
+
+### Wrong credentials
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "WrongPass@1"
+}
