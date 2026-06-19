@@ -3,14 +3,26 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
 import { buttonVariants } from "@/components/ui";
 import { Menu, X } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { logoutThunk } from "@/store/authSlice";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { user } = useAppSelector((s) => s.auth);
+
+  const handleLogout = async () => {
+    await dispatch(logoutThunk());
+    router.push("/");
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 48);
@@ -70,13 +82,30 @@ export function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            <Link
-              href="#login"
-              className="hidden sm:inline-block text-[13px] font-medium text-white/45 hover:text-white
-                         transition-colors duration-250 px-3 py-2"
-            >
-              Log in
-            </Link>
+            {user ? (
+              <>
+                <span className="hidden sm:inline-block text-[13px] text-white/50 px-3 py-2">
+                  <User className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+                  {user.firstName ?? user.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-medium text-white/45 hover:text-red-400
+                             transition-colors duration-250 px-3 py-2"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:inline-block text-[13px] font-medium text-white/45 hover:text-white
+                           transition-colors duration-250 px-3 py-2"
+              >
+                Log in
+              </Link>
+            )}
             <Link
               href="#demo"
               className={cn(buttonVariants({ variant: "primary", size: "sm" }), "text-[13px]")}
@@ -126,9 +155,23 @@ export function Navbar() {
             </Link>
           ))}
           <div className="mt-3 pt-3 border-t border-white/6 flex flex-col gap-2">
-            <Link href="#login" className="px-4 py-2.5 text-[14px] text-white/60 hover:text-white transition-colors duration-200">
-              Log in
-            </Link>
+            {user ? (
+              <button
+                onClick={() => { setMobileOpen(false); handleLogout(); }}
+                className="px-4 py-2.5 text-[14px] text-left text-red-400/80 hover:text-red-400 transition-colors duration-200 flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out ({user.firstName ?? user.email})
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="px-4 py-2.5 text-[14px] text-white/60 hover:text-white transition-colors duration-200"
+              >
+                Log in
+              </Link>
+            )}
             <Link href="#demo" className={cn(buttonVariants({ variant: "primary", size: "sm" }), "w-full justify-center")}>
               Book a Demo
             </Link>

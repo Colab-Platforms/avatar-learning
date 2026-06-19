@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SITE } from "@/data/site";
 import { ScrollProgress } from "@/components/ui";
+import { StoreProvider } from "@/store/StoreProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,8 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        <ScrollProgress />
-        {children}
+        <StoreProvider>
+          <ScrollProgress />
+          {children}
+        </StoreProvider>
       </body>
     </html>
   );
