@@ -1,5 +1,10 @@
 export type Level = "Beginner" | "Intermediate" | "Advanced";
 
+export interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
 export interface NavItem {
   label: string;
   href: string;
@@ -7,8 +12,25 @@ export interface NavItem {
 
 export interface CourseModule {
   title: string;
-  session: string;
+  week: string;
   image: string;
+}
+
+export interface CourseLearnItem {
+  iconName: string; // lucide icon name stored as string, resolved at render time
+  title: string;
+  body: string;
+}
+
+export interface CourseWeek {
+  title: string;
+  modules: string[];
+}
+
+export interface CourseAudienceItem {
+  iconName: string;
+  title: string;
+  body: string;
 }
 
 export interface Course {
@@ -21,6 +43,17 @@ export interface Course {
   sessions: string;
   certificate: boolean;
   modules: CourseModule[];
+  // Detail-page fields
+  description: string;
+  rating: number;
+  reviews: string;
+  startDate: string;
+  seats: string;
+  heroImage: string;
+  bannerImage: string;
+  whatYouLearn: CourseLearnItem[];
+  weekData: CourseWeek[];
+  audience: CourseAudienceItem[];
 }
 
 export interface Feature {

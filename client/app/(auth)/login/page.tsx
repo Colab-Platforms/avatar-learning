@@ -11,9 +11,11 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, verifyOtp, resendOtp, clearError } from "@/store/authSlice";
 
 const inputCls = cn(
-  "w-full rounded-xl border bg-white/4 px-4 py-2.5 text-[14px] text-white",
-  "placeholder-white/25 border-white/10",
-  "focus:outline-none focus:border-brand-500/60 focus:bg-white/6 focus:ring-2 focus:ring-brand-500/15",
+  "w-full rounded-xl border px-4 py-3 text-[14px] text-white",
+  "placeholder-white/20 border-white/10",
+  "bg-ink-800/60 backdrop-blur-sm",
+  "focus:outline-none focus:border-brand-500/70 focus:bg-ink-800/80",
+  "focus:ring-2 focus:ring-brand-500/20 focus:shadow-[0_0_12px_rgba(0,200,255,0.10)]",
   "transition-all duration-200"
 );
 
@@ -72,7 +74,20 @@ export default function LoginPage() {
   if (step === "otp") {
     return (
       <div className="w-full space-y-6">
-        <div className="text-center space-y-1">
+        {/* Icon */}
+        <div className="flex justify-center">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(0,128,255,0.10) 100%)",
+              border: "1px solid rgba(0,200,255,0.20)",
+              boxShadow: "0 0 20px rgba(0,200,255,0.10)",
+            }}
+          >
+            ✉️
+          </div>
+        </div>
+        <div className="text-center space-y-1.5">
           <h2 className="text-xl font-semibold text-white">Check your email</h2>
           <p className="text-[13px] text-white/45">
             We sent a 6-digit code to{" "}
@@ -132,14 +147,22 @@ export default function LoginPage() {
   // ── Login form ─────────────────────────────────────────────────────────────
   return (
     <div className="w-full space-y-6">
-      <div className="text-center space-y-1">
-        <h2 className="text-xl font-semibold text-white">Welcome back</h2>
-        <p className="text-[13px] text-white/45">Sign in to your Avatar account</p>
+      {/* Header with icon */}
+      <div className="text-center space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold text-white tracking-tight">Get Back To Your Learning</h2>
+          <p className="text-[13px] text-white/40">Sign in to your Avatar account</p>
+        </div>
       </div>
+
+      {/* Divider */}
+      <div className="divider-glow" />
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-1.5">
-          <label htmlFor="email" className="text-[13px] font-medium text-white/60">Email</label>
+          <label htmlFor="email" className="text-[12px] font-semibold tracking-wide uppercase text-white/40">
+            Email
+          </label>
           <input
             id="email" type="email" autoComplete="email" required
             value={email} onChange={(e) => setEmail(e.target.value)}
@@ -149,10 +172,12 @@ export default function LoginPage() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-[13px] font-medium text-white/60">Password</label>
-            <Link href="/forgot-password" className="text-[12px] text-brand-300/70 hover:text-brand-300 transition-colors duration-200">
+            <label htmlFor="password" className="text-[12px] font-semibold tracking-wide uppercase text-white/40">
+              Password
+            </label>
+            {/* <Link href="/forgot-password" className="text-[12px] text-brand-400/70 hover:text-brand-300 transition-colors duration-200">
               Forgot password?
-            </Link>
+            </Link> */}
           </div>
           <div className="relative">
             <input
@@ -163,7 +188,7 @@ export default function LoginPage() {
             />
             <button
               type="button" onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors duration-200"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors duration-200"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -171,18 +196,24 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {error && <p className="text-[13px] text-red-400">{error}</p>}
+        {error && (
+          <div className="rounded-lg px-3.5 py-2.5 text-[13px] text-red-300 bg-red-500/10 border border-red-500/20">
+            {error}
+          </div>
+        )}
 
-        <Button type="submit" variant="primary" size="md" disabled={loading} className="w-full mt-1">
+        <Button type="submit" variant="primary" size="md" disabled={loading} className="w-full mt-2">
           {loading
             ? <Loader2 className="h-4 w-4 animate-spin" />
             : <>Sign In <ArrowRight className="h-4 w-4" /></>}
         </Button>
       </form>
 
-      <p className="text-center text-[13px] text-white/40">
+      <div className="divider-glow" />
+
+      <p className="text-center text-[13px] text-white/35">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-medium text-brand-300 hover:text-brand-200 transition-colors duration-200">
+        <Link href="/register" className="font-semibold text-brand-400 hover:text-brand-300 transition-colors duration-200">
           Create one
         </Link>
       </p>
