@@ -60,6 +60,7 @@ export default function RegisterPage() {
     phoneNo: "", state: "", country: "", password: "",
   });
   const [showPassword,   setShowPassword]   = useState(false);
+  const [agreed,         setAgreed]         = useState(false);
   const [otp,            setOtp]            = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess,  setResendSuccess]  = useState(false);
@@ -80,7 +81,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isPasswordValid) return;
+    if (!isPasswordValid || !agreed) return;
     dispatch(clearError());
     const result = await dispatch(register(form));
     console.log("Register result:", result);
@@ -263,8 +264,50 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* Consent checkbox */}
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <div className="relative mt-0.5 shrink-0">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="sr-only"
+            />
+            <div
+              className={cn(
+                "h-4 w-4 rounded border transition-all duration-200 flex items-center justify-center",
+                agreed
+                  ? "border-brand-500 bg-brand-500/20 shadow-[0_0_8px_rgba(0,200,255,0.3)]"
+                  : "border-white/20 bg-white/4 group-hover:border-white/35"
+              )}
+            >
+              {agreed && (
+                <svg className="h-2.5 w-2.5 text-brand-400" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <span className="text-[12px] text-white/45 leading-5">
+            I agree to the{" "}
+            <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer"
+              className="text-brand-400 hover:text-brand-300 transition-colors duration-200 font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Terms &amp; Conditions
+            </a>
+            {" "}and{" "}
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer"
+              className="text-brand-400 hover:text-brand-300 transition-colors duration-200 font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Privacy Policy
+            </a>
+          </span>
+        </label>
+
         <Button type="submit" variant="primary" size="md"
-          disabled={loading || !isPasswordValid} className="w-full mt-2"
+          disabled={loading || !isPasswordValid || !agreed} className="w-full mt-2"
         >
           {loading
             ? <Loader2 className="h-4 w-4 animate-spin" />
