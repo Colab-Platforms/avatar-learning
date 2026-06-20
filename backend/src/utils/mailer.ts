@@ -76,7 +76,7 @@ export const sendOtpEmail = async (email: string, otp: string, type: "REGISTER" 
  * Send Password Reset Email via Resend
  */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?token=${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
     console.log(`[Resend] Sending password reset email to: ${email}`);
     try {
         const { data, error } = await resend.emails.send({
@@ -87,9 +87,6 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
             <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 40px 20px;">
                 <div style="background: white; border-radius: 24px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
                     <div style="text-align: center; margin-bottom: 32px;">
-                        <div style="background: linear-gradient(135deg, #4f46e5, #f43f5e); width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
-                            <span style="color: white; font-size: 24px; font-weight: bold;">⚡</span>
-                        </div>
                         <h1 style="color: #0f172a; font-size: 28px; font-weight: 800; margin: 16px 0 4px;">${APP_NAME}</h1>
                     </div>
                     <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 12px;">Reset Your Password</h2>

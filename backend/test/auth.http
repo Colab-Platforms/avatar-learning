@@ -11,13 +11,13 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "firstName": "vinayak",
-  "lastName": "Potdar",
-  "email": "vinayak.233434109@vcet.edu.in",
+  "firstName": "userName",
+  "lastName": "lastName",
+  "email": "{{email}}",
   "phoneNumber": "1234567890",
   "state": "Maharashtra",
   "country": "India",
-  "password": "Vinayak@9"
+  "password": "{{password}}"
 }
 
 ###
@@ -28,8 +28,8 @@ POST {{baseUrl}}/auth/verify-otp
 Content-Type: application/json
 
 {
-  "email": "vinayak.233434109@vcet.edu.in",
-  "otp": "594853",
+  "email": "{{email}}",
+  "otp": "{{otp}}",
   "type": "REGISTER"
 }
 
@@ -40,7 +40,7 @@ POST {{baseUrl}}/auth/resend-otp
 Content-Type: application/json
 
 {
-  "email": "vinayak.233434109@vcet.edu.in",
+  "email": "{{email}}",
   "type": "REGISTER"
 }
 
@@ -52,8 +52,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "vinayak.233434109@vcet.edu.in",
-  "password": "Vinayak@9"
+  "email": "{{email}}",
+  "password": "{{password}}"
 }
 
 ###
@@ -124,7 +124,7 @@ POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "{{email}}"
+  "email": "vinayak.233434109@vcet.edu.in"
 }
 
 ###

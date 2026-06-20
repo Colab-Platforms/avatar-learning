@@ -180,6 +180,39 @@ export const resendOtp = createAsyncThunk(
   }
 );
 
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (data: { email: string }, { rejectWithValue }) => {
+    try {
+      const { data: res } = await apiClient.post<ApiResponse<null>>(
+        "/auth/forgot-password",
+        data
+      );
+      return res.message;
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (
+    data: { token: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { data: res } = await apiClient.post<ApiResponse<null>>(
+        "/auth/reset-password",
+        data
+      );
+      return res.message;
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
 export const logoutThunk = createAsyncThunk(
   "auth/logoutThunk",
   async (_, { getState }) => {
@@ -404,6 +437,32 @@ const authSlice = createSlice({
         state.error = null;
 
         clearStorage();
+      })
+
+      // FORGOT PASSWORD
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // RESET PASSWORD
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
