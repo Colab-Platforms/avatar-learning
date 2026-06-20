@@ -11,6 +11,7 @@ const app = express();
 dotenv.config();
 
 const allowedOrigins = [
+    "https://avatar-learning.vercel.app/",
     "http://localhost:3000",
     "http://localhost:5173",
     process.env.FRONTEND_URL,
