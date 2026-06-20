@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SITE } from "@/data/site";
-import { ScrollProgress } from "@/components/ui";
+import { ScrollProgress, PenCursor } from "@/components/ui";
 import { StoreProvider } from "@/store/StoreProvider";
 
 const inter = Inter({
@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body>
         <StoreProvider>
+          <PenCursor />
           <ScrollProgress />
           {children}
         </StoreProvider>
