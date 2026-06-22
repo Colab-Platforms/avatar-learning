@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CourseCard } from "./CourseCard";
 import { COURSES, COURSE_FILTERS } from "@/data/courses";
 import { ScrollReveal } from "@/components/ui";
@@ -62,14 +63,17 @@ export function CoursesSection() {
           ))}
         </div>
 
-        {/* ── Show more ── */}
+        {/* ── View all ── */}
         <ScrollReveal animation="fade-up" delay={80} className="mt-10">
-          <button className="group inline-flex items-center gap-2 text-[13px] font-medium text-white/35 hover:text-brand-400 transition-colors duration-300">
+          <Link
+            href="/courses"
+            className="group inline-flex items-center gap-2 text-[13px] font-medium text-white/35 hover:text-brand-400 transition-colors duration-300"
+          >
             <span className="underline-offset-4 underline decoration-white/15 group-hover:decoration-brand-400/60 transition-all duration-300">
-              Show 5 more courses
+              View all programs
             </span>
             <span className="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
-          </button>
+          </Link>
         </ScrollReveal>
       </div>
     </section>

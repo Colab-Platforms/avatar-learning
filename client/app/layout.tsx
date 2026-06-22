@@ -14,6 +14,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: SITE.tagline,
   description: SITE.description,
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
