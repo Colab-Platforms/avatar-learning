@@ -148,9 +148,6 @@
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
 
-  /* Hide native cursor — PenCursor component provides the custom one */
-  * { cursor: none !important; }
-
   html, body {
     background-color: #050B14;
     color: #ffffff;

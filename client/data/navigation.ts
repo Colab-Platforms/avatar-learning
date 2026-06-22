@@ -1,17 +1,17 @@
 import type { NavItem, FooterColumn, SocialLink } from "@/types";
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "About",       href: "#about" },
-  { label: "Solutions",   href: "#solutions" },
-  { label: "Learning",    href: "#learning" },
-  { label: "Marketplace", href: "#marketplace" },
+  { label: "Home",        href: "/" },
+  { label: "Learning",       href: "/courses" },
+  { label: "Contact",    href: "/contact" },
+  { label: "About",     href: "/about" },
 ];
 
 export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Platforms",
     items: [
-      { label: "Learning", href: "#" },
+      { label: "Learning", href: "/courses" },
       { label: "Marketplace", href: "#" },
       { label: "Solutions", href: "#" },
     ],
@@ -19,10 +19,10 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Company",
     items: [
-      { label: "About Us", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "About Us", href: "/about" },
+      { label: "Careers",  href: "#" },
+      { label: "Blog",     href: "#" },
+      { label: "Contact",  href: "/contact" },
     ],
   },
   {
