@@ -11,6 +11,7 @@ const app = express();
 dotenv.config();
 
 const allowedOrigins = [
+    "https://www.avatarindia.com/",
     "https://avatar-learning.vercel.app/",
     "http://localhost:3000",
     "http://localhost:5173",

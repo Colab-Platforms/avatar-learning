@@ -5,6 +5,7 @@ import {
   WebinarsSection,
   QuizBanner,
   HackathonBanner,
+  InternshipBanner,
   WhyChooseUs,
   AdvisorCTA,
 } from "@/components/sections";
@@ -14,6 +15,7 @@ export default function Page() {
     <main className="bg-ink-950">
       <Navbar />
       <Hero />
+      <InternshipBanner />
       <QuizBanner />
       <CoursesSection />
       <WebinarsSection />

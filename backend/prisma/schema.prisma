@@ -199,12 +199,25 @@ model Courses {
 
   description  String?
   thumbnail    String?
+  heroImage    String?     @map("hero_image")
+  bannerImage  String?     @map("banner_image")
 
   level        CourseLevel
 
-  price Int @default(0)
+  price        Int         @default(0)
 
   totalWeeks   Int         @default(1) @map("total_weeks")
+
+  tools        String[]    @default([])
+  sessions     String?
+  certificate  Boolean     @default(false)
+  rating       Float?
+  reviews      String?
+  startDate    String?     @map("start_date")
+  seats        String?
+
+  whatYouLearn Json?       @map("what_you_learn")
+  audience     Json?
 
   isPublished  Boolean     @default(false) @map("is_published")
 
@@ -263,6 +276,8 @@ model Lessons {
 
   description    String?
 
+  modules        String[]    @default([])
+
   duration       Int?
 
   lessonOrder    Int         @map("lesson_order")
@@ -302,6 +317,8 @@ model Resource {
   type          String
 
   url           String
+
+  bunnyVideoId  String?            @map("bunny_video_id")
 
   size          String?
 
