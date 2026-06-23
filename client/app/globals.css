@@ -124,12 +124,33 @@
   75%, 100% { transform: scale(2); opacity: 0; }
 }
 
+/* Slideshow dot progress fill */
+@keyframes progress-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 /* Neon scan line sweeping across card */
 @keyframes neon-scan {
   0%   { transform: translateX(-100%) skewX(-8deg); opacity: 0; }
   10%  { opacity: 1; }
   90%  { opacity: 1; }
   100% { transform: translateX(400%) skewX(-8deg); opacity: 0; }
+}
+
+/* ════════════════════════════════════════════
+   HERO VIDEO — responsive object-position
+════════════════════════════════════════════ */
+/* Video 1: robot — always centered */
+.hero-vid-1 { object-position: center center; }
+
+/* Video 2: avatar — desktop shows right portion where the face sits */
+.hero-vid-2 { object-position: 65% center; }
+
+/* Mobile: both videos center on the narrow viewport */
+@media (max-width: 767px) {
+  .hero-vid-1,
+  .hero-vid-2 { object-position: center center; }
 }
 
 /* ════════════════════════════════════════════

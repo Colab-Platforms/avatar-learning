@@ -1,6 +1,11 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, Users, Star, TrendingUp, ArrowRight, ChevronDown } from "lucide-react";
 import { Button, Badge, CountUp, HeroParticles } from "@/components/ui";
 import { HERO_SLIDES } from "@/data/hero";
+
+const SLIDE_DURATION = 4000;
 
 const STATS = [
   { icon: Users,      value: "10,000+", label: "Students enrolled" },
@@ -21,18 +26,52 @@ const TICKER_ITEMS = [
 
 export function Hero() {
   const slide = HERO_SLIDES[0];
+  const [activeIdx, setActiveIdx] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const vid1Ref = useRef<HTMLVideoElement>(null);
+  const vid2Ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Restart whichever video is becoming active so it never shows a frozen last frame
+    const activeVid = activeIdx === 0 ? vid1Ref.current : vid2Ref.current;
+    if (activeVid) {
+      activeVid.currentTime = 0;
+      activeVid.play().catch(() => {});
+    }
+
+    timerRef.current = setTimeout(() => {
+      setActiveIdx((i) => (i + 1) % 2);
+    }, SLIDE_DURATION);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [activeIdx]);
 
   return (
     <section className="relative isolate overflow-hidden bg-ink-950 text-white min-h-screen flex flex-col">
 
-      {/* ── Video background ── */}
+      {/* ── Video 1: full background, plays for 4 s then fades out ── */}
       <video
-        autoPlay muted loop playsInline
-        poster="/landingpage-images/hero.png"
+        ref={vid1Ref}
+        autoPlay muted playsInline
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-80 video-pos"
+        className="absolute inset-0 h-full w-full object-cover video-pos transition-opacity duration-1000"
+        style={{ opacity: activeIdx === 0 ? 0.8 : 0 }}
       >
         <source src="/landing-vid/robot-vid.mp4" type="video/mp4" />
+      </video>
+
+      {/* ── Video 2: avatar — full-width on mobile, right-half on md+ ── */}
+      <video
+        ref={vid2Ref}
+        autoPlay muted playsInline loop
+        aria-hidden="true"
+        className="absolute inset-0 md:left-auto md:right-0 h-full w-full md:w-1/2 object-cover object-center transition-opacity duration-1000"
+        style={{
+          opacity: activeIdx === 1 ? 0.85 : 0,
+          maskImage: "linear-gradient(to right, transparent 0%, black 20%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 20%)",
+        }}
+      >
+        <source src="/landing-vid/avatar_video.mp4" type="video/mp4" />
       </video>
 
       {/* ── Gradient overlays ── */}
