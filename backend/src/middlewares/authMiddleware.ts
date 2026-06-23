@@ -29,7 +29,11 @@ export const auth = (...allowedRoles: Role[]) => {
 
             if (allowedRoles.length > 0) {
                 const effectiveRoles = [...allowedRoles];
-                if (effectiveRoles.includes("ADMIN") && !effectiveRoles.includes("SUPERADMIN")) {
+         // ensure that if a user has a higher role, they can access lower role routes
+                if (effectiveRoles.includes("USER")) {
+                    if (!effectiveRoles.includes("ADMIN")) effectiveRoles.push("ADMIN");
+                    if (!effectiveRoles.includes("SUPERADMIN")) effectiveRoles.push("SUPERADMIN");
+                } else if (effectiveRoles.includes("ADMIN") && !effectiveRoles.includes("SUPERADMIN")) {
                     effectiveRoles.push("SUPERADMIN");
                 }
 

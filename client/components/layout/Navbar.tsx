@@ -168,7 +168,7 @@ export function Navbar() {
                 className="hidden sm:inline-block text-[13px] font-medium text-white/45 hover:text-white
                            transition-colors duration-250 px-3 py-2"
               >
-                Log in
+                Log in / Register
               </Link>
             )}
             <Link
@@ -244,7 +244,7 @@ export function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-2.5 text-[14px] text-white/60 hover:text-white transition-colors duration-200"
               >
-                Log in
+                Log in / Register
               </Link>
             )}
             <Link href="#demo" className={cn(buttonVariants({ variant: "primary", size: "sm" }), "w-full justify-center")}>
