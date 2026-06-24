@@ -197,13 +197,10 @@ function CourseCard({ course }: { course: DBCourse }) {
           <button
             onClick={handleEnroll}
             className={cn(
-              "flex-1 rounded-xl py-2 text-[13px] font-semibold transition-all duration-250",
-              isFree
-                ? "bg-brand-500 text-ink-950 hover:bg-brand-400 shadow-[0_2px_12px_rgba(0,200,255,0.3)]"
-                : "border border-brand-500/35 text-brand-400 hover:bg-brand-500/10 hover:border-brand-500/60"
+              "flex-1 rounded-xl py-2 text-[13px] font-semibold transition-all duration-250 bg-brand-500 text-ink-950 hover:bg-brand-400 shadow-[0_2px_12px_rgba(0,200,255,0.3)]"
             )}
           >
-            {isFree ? "Enroll Free" : "View Course"}
+            Enroll Now
           </button>
           <span className="flex items-center gap-0.5 text-[12px] text-white/30
                            group-hover:text-brand-400 transition-colors duration-250">

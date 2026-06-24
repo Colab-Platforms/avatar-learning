@@ -17,7 +17,6 @@ export interface CourseModule {
 }
 
 export interface CourseLearnItem {
-  iconName: string; // lucide icon name stored as string, resolved at render time
   title: string;
   body: string;
 }
@@ -28,13 +27,13 @@ export interface CourseWeek {
 }
 
 export interface CourseAudienceItem {
-  iconName: string;
   title: string;
   body: string;
 }
 
 export interface Course {
   id: string;
+  slug: string;
   title: string;
   level: Level;
   free: boolean;

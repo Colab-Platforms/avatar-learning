@@ -8,9 +8,3 @@ export const INTERNSHIP_BANNER: QuizBannerData = {
   ctaLabel: "Explore Programs",
   image: "/landingpage-images/internship-bannner.jpg",
 };
-
-export const INTERNSHIP_HIGHLIGHTS = [
-  "Live partner projects",
-  "Mentor-led onboarding",
-  "Portfolio-ready work",
-] as const;

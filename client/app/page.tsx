@@ -15,8 +15,8 @@ export default function Page() {
     <main className="bg-ink-950">
       <Navbar />
       <Hero />
-      <InternshipBanner />
       <QuizBanner />
+      <InternshipBanner />
       <CoursesSection />
       <WebinarsSection />
       <HackathonBanner />

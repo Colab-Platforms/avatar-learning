@@ -1,14 +1,28 @@
 import apiClient from "./apiClient";
 
+export interface CourseLearnItem { title: string; body: string; }
+export interface AudienceItem    { title: string; body: string; }
+
 export interface DBCourse {
     id: string;
     title: string;
     slug: string;
     description?: string;
     thumbnail?: string;
+    heroImage?: string;
+    bannerImage?: string;
     level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
     price: number;
     totalWeeks: number;
+    tools: string[];
+    sessions?: string;
+    certificate: boolean;
+    rating?: number;
+    reviews?: string;
+    startDate?: string;
+    seats?: string;
+    whatYouLearn?: CourseLearnItem[];
+    audience?: AudienceItem[];
     isPublished: boolean;
     category: { id: string; name: string; slug: string };
     _count: { lessons: number; enrollments: number };
@@ -20,6 +34,7 @@ export interface DBResource {
     category: string;
     type: string;
     url: string;
+    downloadUrl?: string;
     bunnyVideoId?: string;
     size?: string;
 }
@@ -29,6 +44,7 @@ export interface DBLesson {
     weekNumber: number;
     title: string;
     description?: string;
+    modules: string[];
     duration?: number;
     isPublished: boolean;
     isFreePreview: boolean;
@@ -39,8 +55,68 @@ export interface DBCourseDetail extends DBCourse {
     lessons: DBLesson[];
 }
 
+export interface Enrollment {
+    id: string;
+    userId: string;
+    courseId: string;
+    enrolledAt: string;
+    completedAt: string | null;
+    progress: number;
+    isCompleted: boolean;
+}
+
+export interface EnrolledCourseDetail extends DBCourseDetail {
+    enrollment: Enrollment;
+}
+
+export interface MyEnrollment {
+    id: string;
+    userId: string;
+    courseId: string;
+    enrolledAt: string;
+    completedAt: string | null;
+    progress: number;
+    isCompleted: boolean;
+    course: DBCourse;
+}
+
 export const fetchPublishedCourses = (): Promise<DBCourse[]> =>
     apiClient.get("/courses").then((r) => r.data.data);
 
 export const fetchCourseBySlug = (slug: string): Promise<DBCourseDetail> =>
     apiClient.get(`/courses/${slug}`).then((r) => r.data.data);
+
+export const enrollCourse = (courseId: string): Promise<Enrollment> =>
+    apiClient.post(`/courses/${courseId}/enroll`).then((r) => r.data.data);
+
+export const unenrollCourse = (courseId: string): Promise<void> =>
+    apiClient.delete(`/courses/${courseId}/enroll`).then((r) => r.data);
+
+export const checkEnrollment = (courseId: string): Promise<{ enrolled: boolean; enrollment: Enrollment | null }> =>
+    apiClient.get(`/courses/${courseId}/enrollment`).then((r) => r.data.data);
+
+export const fetchEnrolledCourseDetail = (courseId: string): Promise<EnrolledCourseDetail> =>
+    apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
+
+export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
+    apiClient.get("/courses/me/enrollments").then((r) => r.data.data);
+
+export const downloadResourceFile = async (resourceId: string, filename: string): Promise<void> => {
+    const response = await apiClient.get(`/courses/resources/${resourceId}/download`, {
+        responseType: "blob",
+    });
+
+    const disposition = response.headers["content-disposition"] as string | undefined;
+    const match = disposition?.match(/filename="([^"]+)"/);
+    const resolvedName = match?.[1] ?? filename;
+
+    const blob = response.data as Blob;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = resolvedName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+};
