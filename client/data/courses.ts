@@ -1,7 +1,7 @@
 import type { Course } from "@/types";
 
 export const COURSE_FILTERS = ["All", "Beginner", "Intermediate", "Advanced"] as const;
-
+//static courses data for now, later we can fetch it from the backend for landing page and course details page
 export const COURSES: Course[] = [
   /* ────────────────────────────────────────────────
      AI Fundamentals & ChatGPT Mastery
