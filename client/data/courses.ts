@@ -8,6 +8,7 @@ export const COURSES: Course[] = [
   ──────────────────────────────────────────────── */
   {
     id: "ai-fundamentals",
+    slug: "ai-fundamentals",
     title: "AI Fundamentals & ChatGPT Mastery",
     level: "Beginner",
     free: true,
@@ -34,22 +35,18 @@ export const COURSES: Course[] = [
 
     whatYouLearn: [
       {
-        iconName: "Brain",
         title: "Understand LLMs & Prompting",
         body: "Grasp how large language models work and write effective prompts that produce accurate, useful outputs.",
       },
       {
-        iconName: "PenLine",
         title: "AI for Research, Writing & Productivity",
         body: "Use AI to supercharge your research, drafting, and daily workflows — saving hours every week.",
       },
       {
-        iconName: "FolderCode",
         title: "Build Real Portfolio Projects",
         body: "Complete guided projects across content creation, data analysis, and automation to build a job-ready AI portfolio.",
       },
       {
-        iconName: "Wrench",
         title: "Tool Compilation & Critical Thinking",
         body: "Evaluate and combine the best AI tools — ChatGPT, Claude, Gemini, Midjourney, Notion AI — for any task.",
       },
@@ -92,22 +89,18 @@ export const COURSES: Course[] = [
 
     audience: [
       {
-        iconName: "GraduationCap",
         title: "Students & Freshers",
         body: "Kickstart your career in the AI era with confidence and a portfolio that stands out.",
       },
       {
-        iconName: "Briefcase",
         title: "Working Professionals",
         body: "Level up your efficiency using AI tools and prompts — no coding background needed.",
       },
       {
-        iconName: "RefreshCw",
         title: "Career Switchers",
         body: "Pivot into AI-adjacent roles by demonstrating hands-on fluency with the most in-demand tools.",
       },
       {
-        iconName: "Building2",
         title: "Business Owners & Founders",
         body: "Automate operations, boost content output, and cut costs using AI across your entire business.",
       },
@@ -119,9 +112,10 @@ export const COURSES: Course[] = [
   ──────────────────────────────────────────────── */
   {
     id: "prompt-engineering",
+    slug: "prompt-engineering",
     title: "Prompt Engineering Advanced",
     level: "Beginner",
-    free: true,
+    free: false,
     tools: ["ChatGPT API", "Claude API", "PromptBase", "LangChain basics"],
     weeks: 3,
     sessions: "6 Sessions (Sat & Sun)",
@@ -144,22 +138,18 @@ export const COURSES: Course[] = [
 
     whatYouLearn: [
       {
-        iconName: "Brain",
         title: "Advanced Prompt Patterns",
         body: "Master chain-of-thought, few-shot, ReAct, and tree-of-thought prompting techniques used by AI engineers.",
       },
       {
-        iconName: "PenLine",
         title: "API Integration & Automation",
         body: "Connect ChatGPT and Claude APIs to build automated pipelines for real-world applications.",
       },
       {
-        iconName: "FolderCode",
         title: "LangChain Fundamentals",
         body: "Build multi-step AI agents and RAG applications using LangChain's composable framework.",
       },
       {
-        iconName: "Wrench",
         title: "Prompt Monetisation",
         body: "Publish and sell high-quality prompts on PromptBase while building a recurring income stream.",
       },
@@ -194,22 +184,18 @@ export const COURSES: Course[] = [
 
     audience: [
       {
-        iconName: "GraduationCap",
         title: "AI Enthusiasts",
         body: "Take your AI skills from hobbyist to professional-grade with structured, hands-on engineering.",
       },
       {
-        iconName: "Briefcase",
         title: "Developers",
         body: "Integrate LLMs into your products with confidence — prompting, APIs, and LangChain included.",
       },
       {
-        iconName: "RefreshCw",
         title: "Product Managers",
         body: "Spec out and evaluate AI features with the technical depth to guide your engineering team.",
       },
       {
-        iconName: "Building2",
         title: "Freelancers & Consultants",
         body: "Offer high-value AI consulting and automation services backed by real engineering knowledge.",
       },
