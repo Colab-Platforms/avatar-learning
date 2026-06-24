@@ -237,6 +237,7 @@ model Courses {
   @@index([createdBy])
   @@index([isPublished])
   @@index([categoryId, isPublished])
+  @@index([isPublished, createdAt])
   @@map("courses")
 }
 
