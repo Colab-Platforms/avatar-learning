@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, Users, Star, TrendingUp, ArrowRight, ChevronDown } from "lucide-react";
 import { Button, Badge, CountUp, HeroParticles } from "@/components/ui";
@@ -168,11 +168,15 @@ export function Hero() {
                   <p className="mt-1.5 text-[13px] text-white/35">{slide.courseMeta}</p>
 
                   <div className="mt-6 flex flex-wrap items-center gap-3">
+                   <Link href="/courses/from-zero-to-ai-ready-at-your-own-pace">
                     <Button variant="primary" size="sm" className="btn-glow">
                       {slide.primaryCta}
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
+                         <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                      </Link>
+                    <Link href="/courses/from-zero-to-ai-ready-at-your-own-pace">
                     <Button variant="ghost-light" size="sm">{slide.secondaryCta}</Button>
+                    </Link>
                   </div>
                 </div>
               </div>

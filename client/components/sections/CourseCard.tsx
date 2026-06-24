@@ -88,7 +88,7 @@ export function CourseCard({ course }: CourseCardProps) {
                 Enroll for free
               </Button>
               <Link
-                href={`/courses/${course.id}`}
+                href={`/courses/${course.slug}`}
                 className="group/lnk inline-flex items-center gap-1 text-sm font-medium text-white/40 hover:text-brand-400 transition-colors duration-250"
               >
                 View details
@@ -103,7 +103,7 @@ export function CourseCard({ course }: CourseCardProps) {
               {course.modules.map((mod, i) => (
                 <Link
                   key={i}
-                  href={`/courses/${course.id}`}
+                  href={`/courses/${course.slug}`}
                   className="group/mod cursor-pointer"
                   style={{ transitionDelay: `${i * 30}ms` }}
                 >

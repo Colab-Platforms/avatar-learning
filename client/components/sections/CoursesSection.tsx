@@ -65,6 +65,7 @@ export function CoursesSection() {
 
         {/* ── View all ── */}
         <ScrollReveal animation="fade-up" delay={80} className="mt-10">
+          <button className="px-4 py-2 rounded-2xl bg-brand-500/10 border border-brand-500/20 hover:bg-brand-500/20 transition-colors duration-300">
           <Link
             href="/courses"
             className="group inline-flex items-center gap-2 text-[13px] font-medium text-white/35 hover:text-brand-400 transition-colors duration-300"
@@ -74,6 +75,7 @@ export function CoursesSection() {
             </span>
             <span className="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
           </Link>
+          </button> 
         </ScrollReveal>
       </div>
     </section>

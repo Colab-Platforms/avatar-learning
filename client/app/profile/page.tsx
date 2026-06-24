@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   User, Mail, Phone, MapPin, Globe, Calendar,
   BadgeCheck, ShieldCheck, Pencil, X, Check,
@@ -13,6 +14,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateUser, logoutThunk, clearError } from "@/store/authSlice";
+import { fetchMyEnrollments, type MyEnrollment } from "@/lib/coursesApi";
 import type { UpdateUserBody } from "@/store/authSlice";
 
 /* ─────────────────────────── helpers ─────────────────────────── */
@@ -53,7 +55,7 @@ function Field({
   );
 }
 
-type Tab = "personal" | "location";
+type Tab = "personal" | "location" | "courses";
 
 /* ─────────────────────────── page ────────────────────────────── */
 export default function ProfilePage() {
@@ -65,8 +67,14 @@ export default function ProfilePage() {
   const [editing,   setEditing]   = useState(false);
   const [saveOk,    setSaveOk]    = useState(false);
   const [form,      setForm]      = useState<UpdateUserBody>({});
+  const [enrollments, setEnrollments] = useState<MyEnrollment[]>([]);
 
   useEffect(() => { if (!user) router.replace("/login"); }, [user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchMyEnrollments().then(setEnrollments).catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (user && editing) {
@@ -113,6 +121,7 @@ export default function ProfilePage() {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "personal", label: "Personal",  icon: <User     className="h-3.5 w-3.5" /> },
     { id: "location", label: "Location",  icon: <MapPin   className="h-3.5 w-3.5" /> },
+    { id: "courses",  label: `My Courses${enrollments.length > 0 ? ` (${enrollments.length})` : ""}`, icon: <BookOpen className="h-3.5 w-3.5" /> },
   ];
 
   return (
@@ -309,8 +318,8 @@ export default function ProfilePage() {
               {/* Quick-stat cards */}
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Courses",    value: "0",    icon: <BookOpen   className="h-4 w-4" /> },
-                  { label: "Completed",  value: "0",    icon: <Sparkles   className="h-4 w-4" /> },
+                  { label: "Courses",    value: enrollments.length.toString(),                                    icon: <BookOpen   className="h-4 w-4" /> },
+                  { label: "Completed",  value: enrollments.filter(e => e.isCompleted).length.toString(),         icon: <Sparkles   className="h-4 w-4" /> },
                 ].map((s) => (
                   <div key={s.label}
                     className="rounded-xl border border-white/6 p-4 text-center
@@ -533,6 +542,61 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* ── MY COURSES TAB ── */}
+              {activeTab === "courses" && (
+                <div
+                  className="rounded-2xl border border-white/7 overflow-hidden"
+                  style={{
+                    background: "linear-gradient(145deg, rgba(9,21,37,0.92) 0%, rgba(6,13,26,0.97) 100%)",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,200,255,0.05)",
+                    animation: "fade-up-in 0.35s cubic-bezier(0.22,1,0.36,1) both",
+                  }}
+                >
+                  <div className="flex items-center gap-2.5 px-6 py-4 border-b border-white/5">
+                    <div className="h-7 w-7 rounded-lg bg-brand-500/10 border border-brand-500/15 flex items-center justify-center">
+                      <BookOpen className="h-3.5 w-3.5 text-brand-400" />
+                    </div>
+                    <h2 className="text-[15px] font-semibold text-white">My Enrolled Courses</h2>
+                  </div>
+
+                  {enrollments.length === 0 ? (
+                    <div className="py-16 text-center">
+                      <BookOpen className="h-10 w-10 text-white/10 mx-auto mb-3" />
+                      <p className="text-[14px] text-white/35">No courses enrolled yet.</p>
+                      <Link href="/courses"
+                        className="mt-3 inline-block text-[13px] text-brand-400 hover:text-brand-300 transition-colors">
+                        Browse courses →
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/5">
+                      {enrollments.map((e) => (
+                        <div key={e.id} className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] transition-colors">
+                          <div className="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/15 flex items-center justify-center shrink-0">
+                            <BookOpen className="h-4 w-4 text-brand-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white/85 truncate">{e.course.title}</p>
+                            <p className="text-[11px] text-white/35 mt-0.5">
+                              Enrolled {new Date(e.enrolledAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          </div>
+                          {e.isCompleted && (
+                            <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-0.5">
+                              <BadgeCheck className="h-3 w-3" /> Completed
+                            </span>
+                          )}
+                          <Link href={`/courses/${e.course.slug}/learn`}
+                            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-brand-500 text-ink-950 text-xs font-semibold hover:bg-brand-400 transition-colors">
+                            Continue →
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
