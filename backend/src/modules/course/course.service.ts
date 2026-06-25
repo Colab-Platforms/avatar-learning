@@ -30,7 +30,7 @@ const slugify = (text: string): string =>
 // ─── Admin Service ────────────────────────────────────────────────────────────
 
 export class AdminCourseService {
-    // Categories 
+    // Categories
     async createCategory(data: CreateCategoryBody) {
         const existing = await prisma.category.findUnique({ where: { slug: data.slug } });
         if (existing) throw new ApiError("Category with this slug already exists", STATUS_CODES.CONFLICT);
@@ -44,16 +44,21 @@ export class AdminCourseService {
         });
     }
 
-    // Courses 
-    async getAllCourses() {
-        return prisma.courses.findMany({
+    // Courses
+    async getAllCourses(take?: number, skip?: number) {
+        const courses = await prisma.courses.findMany({
             include: {
                 category: { select: { id: true, name: true, slug: true } },
                 creator: { select: { id: true, firstName: true, lastName: true, email: true } },
                 _count: { select: { lessons: true, enrollments: true } },
             },
             orderBy: { createdAt: "desc" },
+            ...(take !== undefined && { take }),
+            ...(skip !== undefined && { skip }),
         });
+        
+        const totalRecords = await prisma.courses.count();
+        return { courses, totalRecords };
     }
 
     async getCourseById(id: string) {
@@ -231,15 +236,20 @@ export class AdminCourseService {
 // ─── Public Course Service ────────────────────────────────────────────────────
 
 export class PublicCourseService {
-    async getCourses() {
-        return prisma.courses.findMany({
+    async getCourses(take?: number, skip?: number) {
+        const courses = await prisma.courses.findMany({
             where: { isPublished: true },
             include: {
                 category: { select: { id: true, name: true, slug: true } },
                 _count: { select: { lessons: true, enrollments: true } },
             },
             orderBy: { createdAt: "desc" },
+            ...(take !== undefined && { take }),
+            ...(skip !== undefined && { skip }),
         });
+
+        const totalRecords = await prisma.courses.count({ where: { isPublished: true } });
+        return { courses, totalRecords };
     }
 
     async getCourseBySlug(slug: string) {
@@ -315,8 +325,8 @@ export class PublicCourseService {
         });
     }
 
-    async getMyEnrollments(userId: string) {
-        return prisma.courseUserMapper.findMany({
+    async getMyEnrollments(userId: string, take?: number, skip?: number) {
+        const enrollments = await prisma.courseUserMapper.findMany({
             where: { userId },
             include: {
                 course: {
@@ -327,7 +337,12 @@ export class PublicCourseService {
                 },
             },
             orderBy: { enrolledAt: "desc" },
+            ...(take !== undefined && { take }),
+            ...(skip !== undefined && { skip }),
         });
+
+        const totalRecords = await prisma.courseUserMapper.count({ where: { userId } });
+        return { enrollments, totalRecords };
     }
 
     async getEnrolledCourseDetail(slugOrId: string, userId: string) {

@@ -1,5 +1,15 @@
 import apiClient from "./apiClient";
 
+export interface PaginatedResponse<T> {
+    currentPage: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    data: T[];
+}
+
 export interface CourseLearnItem { title: string; body: string; }
 export interface AudienceItem    { title: string; body: string; }
 
@@ -80,8 +90,15 @@ export interface MyEnrollment {
     course: DBCourse;
 }
 
-export const fetchPublishedCourses = (): Promise<DBCourse[]> =>
-    apiClient.get("/courses").then((r) => r.data.data);
+//fetch courses without pagination
+// export const fetchPublishedCourses = (): Promise<DBCourse[]> =>
+//     apiClient.get("/courses").then((r) => r.data.data.data ?? r.data.data);
+
+export const fetchPublishedCoursesPaginated = (page: number = 1, pageSize: number = 12): Promise<PaginatedResponse<DBCourse>> =>
+    apiClient.get("/courses", { params: { page, pageSize } }).then((r) => 
+    {   // console.log(r.data.data)
+        return r.data.data
+    });
 
 export const fetchCourseBySlug = (slug: string): Promise<DBCourseDetail> =>
     apiClient.get(`/courses/${slug}`).then((r) => r.data.data);
@@ -99,7 +116,10 @@ export const fetchEnrolledCourseDetail = (courseId: string): Promise<EnrolledCou
     apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
 
 export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
-    apiClient.get("/courses/me/enrollments").then((r) => r.data.data);
+    apiClient.get("/courses/me/enrollments").then((r) => r.data.data.data ?? r.data.data);
+
+export const fetchMyEnrollmentsPaginated = (page: number = 1, pageSize: number = 12): Promise<PaginatedResponse<MyEnrollment>> =>
+    apiClient.get("/courses/me/enrollments", { params: { page, pageSize } }).then((r) => r.data.data);
 
 export const downloadResourceFile = async (resourceId: string, filename: string): Promise<void> => {
     const response = await apiClient.get(`/courses/resources/${resourceId}/download`, {

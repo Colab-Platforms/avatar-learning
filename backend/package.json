@@ -33,6 +33,7 @@
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
+    "pagination-helper": "^3.1.11",
     "prisma-qb": "^1.0.3",
     "resend": "^6.9.3",
     "twilio": "^5.13.0",

@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap } from "lucide-react";
+import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import {
     fetchAdminCourses,
+    fetchAdminCoursesPaginated,
     fetchCategories,
     createCourse,
     deleteCourse,
     toggleCoursePublish,
 } from "@/lib/adminApi";
+import type { PaginatedResponse } from "@/lib/coursesApi";
 
 interface Category { id: string; name: string; slug: string; }
 interface Course {
@@ -32,6 +34,9 @@ const LEVEL_COLOR: Record<string, string> = {
 
 export default function AdminCoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
+    const [allCoursesCount, setAllCoursesCount] = useState(0);
+    const [pagination, setPagination] = useState<Omit<PaginatedResponse<Course>, 'data'> | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -50,13 +55,26 @@ export default function AdminCoursesPage() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [c, cats] = await Promise.all([fetchAdminCourses(), fetchCategories()]);
-            setCourses(c);
+            const [res, cats] = await Promise.all([fetchAdminCoursesPaginated(currentPage, 10), fetchCategories()]);
+            setCourses(res.data);
+            setAllCoursesCount(res.totalRecords);
+            setPagination({
+                currentPage: res.currentPage,
+                pageSize: res.pageSize,
+                totalRecords: res.totalRecords,
+                totalPages: res.totalPages,
+                hasNextPage: res.hasNextPage,
+                hasPreviousPage: res.hasPreviousPage,
+            });
             setCategories(cats);
         } finally { setLoading(false); }
-    }, []);
+    }, [currentPage]);
 
     useEffect(() => { load(); }, [load]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
 
     const filtered = courses.filter((c) => {
         const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -102,7 +120,7 @@ export default function AdminCoursesPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Courses</h1>
-                    <p className="text-sm text-white/40 mt-0.5">{courses.length} total · {courses.filter(c => c.isPublished).length} published</p>
+                    <p className="text-sm text-white/40 mt-0.5">{allCoursesCount} total · {courses.filter(c => c.isPublished).length} on this page</p>
                 </div>
                 <button
                     onClick={() => setShowForm((v) => !v)}
@@ -288,6 +306,53 @@ export default function AdminCoursesPage() {
                     </div>
                 )}
             </div>
+
+            {/* Pagination */}
+            {!loading && pagination && pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={!pagination.hasPreviousPage}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            pagination.hasPreviousPage
+                                ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                                : "border border-white/5 text-white/20 cursor-not-allowed"
+                        }`}
+                    >
+                        <ChevronLeft size={16} />
+                        Previous
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`h-9 w-9 rounded-lg text-sm font-medium transition-all ${
+                                    currentPage === page
+                                        ? "bg-brand-500 text-ink-950 font-semibold"
+                                        : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={!pagination.hasNextPage}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            pagination.hasNextPage
+                                ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                                : "border border-white/5 text-white/20 cursor-not-allowed"
+                        }`}
+                    >
+                        Next
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

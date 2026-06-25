@@ -6,13 +6,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Search, SlidersHorizontal, X, BookOpen, Clock,
-  Users, ArrowRight, Layers, ChevronDown, RotateCcw,
+  Users, ArrowRight, Layers, ChevronDown, RotateCcw, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Button, ScrollReveal } from "@/components/ui";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { fetchPublishedCourses, type DBCourse } from "@/lib/coursesApi";
+import { fetchPublishedCoursesPaginated, type DBCourse, type PaginatedResponse } from "@/lib/coursesApi";
 import { useAppSelector } from "@/store/hooks";
 
 /* ─────────────────────────── types / constants ─────────────────────────── */
@@ -261,22 +261,36 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 /* ─────────────────────────── main page ─────────────────────────────────── */
 
 export default function CoursesPage() {
-  const [courses,       setCourses]       = useState<DBCourse[]>([]);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState<string | null>(null);
-  const [search,        setSearch]        = useState("");
-  const [level,         setLevel]         = useState<Level>("ALL");
-  const [priceFilter,   setPriceFilter]   = useState<PriceFilter>("ALL");
-  const [sortBy,        setSortBy]        = useState<SortBy>("NEWEST");
-  const [filtersOpen,   setFiltersOpen]   = useState(false);
+  const [courses,         setCourses]         = useState<DBCourse[]>([]);
+  const [pagination,      setPagination]      = useState<Omit<PaginatedResponse<DBCourse>, 'data'> | null>(null);
+  const [currentPage,     setCurrentPage]     = useState(1);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState<string | null>(null);
+  const [search,          setSearch]          = useState("");
+  const [level,           setLevel]           = useState<Level>("ALL");
+  const [priceFilter,     setPriceFilter]     = useState<PriceFilter>("ALL");
+  const [sortBy,          setSortBy]          = useState<SortBy>("NEWEST");
+  const [filtersOpen,     setFiltersOpen]     = useState(false);
 
-  /* fetch on mount */
+  /* fetch on page change */
   useEffect(() => {
-    fetchPublishedCourses()
-      .then(setCourses)
+    setLoading(true);
+    fetchPublishedCoursesPaginated(currentPage, 12)
+      .then((res) => {
+        // console.log(res.data)
+        setCourses(res.data);
+        setPagination({
+          currentPage: res.currentPage,
+          pageSize: res.pageSize,
+          totalRecords: res.totalRecords,
+          totalPages: res.totalPages,
+          hasNextPage: res.hasNextPage,
+          hasPreviousPage: res.hasPreviousPage,
+        });
+      })
       .catch(() => setError("Failed to load courses. Please try again."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage]);
 
   /* derived filtered + sorted list */
   const filtered = useMemo(() => {
@@ -313,6 +327,12 @@ export default function CoursesPage() {
     setLevel("ALL");
     setPriceFilter("ALL");
     setSortBy("NEWEST");
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -499,7 +519,7 @@ export default function CoursesPage() {
               <h3 className="text-[16px] font-semibold text-white/50 mb-2">Something went wrong</h3>
               <p className="text-[13px] text-white/30 mb-5">{error}</p>
               <button
-                onClick={() => { setError(null); setLoading(true); fetchPublishedCourses().then(setCourses).catch(() => setError("Failed again. Please refresh.")).finally(() => setLoading(false)); }}
+                onClick={() => { setError(null); setCurrentPage(1); }}
                 className="rounded-full border border-white/10 px-5 py-2 text-[13px] text-white/40
                            hover:text-white/70 hover:border-white/20 transition-all duration-250"
               >
@@ -522,6 +542,56 @@ export default function CoursesPage() {
                       </ScrollReveal>
                     ))
               }
+            </div>
+          )}
+
+          {/* ── PAGINATION ── */}
+          {!error && !loading && filtered.length > 0 && pagination && (
+            <div className="mt-12 flex items-center justify-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!pagination.hasPreviousPage}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200",
+                  pagination.hasPreviousPage
+                    ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                    : "border border-white/5 text-white/20 cursor-not-allowed"
+                )}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={cn(
+                      "h-9 w-9 rounded-lg text-sm font-medium transition-all duration-200",
+                      currentPage === page
+                        ? "bg-brand-500 text-ink-950 font-semibold"
+                        : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                    )}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!pagination.hasNextPage}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200",
+                  pagination.hasNextPage
+                    ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                    : "border border-white/5 text-white/20 cursor-not-allowed"
+                )}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
           )}
 

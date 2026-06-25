@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import type { PaginatedResponse } from "./coursesApi";
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
@@ -15,7 +16,10 @@ export const createCategory = (payload: {
 // ─── Courses ──────────────────────────────────────────────────────────────────
 
 export const fetchAdminCourses = () =>
-    apiClient.get("/admin/courses").then((r) => r.data.data);
+    apiClient.get("/admin/courses").then((r) => r.data.data.data ?? r.data.data);
+
+export const fetchAdminCoursesPaginated = (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> =>
+    apiClient.get("/admin/courses", { params: { page, pageSize } }).then((r) => r.data.data);
 
 export const fetchAdminCourse = (id: string) =>
     apiClient.get(`/admin/courses/${id}`).then((r) => r.data.data);

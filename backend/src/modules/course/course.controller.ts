@@ -3,6 +3,7 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { AdminCourseService, PublicCourseService } from "./course.service.js";
+import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
 import {
     validateCreateCategory,
     validateCreateCourse,
@@ -43,11 +44,12 @@ export const getCategories = async (_req: Request, res: Response): Promise<void>
 };
 
 //  Courses 
-export const adminGetAllCourses = async (_req: Request, res: Response): Promise<void> => {
+export const adminGetAllCourses = async (req: Request, res: Response): Promise<void> => {
     try {
-        const courses = await adminService.getAllCourses();
-        // console.log("adminGetAllCourses: courses:", courses);
-        sendResponse(res, true, courses, "Courses fetched");
+        const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
+        const { courses, totalRecords } = await adminService.getAllCourses(take, skip);
+        const response = formatPaginationResponse(courses, totalRecords, page, pageSize);
+        sendResponse(res, true, response, "Courses fetched");
     } catch (err: any) {
         sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
@@ -199,10 +201,13 @@ export const deleteResource = async (req: Request, res: Response): Promise<void>
 
 // ─── Public Endpoints ─────────────────────────────────────────────────────────
 
-export const getCourses = async (_req: Request, res: Response): Promise<void> => {
+export const getCourses = async (req: Request, res: Response): Promise<void> => {
     try {
-        const courses = await publicService.getCourses();
-        sendResponse(res, true, courses, "Courses fetched");
+        const { page, pageSize, take, skip } = getPaginationOptions(req.query, 12);
+        const { courses, totalRecords } = await publicService.getCourses(take, skip);
+        const response = formatPaginationResponse(courses, totalRecords, page, pageSize);
+        // console.log("Courses response:", response); 
+        sendResponse(res, true, response, "Courses fetched");
     } catch (err: any) {
         sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
@@ -237,8 +242,10 @@ export const unenrollCourse = async (req: AuthRequest, res: Response): Promise<v
 
 export const getMyEnrollments = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const enrollments = await publicService.getMyEnrollments(req.user!.id);
-        sendResponse(res, true, enrollments, "Enrollments fetched");
+        const { page, pageSize, take, skip } = getPaginationOptions(req.query, 12);
+        const { enrollments, totalRecords } = await publicService.getMyEnrollments(req.user!.id, take, skip);
+        const response = formatPaginationResponse(enrollments, totalRecords, page, pageSize);
+        sendResponse(res, true, response, "Enrollments fetched");
     } catch (err: any) {
         sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
