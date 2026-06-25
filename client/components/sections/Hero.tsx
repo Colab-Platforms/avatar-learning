@@ -1,16 +1,25 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Sparkles, Users, Star, TrendingUp, ArrowRight, ChevronDown } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Users,
+  Star,
+  TrendingUp,
+  ArrowRight,
+  ChevronDown,
+} from "lucide-react";
 import { Button, Badge, CountUp, HeroParticles } from "@/components/ui";
 import { HERO_SLIDES } from "@/data/hero";
 
 const SLIDE_DURATION = 4000;
 
 const STATS = [
-  { icon: Users,      value: "10,000+", label: "Students enrolled" },
-  { icon: Star,       value: "4.9",     label: "Average rating" },
-  { icon: TrendingUp, value: "95%",     label: "Completion rate" },
+  { icon: Users, value: "10,000+", label: "Students enrolled" },
+  { icon: Star, value: "4.9", label: "Average rating" },
+  { icon: TrendingUp, value: "95%", label: "Completion rate" },
 ];
 
 const TICKER_ITEMS = [
@@ -42,16 +51,19 @@ export function Hero() {
     timerRef.current = setTimeout(() => {
       setActiveIdx((i) => (i + 1) % 2);
     }, SLIDE_DURATION);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [activeIdx]);
 
   return (
     <section className="relative isolate overflow-hidden bg-ink-950 text-white min-h-screen flex flex-col">
-
       {/* ── Video 1: full background, plays for 4 s then fades out ── */}
       <video
         ref={vid1Ref}
-        autoPlay muted playsInline
+        autoPlay
+        muted
+        playsInline
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover video-pos transition-opacity duration-1000"
         style={{ opacity: activeIdx === 0 ? 0.8 : 0 }}
@@ -62,13 +74,17 @@ export function Hero() {
       {/* ── Video 2: avatar — full-width on mobile, right-half on md+ ── */}
       <video
         ref={vid2Ref}
-        autoPlay muted playsInline loop
+        autoPlay
+        muted
+        playsInline
+        loop
         aria-hidden="true"
         className="absolute inset-0 md:left-auto md:right-0 h-full w-full md:w-1/2 object-cover object-center transition-opacity duration-1000"
         style={{
           opacity: activeIdx === 1 ? 0.85 : 0,
           maskImage: "linear-gradient(to right, transparent 0%, black 20%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 20%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0%, black 20%)",
         }}
       >
         <source src="/landing-vid/avatar_video.mp4" type="video/mp4" />
@@ -83,17 +99,28 @@ export function Hero() {
       {/* Primary neon cyan orb — top left */}
       <div
         className="orb w-[680px] h-[680px] -top-48 -left-52 opacity-[0.22]"
-        style={{ background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)", filter: "blur(100px)" }}
+        style={{
+          background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)",
+          filter: "blur(100px)",
+        }}
       />
       {/* Secondary electric blue orb — bottom left */}
       <div
         className="orb w-[420px] h-[420px] bottom-16 -left-20 opacity-[0.18]"
-        style={{ background: "radial-gradient(circle, #0080FF 0%, transparent 65%)", filter: "blur(80px)", animationDelay: "3.2s" }}
+        style={{
+          background: "radial-gradient(circle, #0080FF 0%, transparent 65%)",
+          filter: "blur(80px)",
+          animationDelay: "3.2s",
+        }}
       />
       {/* Accent cyan orb — centre right */}
       <div
         className="orb-breathe absolute top-1/3 right-1/4 w-[320px] h-[320px] rounded-full opacity-[0.12]"
-        style={{ background: "radial-gradient(circle, #00D4FF 0%, transparent 65%)", filter: "blur(65px)", animationDelay: "1.5s" }}
+        style={{
+          background: "radial-gradient(circle, #00D4FF 0%, transparent 65%)",
+          filter: "blur(65px)",
+          animationDelay: "1.5s",
+        }}
       />
 
       {/* ── Neon dot grid ── */}
@@ -105,7 +132,6 @@ export function Hero() {
       {/* ══════════ MAIN CONTENT ══════════ */}
       <div className="relative flex-1 flex items-center">
         <div className="container-x pt-36 pb-20 md:pt-44 md:pb-28 w-full">
-
           {/* ── Eyebrow pill ── */}
           {/* <div className="anim-fade-up stagger-1">
             <span className="pill-tag border-brand-500/35 bg-brand-500/10 text-brand-300 backdrop-blur-sm">
@@ -122,10 +148,11 @@ export function Hero() {
           <h1 className="h-display mt-7 max-w-[700px] anim-fade-up stagger-2">
             {slide.heading.split("\n").map((line, i, arr) => (
               <span key={i}>
-                {i === arr.length - 1
-                  ? <span className="text-shimmer">{line}</span>
-                  : <span className="text-white">{line}{" "}</span>
-                }
+                {i === arr.length - 1 ? (
+                  <span className="text-shimmer">{line}</span>
+                ) : (
+                  <span className="text-white">{line} </span>
+                )}
                 {i < arr.length - 1 && <br />}
               </span>
             ))}
@@ -133,8 +160,8 @@ export function Hero() {
 
           {/* ── Sub-copy ── */}
           <p className="mt-6 max-w-[440px] text-white/48 text-[15px] leading-[1.85] anim-fade-up stagger-3">
-            Hands-on AI programs built for the weekend — live sessions,
-            real projects, and career-moving certifications.
+            Hands-on AI programs built for the weekend — live sessions, real
+            projects, and career-moving certifications.
           </p>
 
           {/* ── Course card — neon animated border ── */}
@@ -143,13 +170,20 @@ export function Hero() {
               <div
                 className="group/hcard relative rounded-[14px] bg-ink-900/95 backdrop-blur-xl p-6 overflow-hidden
                             transition-all duration-500 hover:bg-ink-800/95"
-                style={{ boxShadow: "0 32px 80px -16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(0,200,255,0.08)" }}
+                style={{
+                  boxShadow:
+                    "0 32px 80px -16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(0,200,255,0.08)",
+                }}
               >
                 {/* Neon corner glow */}
                 <div
                   className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none
                               opacity-30 group-hover/hcard:opacity-60 transition-opacity duration-500"
-                  style={{ background: "radial-gradient(circle, rgba(0,200,255,0.35) 0%, transparent 70%)", filter: "blur(22px)" }}
+                  style={{
+                    background:
+                      "radial-gradient(circle, rgba(0,200,255,0.35) 0%, transparent 70%)",
+                    filter: "blur(22px)",
+                  }}
                 />
 
                 <div className="relative">
@@ -161,22 +195,26 @@ export function Hero() {
                     </span>
                   </div>
 
-                  <h3 className="mt-4 text-[17px] font-semibold leading-snug text-white
-                                  group-hover/hcard:text-brand-300 transition-colors duration-300">
+                  <h3
+                    className="mt-4 text-[17px] font-semibold leading-snug text-white
+                                  group-hover/hcard:text-brand-300 transition-colors duration-300"
+                  >
                     {slide.courseTitle}
                   </h3>
-                  <p className="mt-1.5 text-[13px] text-white/35">{slide.courseMeta}</p>
+                  <p className="mt-1.5 text-[13px] text-white/35">
+                    {slide.courseMeta}
+                  </p>
 
                   <div className="mt-6 flex flex-wrap items-center gap-3">
-                   <Link href="/courses/from-zero-to-ai-ready-at-your-own-pace">
-                    <Button variant="primary" size="sm" className="btn-glow">
-                      {slide.primaryCta}
-                         <ArrowRight className="h-3.5 w-3.5" />
+                    <Link href="/courses/ai-fundamentals-chatgpt-mastery">
+                      <Button variant="primary" size="sm" className="btn-glow">
+                        {slide.primaryCta}
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
-                      </Link>
-                    <Link href="/courses/from-zero-to-ai-ready-at-your-own-pace">
-                    <Button variant="ghost-light" size="sm">{slide.secondaryCta}</Button>
                     </Link>
+                    {/* <Link href="/courses/from-zero-to-ai-ready-at-your-own-pace">
+                    <Button variant="ghost-light" size="sm">{slide.secondaryCta}</Button>
+                    </Link> */}
                   </div>
                 </div>
               </div>
@@ -247,7 +285,10 @@ export function Hero() {
             style={{ animation: "scroll-dot 2s ease-in-out infinite" }}
           />
         </div>
-        <ChevronDown className="h-3.5 w-3.5 text-brand-500/50" style={{ animation: "float-up 2s ease-in-out infinite alternate" }} />
+        <ChevronDown
+          className="h-3.5 w-3.5 text-brand-500/50"
+          style={{ animation: "float-up 2s ease-in-out infinite alternate" }}
+        />
       </div>
 
       {/* ══════════ TICKER BAR ══════════ */}

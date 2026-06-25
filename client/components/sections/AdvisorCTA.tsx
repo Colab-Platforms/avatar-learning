@@ -12,15 +12,21 @@ const TRUST_ITEMS = [
 export function AdvisorCTA() {
   return (
     <section className="relative bg-ink-950 text-white overflow-hidden">
-
       {/* ── Background ── */}
       <div
         className="orb w-175 h-175 top-1/2 -translate-y-1/2 -left-56 opacity-[0.14]"
-        style={{ background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)", filter: "blur(100px)" }}
+        style={{
+          background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)",
+          filter: "blur(100px)",
+        }}
       />
       <div
         className="orb w-125 h-125 -bottom-32 right-1/4 opacity-[0.07]"
-        style={{ background: "radial-gradient(circle, #0080FF 0%, transparent 60%)", filter: "blur(80px)", animationDelay: "3s" }}
+        style={{
+          background: "radial-gradient(circle, #0080FF 0%, transparent 60%)",
+          filter: "blur(80px)",
+          animationDelay: "3s",
+        }}
       />
       <div className="absolute inset-0 dot-grid-dark" />
       <div className="absolute inset-0 noise-overlay opacity-20 pointer-events-none" />
@@ -28,9 +34,8 @@ export function AdvisorCTA() {
       {/* Top separator */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
 
-      <div className="relative container-x py-32">
+      <div className="relative container-x py-16">
         <div className="grid md:grid-cols-2 gap-20 items-center">
-
           {/* ── Left: copy ── */}
           <div>
             <ScrollReveal animation="fade-up">
@@ -44,10 +49,11 @@ export function AdvisorCTA() {
               <h3 className="h-display leading-[1.05]">
                 {ADVISOR_CTA.heading.split("\n").map((line, i, arr) => (
                   <span key={i}>
-                    {i === arr.length - 1
-                      ? <span className="text-gradient-white">{line}</span>
-                      : <span>{line}</span>
-                    }
+                    {i === arr.length - 1 ? (
+                      <span className="text-gradient-white">{line}</span>
+                    ) : (
+                      <span>{line}</span>
+                    )}
                     {i < arr.length - 1 && <br />}
                   </span>
                 ))}
@@ -68,11 +74,15 @@ export function AdvisorCTA() {
                     className="flex items-center gap-3 text-[14px] text-white/50 group/item cursor-default"
                     style={{ transitionDelay: `${i * 50}ms` }}
                   >
-                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500/12 border border-emerald-500/22 shrink-0
-                                     group-hover/item:bg-emerald-500/22 transition-colors duration-300">
+                    <span
+                      className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500/12 border border-emerald-500/22 shrink-0
+                                     group-hover/item:bg-emerald-500/22 transition-colors duration-300"
+                    >
                       <CheckCircle2 className="h-3 w-3 text-emerald-400" />
                     </span>
-                    <span className="group-hover/item:text-white/72 transition-colors duration-300">{item}</span>
+                    <span className="group-hover/item:text-white/72 transition-colors duration-300">
+                      {item}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -83,16 +93,22 @@ export function AdvisorCTA() {
               <div className="mt-6 flex items-center gap-2">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                    <Star
+                      key={i}
+                      className="h-3.5 w-3.5 text-amber-400 fill-amber-400"
+                    />
                   ))}
                 </div>
-                <span className="text-[13px] text-white/38">4.9 · 500+ sessions completed</span>
+                <span className="text-[13px] text-white/38">
+                  4.9 · 500+ sessions completed
+                </span>
               </div>
             </ScrollReveal>
 
             <ScrollReveal animation="fade-up" delay={360}>
               <Button
-                variant="primary" size="lg"
+                variant="primary"
+                size="lg"
                 className="mt-8 btn-glow group/btn"
               >
                 {ADVISOR_CTA.ctaLabel}
@@ -104,21 +120,25 @@ export function AdvisorCTA() {
           {/* ── Right: image ── */}
           <ScrollReveal animation="fade-left" delay={180} duration={800}>
             <div className="group/img relative">
-
               {/* Animated glow ring */}
               <div
                 className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover/img:opacity-100 transition-opacity duration-600 pointer-events-none"
                 style={{
-                  background: "linear-gradient(135deg, rgba(0,200,255,0.30) 0%, rgba(0,128,255,0.22) 50%, rgba(0,200,255,0.08) 100%)",
+                  background:
+                    "linear-gradient(135deg, rgba(0,200,255,0.30) 0%, rgba(0,128,255,0.22) 50%, rgba(0,200,255,0.08) 100%)",
                   filter: "blur(10px)",
                 }}
               />
 
-              <div className="relative rounded-2xl overflow-hidden" style={{ height: "clamp(340px, 45vw, 500px)" }}>
+              <div
+                className="relative rounded-2xl overflow-hidden"
+                style={{ height: "clamp(340px, 45vw, 500px)" }}
+              >
                 <Image
                   src={ADVISOR_CTA.image}
                   alt="Global AI network"
-                  fill sizes="(min-width:768px) 50vw, 100vw"
+                  fill
+                  sizes="(min-width:768px) 50vw, 100vw"
                   className="object-cover transition-transform duration-700 group-hover/img:scale-[1.04]"
                 />
                 {/* Overlays */}
@@ -139,14 +159,17 @@ export function AdvisorCTA() {
                     />
                   </span>
                   <div>
-                    <div className="text-[13px] font-semibold leading-tight">500+ sessions booked</div>
-                    <div className="text-[11px] text-white/38 mt-0.5">This month alone</div>
+                    <div className="text-[13px] font-semibold leading-tight">
+                      500+ sessions booked
+                    </div>
+                    <div className="text-[11px] text-white/38 mt-0.5">
+                      This month alone
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </ScrollReveal>
-
         </div>
       </div>
     </section>

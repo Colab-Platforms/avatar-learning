@@ -6,14 +6,12 @@ import { Brain, ArrowRight, Sparkles } from "lucide-react";
 
 export function QuizBanner() {
   return (
-    <section className="relative bg-ink-950 pb-28  overflow-hidden">
-
+    <section className="relative bg-ink-950   py-14 overflow-hidden">
       {/* Top divider */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
 
-      <div className="container-x mt-6">
+      <div className="container-x ">
         <ScrollReveal animation="zoom-in" duration={800} threshold={0.08}>
-                    
           <div
             className="group/quiz relative overflow-hidden rounded-3xl bg-ink-800 text-white cursor-default
                         border border-white/6 transition-all duration-600
@@ -23,17 +21,29 @@ export function QuizBanner() {
             {/* ── Background layers ── */}
             <div
               className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(0,200,255,0.28) 0%, transparent 65%)", filter: "blur(65px)" }}
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(0,200,255,0.28) 0%, transparent 65%)",
+                filter: "blur(65px)",
+              }}
             />
             <div
               className="absolute -bottom-20 right-28 w-72 h-72 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(0,128,255,0.20) 0%, transparent 65%)", filter: "blur(55px)" }}
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(0,128,255,0.20) 0%, transparent 65%)",
+                filter: "blur(55px)",
+              }}
             />
             {/* Hover center orb */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/quiz:opacity-100 transition-opacity duration-700">
               <div
                 className="w-125 h-125 rounded-full"
-                style={{ background: "radial-gradient(circle, rgba(0,200,255,0.07) 0%, transparent 60%)", filter: "blur(40px)" }}
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(0,200,255,0.07) 0%, transparent 60%)",
+                  filter: "blur(40px)",
+                }}
               />
             </div>
 
@@ -47,7 +57,6 @@ export function QuizBanner() {
             <div className="absolute inset-0 noise-overlay opacity-30 pointer-events-none" />
 
             <div className="relative grid md:grid-cols-2 items-stretch">
-
               {/* ── Text side ── */}
               <div className="p-10 sm:p-14 flex flex-col justify-center z-10">
                 <ScrollReveal animation="fade-right" delay={100} duration={650}>
@@ -58,10 +67,11 @@ export function QuizBanner() {
                   <h3 className="text-[32px] sm:text-[40px] font-semibold tracking-tight leading-[1.1]">
                     {QUIZ_BANNER.heading.split("\n").map((line, i, arr) => (
                       <span key={i}>
-                        {i === 0
-                          ? <span className="text-shimmer">{line}</span>
-                          : <span className="text-white/85">{line}</span>
-                        }
+                        {i === 0 ? (
+                          <span className="text-shimmer">{line}</span>
+                        ) : (
+                          <span className="text-white/85">{line}</span>
+                        )}
                         {i < arr.length - 1 && <br />}
                       </span>
                     ))}
@@ -72,17 +82,23 @@ export function QuizBanner() {
 
                   {/* Feature chips */}
                   <div className="mt-6 flex flex-wrap gap-2">
-                    {["10 Questions", "2 min", "Instant results"].map((chip) => (
-                      <span key={chip} className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/8 px-3 py-1 text-[11px] font-medium text-brand-300">
-                        <Sparkles className="h-2.5 w-2.5 text-brand-400" />
-                        {chip}
-                      </span>
-                    ))}
+                    {["10 Questions", "2 min", "Instant results"].map(
+                      (chip) => (
+                        <span
+                          key={chip}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/8 px-3 py-1 text-[11px] font-medium text-brand-300"
+                        >
+                          <Sparkles className="h-2.5 w-2.5 text-brand-400" />
+                          {chip}
+                        </span>
+                      ),
+                    )}
                   </div>
 
                   <Link href="/quiz">
                     <Button
-                      variant="primary" size="md"
+                      variant="primary"
+                      size="md"
                       className="mt-8 self-start group/btn w-fit btn-glow"
                     >
                       {QUIZ_BANNER.ctaLabel}
@@ -97,7 +113,8 @@ export function QuizBanner() {
                 <Image
                   src={QUIZ_BANNER.image}
                   alt="Network visualization"
-                  fill sizes="(min-width:768px) 50vw, 100vw"
+                  fill
+                  sizes="(min-width:768px) 50vw, 100vw"
                   className="object-cover transition-transform duration-700 group-hover/quiz:scale-[1.04]"
                 />
                 {/* Left gradient blend */}

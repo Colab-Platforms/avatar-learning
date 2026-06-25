@@ -3,40 +3,56 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, BadgeCheck, Zap, Clock, ArrowRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  BadgeCheck,
+  Zap,
+  Clock,
+  ArrowRight,
+} from "lucide-react";
 import { Badge, Button } from "@/components/ui";
 import { useAppSelector } from "@/store/hooks";
 import type { Course } from "@/types";
 
-interface CourseCardProps { course: Course; }
+interface CourseCardProps {
+  course: Course;
+}
 
 export function CourseCard({ course }: CourseCardProps) {
   const router = useRouter();
   const { user } = useAppSelector((s) => s.auth);
 
   const handleEnroll = () => {
-    if (!user) router.push("/login");
+    if (!user) {
+      router.push("/login");
+    } else {
+      router.push(`/courses/${course.slug}`);
+    }
   };
 
   return (
     <>
-
       <article
         className="group/card relative rounded-2xl border border-white/6 bg-ink-800 overflow-hidden card-lift"
         style={{ boxShadow: "0 2px 24px rgba(0,0,0,0.3)" }}
       >
         {/* Hover shimmer top line */}
-        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-brand-500/0 to-transparent
-                        group-hover/card:via-brand-500/55 transition-all duration-600 origin-center" />
+        <div
+          className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-brand-500/0 to-transparent
+                        group-hover/card:via-brand-500/55 transition-all duration-600 origin-center"
+        />
 
         {/* Hover glow */}
         <div
           className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
-          style={{ background: "radial-gradient(ellipse at 75% 50%, rgba(57,130,198,0.06) 0%, transparent 60%)" }}
+          style={{
+            background:
+              "radial-gradient(ellipse at 75% 50%, rgba(57,130,198,0.06) 0%, transparent 60%)",
+          }}
         />
 
         <div className="relative p-6 sm:p-8 grid gap-8 md:grid-cols-[1fr_2fr]">
-
           {/* ── Left ── */}
           <div className="flex flex-col">
             <div className="flex flex-wrap items-center gap-2">
@@ -44,8 +60,10 @@ export function CourseCard({ course }: CourseCardProps) {
               <Badge variant="level-light">{course.level}</Badge>
             </div>
 
-            <h3 className="mt-4 text-xl sm:text-[22px] font-semibold tracking-tight leading-snug text-white
-                            group-hover/card:text-brand-300 transition-colors duration-350">
+            <h3
+              className="mt-4 text-xl sm:text-[22px] font-semibold tracking-tight leading-snug text-white
+                            group-hover/card:text-brand-300 transition-colors duration-350"
+            >
               {course.title}
             </h3>
 
@@ -85,7 +103,7 @@ export function CourseCard({ course }: CourseCardProps) {
             {/* CTAs */}
             <div className="mt-auto pt-8 flex items-center gap-3">
               <Button variant="primary" size="sm" onClick={handleEnroll}>
-                Enroll for free
+                Enroll Now
               </Button>
               <Link
                 href={`/courses/${course.slug}`}
@@ -99,7 +117,12 @@ export function CourseCard({ course }: CourseCardProps) {
 
           {/* ── Right: module grid ── */}
           <div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              }}
+            >
               {course.modules.map((mod, i) => (
                 <Link
                   key={i}
@@ -109,21 +132,29 @@ export function CourseCard({ course }: CourseCardProps) {
                 >
                   <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-ink-700">
                     <Image
-                      src={mod.image} alt={mod.title}
-                      fill sizes="180px"
+                      src={mod.image}
+                      alt={mod.title}
+                      fill
+                      sizes="180px"
                       className="object-cover transition-transform duration-600 group-hover/mod:scale-110"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent
+                    <div
+                      className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent
                                     opacity-0 group-hover/mod:opacity-100 transition-opacity duration-350
-                                    flex items-end p-2">
-                      <span className="text-white text-[10px] font-semibold bg-brand-500/80 rounded-md px-1.5 py-0.5
-                                       translate-y-2 group-hover/mod:translate-y-0 transition-transform duration-300">
+                                    flex items-end p-2"
+                    >
+                      <span
+                        className="text-white text-[10px] font-semibold bg-brand-500/80 rounded-md px-1.5 py-0.5
+                                       translate-y-2 group-hover/mod:translate-y-0 transition-transform duration-300"
+                      >
                         Preview →
                       </span>
                     </div>
                   </div>
-                  <p className="mt-2 text-[13px] font-medium leading-snug text-white/75
-                                 group-hover/mod:text-brand-300 transition-colors duration-250">
+                  <p
+                    className="mt-2 text-[13px] font-medium leading-snug text-white/75
+                                 group-hover/mod:text-brand-300 transition-colors duration-250"
+                  >
                     {mod.title}
                   </p>
                   <p className="text-[11px] text-white/30 mt-0.5">{mod.week}</p>

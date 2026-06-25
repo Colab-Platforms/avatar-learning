@@ -12,7 +12,10 @@ export function InternshipBanner() {
 
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse 80% 60% at 15% 50%, rgba(0,128,255,0.10) 0%, transparent 60%)" }}
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 15% 50%, rgba(0,128,255,0.10) 0%, transparent 60%)",
+        }}
       />
       <div className="absolute inset-0 line-grid opacity-20 pointer-events-none" />
       <div className="absolute inset-0 noise-overlay opacity-20 pointer-events-none" />
@@ -20,7 +23,7 @@ export function InternshipBanner() {
       <div className="relative flex flex-col lg:flex-row lg:min-h-[520px]">
         {/* Text */}
         <div className="relative z-10 flex flex-1 items-center sm:ml-80">
-          <div className="container-x w-full py-16 sm:py-20 lg:py-24 lg:pr-8">
+          <div className="container-x w-full py-10 sm:py-12 lg:py-14 lg:pr-8">
             <ScrollReveal animation="fade-up" duration={700}>
               <p className="eyebrow eyebrow-dark mb-5">
                 <Briefcase className="h-3.5 w-3.5" />
@@ -45,7 +48,11 @@ export function InternshipBanner() {
               </p>
 
               <Link href="#learning">
-                <Button variant="primary" size="md" className="mt-9 group/btn btn-glow">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="mt-9 group/btn btn-glow"
+                >
                   {INTERNSHIP_BANNER.ctaLabel}
                   <ArrowUpRight className="h-4 w-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform duration-250" />
                 </Button>

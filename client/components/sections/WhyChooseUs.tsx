@@ -39,8 +39,7 @@ const CARDS = [
 
 export function WhyChooseUs() {
   return (
-    <section className="relative bg-ink-950 py-28 sm:py-36 overflow-hidden">
-
+    <section className="relative bg-ink-950 py-16 sm:py-18 overflow-hidden">
       {/* Dividers */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
       <div className="absolute bottom-0 inset-x-0 divider-glow" />
@@ -48,11 +47,13 @@ export function WhyChooseUs() {
       {/* Ambient neon orb */}
       <div
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-250 h-125 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at center bottom, rgba(0,200,255,0.07) 0%, transparent 65%)" }}
+        style={{
+          background:
+            "radial-gradient(ellipse at center bottom, rgba(0,200,255,0.07) 0%, transparent 65%)",
+        }}
       />
 
       <div className="container-x">
-
         {/* ── Header ── */}
         <ScrollReveal animation="fade-up">
           <p className="eyebrow">Why Choose Us</p>
@@ -61,17 +62,30 @@ export function WhyChooseUs() {
             <span className="text-gradient-brand">Lead Tomorrow.</span>
           </h2>
           <p className="mt-6 max-w-xl text-white/40 text-[15px] leading-[1.85]">
-            Every program is designed with one goal — turning beginners into capable
-            AI professionals through live sessions, hands-on projects, and real career outcomes.
+            Every program is designed with one goal — turning beginners into
+            capable AI professionals through live sessions, hands-on projects,
+            and real career outcomes.
           </p>
         </ScrollReveal>
 
         {/* ── Cards grid ── */}
         <div className="mt-14 grid gap-4 md:grid-cols-2">
           {WHY_FEATURES.map((feature, i) => {
-            const { icon: Icon, tag, orbColor, hoverBg, iconCls, accentLine } = CARDS[i];
+            const {
+              icon: Icon,
+              tag,
+              orbColor,
+              hoverBg,
+              iconCls,
+              accentLine,
+            } = CARDS[i];
             return (
-              <ScrollReveal key={feature.title} animation="fade-up" delay={i * 90} duration={720}>
+              <ScrollReveal
+                key={feature.title}
+                animation="fade-up"
+                delay={i * 90}
+                duration={720}
+              >
                 <div
                   className="group/feat relative overflow-hidden rounded-2xl bg-ink-800 text-white p-8 sm:p-9
                               min-h-70 flex flex-col justify-between border border-white/6
@@ -81,18 +95,25 @@ export function WhyChooseUs() {
                   <div
                     className="absolute -top-12 -right-12 w-60 h-60 rounded-full pointer-events-none
                                 opacity-0 group-hover/feat:opacity-100 transition-opacity duration-600"
-                    style={{ background: `radial-gradient(circle, ${orbColor} 0%, transparent 65%)`, filter: "blur(55px)" }}
+                    style={{
+                      background: `radial-gradient(circle, ${orbColor} 0%, transparent 65%)`,
+                      filter: "blur(55px)",
+                    }}
                   />
 
                   {/* Hover surface tint */}
                   <div
                     className="absolute inset-0 opacity-0 group-hover/feat:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
-                    style={{ background: `radial-gradient(ellipse at 85% 20%, ${hoverBg} 0%, transparent 65%)` }}
+                    style={{
+                      background: `radial-gradient(ellipse at 85% 20%, ${hoverBg} 0%, transparent 65%)`,
+                    }}
                   />
 
                   {/* Top neon accent line */}
-                  <div className={`absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent ${accentLine} to-transparent
-                                  scale-x-0 group-hover/feat:scale-x-100 transition-transform duration-500 origin-left`} />
+                  <div
+                    className={`absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent ${accentLine} to-transparent
+                                  scale-x-0 group-hover/feat:scale-x-100 transition-transform duration-500 origin-left`}
+                  />
 
                   {/* ── Top row ── */}
                   <div className="relative flex items-start justify-between">
@@ -109,15 +130,19 @@ export function WhyChooseUs() {
 
                   {/* ── Bottom text ── */}
                   <div className="relative">
-                    <h4 className="text-[17px] font-semibold leading-snug text-white">{feature.title}</h4>
+                    <h4 className="text-[17px] font-semibold leading-snug text-white">
+                      {feature.title}
+                    </h4>
                     <p className="mt-3 text-[14px] text-white/38 leading-[1.85] group-hover/feat:text-white/60 transition-colors duration-400">
                       {feature.body}
                     </p>
                   </div>
 
                   {/* Bottom neon line */}
-                  <div className={`absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent ${accentLine} to-transparent
-                                  scale-x-0 group-hover/feat:scale-x-100 transition-transform duration-700 delay-100 origin-right`} />
+                  <div
+                    className={`absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent ${accentLine} to-transparent
+                                  scale-x-0 group-hover/feat:scale-x-100 transition-transform duration-700 delay-100 origin-right`}
+                  />
                 </div>
               </ScrollReveal>
             );

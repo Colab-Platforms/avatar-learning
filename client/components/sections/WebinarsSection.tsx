@@ -5,14 +5,17 @@ import { WEBINARS, WEBINARS_SECTION } from "@/data/webinars";
 
 export function WebinarsSection() {
   return (
-    <section className="relative bg-ink-950 py-28 overflow-hidden">
+    <section className="relative bg-ink-950 py-16 overflow-hidden">
       {/* Top divider */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
 
       {/* Subtle ambient orb */}
       <div
         className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full pointer-events-none opacity-[0.07]"
-        style={{ background: "radial-gradient(ellipse, #00C8FF 0%, transparent 65%)", filter: "blur(100px)" }}
+        style={{
+          background: "radial-gradient(ellipse, #00C8FF 0%, transparent 65%)",
+          filter: "blur(100px)",
+        }}
       />
 
       <div className="relative container-x">
@@ -32,7 +35,12 @@ export function WebinarsSection() {
         {/* ── Cards grid ── */}
         <div className="mt-12 grid sm:grid-cols-2 gap-5">
           {WEBINARS.map((webinar, i) => (
-            <ScrollReveal key={webinar.id} animation="fade-up" delay={i * 80} duration={600}>
+            <ScrollReveal
+              key={webinar.id}
+              animation="fade-up"
+              delay={i * 80}
+              duration={600}
+            >
               <WebinarCard webinar={webinar} />
             </ScrollReveal>
           ))}
@@ -42,7 +50,11 @@ export function WebinarsSection() {
   );
 }
 
-function WebinarCard({ webinar }: { webinar: import("@/data/webinars").Webinar }) {
+function WebinarCard({
+  webinar,
+}: {
+  webinar: import("@/data/webinars").Webinar;
+}) {
   return (
     <div
       className="group relative flex flex-col rounded-2xl border border-white/8 bg-ink-800
@@ -62,7 +74,9 @@ function WebinarCard({ webinar }: { webinar: import("@/data/webinars").Webinar }
             </span>
           )}
           <div className="ml-auto text-right shrink-0">
-            <p className="text-[13px] font-semibold text-white/80">{webinar.date}</p>
+            <p className="text-[13px] font-semibold text-white/80">
+              {webinar.date}
+            </p>
             <p className="text-[12px] text-white/35 mt-0.5">{webinar.time}</p>
           </div>
         </div>
@@ -81,7 +95,9 @@ function WebinarCard({ webinar }: { webinar: import("@/data/webinars").Webinar }
             {webinar.learns.map((item) => (
               <li key={item} className="flex items-start gap-2.5">
                 <span className="mt-0.5 shrink-0 h-[7px] w-[7px] rounded-full bg-brand-500/70 mt-[5px]" />
-                <span className="text-[13px] text-white/55 leading-snug">{item}</span>
+                <span className="text-[13px] text-white/55 leading-snug">
+                  {item}
+                </span>
               </li>
             ))}
           </ul>
@@ -114,7 +130,9 @@ function WebinarCard({ webinar }: { webinar: import("@/data/webinars").Webinar }
         {/* Certificate indicator */}
         <div className="flex items-center gap-2 pt-1">
           <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
-          <span className="text-[12px] text-emerald-400/80">{WEBINARS_SECTION.certificateLabel}</span>
+          <span className="text-[12px] text-emerald-400/80">
+            {WEBINARS_SECTION.certificateLabel}
+          </span>
         </div>
       </div>
     </div>

@@ -1,6 +1,11 @@
 import type { Course } from "@/types";
 
-export const COURSE_FILTERS = ["All", "Beginner", "Intermediate", "Advanced"] as const;
+export const COURSE_FILTERS = [
+  "All",
+  "Beginner",
+  "Intermediate",
+  "Advanced",
+] as const;
 //static courses data for now, later we can fetch it from the backend for landing page and course details page
 export const COURSES: Course[] = [
   /* ────────────────────────────────────────────────
@@ -8,7 +13,7 @@ export const COURSES: Course[] = [
   ──────────────────────────────────────────────── */
   {
     id: "ai-fundamentals",
-    slug: "ai-fundamentals",
+    slug: "ai-fundamentals-chatgpt-mastery",
     title: "AI Fundamentals & ChatGPT Mastery",
     level: "Beginner",
     free: true,
@@ -17,10 +22,26 @@ export const COURSES: Course[] = [
     sessions: "8 Sessions (Sat & Sun)",
     certificate: true,
     modules: [
-      { title: "AI Landscape",       week: "week 1 of 4", image: "/landingpage-images/course-1.png" },
-      { title: "Mastering ChatGPT",  week: "week 2 of 4", image: "/landingpage-images/course-2.png" },
-      { title: "Prompt Essentials",  week: "week 3 of 4", image: "/landingpage-images/course-3.png" },
-      { title: "AI Productivity",    week: "week 4 of 4", image: "/landingpage-images/course-4.jpg" },
+      {
+        title: "AI Landscape",
+        week: "week 1 of 4",
+        image: "/landingpage-images/course-1.png",
+      },
+      {
+        title: "Mastering ChatGPT",
+        week: "week 2 of 4",
+        image: "/landingpage-images/course-2.png",
+      },
+      {
+        title: "Prompt Essentials",
+        week: "week 3 of 4",
+        image: "/landingpage-images/course-3.png",
+      },
+      {
+        title: "AI Productivity",
+        week: "week 4 of 4",
+        image: "/landingpage-images/course-4.jpg",
+      },
     ],
 
     /* ── Detail fields ── */
@@ -30,7 +51,7 @@ export const COURSES: Course[] = [
     reviews: "1.2k Reviews",
     startDate: "17 Jul 2026",
     seats: "Limited Seats",
-    heroImage:  "/landingpage-images/course-1.png",
+    heroImage: "/landingpage-images/course-1.png",
     bannerImage: "/landingpage-images/course-2.png",
 
     whatYouLearn: [
@@ -112,7 +133,7 @@ export const COURSES: Course[] = [
   ──────────────────────────────────────────────── */
   {
     id: "prompt-engineering",
-    slug: "prompt-engineering",
+    slug: "prompt-engineering-advanced",
     title: "Prompt Engineering Advanced",
     level: "Beginner",
     free: false,
@@ -121,9 +142,21 @@ export const COURSES: Course[] = [
     sessions: "6 Sessions (Sat & Sun)",
     certificate: true,
     modules: [
-      { title: "Foundations of Prompt Engineering", week: "week 1 of 3", image: "/landingpage-images/course-5.jpg" },
-      { title: "Advanced Techniques",               week: "week 2 of 3", image: "/landingpage-images/course-6.jpg" },
-      { title: "Industry Applications",             week: "week 3 of 3", image: "/landingpage-images/course-7.jpg" },
+      {
+        title: "Foundations of Prompt Engineering",
+        week: "week 1 of 3",
+        image: "/landingpage-images/course-5.jpg",
+      },
+      {
+        title: "Advanced Techniques",
+        week: "week 2 of 3",
+        image: "/landingpage-images/course-6.jpg",
+      },
+      {
+        title: "Industry Applications",
+        week: "week 3 of 3",
+        image: "/landingpage-images/course-7.jpg",
+      },
     ],
 
     /* ── Detail fields ── */
@@ -133,7 +166,7 @@ export const COURSES: Course[] = [
     reviews: "840 Reviews",
     startDate: "24 Jul 2026",
     seats: "Limited Seats",
-    heroImage:  "/landingpage-images/course-5.jpg",
+    heroImage: "/landingpage-images/course-5.jpg",
     bannerImage: "/landingpage-images/course-6.jpg",
 
     whatYouLearn: [
