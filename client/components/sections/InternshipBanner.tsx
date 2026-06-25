@@ -21,9 +21,11 @@ export function InternshipBanner() {
       <div className="absolute inset-0 noise-overlay opacity-20 pointer-events-none" />
 
       <div className="relative flex flex-col lg:flex-row lg:min-h-[520px]">
-        {/* Text */}
-        <div className="relative z-10 flex flex-1 items-center sm:ml-80">
-          <div className="container-x w-full py-10 sm:py-12 lg:py-14 lg:pr-8">
+        {/* Text — left column on desktop */}
+        <div className="relative z-10 flex flex-1 items-center min-w-0">
+          <div className="w-full py-10 sm:py-12 lg:py-14
+            pl-5 sm:pl-8 lg:pl-[max(2rem,calc((105vw_-_80rem)_/_2))]
+            pr-5 sm:pr-8 lg:pr-16 xl:pr-20">
             <ScrollReveal animation="fade-up" duration={700}>
               <p className="eyebrow eyebrow-dark mb-5">
                 <Briefcase className="h-3.5 w-3.5" />
@@ -61,18 +63,20 @@ export function InternshipBanner() {
           </div>
         </div>
 
-        {/* Image — full bleed on desktop */}
-        <div className="relative w-full lg:w-[48%] xl:w-[44%] shrink-0 min-h-[320px] sm:min-h-[380px] lg:min-h-0">
+        {/* Image — full bleed right column on desktop, stacked on mobile */}
+        <div className="relative w-full lg:w-[50%] xl:w-[46%] shrink-0 min-h-[300px] sm:min-h-[360px] lg:min-h-0">
           <Image
             src={INTERNSHIP_BANNER.image}
             alt="Internship pathway from learning to real-world projects"
             fill
-            sizes="(min-width: 1024px) 44vw, 100vw"
+            sizes="(min-width: 1024px) 46vw, 100vw"
             className="object-cover object-center"
             priority={false}
           />
-          <div className="absolute inset-0 bg-linear-to-t from-ink-900 via-ink-900/20 to-transparent lg:hidden" />
-          <div className="absolute inset-0 bg-linear-to-r from-ink-900 via-ink-900/55 to-transparent lg:via-ink-900/25" />
+          {/* Mobile: fade image into background below */}
+          <div className="absolute inset-0 bg-linear-to-t from-ink-900 via-ink-900/30 to-transparent lg:hidden" />
+          {/* Desktop: subtle left-edge fade so image blends with text column */}
+          <div className="absolute inset-0 bg-linear-to-r from-ink-900 via-ink-900/20 to-transparent hidden lg:block" />
         </div>
       </div>
     </section>

@@ -44,7 +44,7 @@ export function CoursesSection() {
         </ScrollReveal>
 
         {/* ── Filters ── */}
-        <ScrollReveal animation="fade-up" delay={100} className="mt-10">
+        {/* <ScrollReveal animation="fade-up" delay={100} className="mt-10">
           <div className="flex flex-wrap gap-2">
             {COURSE_FILTERS.map((filter, i) => (
               <button
@@ -55,7 +55,7 @@ export function CoursesSection() {
               </button>
             ))}
           </div>
-        </ScrollReveal>
+        </ScrollReveal> */}
 
         {/* ── Cards ── */}
         <div className="mt-10 space-y-4">
