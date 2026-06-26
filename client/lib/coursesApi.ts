@@ -1,142 +1,175 @@
 import apiClient from "./apiClient";
 
 export interface PaginatedResponse<T> {
-    currentPage: number;
-    pageSize: number;
-    totalRecords: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    data: T[];
+  currentPage: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  data: T[];
 }
 
-export interface CourseLearnItem { title: string; body: string; }
-export interface AudienceItem    { title: string; body: string; }
+export interface CourseLearnItem {
+  title: string;
+  body: string;
+}
+export interface AudienceItem {
+  title: string;
+  body: string;
+}
 
 export interface DBCourse {
-    id: string;
-    title: string;
-    slug: string;
-    description?: string;
-    thumbnail?: string;
-    heroImage?: string;
-    bannerImage?: string;
-    level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-    price: number;
-    totalWeeks: number;
-    tools: string[];
-    sessions?: string;
-    certificate: boolean;
-    rating?: number;
-    reviews?: string;
-    startDate?: string;
-    seats?: string;
-    whatYouLearn?: CourseLearnItem[];
-    audience?: AudienceItem[];
-    isPublished: boolean;
-    category: { id: string; name: string; slug: string };
-    _count: { lessons: number; enrollments: number };
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  thumbnail?: string;
+  heroImage?: string;
+  bannerImage?: string;
+  level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  price: number;
+  totalWeeks: number;
+  tools: string[];
+  sessions?: string;
+  certificate: boolean;
+  rating?: number;
+  reviews?: string;
+  startDate?: string;
+  seats?: string;
+  whatYouLearn?: CourseLearnItem[];
+  audience?: AudienceItem[];
+  isPublished: boolean;
+  category: { id: string; name: string; slug: string };
+  _count: { lessons: number; enrollments: number };
 }
 
 export interface DBResource {
-    id: string;
-    title: string;
-    category: string;
-    type: string;
-    url: string;
-    downloadUrl?: string;
-    bunnyVideoId?: string;
-    size?: string;
+  id: string;
+  title: string;
+  category: string;
+  type: string;
+  url: string;
+  downloadUrl?: string;
+  bunnyVideoId?: string;
+  size?: string;
 }
 
 export interface DBLesson {
-    id: string;
-    weekNumber: number;
-    title: string;
-    description?: string;
-    modules: string[];
-    duration?: number;
-    isPublished: boolean;
-    isFreePreview: boolean;
-    resources: DBResource[];
+  id: string;
+  weekNumber: number;
+  title: string;
+  description?: string;
+  modules: string[];
+  duration?: number;
+  isPublished: boolean;
+  isFreePreview: boolean;
+  resources: DBResource[];
 }
 
 export interface DBCourseDetail extends DBCourse {
-    lessons: DBLesson[];
+  lessons: DBLesson[];
 }
 
 export interface Enrollment {
-    id: string;
-    userId: string;
-    courseId: string;
-    enrolledAt: string;
-    completedAt: string | null;
-    progress: number;
-    isCompleted: boolean;
+  id: string;
+  userId: string;
+  courseId: string;
+  enrolledAt: string;
+  completedAt: string | null;
+  progress: number;
+  isCompleted: boolean;
 }
 
 export interface EnrolledCourseDetail extends DBCourseDetail {
-    enrollment: Enrollment;
+  enrollment: Enrollment;
 }
 
 export interface MyEnrollment {
-    id: string;
-    userId: string;
-    courseId: string;
-    enrolledAt: string;
-    completedAt: string | null;
-    progress: number;
-    isCompleted: boolean;
-    course: DBCourse;
+  id: string;
+  userId: string;
+  courseId: string;
+  enrolledAt: string;
+  completedAt: string | null;
+  progress: number;
+  isCompleted: boolean;
+  course: DBCourse;
 }
 
 //fetch courses without pagination
 // export const fetchPublishedCourses = (): Promise<DBCourse[]> =>
 //     apiClient.get("/courses").then((r) => r.data.data.data ?? r.data.data);
 
-export const fetchPublishedCoursesPaginated = (page: number = 1, pageSize: number = 12): Promise<PaginatedResponse<DBCourse>> =>
-    apiClient.get("/courses", { params: { page, pageSize } }).then((r) => 
-    {   // console.log(r.data.data)
-        return r.data.data
-    });
+export const fetchPublishedCoursesPaginated = (
+  page: number = 1,
+  pageSize: number = 12,
+): Promise<PaginatedResponse<DBCourse>> =>
+  apiClient.get("/courses", { params: { page, pageSize } }).then((r) => {
+    // console.log(r.data.data)
+    return r.data.data;
+  });
 
 export const fetchCourseBySlug = (slug: string): Promise<DBCourseDetail> =>
-    apiClient.get(`/courses/${slug}`).then((r) => r.data.data);
+  apiClient.get(`/courses/${slug}`).then((r) => r.data.data);
 
 export const enrollCourse = (courseId: string): Promise<Enrollment> =>
-    apiClient.post(`/courses/${courseId}/enroll`).then((r) => r.data.data);
+  apiClient.post(`/courses/${courseId}/enroll`).then((r) => r.data.data);
 
 export const unenrollCourse = (courseId: string): Promise<void> =>
-    apiClient.delete(`/courses/${courseId}/enroll`).then((r) => r.data);
+  apiClient.delete(`/courses/${courseId}/enroll`).then((r) => r.data);
 
-export const checkEnrollment = (courseId: string): Promise<{ enrolled: boolean; enrollment: Enrollment | null }> =>
-    apiClient.get(`/courses/${courseId}/enrollment`).then((r) => r.data.data);
+export const checkEnrollment = (
+  courseId: string,
+): Promise<{ enrolled: boolean; enrollment: Enrollment | null }> =>
+  apiClient.get(`/courses/${courseId}/enrollment`).then((r) => r.data.data);
 
-export const fetchEnrolledCourseDetail = (courseId: string): Promise<EnrolledCourseDetail> =>
-    apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
+export const fetchEnrolledCourseDetail = (
+  courseId: string,
+): Promise<EnrolledCourseDetail> =>
+  apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
 
 export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
-    apiClient.get("/courses/me/enrollments").then((r) => r.data.data.data ?? r.data.data);
+  apiClient
+    .get("/courses/me/enrollments")
+    .then((r) => r.data.data.data ?? r.data.data);
 
-export const fetchMyEnrollmentsPaginated = (page: number = 1, pageSize: number = 12): Promise<PaginatedResponse<MyEnrollment>> =>
-    apiClient.get("/courses/me/enrollments", { params: { page, pageSize } }).then((r) => r.data.data);
+export const fetchMyEnrollmentsPaginated = (
+  page: number = 1,
+  pageSize: number = 12,
+): Promise<PaginatedResponse<MyEnrollment>> =>
+  apiClient
+    .get("/courses/me/enrollments", { params: { page, pageSize } })
+    .then((r) => r.data.data);
 
-export const downloadResourceFile = async (resourceId: string, filename: string): Promise<void> => {
-    const response = await apiClient.get(`/courses/resources/${resourceId}/download`, {
-        responseType: "blob",
-    });
+export const downloadResourceFile = async (
+  resourceId: string,
+  filename: string,
+): Promise<void> => {
+  const response = await apiClient.get(
+    `/courses/resources/${resourceId}/download`,
+    {
+      responseType: "blob",
+    },
+  );
 
-    const disposition = response.headers["content-disposition"] as string | undefined;
-    const match = disposition?.match(/filename="([^"]+)"/);
-    const resolvedName = match?.[1] ?? filename;
+  const disposition = response.headers["content-disposition"] as
+    | string
+    | undefined;
+  const match = disposition?.match(/filename="([^"]+)"/);
+  const resolvedName = match?.[1] ?? filename;
 
-    const blob = response.data as Blob;
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = resolvedName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+  const blob = response.data as Blob;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = resolvedName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
+export const fetchHeroCourses = async () => {
+  const response = await fetchPublishedCoursesPaginated(1, 3);
+  return response.data;
 };
