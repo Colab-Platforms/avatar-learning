@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { QUIZ_QUESTIONS, computeResult } from "@/data/quizQuestions";
+import { PageBackground } from "@/components/layout";
 import { QuizQuestion } from "./QuizQuestion";
 import { QuizResult } from "./QuizResult";
 import { QuizNav } from "./QuizNav";
+import { QuizPanel } from "./QuizPanel";
+import { Brain, Sparkles } from "lucide-react";
 
 // answers stores string[] per question (single-select = 1-item array)
 export function QuizShell() {
@@ -15,7 +18,6 @@ export function QuizShell() {
   const total    = QUIZ_QUESTIONS.length;
   const question = QUIZ_QUESTIONS[current];
   const selected = answers[question.id] ?? [];
-  const progress  = Math.round((Object.keys(answers).length / total) * 100);
 
   function handleToggle(label: string) {
     setAnswers((prev) => {
@@ -55,23 +57,34 @@ export function QuizShell() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-950 text-white flex flex-col">
+    <PageBackground variant="rich" className="flex flex-col">
       <QuizNav />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-5 py-16 sm:py-20">
-        <div className="w-full max-w-2xl">
-          <QuizQuestion
+      <main className="flex-1 flex flex-col items-center justify-center px-5 py-12 sm:py-16">
+        <div className="w-full max-w-3xl flex flex-col gap-6 sm:gap-8">
+          <div className="text-center">
+            <p className="eyebrow eyebrow-dark justify-center mb-3">
+              <Brain className="h-3.5 w-3.5" />
+              Career Path Quiz
+            </p>
+            <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight">
+              <span className="text-shimmer">Discover your AI career path</span>
+            </h2>
+          </div>
+
+          <QuizPanel>
+            <QuizQuestion
             question={question}
             selected={selected}
             onToggle={handleToggle}
             current={current}
             total={total}
-            progress={progress}
             onNext={handleNext}
             onBack={handleBack}
-          />
+            />
+          </QuizPanel>
         </div>
       </main>
-    </div>
+    </PageBackground>
   );
 }

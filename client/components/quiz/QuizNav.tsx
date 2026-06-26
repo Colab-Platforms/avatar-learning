@@ -4,7 +4,8 @@ import { ArrowLeft } from "lucide-react";
 
 export function QuizNav() {
   return (
-    <header className="w-full border-b border-white/6 bg-ink-950/80 backdrop-blur-xl sticky top-0 z-40">
+    <header className="relative w-full border-b border-white/8 bg-[#060D1A]/60 backdrop-blur-xl sticky top-0 z-40">
+      <div className="absolute bottom-0 inset-x-0 divider-glow" />
       <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
         <Link href="/" aria-label="Avatar India home">
           <Image
