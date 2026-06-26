@@ -1,18 +1,29 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  Search, SlidersHorizontal, X, BookOpen, Clock,
-  Users, ArrowRight, Layers, ChevronDown, RotateCcw, ChevronLeft, ChevronRight,
+  Search,
+  SlidersHorizontal,
+  X,
+  BookOpen,
+  Clock,
+  Users,
+  ArrowRight,
+  Layers,
+  ChevronDown,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Button, ScrollReveal } from "@/components/ui";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { fetchPublishedCoursesPaginated, type DBCourse, type PaginatedResponse } from "@/lib/coursesApi";
+import { type DBCourse, type PaginatedResponse } from "@/lib/coursesApi";
+import { useCourses } from "@/hooks/queries/useCourses";
 import { useAppSelector } from "@/store/hooks";
 
 /* ─────────────────────────── types / constants ─────────────────────────── */
@@ -22,28 +33,28 @@ type PriceFilter = "ALL" | "FREE" | "PAID";
 type SortBy = "NEWEST" | "PRICE_ASC" | "PRICE_DESC";
 
 const LEVELS: { value: Level; label: string }[] = [
-  { value: "ALL",          label: "All Levels" },
-  { value: "BEGINNER",     label: "Beginner" },
+  { value: "ALL", label: "All Levels" },
+  { value: "BEGINNER", label: "Beginner" },
   { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "ADVANCED",     label: "Advanced" },
+  { value: "ADVANCED", label: "Advanced" },
 ];
 
 const PRICE_OPTIONS: { value: PriceFilter; label: string }[] = [
-  { value: "ALL",  label: "Any Price" },
+  { value: "ALL", label: "Any Price" },
   { value: "FREE", label: "Free" },
   { value: "PAID", label: "Paid" },
 ];
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: "NEWEST",     label: "Newest First" },
-  { value: "PRICE_ASC",  label: "Price: Low → High" },
+  { value: "NEWEST", label: "Newest First" },
+  { value: "PRICE_ASC", label: "Price: Low → High" },
   { value: "PRICE_DESC", label: "Price: High → Low" },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
-  BEGINNER:     "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
+  BEGINNER: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
   INTERMEDIATE: "bg-amber-500/15  text-amber-400  border-amber-500/25",
-  ADVANCED:     "bg-red-500/15    text-red-400    border-red-500/25",
+  ADVANCED: "bg-red-500/15    text-red-400    border-red-500/25",
 };
 
 /* ─────────────────────────── skeleton card ─────────────────────────────── */
@@ -86,13 +97,16 @@ function CourseCard({ course }: { course: DBCourse }) {
                  overflow-hidden transition-all duration-350 hover:-translate-y-1.5
                  hover:border-brand-500/30 hover:shadow-[0_16px_48px_rgba(0,0,0,0.45),0_0_0_1px_rgba(0,200,255,0.08)]"
       style={{
-        background: "linear-gradient(160deg, rgba(13,23,39,0.9) 0%, rgba(9,18,32,0.98) 100%)",
+        background:
+          "linear-gradient(160deg, rgba(13,23,39,0.9) 0%, rgba(9,18,32,0.98) 100%)",
         transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
       }}
     >
       {/* top shimmer on hover */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/0
-                      to-transparent group-hover:via-brand-500/50 transition-all duration-500 z-10" />
+      <div
+        className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/0
+                      to-transparent group-hover:via-brand-500/50 transition-all duration-500 z-10"
+      />
 
       {/* thumbnail */}
       <div className="relative aspect-video w-full overflow-hidden bg-ink-700 shrink-0">
@@ -105,8 +119,13 @@ function CourseCard({ course }: { course: DBCourse }) {
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, rgba(0,60,140,0.4) 0%, rgba(0,200,255,0.08) 100%)" }}>
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(0,60,140,0.4) 0%, rgba(0,200,255,0.08) 100%)",
+            }}
+          >
             <BookOpen className="h-10 w-10 text-brand-500/25" />
           </div>
         )}
@@ -116,15 +135,19 @@ function CourseCard({ course }: { course: DBCourse }) {
         {/* price badge */}
         <div className="absolute top-3 right-3 z-10">
           {isFree ? (
-            <span className="inline-flex items-center rounded-full border border-emerald-500/30
+            <span
+              className="inline-flex items-center rounded-full border border-emerald-500/30
                              bg-ink-900/80 backdrop-blur-sm px-2.5 py-1 text-[11px]
-                             font-semibold text-emerald-400">
+                             font-semibold text-emerald-400"
+            >
               FREE
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full border border-white/15
+            <span
+              className="inline-flex items-center rounded-full border border-white/15
                              bg-ink-900/80 backdrop-blur-sm px-2.5 py-1 text-[11px]
-                             font-semibold text-white">
+                             font-semibold text-white"
+            >
               ₹{course.price.toLocaleString("en-IN")}
             </span>
           )}
@@ -133,9 +156,11 @@ function CourseCard({ course }: { course: DBCourse }) {
         {/* category pill */}
         {course.category && (
           <div className="absolute bottom-3 left-3 z-10">
-            <span className="inline-flex items-center rounded-full border border-brand-500/20
+            <span
+              className="inline-flex items-center rounded-full border border-brand-500/20
                              bg-ink-900/80 backdrop-blur-sm px-2.5 py-1 text-[10px]
-                             font-medium text-brand-300/80">
+                             font-medium text-brand-300/80"
+            >
               {course.category.name}
             </span>
           </div>
@@ -146,17 +171,22 @@ function CourseCard({ course }: { course: DBCourse }) {
       <div className="flex flex-col flex-1 p-5">
         {/* level badge */}
         <div className="flex items-center gap-2 mb-3">
-          <span className={cn(
-            "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-            LEVEL_COLOR[course.level] ?? "bg-white/8 text-white/50 border-white/10"
-          )}>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              LEVEL_COLOR[course.level] ??
+                "bg-white/8 text-white/50 border-white/10",
+            )}
+          >
             {course.level.charAt(0) + course.level.slice(1).toLowerCase()}
           </span>
         </div>
 
         {/* title */}
-        <h3 className="text-[15px] font-semibold leading-snug text-white mb-2
-                       group-hover:text-brand-300 transition-colors duration-300 line-clamp-2">
+        <h3
+          className="text-[15px] font-semibold leading-snug text-white mb-2
+                       group-hover:text-brand-300 transition-colors duration-300 line-clamp-2"
+        >
           {course.title}
         </h3>
 
@@ -178,7 +208,8 @@ function CourseCard({ course }: { course: DBCourse }) {
           {course._count.lessons > 0 && (
             <span className="flex items-center gap-1.5">
               <Layers className="h-3.5 w-3.5 text-brand-500/50" />
-              {course._count.lessons} {course._count.lessons === 1 ? "lesson" : "lessons"}
+              {course._count.lessons}{" "}
+              {course._count.lessons === 1 ? "lesson" : "lessons"}
             </span>
           )}
           {course._count.enrollments > 0 && (
@@ -197,13 +228,15 @@ function CourseCard({ course }: { course: DBCourse }) {
           <button
             onClick={handleEnroll}
             className={cn(
-              "flex-1 rounded-xl py-2 text-[13px] font-semibold transition-all duration-250 bg-brand-500 text-ink-950 hover:bg-brand-400 shadow-[0_2px_12px_rgba(0,200,255,0.3)]"
+              "flex-1 rounded-xl py-2 text-[13px] font-semibold transition-all duration-250 bg-brand-500 text-ink-950 hover:bg-brand-400 shadow-[0_2px_12px_rgba(0,200,255,0.3)]",
             )}
           >
             Enroll Now
           </button>
-          <span className="flex items-center gap-0.5 text-[12px] text-white/30
-                           group-hover:text-brand-400 transition-colors duration-250">
+          <span
+            className="flex items-center gap-0.5 text-[12px] text-white/30
+                           group-hover:text-brand-400 transition-colors duration-250"
+          >
             Details
             <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform duration-250" />
           </span>
@@ -216,8 +249,14 @@ function CourseCard({ course }: { course: DBCourse }) {
 /* ─────────────────────────── filter pill ───────────────────────────────── */
 
 function FilterPill({
-  active, onClick, children,
-}: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
@@ -225,7 +264,7 @@ function FilterPill({
         "rounded-full px-4 py-1.5 text-[13px] font-medium border transition-all duration-250",
         active
           ? "bg-brand-500/12 border-brand-500/40 text-brand-300"
-          : "border-white/8 bg-white/3 text-white/40 hover:border-brand-500/25 hover:text-white/70"
+          : "border-white/8 bg-white/3 text-white/40 hover:border-brand-500/25 hover:text-white/70",
       )}
     >
       {children}
@@ -238,11 +277,15 @@ function FilterPill({
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
-      <div className="h-16 w-16 rounded-2xl border border-white/8 bg-white/4
-                      flex items-center justify-center mb-5">
+      <div
+        className="h-16 w-16 rounded-2xl border border-white/8 bg-white/4
+                      flex items-center justify-center mb-5"
+      >
         <Search className="h-7 w-7 text-white/20" />
       </div>
-      <h3 className="text-[17px] font-semibold text-white/60 mb-2">No courses found</h3>
+      <h3 className="text-[17px] font-semibold text-white/60 mb-2">
+        No courses found
+      </h3>
       <p className="text-[14px] text-white/30 max-w-xs mb-6">
         Try adjusting your search or filters to find what you're looking for.
       </p>
@@ -261,36 +304,27 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 /* ─────────────────────────── main page ─────────────────────────────────── */
 
 export default function CoursesPage() {
-  const [courses,         setCourses]         = useState<DBCourse[]>([]);
-  const [pagination,      setPagination]      = useState<Omit<PaginatedResponse<DBCourse>, 'data'> | null>(null);
-  const [currentPage,     setCurrentPage]     = useState(1);
-  const [loading,         setLoading]         = useState(true);
-  const [error,           setError]           = useState<string | null>(null);
-  const [search,          setSearch]          = useState("");
-  const [level,           setLevel]           = useState<Level>("ALL");
-  const [priceFilter,     setPriceFilter]     = useState<PriceFilter>("ALL");
-  const [sortBy,          setSortBy]          = useState<SortBy>("NEWEST");
-  const [filtersOpen,     setFiltersOpen]     = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [level, setLevel] = useState<Level>("ALL");
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>("ALL");
+  const [sortBy, setSortBy] = useState<SortBy>("NEWEST");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  /* fetch on page change */
-  useEffect(() => {
-    setLoading(true);
-    fetchPublishedCoursesPaginated(currentPage, 12)
-      .then((res) => {
-        // console.log(res.data)
-        setCourses(res.data);
-        setPagination({
-          currentPage: res.currentPage,
-          pageSize: res.pageSize,
-          totalRecords: res.totalRecords,
-          totalPages: res.totalPages,
-          hasNextPage: res.hasNextPage,
-          hasPreviousPage: res.hasPreviousPage,
-        });
-      })
-      .catch(() => setError("Failed to load courses. Please try again."))
-      .finally(() => setLoading(false));
-  }, [currentPage]);
+  // Fetch courses for current page using TanStack Query
+  const { data, isLoading: loading, isError, error } = useCourses(currentPage);
+
+  const courses = data?.data ?? [];
+  const pagination = data
+    ? {
+        currentPage: data.currentPage,
+        pageSize: data.pageSize,
+        totalRecords: data.totalRecords,
+        totalPages: data.totalPages,
+        hasNextPage: data.hasNextPage,
+        hasPreviousPage: data.hasPreviousPage,
+      }
+    : null;
 
   /* derived filtered + sorted list */
   const filtered = useMemo(() => {
@@ -302,7 +336,7 @@ export default function CoursesPage() {
         (c) =>
           c.title.toLowerCase().includes(q) ||
           c.description?.toLowerCase().includes(q) ||
-          c.category?.name.toLowerCase().includes(q)
+          c.category?.name.toLowerCase().includes(q),
       );
     }
 
@@ -313,14 +347,15 @@ export default function CoursesPage() {
     if (priceFilter === "FREE") list = list.filter((c) => c.price === 0);
     if (priceFilter === "PAID") list = list.filter((c) => c.price > 0);
 
-    if (sortBy === "PRICE_ASC")  list.sort((a, b) => a.price - b.price);
+    if (sortBy === "PRICE_ASC") list.sort((a, b) => a.price - b.price);
     if (sortBy === "PRICE_DESC") list.sort((a, b) => b.price - a.price);
     // NEWEST: server already orders by createdAt desc
 
     return list;
   }, [courses, search, level, priceFilter, sortBy]);
 
-  const hasActiveFilters = level !== "ALL" || priceFilter !== "ALL" || search.trim().length > 0;
+  const hasActiveFilters =
+    level !== "ALL" || priceFilter !== "ALL" || search.trim().length > 0;
 
   const resetFilters = () => {
     setSearch("");
@@ -342,15 +377,20 @@ export default function CoursesPage() {
       <main
         className="min-h-screen text-white overflow-x-hidden pt-16"
         style={{
-          background: "linear-gradient(160deg, #060D1A 0%, #091220 25%, #060D1A 55%, #091525 80%, #060D1A 100%)",
+          background:
+            "linear-gradient(160deg, #060D1A 0%, #091220 25%, #060D1A 55%, #091525 80%, #060D1A 100%)",
         }}
       >
         {/* ambient layers */}
-        <div className="pointer-events-none fixed inset-0 dot-grid-dark opacity-20" aria-hidden />
+        <div
+          className="pointer-events-none fixed inset-0 dot-grid-dark opacity-20"
+          aria-hidden
+        />
         <div
           className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] opacity-[0.11]"
           style={{
-            background: "radial-gradient(ellipse at top, rgba(0,200,255,0.45) 0%, transparent 65%)",
+            background:
+              "radial-gradient(ellipse at top, rgba(0,200,255,0.45) 0%, transparent 65%)",
             filter: "blur(70px)",
           }}
           aria-hidden
@@ -358,19 +398,21 @@ export default function CoursesPage() {
         <div
           className="pointer-events-none fixed bottom-0 right-0 w-[600px] h-[500px] opacity-[0.07]"
           style={{
-            background: "radial-gradient(ellipse at bottom right, rgba(0,80,200,0.7) 0%, transparent 65%)",
+            background:
+              "radial-gradient(ellipse at bottom right, rgba(0,80,200,0.7) 0%, transparent 65%)",
             filter: "blur(90px)",
           }}
           aria-hidden
         />
 
         <div className="relative container-x py-14 max-w-7xl">
-
           {/* ── PAGE HEADER ── */}
           <ScrollReveal animation="fade-up" duration={700}>
             <div className="mb-3 flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg
-                               bg-brand-500/10 border border-brand-500/20">
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-lg
+                               bg-brand-500/10 border border-brand-500/20"
+              >
                 <Layers className="h-4 w-4 text-brand-400" />
               </span>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400">
@@ -382,19 +424,17 @@ export default function CoursesPage() {
               Our Programs
             </h1>
             <p className="text-white/40 text-[15px] leading-relaxed max-w-xl">
-              Explore our comprehensive curriculum designed for the next era of technological mastery.
-              Filter by level, duration, and investment to find your optimal path.
+              Explore our comprehensive curriculum designed for the next era of
+              technological mastery. Filter by level, duration, and investment
+              to find your optimal path.
             </p>
           </ScrollReveal>
-
 
           {/* ── SEARCH + FILTER BAR ── */}
           <ScrollReveal animation="fade-up" delay={100} duration={650}>
             <div className="mt-10 flex flex-col gap-4">
-
               {/* top row: search + sort + filter toggle */}
               <div className="flex flex-col sm:flex-row gap-3">
-
                 {/* search */}
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
@@ -430,11 +470,15 @@ export default function CoursesPage() {
                                transition-all duration-200 cursor-pointer hover:border-white/15"
                   >
                     {SORT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2
-                                         h-4 w-4 text-white/30" />
+                  <ChevronDown
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2
+                                         h-4 w-4 text-white/30"
+                  />
                 </div>
 
                 {/* filter toggle (mobile) */}
@@ -445,7 +489,7 @@ export default function CoursesPage() {
                     "text-[13px] font-medium transition-all duration-250",
                     filtersOpen
                       ? "border-brand-500/40 bg-brand-500/10 text-brand-300"
-                      : "border-white/8 bg-white/4 text-white/50"
+                      : "border-white/8 bg-white/4 text-white/50",
                   )}
                 >
                   <SlidersHorizontal className="h-4 w-4" />
@@ -457,14 +501,20 @@ export default function CoursesPage() {
               </div>
 
               {/* filter pills row — always visible on desktop, toggleable on mobile */}
-              <div className={cn(
-                "flex flex-wrap gap-2 sm:flex",
-                filtersOpen ? "flex" : "hidden sm:flex"
-              )}>
+              <div
+                className={cn(
+                  "flex flex-wrap gap-2 sm:flex",
+                  filtersOpen ? "flex" : "hidden sm:flex",
+                )}
+              >
                 {/* LEVEL */}
                 <div className="flex flex-wrap gap-2">
                   {LEVELS.map((l) => (
-                    <FilterPill key={l.value} active={level === l.value} onClick={() => setLevel(l.value)}>
+                    <FilterPill
+                      key={l.value}
+                      active={level === l.value}
+                      onClick={() => setLevel(l.value)}
+                    >
                       {l.label}
                     </FilterPill>
                   ))}
@@ -475,7 +525,11 @@ export default function CoursesPage() {
                 {/* PRICE */}
                 <div className="flex flex-wrap gap-2">
                   {PRICE_OPTIONS.map((p) => (
-                    <FilterPill key={p.value} active={priceFilter === p.value} onClick={() => setPriceFilter(p.value)}>
+                    <FilterPill
+                      key={p.value}
+                      active={priceFilter === p.value}
+                      onClick={() => setPriceFilter(p.value)}
+                    >
                       {p.label}
                     </FilterPill>
                   ))}
@@ -493,12 +547,11 @@ export default function CoursesPage() {
                   </button>
                 )}
               </div>
-
             </div>
           </ScrollReveal>
 
           {/* results meta */}
-          {!loading && !error && (
+          {!loading && !isError && (
             <div className="mt-6 mb-2 flex items-center justify-between">
               <p className="text-[13px] text-white/30">
                 {filtered.length === 0
@@ -508,18 +561,25 @@ export default function CoursesPage() {
             </div>
           )}
 
-
           {/* ── ERROR STATE ── */}
-          {error && (
+          {isError && (
             <div className="mt-12 flex flex-col items-center text-center py-20">
-              <div className="h-14 w-14 rounded-2xl border border-red-500/20 bg-red-500/8
-                              flex items-center justify-center mb-4">
+              <div
+                className="h-14 w-14 rounded-2xl border border-red-500/20 bg-red-500/8
+                              flex items-center justify-center mb-4"
+              >
                 <X className="h-6 w-6 text-red-400/70" />
               </div>
-              <h3 className="text-[16px] font-semibold text-white/50 mb-2">Something went wrong</h3>
-              <p className="text-[13px] text-white/30 mb-5">{error}</p>
+              <h3 className="text-[16px] font-semibold text-white/50 mb-2">
+                Something went wrong
+              </h3>
+              <p className="text-[13px] text-white/30 mb-5">
+                {error?.message ?? "Failed to load courses. Please try again."}
+              </p>
               <button
-                onClick={() => { setError(null); setCurrentPage(1); }}
+                onClick={() => {
+                  setCurrentPage(1);
+                }}
                 className="rounded-full border border-white/10 px-5 py-2 text-[13px] text-white/40
                            hover:text-white/70 hover:border-white/20 transition-all duration-250"
               >
@@ -528,25 +588,32 @@ export default function CoursesPage() {
             </div>
           )}
 
-
           {/* ── COURSE GRID ── */}
-          {!error && (
+          {!isError && (
             <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {loading
-                ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-                : filtered.length === 0
-                  ? <EmptyState onReset={resetFilters} />
-                  : filtered.map((course, i) => (
-                      <ScrollReveal key={course.id} animation="fade-up" delay={i * 60} duration={650}>
-                        <CourseCard course={course} />
-                      </ScrollReveal>
-                    ))
-              }
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))
+              ) : filtered.length === 0 ? (
+                <EmptyState onReset={resetFilters} />
+              ) : (
+                filtered.map((course, i) => (
+                  <ScrollReveal
+                    key={course.id}
+                    animation="fade-up"
+                    delay={i * 60}
+                    duration={650}
+                  >
+                    <CourseCard course={course} />
+                  </ScrollReveal>
+                ))
+              )}
             </div>
           )}
 
           {/* ── PAGINATION ── */}
-          {!error && !loading && filtered.length > 0 && pagination && (
+          {!isError && !loading && filtered.length > 0 && pagination && (
             <div className="mt-12 flex items-center justify-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -555,7 +622,7 @@ export default function CoursesPage() {
                   "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200",
                   pagination.hasPreviousPage
                     ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                    : "border border-white/5 text-white/20 cursor-not-allowed"
+                    : "border border-white/5 text-white/20 cursor-not-allowed",
                 )}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -563,7 +630,10 @@ export default function CoursesPage() {
               </button>
 
               <div className="flex items-center gap-1">
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                {Array.from(
+                  { length: pagination.totalPages },
+                  (_, i) => i + 1,
+                ).map((page) => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
@@ -571,7 +641,7 @@ export default function CoursesPage() {
                       "h-9 w-9 rounded-lg text-sm font-medium transition-all duration-200",
                       currentPage === page
                         ? "bg-brand-500 text-ink-950 font-semibold"
-                        : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                        : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5",
                     )}
                   >
                     {page}
@@ -586,7 +656,7 @@ export default function CoursesPage() {
                   "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200",
                   pagination.hasNextPage
                     ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                    : "border border-white/5 text-white/20 cursor-not-allowed"
+                    : "border border-white/5 text-white/20 cursor-not-allowed",
                 )}
               >
                 Next
@@ -594,7 +664,6 @@ export default function CoursesPage() {
               </button>
             </div>
           )}
-
         </div>
       </main>
 
