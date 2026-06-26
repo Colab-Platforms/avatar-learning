@@ -6,8 +6,7 @@ import { Brain, ArrowRight, Sparkles } from "lucide-react";
 
 export function QuizBanner() {
   return (
-    <section className="relative bg-ink-950 pb-16 overflow-hidden">
-
+    <section className="relative bg-ink-950 py-14 overflow-hidden">
       {/* Top divider */}
       <div className="absolute top-0 inset-x-0 divider-glow" />
 

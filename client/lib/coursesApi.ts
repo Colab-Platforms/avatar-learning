@@ -169,7 +169,5 @@ export const downloadResourceFile = async (
   URL.revokeObjectURL(url);
 };
 
-export const fetchHeroCourses = async () => {
-  const response = await fetchPublishedCoursesPaginated(1, 3);
-  return response.data;
-};
+export const fetchHeroCourses = (): Promise<DBCourse[]> =>
+  apiClient.get("/courses/hero").then((r) => r.data.data);

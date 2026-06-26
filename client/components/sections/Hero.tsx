@@ -16,6 +16,7 @@ import { Button, Badge, CountUp, HeroParticles } from "@/components/ui";
 import { DBCourse, fetchHeroCourses } from "@/lib/coursesApi";
 import { HeroCardSkeleton } from "../ui/HeroCardSkeleton";
 import { AnimatePresence, motion } from "framer-motion";
+import { useHeroCourses } from "@/hooks/queries/courseQueries";
 
 const SLIDE_DURATION = 4000;
 
@@ -38,29 +39,32 @@ const TICKER_ITEMS = [
 
 export function Hero() {
   // const slide = HERO_SLIDES[0];
-  const [courses, setCourses] = useState<DBCourse[]>([]);
+  // const [courses, setCourses] = useState<DBCourse[]>([]);
   const [direction, setDirection] = useState(1);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const vid1Ref = useRef<HTMLVideoElement>(null);
   const vid2Ref = useRef<HTMLVideoElement>(null);
+
+  const { data: courses = [], isLoading, error } = useHeroCourses();
+
   const course = courses[activeIdx] ?? null;
 
-  useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        const data = await fetchHeroCourses();
-        console.log("Hero:", data);
+  // useEffect(() => {
+  //   const loadCourses = async () => {
+  //     try {
+  //       const data = await fetchHeroCourses();
+  //       console.log("Hero:", data);
 
-        setCourses(data);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       setCourses(data);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    loadCourses();
-  }, []);
+  //   loadCourses();
+  // }, []);
 
   //2nd time
   // useEffect(() => {
@@ -287,7 +291,7 @@ export function Hero() {
           {/* ── Course card — neon animated border ── */}
 
           <div className=" relative mt-10 max-w-[476px] min-h-[240px]">
-            {loading || !course ? (
+            {isLoading || !course ? (
               <HeroCardSkeleton />
             ) : (
               <AnimatePresence mode="popLayout">
