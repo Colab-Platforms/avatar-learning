@@ -8,6 +8,7 @@ import { hashPassword, comparePassword } from "@/utils/auth.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { sendOtpEmail, sendPasswordResetEmail } from "@/utils/mailer.js";
+import { sendOtpSms } from "@/utils/msg91.js";
 import { RegisterBody, LoginBody, VerifyOtpBody, ResendOtpBody } from "./auth.types.js";
 
 dayjs.extend(utc);
@@ -119,11 +120,16 @@ class AuthService {
             },
         });
 
-        sendOtpEmail(data.email, otp, "REGISTER").catch((err) =>
-            console.error("[Auth] Failed to send registration OTP:", err)
-        );
+        await Promise.all([
+            sendOtpEmail(data.email, otp, "REGISTER").catch((err) =>
+                console.error("[Auth] Failed to send registration OTP email:", err)
+            ),
+            data.phoneNo ? sendOtpSms(data.phoneNo, otp).catch((err) =>
+                console.error("[Auth] Failed to send registration OTP SMS:", err)
+            ) : Promise.resolve(),
+        ]);
 
-        return { message: "OTP sent to your email. Please verify to complete registration." };
+        return { message: "OTP sent to your email and phone. Please verify to complete registration." };
     }
 
     async verifyOtp(data: VerifyOtpBody, device?: string) {
@@ -214,13 +220,18 @@ class AuthService {
                 },
             });
 
-            sendOtpEmail(data.email, otp, "LOGIN").catch((err) =>
-                console.error("[Auth] Failed to send login OTP:", err)
-            );
+            await Promise.all([
+                sendOtpEmail(data.email, otp, "LOGIN").catch((err) =>
+                    console.error("[Auth] Failed to send login OTP email:", err)
+                ),
+                user.phoneNo ? sendOtpSms(user.phoneNo, otp).catch((err) =>
+                    console.error("[Auth] Failed to send login OTP SMS:", err)
+                ) : Promise.resolve(),
+            ]);
 
             return {
                 requiresVerification: true,
-                message: "Your email is not verified. An OTP has been sent to your email.",
+                message: "Your email is not verified. An OTP has been sent to your email and phone.",
             };
         }
 
@@ -316,11 +327,16 @@ class AuthService {
             },
         });
 
-        sendOtpEmail(data.email, otp, data.type).catch((err) =>
-            console.error("[Auth] Failed to resend OTP:", err)
-        );
+        await Promise.all([
+            sendOtpEmail(data.email, otp, data.type).catch((err) =>
+                console.error("[Auth] Failed to resend OTP email:", err)
+            ),
+            user.phoneNo ? sendOtpSms(user.phoneNo, otp).catch((err) =>
+                console.error("[Auth] Failed to resend OTP SMS:", err)
+            ) : Promise.resolve(),
+        ]);
 
-        return { message: "A new OTP has been sent to your email." };
+        return { message: "A new OTP has been sent to your email and phone." };
     }
 
     async forgotPassword(email: string) {
@@ -370,6 +386,31 @@ class AuthService {
         ]);
 
         return { message: "Password reset successfully. You can now log in." };
+    }
+
+    async testOtpSending(email: string, phoneNo: string, otpType: string) {
+        const otp = generateOtp();
+
+        console.log(`[Test OTP] Testing with email=${email}, phone=${phoneNo}, otp=${otp}`);
+
+        const [emailRes, smsRes] = await Promise.all([
+            sendOtpEmail(email, otp, otpType as "REGISTER" | "LOGIN")
+                .then(() => ({ success: true, message: "Email OTP sent successfully" }))
+                .catch((err) => ({ success: false, message: `Email failed: ${err.message}` })),
+            sendOtpSms(phoneNo, otp)
+                .then((result) => result
+                    ? { success: true, message: "SMS OTP sent successfully" }
+                    : { success: false, message: "SMS API returned false" }
+                )
+                .catch((err) => ({ success: false, message: `SMS failed: ${err.message}` })),
+        ]);
+
+        return {
+            otp,
+            email: emailRes,
+            sms: smsRes,
+            message: `Test OTP: ${otp}\n\nEmail: ${emailRes.message}\nSMS: ${smsRes.message}`,
+        };
     }
 }
 

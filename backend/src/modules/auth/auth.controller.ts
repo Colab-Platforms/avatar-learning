@@ -17,6 +17,7 @@ const authService = new AuthService();
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log(req.body)
         const { error, value } = validateRegisterSchema(req.body);
         if (error) {
             sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
@@ -138,6 +139,23 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
         }
         const result = await authService.resetPassword(value.token, value.password);
         sendResponse(res, true, null, result.message, STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const testOtpSending = async (req: Request, res: Response): Promise<void> => {
+    try {
+        console.log(req.body)
+        const { email, phoneNo, otpType = "REGISTER" } = req.body;
+
+        if (!email || !phoneNo) {
+            sendResponse(res, false, null, "email and phoneNo are required", STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await authService.testOtpSending(email, phoneNo, otpType);
+        sendResponse(res, true, result, "Test OTP sent successfully", STATUS_CODES.OK);
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }

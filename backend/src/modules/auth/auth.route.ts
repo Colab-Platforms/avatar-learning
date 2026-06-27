@@ -21,4 +21,7 @@ router.post("/logout-all", auth("USER", "ADMIN", "SUPERADMIN"), authController.l
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 
+// Test endpoint
+router.post("/test-otp", authController.testOtpSending);
+
 export default router;
