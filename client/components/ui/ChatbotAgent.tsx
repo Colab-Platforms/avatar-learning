@@ -7,8 +7,8 @@ import {
   Send,
   Loader,
   Shield,
-  AlertTriangle,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { layout, prepare } from "@chenglou/pretext";
 import { useChatbotMutation } from "@/hooks/mutations/useChatbot";
@@ -166,66 +166,84 @@ export default function ChatbotAgent() {
       .replace(/>/g, "&gt;");
 
     const formatted = escaped
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong class='font-semibold text-cyan-200'>$1</strong>",
+      )
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
       .replace(/\n/g, "<br />");
 
     return (
       <div
         dangerouslySetInnerHTML={{ __html: formatted }}
-        className="whitespace-pre-wrap text-sm leading-6"
+        className="whitespace-pre-wrap text-sm leading-relaxed"
       />
     );
   };
 
   return (
     <>
+      {/* Floating Toggle Button */}
       <button
         onClick={() => setIsOpen((current) => !current)}
-        className="fixed md:right-20 md:bottom-20 right-4 bottom-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-white shadow-[0_22px_50px_rgba(14,165,233,0.3)] transition-transform duration-300 hover:scale-105"
-        style={{
-          animation: "chatbotFloat 2400ms ease-in-out infinite alternate",
-        }}
+        className="fixed md:right-8 md:bottom-8 right-4 bottom-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:scale-110 active:scale-95"
         aria-label={isOpen ? "Close chat" : "Open chat"}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
+        {isOpen ? (
+          <X className="h-6 w-6 transform rotate-0 transition-transform duration-200" />
+        ) : (
+          <Bot className="h-6 w-6 transform scale-110" />
+        )}
       </button>
 
       {isOpen && (
         <div
-          className="fixed bottom-28 left-4 right-4 md:mb-4 z-40 mx-auto w-[min(95vw,420px)] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/95 shadow-[0_40px_120px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:right-20 sm:left-auto"
-          style={{ animation: "chatbotPanelReveal 220ms ease-out forwards" }}
+          className="fixed bottom-24 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85vh] overflow-hidden rounded-3xl border border-slate-800 shadow-2xl bg-slate-950/95 backdrop-blur-xl sm:right-8 sm:left-auto"
+          style={{
+            animation:
+              "chatbotPanelReveal 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          }}
         >
-          <div className="rounded-t-[28px] border-b border-cyan-500/12 bg-gradient-to-br from-slate-900/95 to-slate-950/85 px-5 py-5 backdrop-blur-sm">
-            <div className="flex items-center justify-between gap-3">
+          {/* Header */}
+          <div className="relative border-b border-slate-800/60 bg-slate-900/40 px-5 py-4 backdrop-blur-md">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="flex items-center justify-between gap-3 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-500/20 to-sky-500/12 text-cyan-300 shadow-inner shadow-cyan-500/10 ring-1 ring-cyan-400/15">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 text-cyan-400 ring-1 ring-cyan-500/30">
                   <Shield className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Learning assistant
                   </p>
-                  <p className="truncate text-base font-semibold text-white">
-                    AI course companion
+                  <p className="truncate text-sm font-semibold text-white">
+                    AI Course Companion
                   </p>
                 </div>
               </div>
 
-              <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
+              <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Live
               </span>
             </div>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto px-4 py-5 sm:max-h-[420px]">
-            <div className="mb-4 space-y-3 rounded-3xl bg-slate-950/70 p-4 text-sm text-slate-400 ring-1 ring-white/5">
-              <p className="font-semibold text-slate-100">Tip</p>
-              <p className="text-[13px] leading-5">
-                You can ask about course paths, enrollment timing, project
-                support, or certification details.
-              </p>
+          {/* Chat Space Content */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
+            {/* Quick Context Tip Box */}
+            <div className="flex gap-2.5 rounded-2xl bg-slate-900/50 p-3.5 text-xs text-slate-400 ring-1 ring-slate-800/80">
+              <Sparkles className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-slate-200 mb-0.5">Quick Tip</p>
+                <p className="leading-normal text-slate-400">
+                  You can ask about course tracks, module support, enrollment
+                  windows, or certificate completions.
+                </p>
+              </div>
             </div>
+
+            {/* Rendered Messages */}
             {messages.map((message) => {
               const minHeight = computedHeights.get(message.id) ?? 56;
               const isUser = message.type === "user";
@@ -233,24 +251,31 @@ export default function ChatbotAgent() {
               return (
                 <div
                   key={message.id}
-                  className={`mb-3 flex ${isUser ? "justify-end" : "justify-start"}`}
+                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     style={{ minHeight }}
-                    className={`min-w-[140px] max-w-[88%] rounded-[28px] px-4 py-3.5 text-sm leading-6 shadow-xl shadow-slate-950/20 transition-all duration-300 ${
+                    className={`max-w-[85%] flex flex-col rounded-2xl px-4 py-3 text-sm shadow-md transition-all ${
                       isUser
-                        ? "bg-gradient-to-br from-sky-500 via-cyan-500 to-teal-400 text-white ring-1 ring-cyan-300/20 shadow-[0_20px_40px_rgba(14,165,233,0.17)]"
+                        ? "bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-tr-none shadow-cyan-950/10"
                         : message.isError
-                          ? "bg-red-950/95 border border-red-700/60 text-red-100 ring-1 ring-red-500/20 shadow-[0_20px_40px_rgba(220,38,38,0.16)]"
-                          : "bg-slate-900/95 border border-white/10 text-slate-100 ring-1 ring-white/10 shadow-[0_20px_40px_rgba(15,23,42,0.22)]"
+                          ? "bg-red-950/40 border border-red-900/50 text-red-200 rounded-tl-none"
+                          : "bg-slate-900/80 border border-slate-800/80 text-slate-100 rounded-tl-none"
                     }`}
                   >
-                    {isUser ? (
-                      <p className="whitespace-pre-wrap">{message.text}</p>
-                    ) : (
-                      renderFormattedMessage(message.text)
-                    )}
-                    <div className="mt-4 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                    <div className="flex-1">
+                      {isUser ? (
+                        <p className="whitespace-pre-wrap leading-relaxed">
+                          {message.text}
+                        </p>
+                      ) : (
+                        renderFormattedMessage(message.text)
+                      )}
+                    </div>
+
+                    <div
+                      className={`mt-2 flex items-center justify-between gap-4 text-[10px] ${isUser ? "text-cyan-200/70" : "text-slate-400"}`}
+                    >
                       <span>
                         {new Date(message.timestamp).toLocaleTimeString([], {
                           hour: "2-digit",
@@ -261,9 +286,9 @@ export default function ChatbotAgent() {
                         <button
                           type="button"
                           onClick={retryLastMessage}
-                          className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-xs text-cyan-300 transition hover:bg-white/10"
+                          className="inline-flex items-center gap-1 rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-cyan-400 transition hover:bg-white/10"
                         >
-                          <RefreshCw className="h-3 w-3" />
+                          <RefreshCw className="h-2.5 w-2.5" />
                           Retry
                         </button>
                       )}
@@ -275,32 +300,35 @@ export default function ChatbotAgent() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Form Input Footer Container */}
           <form
             onSubmit={handleSendMessage}
-            className="rounded-b-3xl border-t border-white/10 bg-slate-950 px-4 py-4"
+            className="border-t border-slate-900 bg-slate-950 px-4 py-3.5"
           >
-            <div className="flex gap-3">
+            <div className="flex items-center gap-2 bg-slate-900/60 rounded-full border border-slate-800 px-3 py-1.5 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
               <input
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
-                placeholder="Ask about a course, mentor, or AI learning path..."
+                placeholder="Ask something..."
                 disabled={mutation.isPending}
-                className="flex-1 rounded-full border border-white/10 bg-slate-900/95 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-500/20"
+                className="flex-1 bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || mutation.isPending}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500 text-white shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md shadow-cyan-500/10 transition hover:bg-cyan-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 {mutation.isPending ? (
-                  <Loader className="h-5 w-5 animate-spin" />
+                  <Loader className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-5 w-5" />
+                  <Send className="h-3.5 w-3.5" />
                 )}
               </button>
             </div>
             {errorHint && (
-              <p className="mt-2 text-xs text-red-300">{errorHint}</p>
+              <p className="mt-2 pl-3 text-xs text-red-400 font-medium">
+                {errorHint}
+              </p>
             )}
           </form>
         </div>
