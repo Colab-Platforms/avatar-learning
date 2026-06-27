@@ -5,6 +5,7 @@ import { SITE } from "@/data/site";
 import { ScrollProgress } from "@/components/ui";
 import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
+import ChatbotAgent from "@/components/ui/ChatbotAgent";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export default function RootLayout({
           <QueryProvider>
             <ScrollProgress />
             {children}
+            <ChatbotAgent />
           </QueryProvider>
         </StoreProvider>
       </body>
