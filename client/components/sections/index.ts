@@ -4,6 +4,7 @@ export { CourseCard } from "./CourseCard";
 export { QuizBanner } from "./QuizBanner";
 export { HackathonBanner } from "./HackathonBanner";
 export { InternshipBanner } from "./InternshipBanner";
+export { TimelineSection } from "./TimelineSection";
 export { WhyChooseUs } from "./WhyChooseUs";
 export { AdvisorCTA } from "./AdvisorCTA";
 export { WebinarsSection } from "./WebinarsSection";

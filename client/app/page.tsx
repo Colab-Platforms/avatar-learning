@@ -6,6 +6,7 @@ import {
   QuizBanner,
   HackathonBanner,
   InternshipBanner,
+  TimelineSection,
   WhyChooseUs,
   AdvisorCTA,
 } from "@/components/sections";
@@ -16,7 +17,8 @@ export default function Page() {
       <Navbar />
       <Hero />
       <QuizBanner />
-      <InternshipBanner />
+      {/* <InternshipBanner /> */}
+      <TimelineSection />
       <CoursesSection />
       <WebinarsSection />
       <HackathonBanner />
