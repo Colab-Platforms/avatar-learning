@@ -75,6 +75,7 @@ model User {
 
   createdCourses    Courses[]           @relation("CourseCreator")
   resourceDownloads ResourceDownload[]
+  paymentOrders     PaymentOrder[]
 
   @@index([email])
   @@index([isActive])
@@ -232,6 +233,7 @@ model Courses {
 
   lessons      Lessons[]
   enrollments  CourseUserMapper[]
+  paymentOrders PaymentOrder[]
 
   @@index([categoryId])
   @@index([createdBy])
@@ -335,6 +337,72 @@ model Resource {
   @@index([category])
 
   @@map("resources")
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentTransactionStatus {
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model PaymentOrder {
+  id               String             @id @default(cuid())
+
+  userId           String             @map("user_id")
+  courseId         String             @map("course_id")
+
+  razorpayOrderId  String             @unique @map("razorpay_order_id")
+
+  amount           Int
+  currency         String             @default("INR")
+
+  status           PaymentOrderStatus @default(PENDING)
+
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course           Courses            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  transactions     PaymentTransaction[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([razorpayOrderId])
+  @@index([status])
+  @@map("payment_orders")
+}
+
+model PaymentTransaction {
+  id                  String                   @id @default(cuid())
+
+  paymentOrderId      String                   @map("payment_order_id")
+
+  razorpayPaymentId   String                   @unique @map("razorpay_payment_id")
+  razorpaySignature   String                   @map("razorpay_signature")
+
+  paymentMethod       String?                  @map("payment_method")
+
+  amount              Int
+
+  status              PaymentTransactionStatus
+
+  metadata            Json?
+
+  createdAt           DateTime                 @default(now()) @map("created_at")
+
+  paymentOrder        PaymentOrder             @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
+
+  @@index([paymentOrderId])
+  @@index([razorpayPaymentId])
+  @@map("payment_transactions")
 }
 
 model ResourceDownload {
