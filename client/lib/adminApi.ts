@@ -118,3 +118,35 @@ export const uploadVideo = async (
 
 export const deleteResource = (resourceId: string) =>
     apiClient.delete(`/admin/resources/${resourceId}`).then((r) => r.data);
+
+// ─── Internships ──────────────────────────────────────────────────────────────
+
+export const fetchAdminInternships = () =>
+    apiClient.get("/admin/internships").then((r) => r.data.data.data ?? r.data.data);
+
+export const fetchAdminInternshipsPaginated = (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> =>
+    apiClient.get("/admin/internships", { params: { page, pageSize } }).then((r) => r.data.data);
+
+export const fetchAdminInternship = (id: string) =>
+    apiClient.get(`/admin/internships/${id}`).then((r) => r.data.data);
+
+export const createInternship = (payload: {
+    categoryId: string;
+    title: string;
+    company: string;
+    description?: string;
+    domain?: string;
+    stipend?: string;
+    employmentType: "FULL_TIME" | "PART_TIME" | "REMOTE";
+    location?: string;
+    deadline?: string;
+}) => apiClient.post("/admin/internships", payload).then((r) => r.data.data);
+
+export const updateInternship = (id: string, payload: Record<string, unknown>) =>
+    apiClient.put(`/admin/internships/${id}`, payload).then((r) => r.data.data);
+
+export const deleteInternship = (id: string) =>
+    apiClient.delete(`/admin/internships/${id}`).then((r) => r.data);
+
+export const toggleInternshipPublish = (id: string) =>
+    apiClient.patch(`/admin/internships/${id}/publish`).then((r) => r.data.data);

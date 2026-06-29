@@ -39,6 +39,18 @@ enum OtpType {
   LOGIN
 }
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  REMOTE
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id                String              @id @default(cuid())
   firstName         String?             @map("first_name")
@@ -75,6 +87,8 @@ model User {
 
   createdCourses    Courses[]           @relation("CourseCreator")
   resourceDownloads ResourceDownload[]
+  createdInternships Internship[]        @relation("InternshipCreator")
+  internshipApplications InternshipApplication[]
 
   @@index([email])
   @@index([isActive])
@@ -184,6 +198,7 @@ model Category {
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
   courses     Courses[]
+  internships Internship[]
 
   @@index([isActive])
   @@map("categories")
@@ -355,4 +370,65 @@ model ResourceDownload {
   @@index([resourceId])
 
   @@map("resource_downloads")
+}
+
+model Internship {
+  id            String    @id @default(cuid())
+
+  categoryId    String    @map("category_id")
+
+  title         String
+  slug          String    @unique
+  company       String
+
+  description   String?
+
+  domain        String?
+  stipend       String?
+  employmentType EmploymentType
+  location      String?
+  deadline      String?
+
+  keyLearningOutcomes Json?  @map("key_learning_outcomes")
+  majorProject        Json?  @map("major_project")
+  whatYouReceive      Json?  @map("what_you_receive")
+
+  isPublished   Boolean   @default(false) @map("is_published")
+
+  createdBy     String?   @map("created_by")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @updatedAt @map("updated_at")
+
+  category      Category  @relation(fields: [categoryId], references: [id])
+  creator       User?     @relation("InternshipCreator", fields: [createdBy], references: [id])
+
+  applications  InternshipApplication[]
+
+  @@index([categoryId])
+  @@index([createdBy])
+  @@index([isPublished])
+  @@index([categoryId, isPublished])
+  @@map("internships")
+}
+
+model InternshipApplication {
+  id            String    @id @default(cuid())
+
+  internshipId  String    @map("internship_id")
+  userId        String    @map("user_id")
+
+  status        ApplicationStatus @default(PENDING)
+
+  appliedAt     DateTime  @default(now()) @map("applied_at")
+
+  internship    Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, internshipId])
+
+  @@index([userId])
+  @@index([internshipId])
+
+  @@map("internship_applications")
 }
