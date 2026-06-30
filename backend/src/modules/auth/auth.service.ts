@@ -8,8 +8,8 @@ import { hashPassword, comparePassword } from "@/utils/auth.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { sendOtpEmail, sendPasswordResetEmail } from "@/utils/mailer.js";
-import { sendOtpSms } from "@/utils/msg91.js";
-import { RegisterBody, LoginBody, VerifyOtpBody, ResendOtpBody } from "./auth.types.js";
+import { verifyMsg91AccessToken, getMsg91WidgetConfig} from "@/utils/msg91.js";
+import { RegisterBody, LoginBody, VerifyOtpBody, ResendOtpBody, VerifyPhoneBody } from "./auth.types.js";
 
 dayjs.extend(utc);
 
@@ -52,6 +52,22 @@ const createSession = async (userId: string, device?: string): Promise<string> =
     return rawToken;
 };
 
+const issueAuthTokens = async (
+    user: {
+        id: string;
+        password: string | null;
+        userRoleMappings: { role: { name: string } }[];
+        [key: string]: unknown;
+    },
+    device?: string
+) => {
+    const roleNames = user.userRoleMappings.map((ur) => ur.role.name);
+    const accessToken = signAccessToken(user.id, getHighestRole(roleNames));
+    const refreshToken = await createSession(user.id, device);
+    const { password: _, ...safeUser } = user;
+    return { user: safeUser, accessToken, refreshToken };
+};
+
 class AuthService {
     async register(data: RegisterBody) {
         const existingUser = await prisma.user.findFirst({
@@ -63,26 +79,44 @@ class AuthService {
         }
         
         //fetch role and hash password in parallel
-        const [hashedPassword, roleRecord] = await Promise.all([ 
+        const [hashedPassword, roleRecord] = await Promise.all([
             hashPassword(data.password),
             prisma.role.findUnique({ where: { name: "USER" } }),
         ]);
-        // console.log(roleRecord);
         if (!roleRecord) throw new ApiError("USER role not found — run db:seed first", STATUS_CODES.SERVER_ERROR);
 
+        const phoneConflict = await prisma.user.findFirst({
+            where: {
+                phoneNo: data.phoneNo,
+                isDeleted: false,
+                ...(existingUser ? { NOT: { id: existingUser.id } } : {}),
+            },
+        });
+        if (phoneConflict) {
+            throw new ApiError("This phone number is already registered to another account.", STATUS_CODES.CONFLICT);
+        }
+
         let userId: string;
-       
-        //email not verfied 
+
+        //email not verfied
         if (existingUser) {
             await prisma.user.update({
                 where: { id: existingUser.id },
-                data: { firstName: data.firstName, lastName: data.lastName, password: hashedPassword },
+                data: {
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    password: hashedPassword,
+                    phoneNo: data.phoneNo,
+                    state: data.state,
+                    country: data.country,
+                    isPhoneVerified: false,
+                },
             });
             userId = existingUser.id;
-        } 
+        }
         //new user
         else {
-            const user = await prisma.$transaction(async (tx) => { //creating user and mapping role in a transaction 
+            const user = await prisma.$transaction(async (tx) => { //creating user and mapping role in a transaction
                 const created = await tx.user.create({
                     data: {
                         firstName: data.firstName,
@@ -93,6 +127,7 @@ class AuthService {
                         state: data.state,
                         country: data.country,
                         isEmailVerified: false,
+                        isPhoneVerified: false,
                     },
                 });
                 await tx.userRoleMapping.create({
@@ -120,16 +155,11 @@ class AuthService {
             },
         });
 
-        await Promise.all([
-            sendOtpEmail(data.email, otp, "REGISTER").catch((err) =>
-                console.error("[Auth] Failed to send registration OTP email:", err)
-            ),
-            data.phoneNo ? sendOtpSms(data.phoneNo, otp).catch((err) =>
-                console.error("[Auth] Failed to send registration OTP SMS:", err)
-            ) : Promise.resolve(),
-        ]);
+        await sendOtpEmail(data.email, otp, "REGISTER").catch((err) =>
+            console.error("[Auth] Failed to send registration OTP email:", err)
+        );
 
-        return { message: "OTP sent to your email and phone. Please verify to complete registration." };
+        return { message: "OTP sent to your email. Please verify to continue registration." };
     }
 
     async verifyOtp(data: VerifyOtpBody, device?: string) {
@@ -166,22 +196,95 @@ class AuthService {
                 where: { id: user.id },
                 data: { isEmailVerified: true },
             });
+            user.isEmailVerified = true;
         }
 
-        const roleNames = user.userRoleMappings.map((ur) => ur.role.name);
-        const accessToken = signAccessToken(user.id, getHighestRole(roleNames));
-        const refreshToken = await createSession(user.id, device);
+        if (data.type === "REGISTER" && !user.isPhoneVerified) {
+            return {
+                requiresPhoneVerification: true,
+                email: user.email,
+                phoneNo: user.phoneNo,
+                message: "Email verified. Please verify your phone number to complete registration.",
+            };
+        }
 
-        const { password: _, ...safeUser } = user;
+        const tokens = await issueAuthTokens(user, device);
+
         return {
-            user: safeUser,
-            accessToken,
-            refreshToken,
+            ...tokens,
             message:
                 data.type === "REGISTER"
-                    ? "Email verified. Welcome to Avatar Learner!"
+                    ? "Registration complete. Welcome to Avatar Learner!"
                     : "Logged in successfully.",
         };
+    }
+
+    async verifyPhone(data: VerifyPhoneBody, device?: string) {
+        const user = await prisma.user.findFirst({
+            where: { email: data.email, isDeleted: false },
+            include: { userRoleMappings: { include: { role: true } } },
+        });
+
+        if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
+
+        if (!user.isEmailVerified) {
+            throw new ApiError("Please verify your email first.", STATUS_CODES.BAD_REQUEST);
+        }
+
+        if (user.isPhoneVerified) {
+            throw new ApiError("Phone number is already verified.", STATUS_CODES.CONFLICT);
+        }
+
+        const verification = await verifyMsg91AccessToken(data.accessToken);
+        if (!verification.success) {
+            throw new ApiError(
+                verification.message ?? "Invalid or expired phone verification.",
+                STATUS_CODES.BAD_REQUEST
+            );
+        }
+
+        if (verification.mobile && user.phoneNo) {
+            const verifiedDigits = verification.mobile.replace(/\D/g, "");
+            if (!verifiedDigits.endsWith(user.phoneNo)) {
+                throw new ApiError(
+                    "Verified phone number does not match the number you registered with.",
+                    STATUS_CODES.BAD_REQUEST
+                );
+            }
+        }
+
+        const phoneConflict = await prisma.user.findFirst({
+            where: {
+                phoneNo: user.phoneNo,
+                isDeleted: false,
+                NOT: { id: user.id },
+            },
+        });
+        if (phoneConflict) {
+            throw new ApiError("This phone number is already registered to another account.", STATUS_CODES.CONFLICT);
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { isPhoneVerified: true },
+        });
+
+        user.isPhoneVerified = true;
+
+        const tokens = await issueAuthTokens(user, device);
+
+        return {
+            ...tokens,
+            message: "Phone verified. Welcome to Avatar Learner!",
+        };
+    }
+
+    getMsg91Config() {
+        const config = getMsg91WidgetConfig();
+        if (!config) {
+            throw new ApiError("Phone verification is not configured.", STATUS_CODES.SERVER_ERROR);
+        }
+        return config;
     }
 
     async login(data: LoginBody, device?: string) {
@@ -220,27 +323,18 @@ class AuthService {
                 },
             });
 
-            await Promise.all([
-                sendOtpEmail(data.email, otp, "LOGIN").catch((err) =>
-                    console.error("[Auth] Failed to send login OTP email:", err)
-                ),
-                user.phoneNo ? sendOtpSms(user.phoneNo, otp).catch((err) =>
-                    console.error("[Auth] Failed to send login OTP SMS:", err)
-                ) : Promise.resolve(),
-            ]);
+            await sendOtpEmail(data.email, otp, "LOGIN").catch((err) =>
+                console.error("[Auth] Failed to send login OTP email:", err)
+            );
 
             return {
                 requiresVerification: true,
-                message: "Your email is not verified. An OTP has been sent to your email and phone.",
+                message: "Your email is not verified. An OTP has been sent to your email.",
             };
         }
 
-        const roleNames = user.userRoleMappings.map((ur) => ur.role.name);
-        const accessToken = signAccessToken(user.id, getHighestRole(roleNames));
-        const refreshToken = await createSession(user.id, device);
-
-        const { password: _, ...safeUser } = user;
-        return { user: safeUser, accessToken, refreshToken };
+        const tokens = await issueAuthTokens(user, device);
+        return tokens;
     }
 
     async refresh(rawRefreshToken: string, device?: string) {
@@ -294,8 +388,8 @@ class AuthService {
 
         if (!user) return { message: "If this email is registered, an OTP has been sent." };
 
-        if (data.type === "REGISTER" && user.isEmailVerified) {
-            throw new ApiError("This email is already verified.", STATUS_CODES.CONFLICT);
+        if (data.type === "REGISTER" && user.isEmailVerified && user.isPhoneVerified) {
+            throw new ApiError("This account is already verified.", STATUS_CODES.CONFLICT);
         }
 
         const recentOtp = await prisma.otpVerification.findFirst({
@@ -327,16 +421,11 @@ class AuthService {
             },
         });
 
-        await Promise.all([
-            sendOtpEmail(data.email, otp, data.type).catch((err) =>
-                console.error("[Auth] Failed to resend OTP email:", err)
-            ),
-            user.phoneNo ? sendOtpSms(user.phoneNo, otp).catch((err) =>
-                console.error("[Auth] Failed to resend OTP SMS:", err)
-            ) : Promise.resolve(),
-        ]);
+        await sendOtpEmail(data.email, otp, data.type).catch((err) =>
+            console.error("[Auth] Failed to resend OTP email:", err)
+        );
 
-        return { message: "A new OTP has been sent to your email and phone." };
+        return { message: "A new OTP has been sent to your email." };
     }
 
     async forgotPassword(email: string) {
@@ -386,31 +475,6 @@ class AuthService {
         ]);
 
         return { message: "Password reset successfully. You can now log in." };
-    }
-
-    async testOtpSending(email: string, phoneNo: string, otpType: string) {
-        const otp = generateOtp();
-
-        console.log(`[Test OTP] Testing with email=${email}, phone=${phoneNo}, otp=${otp}`);
-
-        const [emailRes, smsRes] = await Promise.all([
-            sendOtpEmail(email, otp, otpType as "REGISTER" | "LOGIN")
-                .then(() => ({ success: true, message: "Email OTP sent successfully" }))
-                .catch((err) => ({ success: false, message: `Email failed: ${err.message}` })),
-            sendOtpSms(phoneNo, otp)
-                .then((result) => result
-                    ? { success: true, message: "SMS OTP sent successfully" }
-                    : { success: false, message: "SMS API returned false" }
-                )
-                .catch((err) => ({ success: false, message: `SMS failed: ${err.message}` })),
-        ]);
-
-        return {
-            otp,
-            email: emailRes,
-            sms: smsRes,
-            message: `Test OTP: ${otp}\n\nEmail: ${emailRes.message}\nSMS: ${smsRes.message}`,
-        };
     }
 }
 

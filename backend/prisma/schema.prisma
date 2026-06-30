@@ -43,7 +43,7 @@ model User {
   id                String              @id @default(cuid())
   firstName         String?             @map("first_name")
   lastName          String?             @map("last_name")
-  phoneNo           String?             @map("phone_no")
+  phoneNo           String?             @unique @map("phone_no")
   address           String?
   gender            String?
   state             String?
@@ -59,6 +59,7 @@ model User {
   authProvider      AuthProvider        @default(LOCAL) @map("auth_provider")
 
   isEmailVerified   Boolean             @default(false) @map("is_email_verified")
+  isPhoneVerified   Boolean             @default(false) @map("is_phone_verified")
   isActive          Boolean             @default(true) @map("is_active")
   isDeleted         Boolean             @default(false) @map("is_deleted")
 

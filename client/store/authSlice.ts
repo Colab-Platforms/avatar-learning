@@ -16,6 +16,7 @@ export interface AuthUser {
   state: string | null;
   country: string | null;
   isEmailVerified: boolean;
+  isPhoneVerified: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -36,6 +37,7 @@ export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   pendingEmail: string | null;
+  pendingPhone: string | null;
   pendingOtpType: "REGISTER" | "LOGIN" | null;
   loading: boolean;
   error: string | null;
@@ -123,6 +125,7 @@ export const login = createAsyncThunk(
           accessToken?: string;
           refreshToken?: string;
           requiresVerification?: boolean;
+          email?: string;
         }>
       >("/auth/login", data);
 
@@ -149,11 +152,59 @@ export const verifyOtp = createAsyncThunk(
     try {
       const { data: res } = await apiClient.post<
         ApiResponse<{
+          user?: AuthUser;
+          accessToken?: string;
+          refreshToken?: string;
+          requiresPhoneVerification?: boolean;
+          email?: string;
+          phoneNo?: string | null;
+        }>
+      >("/auth/verify-otp", data);
+
+      if (res.data?.requiresPhoneVerification) {
+        return {
+          requiresPhoneVerification: true,
+          email: res.data.email ?? data.email,
+          phoneNo: res.data.phoneNo ?? null,
+        };
+      }
+
+      if (!res.data?.user || !res.data.accessToken || !res.data.refreshToken) {
+        throw new Error("Verification response was incomplete.");
+      }
+
+      return {
+        user: res.data.user,
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken,
+      };
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
+export const verifyPhone = createAsyncThunk(
+  "auth/verifyPhone",
+  async (
+    data: {
+      email: string;
+      accessToken: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { data: res } = await apiClient.post<
+        ApiResponse<{
           user: AuthUser;
           accessToken: string;
           refreshToken: string;
         }>
-      >("/auth/verify-otp", data);
+      >("/auth/verify-phone", data);
+
+      if (!res.data?.user || !res.data.accessToken || !res.data.refreshToken) {
+        throw new Error("Phone verification response was incomplete.");
+      }
 
       return res.data;
     } catch (err) {
@@ -256,6 +307,7 @@ const initialState: AuthState = {
   accessToken: null,
   refreshToken: null,
   pendingEmail: null,
+  pendingPhone: null,
   pendingOtpType: null,
   loading: false,
   error: null,
@@ -284,6 +336,7 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.pendingEmail = null;
+      state.pendingPhone = null;
       state.pendingOtpType = null;
       state.error = null;
 
@@ -366,11 +419,45 @@ const authSlice = createSlice({
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.loading = false;
 
+        if ("requiresPhoneVerification" in action.payload && action.payload.requiresPhoneVerification) {
+          state.pendingEmail = action.payload.email;
+          state.pendingPhone = action.payload.phoneNo;
+          return;
+        }
+
+        state.user = action.payload.user!;
+        state.accessToken = action.payload.accessToken!;
+        state.refreshToken = action.payload.refreshToken!;
+
+        state.pendingEmail = null;
+        state.pendingPhone = null;
+        state.pendingOtpType = null;
+
+        persist(
+          action.payload.user!,
+          action.payload.accessToken!,
+          action.payload.refreshToken!
+        );
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // VERIFY PHONE
+      .addCase(verifyPhone.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyPhone.fulfilled, (state, action) => {
+        state.loading = false;
+
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
 
         state.pendingEmail = null;
+        state.pendingPhone = null;
         state.pendingOtpType = null;
 
         persist(
@@ -379,7 +466,7 @@ const authSlice = createSlice({
           action.payload.refreshToken
         );
       })
-      .addCase(verifyOtp.rejected, (state, action) => {
+      .addCase(verifyPhone.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

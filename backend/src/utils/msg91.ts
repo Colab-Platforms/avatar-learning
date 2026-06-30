@@ -2,23 +2,30 @@ import axios from "axios";
 
 const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
 const MSG91_WIDGET_ID = process.env.MSG91_WIDGET_ID;
+const MSG91_TOKEN_AUTH = process.env.MSG91_TOKEN_AUTH;
 
 if (!MSG91_AUTH_KEY) {
-    console.warn("[MSG91] MSG91_AUTH_KEY not found in environment variables. SMS OTP will be skipped.");
+    console.warn("[MSG91] MSG91_AUTH_KEY not found in environment variables.");
 }
 
 const MSG91_CONTROL_BASE = "https://control.msg91.com/api/v5";
-const MSG91_API_BASE = "https://api.msg91.com/api/v5";
 const MSG91_REQUEST_TIMEOUT = 5000;
 
-/**
- * Normalizes phone number to strict format: '919819121547'
- * Keeps or prepends the country code (no leading + symbols)
- */
-const normalizePhoneNumber = (phoneNumber: string): string => {
+export interface Msg91WidgetConfig {
+    widgetId: string;
+    tokenAuth: string;
+}
+
+export interface Msg91VerifyResult {
+    success: boolean;
+    mobile?: string;
+    message?: string;
+}
+
+//normalizes a phone number to the format expected by MSG91 (e.g., "919876543210" for an Indian number).
+export const normalizePhoneNumber = (phoneNumber: string): string => {
     const cleaned = phoneNumber.replace(/\D/g, "");
 
-    // If it's a bare 10-digit Indian number, prepend '91'
     if (cleaned.length === 10) {
         return `91${cleaned}`;
     }
@@ -26,93 +33,71 @@ const normalizePhoneNumber = (phoneNumber: string): string => {
     return cleaned;
 };
 
-export const sendOtpSms = async (phoneNumber: string, otp: string): Promise<boolean> => {
+export const getMsg91WidgetConfig = (): Msg91WidgetConfig | null => {
+    if (!MSG91_WIDGET_ID || !MSG91_TOKEN_AUTH) {
+        return null;
+    }
+
+    return {
+        widgetId: MSG91_WIDGET_ID,
+        tokenAuth: MSG91_TOKEN_AUTH,
+    };
+};
+
+/**
+ * Server-side validation of MSG91 widget access token (from otp.js / index.html flow).
+ */
+export const verifyMsg91AccessToken = async (accessToken: string): Promise<Msg91VerifyResult> => {
     if (!MSG91_AUTH_KEY) {
-        console.warn(`[MSG91] Skipping SMS to ${phoneNumber} — MSG91_AUTH_KEY not configured`);
-        return false;
+        return { success: false, message: "MSG91 is not configured on the server." };
     }
 
-    if (!phoneNumber) {
-        console.warn(`[MSG91] Skipping SMS — no phone number provided`);
-        return false;
+    if (!accessToken) {
+        return { success: false, message: "Access token is required." };
     }
 
-    // Now properly yields '919819121547'
-    const normalizedPhone = normalizePhoneNumber(phoneNumber); 
-
-    if (!normalizedPhone || normalizedPhone.length < 11) {
-        console.warn(`[MSG91] Invalid phone length configuration: ${phoneNumber} (normalized: ${normalizedPhone})`);
-        return false;
-    }
-
-    // ==========================================
-    // PATHWAY 1: MSG91 WIDGET API (MSG91 Generates the OTP)
-    // ==========================================
-    if (MSG91_WIDGET_ID) {
-        try {
-            console.log(`[MSG91] Trying widget endpoint for: ${normalizedPhone}`);
-            const widgetUrl = `${MSG91_CONTROL_BASE}/widget/sendOtp/${MSG91_WIDGET_ID}`;
-            
-            const widgetResponse = await axios.post(
-                widgetUrl,
-                { invisible: 0, mobile: normalizedPhone },
-                {
-                    headers: {
-                        "authkey": MSG91_AUTH_KEY,
-                        "Content-Type": "application/json",
-                    },
-                    timeout: MSG91_REQUEST_TIMEOUT,
-                }
-            );
-
-            console.log(`[MSG91 Widget Response]`, widgetResponse.data);
-
-            if (widgetResponse.data?.type === "success") {
-                console.log(`[MSG91 Success] Managed OTP sent via widget to ${normalizedPhone}`);
-                return true;
-            }
-            console.warn(`[MSG91] Widget explicitly rejected parameters:`, widgetResponse.data);
-        } catch (widgetErr: any) {
-            console.warn(`[MSG91] Widget endpoint failed, transferring to standard fallback:`, widgetErr.message);
-        }
-    }
-
-    // ==========================================
-    // PATHWAY 2: STANDARD FALLBACK (Using default MSG91 template)
-    // ==========================================
     try {
-        console.log(`[MSG91] Trying standard OTP endpoint with default template for: ${normalizedPhone}`);
-
-        // Use standard /otp/send endpoint with POST body (no DLT required with default template)
-        const otpUrl = `${MSG91_API_BASE}/otp/send`;
-
         const response = await axios.post(
-            otpUrl,
+            `${MSG91_CONTROL_BASE}/widget/verifyAccessToken`,
             {
-                mobile: normalizedPhone,
-                otp: otp,
-                template_id: "default" // Use MSG91's default template (no DLT required)
+                authkey: MSG91_AUTH_KEY,
+                "access-token": accessToken,
             },
             {
                 headers: {
-                    "authkey": MSG91_AUTH_KEY,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
                 },
                 timeout: MSG91_REQUEST_TIMEOUT,
             }
         );
 
-        console.log(`[MSG91 OTP Response]`, response.data);
+        const data = response.data;
 
-        if (response.data?.type === "success" || response.data?.status === "success") {
-            console.log(`[MSG91 Success] OTP sent successfully using default template: ${normalizedPhone}`);
-            return true;
+        if (response.status === 200 && data?.type === "success") {
+            const mobile =
+                data.mobile ??
+                data.phone ??
+                data.identifier ??
+                data.data?.mobile ??
+                data.data?.phone;
+
+            return {
+                success: true,
+                mobile: typeof mobile === "string" ? mobile : undefined,
+                message: data.message,
+            };
         }
 
-        console.error(`[MSG91 Error] Unexpected response:`, response.data);
-        return false;
+        return {
+            success: false,
+            message: data?.message ?? "Invalid or expired phone verification token.",
+        };
     } catch (error: any) {
-        console.error(`[MSG91 Error] Failed to send OTP:`, error.response?.data || error.message);
-        return false;
+        console.error("[MSG91] verifyAccessToken failed:", error.response?.data ?? error.message);
+        return {
+            success: false,
+            message: error.response?.data?.message ?? "Phone verification failed.",
+        };
     }
 };

@@ -11,13 +11,14 @@ import {
     validateRefreshTokenSchema,
     validateForgotPasswordSchema,
     validateResetPasswordSchema,
+    validateVerifyPhoneSchema,
 } from "./auth.validators.js";
 
 const authService = new AuthService();
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log(req.body)
+
         const { error, value } = validateRegisterSchema(req.body);
         if (error) {
             sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
@@ -39,7 +40,29 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
         }
         const device = req.headers["user-agent"];
         const result = await authService.verifyOtp(value, device);
-        sendResponse(res, true, { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }, result.message, STATUS_CODES.OK);
+
+        if ("requiresPhoneVerification" in result) {
+            sendResponse(
+                res,
+                true,
+                {
+                    requiresPhoneVerification: true,
+                    email: result.email,
+                    phoneNo: result.phoneNo,
+                },
+                result.message,
+                STATUS_CODES.OK
+            );
+            return;
+        }
+
+        sendResponse(
+            res,
+            true,
+            { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken },
+            result.message,
+            STATUS_CODES.OK
+        );
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
@@ -144,18 +167,32 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     }
 };
 
-export const testOtpSending = async (req: Request, res: Response): Promise<void> => {
+export const verifyPhone = async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log(req.body)
-        const { email, phoneNo, otpType = "REGISTER" } = req.body;
-
-        if (!email || !phoneNo) {
-            sendResponse(res, false, null, "email and phoneNo are required", STATUS_CODES.BAD_REQUEST);
+        const { error, value } = validateVerifyPhoneSchema(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
             return;
         }
 
-        const result = await authService.testOtpSending(email, phoneNo, otpType);
-        sendResponse(res, true, result, "Test OTP sent successfully", STATUS_CODES.OK);
+        const device = req.headers["user-agent"];
+        const result = await authService.verifyPhone(value, device);
+        sendResponse(
+            res,
+            true,
+            { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken },
+            result.message,
+            STATUS_CODES.OK
+        );
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const getMsg91Config = async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const config = authService.getMsg91Config();
+        sendResponse(res, true, config, "MSG91 config loaded.", STATUS_CODES.OK);
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
