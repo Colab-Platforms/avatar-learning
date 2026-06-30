@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Button, ScrollReveal } from "@/components/ui";
 import { ADVISOR_CTA } from "@/data/advisor";
 import { ArrowUpRight, Users, CheckCircle2, Star } from "lucide-react";
+import Link from "next/link";
 
 const TRUST_ITEMS = [
   "No commitment required",
@@ -106,14 +107,16 @@ export function AdvisorCTA() {
             </ScrollReveal>
 
             <ScrollReveal animation="fade-up" delay={360}>
-              <Button
-                variant="primary"
-                size="lg"
-                className="mt-8 btn-glow group/btn"
-              >
-                {ADVISOR_CTA.ctaLabel}
-                <ArrowUpRight className="h-4 w-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform duration-250" />
-              </Button>
+              <Link href={"/contact"}>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="mt-8 btn-glow group/btn cursor-pointer"
+                >
+                  {ADVISOR_CTA.ctaLabel}
+                  <ArrowUpRight className="h-4 w-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform duration-250" />
+                </Button>
+              </Link>
             </ScrollReveal>
           </div>
 

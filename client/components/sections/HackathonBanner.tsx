@@ -62,7 +62,7 @@ export function HackathonBanner() {
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={240}>
+            {/* <ScrollReveal animation="fade-up" delay={240}>
               <div className="mt-8 flex flex-wrap gap-3">
                 <div
                   className="inline-flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/4 px-4 py-2.5 text-sm text-white/55
@@ -83,7 +83,7 @@ export function HackathonBanner() {
                   {HACKATHON.prizeText}
                 </div>
               </div>
-            </ScrollReveal>
+            </ScrollReveal> */}
 
             <ScrollReveal animation="fade-up" delay={310}>
               <Button
