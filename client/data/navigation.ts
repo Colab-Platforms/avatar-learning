@@ -13,15 +13,14 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Platforms",
     items: [
       { label: "Learning", href: "/courses" },
-      { label: "Marketplace", href: "#" },
-      { label: "Solutions", href: "#" },
+      { label: "Marketplace", href: "/marketplace" },
     ],
   },
   {
     title: "Company",
     items: [
       { label: "About Us", href: "/about" },
-      { label: "Careers", href: "#" },
+      { label: "Careers", href: "/internship" },
       { label: "Contact", href: "/contact" },
     ],
   },
