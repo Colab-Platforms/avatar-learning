@@ -118,3 +118,40 @@ export const uploadVideo = async (
 
 export const deleteResource = (resourceId: string) =>
     apiClient.delete(`/admin/resources/${resourceId}`).then((r) => r.data);
+
+// ─── Course Image Upload (Cloudinary) ────────────────────────────────────────
+
+export type CourseImageField = "heroImage" | "bannerImage" | "thumbnail";
+
+export interface UploadImageResult {
+    url: string;
+    publicId: string;
+}
+
+/**
+ * Upload a course image to Cloudinary via the backend.
+ * Returns { url, publicId } on success.
+ */
+export const uploadCourseImage = async (
+    courseId: string,
+    field: CourseImageField,
+    file: File,
+    onProgress?: (pct: number) => void,
+): Promise<UploadImageResult> => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await apiClient.post(
+        `/admin/courses/${courseId}/images/${field}`,
+        formData,
+        {
+            headers: { "Content-Type": "multipart/form-data" },
+            onUploadProgress: (e) => {
+                if (onProgress && e.total) {
+                    onProgress(Math.round((e.loaded / e.total) * 100));
+                }
+            },
+        },
+    );
+    return response.data.data as UploadImageResult;
+};

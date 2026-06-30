@@ -4,6 +4,7 @@ import { updateCourse } from "@/lib/adminApi";
 import { Field, Spinner, inputCls, primaryBtn } from "./FormField";
 import { ToolsEditor } from "./ToolsEditor";
 import { LearnItemEditor, CourseLearnItem } from "./LearnItemEditor";
+import { CourseImageUpload } from "./CourseImageUpload";
 
 interface Course {
     id: string; title: string; slug: string; level: string; price: number; totalWeeks: number;
@@ -21,6 +22,7 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
     const [form, setForm] = useState({
         heroImage: course.heroImage ?? "",
         bannerImage: course.bannerImage ?? "",
+        thumbnail: course.thumbnail ?? "",
         sessions: course.sessions ?? "",
         certificate: course.certificate,
         rating: course.rating?.toString() ?? "",
@@ -45,7 +47,6 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
-    // Auto-clear the status message after 4 s
     useEffect(() => {
         if (!msg) return;
         const t = setTimeout(() => setMsg(null), 4000);
@@ -60,6 +61,7 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
             await updateCourse(course.id, {
                 heroImage: form.heroImage || undefined,
                 bannerImage: form.bannerImage || undefined,
+                thumbnail: form.thumbnail || undefined,
                 sessions: form.sessions || undefined,
                 certificate: form.certificate,
                 rating: form.rating ? parseFloat(form.rating) : undefined,
@@ -71,7 +73,6 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
                 audience: audience.filter((item) => item.title.trim() && item.body.trim()),
             });
             setMsg({ text: "Metadata saved successfully!", ok: true });
-            // Delay the parent reload so the success banner stays visible
             setTimeout(() => onSaved(), 1500);
         } catch (err: unknown) {
             const e = err as { response?: { data?: { message?: string } } };
@@ -86,7 +87,7 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
         <form onSubmit={handleSave} className="bg-ink-800 border border-white/6 rounded-2xl p-6 space-y-6">
             <h2 className="text-sm font-semibold text-white mb-1">Course Metadata</h2>
 
-            {/* Status message — shown at the top so it's always visible */}
+            {/* Status message */}
             {msg && (
                 <div className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
                     msg.ok
@@ -98,16 +99,39 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
                 </div>
             )}
 
-            {/* Basic fields */}
+            {/* ── Image uploads ── */}
+            <div className="grid sm:grid-cols-3 gap-5">
+                <CourseImageUpload
+                    courseId={course.id}
+                    field="heroImage"
+                    label="Hero Image"
+                    currentUrl={form.heroImage || undefined}
+                    onUploaded={(url) => setForm((f) => ({ ...f, heroImage: url }))}
+                />
+                <CourseImageUpload
+                    courseId={course.id}
+                    field="bannerImage"
+                    label="Banner Image"
+                    currentUrl={form.bannerImage || undefined}
+                    onUploaded={(url) => setForm((f) => ({ ...f, bannerImage: url }))}
+                />
+                <CourseImageUpload
+                    courseId={course.id}
+                    field="thumbnail"
+                    label="Thumbnail"
+                    currentUrl={form.thumbnail || undefined}
+                    onUploaded={(url) => setForm((f) => ({ ...f, thumbnail: url }))}
+                />
+            </div>
+
+            {/* Note: images are uploaded immediately on file selection.
+                The URLs are saved to the DB when you click Save below. */}
+            <p className="text-[11px] text-white/25 -mt-2">
+                Images upload instantly to Cloudinary. Click <strong className="text-white/40">Save Metadata</strong> below to persist the URLs to the database.
+            </p>
+
+            {/* ── Other fields ── */}
             <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Hero Image URL">
-                    <input value={form.heroImage} onChange={(e) => setForm((f) => ({ ...f, heroImage: e.target.value }))}
-                        placeholder="https://..." className={inputCls} />
-                </Field>
-                <Field label="Banner Image URL">
-                    <input value={form.bannerImage} onChange={(e) => setForm((f) => ({ ...f, bannerImage: e.target.value }))}
-                        placeholder="https://..." className={inputCls} />
-                </Field>
                 <Field label="Sessions (e.g. 12 sessions)">
                     <input value={form.sessions} onChange={(e) => setForm((f) => ({ ...f, sessions: e.target.value }))}
                         placeholder="12 sessions" className={inputCls} />
@@ -166,8 +190,6 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
                     onChange={setAudience}
                 />
             </div>
-
-
 
             {/* Save button */}
             <div className="flex justify-end border-t border-white/5 pt-6">

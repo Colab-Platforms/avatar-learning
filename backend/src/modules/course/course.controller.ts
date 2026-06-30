@@ -14,6 +14,7 @@ import {
   validateCreateLesson,
   validateUpdateLesson,
 } from "./course.validators.js";
+import { uploadToCloudinary, type ImageFolder } from "@/utils/cloudinary.js";
 
 const adminService = new AdminCourseService();
 const publicService = new PublicCourseService();
@@ -341,6 +342,39 @@ export const completeVideoUpload = async (
       err.message,
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
+  }
+};
+
+// ─── Admin – Course Image Upload (via Cloudinary) ────────────────────────────
+
+export const uploadCourseImage = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const file = req.file;
+    if (!file) {
+      sendResponse(res, false, null, "No image file provided", STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+
+    const { field } = req.params as { field: string };
+    const validFields = ["heroImage", "bannerImage", "thumbnail"];
+    if (!validFields.includes(field)) {
+      sendResponse(res, false, null, "Invalid image field", STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+
+    const folderMap: Record<string, ImageFolder> = {
+      heroImage: "courses/hero",
+      bannerImage: "courses/banner",
+      thumbnail: "courses/thumbnail",
+    };
+
+    const result = await uploadToCloudinary(file.buffer, folderMap[field]);
+    sendResponse(res, true, { url: result.secureUrl, publicId: result.publicId }, "Image uploaded", STATUS_CODES.CREATED);
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
   }
 };
 
