@@ -41,6 +41,7 @@ export default function ChatbotAgent() {
   const [inputValue, setInputValue] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [errorHint, setErrorHint] = useState<string | null>(null);
+  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const mutation = useChatbotMutation();
@@ -183,37 +184,84 @@ export default function ChatbotAgent() {
 
   return (
     <>
+      {/* Ripples rendered at fixed position outside button */}
+      {ripples.map((r) => (
+        <span
+          key={r.id}
+          className="chatbot-ripple"
+          style={{ top: r.y, left: r.x }}
+        />
+      ))}
+
       {/* Floating Toggle Button */}
-      <button
-        onClick={() => setIsOpen((current) => !current)}
-        className="fixed md:right-8 md:bottom-8 right-4 bottom-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:scale-110 active:scale-95"
-        aria-label={isOpen ? "Close chat" : "Open chat"}
-      >
-        {isOpen ? (
-          <X className="h-6 w-6 transform rotate-0 transition-transform duration-200" />
-        ) : (
-          <Bot className="h-6 w-6 transform scale-110" />
+      <div className="fixed md:right-19 md:bottom-16 right-4 bottom-12 z-50 group">
+        {/* idle pulse rings and backlight — only when closed */}
+        {!isOpen && (
+          <>
+            <div className="chatbot-backlight" />
+            <span className="chatbot-ring chatbot-ring-1" />
+            <span className="chatbot-ring chatbot-ring-2" />
+            <span className="chatbot-ring chatbot-ring-3" />
+          </>
         )}
-      </button>
+
+        <button
+          onClick={(e) => {
+            const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const id = Date.now();
+            setRipples((prev) => [...prev, { id, x: cx, y: cy }]);
+            setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 850);
+            setIsOpen((c) => !c);
+          }}
+          className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white transition-all duration-300
+            ${!isOpen ? "chatbot-toggle-button hover:scale-110" : "hover:rotate-90 hover:scale-105 active:scale-95"}`}
+          style={{
+            background: "linear-gradient(135deg, #00C8FF 0%, #0062FF 100%)",
+            boxShadow: isOpen ? "0 6px 20px rgba(0, 0, 0, 0.4)" : undefined,
+          }}
+          aria-label={isOpen ? "Close chat" : "Open chat"}
+        >
+          {isOpen ? (
+            <X className="h-6 w-6 transition-transform duration-200" />
+          ) : (
+            <>
+              <Bot className="h-6 w-6 scale-110" />
+              {/* Hover Tooltip */}
+              <div className="absolute right-full mr-4 top-1/2 -translate-y-[58%] whitespace-nowrap opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out">
+                <div className="px-4 py-2 rounded-2xl text-xs font-semibold text-white/95 border border-cyan-500/30 shadow-xl flex items-center bg-[#0b1528]/95 backdrop-blur-md">
+                  <span>Try using Ava!</span>
+                  <div className="absolute top-1/2 -translate-y-1/2 left-full w-2 h-2 border-r border-t border-cyan-500/30 bg-[#0b1528] rotate-45 -ml-1" />
+                </div>
+              </div>
+            </>
+          )}
+        </button>
+      </div>
 
       {isOpen && (
         <div
-          className="fixed bottom-24 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85vh] overflow-hidden rounded-3xl border border-slate-800 shadow-2xl bg-slate-950/95 backdrop-blur-xl sm:right-8 sm:left-auto"
-          style={{
-            animation:
-              "chatbotPanelReveal 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
-          }}
+          className="fixed bottom-28 sm:bottom-32 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85vh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto"
         >
           {/* Header */}
-          <div className="relative border-b border-slate-800/60 bg-slate-900/40 px-5 py-4 backdrop-blur-md">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div
+            className="relative px-5 py-4 backdrop-blur-md"
+            style={{
+              borderBottom: "1px solid rgba(0,200,255,0.12)",
+              background: "rgba(8,16,30,0.85)",
+            }}
+          >
+            <div className="absolute top-0 right-0 w-40 h-40 rounded-full pointer-events-none"
+              style={{ background: "radial-gradient(ellipse at top right,rgba(0,200,255,0.08) 0%,transparent 70%)" }} />
             <div className="flex items-center justify-between gap-3 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 text-cyan-400 ring-1 ring-cyan-500/30">
-                  <Shield className="h-5 w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl text-[#00C8FF]"
+                  style={{ background: "rgba(0,200,255,0.15)", border: "1px solid rgba(0,200,255,0.35)" }}>
+                  <Shield className="h-5 w-5 animate-pulse" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                     Learning assistant
                   </p>
                   <p className="truncate text-sm font-semibold text-white">
@@ -222,21 +270,33 @@ export default function ChatbotAgent() {
                 </div>
               </div>
 
-              <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400"
+                  style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.18)" }}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Close chat"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Chat Space Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chatbot-messages">
             {/* Quick Context Tip Box */}
-            <div className="flex gap-2.5 rounded-2xl bg-slate-900/50 p-3.5 text-xs text-slate-400 ring-1 ring-slate-800/80">
-              <Sparkles className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+            <div className="flex gap-2.5 rounded-2xl p-3.5 text-xs"
+              style={{ background: "rgba(0,200,255,0.08)", border: "1px solid rgba(0,200,255,0.20)" }}>
+              <Sparkles className="h-4 w-4 text-[#00C8FF] shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-slate-200 mb-0.5">Quick Tip</p>
-                <p className="leading-normal text-slate-400">
+                <p className="font-semibold text-white/85 mb-0.5">Quick Tip</p>
+                <p className="leading-normal text-white/55">
                   You can ask about course tracks, module support, enrollment
                   windows, or certificate completions.
                 </p>
@@ -251,17 +311,36 @@ export default function ChatbotAgent() {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                  className={`flex ${isUser ? "justify-end" : "justify-start"} gap-2.5 items-start`}
                 >
+                  {!isUser && (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-950/85 border border-cyan-500/30 text-[#00C8FF] shadow-md">
+                      {message.isError ? (
+                        <Shield className="h-4.5 w-4.5 text-red-400" />
+                      ) : (
+                        <Bot className="h-4.5 w-4.5" />
+                      )}
+                    </div>
+                  )}
                   <div
-                    style={{ minHeight }}
-                    className={`max-w-[85%] flex flex-col rounded-2xl px-4 py-3 text-sm shadow-md transition-all ${
+                    className={`max-w-[80%] flex flex-col rounded-2xl px-4 py-3 text-sm transition-all ${
                       isUser
-                        ? "bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-tr-none shadow-cyan-950/10"
+                        ? "text-white rounded-tr-none"
                         : message.isError
-                          ? "bg-red-950/40 border border-red-900/50 text-red-200 rounded-tl-none"
-                          : "bg-slate-900/80 border border-slate-800/80 text-slate-100 rounded-tl-none"
+                          ? "text-red-300 rounded-tl-none"
+                          : "text-white/90 rounded-tl-none"
                     }`}
+                    style={
+                      isUser
+                        ? {
+                            minHeight,
+                            background: "linear-gradient(135deg,#00C8FF 0%,#0062FF 100%)",
+                            boxShadow: "0 4px 16px rgba(0,200,255,0.18)",
+                          }
+                        : message.isError
+                          ? { minHeight, background: "rgba(220,38,38,0.18)", border: "1px solid rgba(220,38,38,0.35)" }
+                          : { minHeight, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,200,255,0.12)", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }
+                    }
                   >
                     <div className="flex-1">
                       {isUser ? (
@@ -274,7 +353,7 @@ export default function ChatbotAgent() {
                     </div>
 
                     <div
-                      className={`mt-2 flex items-center justify-between gap-4 text-[10px] ${isUser ? "text-cyan-200/70" : "text-slate-400"}`}
+                      className={`mt-2 flex items-center justify-between gap-4 text-[10px] ${isUser ? "text-white/50" : "text-white/25"}`}
                     >
                       <span>
                         {new Date(message.timestamp).toLocaleTimeString([], {
@@ -286,7 +365,7 @@ export default function ChatbotAgent() {
                         <button
                           type="button"
                           onClick={retryLastMessage}
-                          className="inline-flex items-center gap-1 rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-cyan-400 transition hover:bg-white/10"
+                          className="inline-flex items-center gap-1 rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-[#00C8FF] transition hover:bg-white/10"
                         >
                           <RefreshCw className="h-2.5 w-2.5" />
                           Retry
@@ -297,26 +376,50 @@ export default function ChatbotAgent() {
                 </div>
               );
             })}
+
+            {/* Typing Indicator */}
+            {mutation.isPending && (
+              <div className="flex justify-start gap-2.5 items-start">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-950/85 border border-cyan-500/30 text-[#00C8FF] shadow-md animate-pulse">
+                  <Bot className="h-4.5 w-4.5 animate-pulse" />
+                </div>
+                <div className="flex items-center gap-1.5 rounded-2xl px-4 py-3 bg-white/[0.05] border border-cyan-500/10 shadow-md">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
           {/* Form Input Footer Container */}
           <form
             onSubmit={handleSendMessage}
-            className="border-t border-slate-900 bg-slate-950 px-4 py-3.5"
+            className="px-4 py-3.5"
+            style={{ borderTop: "1px solid rgba(0,200,255,0.12)", background: "rgba(8,16,30,0.98)" }}
           >
-            <div className="flex items-center gap-2 bg-slate-900/60 rounded-full border border-slate-800 px-3 py-1.5 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
+            <div
+              className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all focus-within:border-[#00C8FF] focus-within:ring-1 focus-within:ring-[#00C8FF]/20"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(0,200,255,0.25)",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+              }}
+            >
               <input
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
                 placeholder="Ask something..."
                 disabled={mutation.isPending}
-                className="flex-1 bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
+                className="flex-1 bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-white/40 outline-none disabled:cursor-not-allowed"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || mutation.isPending}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md shadow-cyan-500/10 transition hover:bg-cyan-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+                style={{ background: "linear-gradient(135deg,#00C8FF 0%,#0062FF 100%)", boxShadow: "0 2px 12px rgba(0,200,255,0.25)" }}
               >
                 {mutation.isPending ? (
                   <Loader className="h-4 w-4 animate-spin" />

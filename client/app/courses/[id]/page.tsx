@@ -173,7 +173,7 @@ export default function CoursePage({ params }: PageProps) {
         </div>
 
         {/* ── HERO INFO ── */}
-        <section className="relative -mt-28 pb-20 overflow-hidden">
+        <section className="relative -mt-28 pb-10 overflow-hidden">
           <div
             className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-[900px] h-[500px]"
             style={{
@@ -437,7 +437,7 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── WHAT YOU'LL LEARN ── */}
         {whatYouLearn.length > 0 && (
-          <section className="py-24 border-t border-white/5 relative overflow-hidden">
+          <section className="py-10 border-t border-white/5 relative overflow-hidden">
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -448,7 +448,7 @@ export default function CoursePage({ params }: PageProps) {
             />
             <div className="relative container-x">
               <ScrollReveal animation="fade-up" duration={700}>
-                <div className="text-center mb-14">
+                <div className="text-center mb-10">
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">
                     Curriculum Overview
                   </p>
@@ -488,7 +488,7 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── PROGRAM STRUCTURE ── */}
         {weekData.length > 0 && (
-          <section className="py-24 border-t border-white/5 relative overflow-hidden">
+          <section className="py-10 border-t border-white/5 relative overflow-hidden">
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -503,7 +503,7 @@ export default function CoursePage({ params }: PageProps) {
             />
             <div className="relative container-x">
               <ScrollReveal animation="fade-up" duration={700}>
-                <div className="text-center mb-14">
+                <div className="text-center mb-5">
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">
                     Curriculum
                   </p>
@@ -583,7 +583,7 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── WHO THIS IS FOR ── */}
         {audience.length > 0 && (
-          <section className="py-24 border-t border-white/5 relative overflow-hidden">
+          <section className="py-10 border-t border-white/5 relative overflow-hidden">
             <div
               className="pointer-events-none absolute inset-0 line-grid opacity-20"
               aria-hidden
@@ -628,7 +628,7 @@ export default function CoursePage({ params }: PageProps) {
         )}
 
         {/* ── ENROLL CTA ── */}
-        <section className="py-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-10 border-t border-white/5 relative overflow-hidden">
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div
