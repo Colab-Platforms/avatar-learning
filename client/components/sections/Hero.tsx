@@ -348,9 +348,9 @@ export function Hero() {
                               ? "Free - Enroll Now"
                               : "Enroll Now"}
                             <Badge variant="level-dark">{course.level}</Badge>
-                            <span className="ml-auto text-[11px] text-white/30 font-medium tabular-nums">
+                            {/* <span className="ml-auto text-[11px] text-white/30 font-medium tabular-nums">
                               {course.startDate ?? "Coming Soon"}
-                            </span>
+                            </span> */}
                           </div>
 
                           <h3
