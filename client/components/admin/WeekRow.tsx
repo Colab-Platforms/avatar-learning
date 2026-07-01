@@ -5,10 +5,14 @@ import {
   Trash2,
   Upload,
   Pencil,
+  X,
+  Check,
 } from "lucide-react";
+import { useState } from "react";
 import { Spinner, inputCls } from "./FormField";
 import { InlineModuleEditor } from "./ModuleEditors";
 import { VideoUploadForm } from "./VideoUploadForm";
+import { updateLesson } from "@/lib/adminApi";
 
 interface Resource {
   id: string;
@@ -63,45 +67,114 @@ export function WeekRow({
   onUploadDone: () => void;
   onCancelUpload: () => void;
 }) {
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({
+    title: lesson.title,
+    description: lesson.description ?? "",
+  });
+
+  const submitInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingInfo(true);
+    try {
+      await updateLesson(lesson.id, {
+        title: infoForm.title,
+        description: infoForm.description,
+      });
+      setEditingInfo(false);
+      onModulesSaved();
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
   return (
     <div className="px-6 py-5">
       {/* Week header */}
       <div className="flex items-start justify-between gap-4">
-        <button
-          onClick={onToggleExpand}
-          className="flex items-start gap-3 min-w-0 flex-1 text-left"
-        >
-          <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/15 flex items-center justify-center shrink-0 mt-0.5">
-            <span className="text-xs font-bold text-brand-400">
-              {lesson.weekNumber}
-            </span>
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white/90">
-              {lesson.title}
-            </p>
-            {lesson.description && (
-              <p className="text-xs text-white/40 mt-0.5 ">
-                {lesson.description}
-              </p>
-            )}
-            <div className="flex items-center gap-2 mt-1.5">
-              {lesson.isFreePreview && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-elec-500/10 text-elec-400 uppercase tracking-wide">
-                  Free
-                </span>
-              )}
-              <span className="text-[10px] text-white/25">
-                {lesson.modules.length} topics
-              </span>
-              <span className="text-[10px] text-white/25">
-                {lesson.resources.length} video
-                {lesson.resources.length !== 1 ? "s" : ""}
+        {editingInfo ? (
+          <form onSubmit={submitInfo} className="flex-1 space-y-2">
+            <input
+              value={infoForm.title}
+              onChange={(e) => setInfoForm((f) => ({ ...f, title: e.target.value }))}
+              className={`${inputCls} text-sm`}
+              placeholder="Week title"
+              required
+            />
+            <textarea
+              value={infoForm.description}
+              onChange={(e) => setInfoForm((f) => ({ ...f, description: e.target.value }))}
+              className={`${inputCls} text-xs resize-none`}
+              placeholder="Description (optional)"
+              rows={2}
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="submit"
+                disabled={savingInfo}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-brand-500 text-ink-950 text-xs font-semibold hover:bg-brand-400 transition-colors disabled:opacity-50"
+              >
+                {savingInfo ? <Spinner small /> : <Check size={11} />}
+                {savingInfo ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setInfoForm({ title: lesson.title, description: lesson.description ?? "" });
+                  setEditingInfo(false);
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-white/10 text-white/50 text-xs hover:text-white/70 transition-colors"
+              >
+                <X size={11} /> Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <button
+            onClick={onToggleExpand}
+            className="flex items-start gap-3 min-w-0 flex-1 text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/15 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-xs font-bold text-brand-400">
+                {lesson.weekNumber}
               </span>
             </div>
-          </div>
-        </button>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white/90">
+                {lesson.title}
+              </p>
+              {lesson.description && (
+                <p className="text-xs text-white/40 mt-0.5 ">
+                  {lesson.description}
+                </p>
+              )}
+              <div className="flex items-center gap-2 mt-1.5">
+                {lesson.isFreePreview && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-elec-500/10 text-elec-400 uppercase tracking-wide">
+                    Free
+                  </span>
+                )}
+                <span className="text-[10px] text-white/25">
+                  {lesson.modules.length} topics
+                </span>
+                <span className="text-[10px] text-white/25">
+                  {lesson.resources.length} video
+                  {lesson.resources.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+          </button>
+        )}
         <div className="flex items-center gap-1 shrink-0">
+          {!editingInfo && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setEditingInfo(true); }}
+              className="p-1.5 rounded-lg text-white/25 hover:text-brand-400 hover:bg-brand-500/8 transition-colors"
+            >
+              <Pencil size={13} />
+            </button>
+          )}
           <button
             onClick={onToggleExpand}
             className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/5 transition-colors"

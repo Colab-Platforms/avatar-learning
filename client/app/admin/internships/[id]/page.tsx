@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Eye, EyeOff, Briefcase, Save } from "lucide-react";
+import { ChevronRight, Eye, EyeOff, Save, Pencil, X, Check } from "lucide-react";
 import {
   fetchAdminInternship,
   updateInternship,
   toggleInternshipPublish,
 } from "@/lib/adminApi";
 import type { OutcomeItem } from "@/lib/internshipsApi";
-import { Field, Spinner, primaryBtn } from "@/components/admin/FormField";
+import { Field, Spinner, primaryBtn, inputCls } from "@/components/admin/FormField";
 import {
   LearnItemEditor,
   CourseLearnItem,
@@ -61,6 +61,19 @@ export default function AdminInternshipDetailPage() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
+  const [editingHeader, setEditingHeader] = useState(false);
+  const [savingHeader, setSavingHeader] = useState(false);
+  const [headerForm, setHeaderForm] = useState({
+    title: "",
+    company: "",
+    description: "",
+    employmentType: "FULL_TIME" as "FULL_TIME" | "PART_TIME" | "REMOTE",
+    location: "",
+    stipend: "",
+    domain: "",
+    deadline: "",
+  });
+
   const [keyLearningOutcomes, setKeyLearningOutcomes] = useState<
     CourseLearnItem[]
   >([]);
@@ -101,6 +114,40 @@ export default function AdminInternshipDetailPage() {
       setError("Failed to toggle publish state.");
     } finally {
       setTogglingPublish(false);
+    }
+  };
+
+  const startEditHeader = () => {
+    if (!internship) return;
+    setHeaderForm({
+      title: internship.title,
+      company: internship.company,
+      description: internship.description ?? "",
+      employmentType: internship.employmentType,
+      location: internship.location ?? "",
+      stipend: internship.stipend ?? "",
+      domain: internship.domain ?? "",
+      deadline: internship.deadline ? internship.deadline.slice(0, 10) : "",
+    });
+    setEditingHeader(true);
+  };
+
+  const submitHeader = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingHeader(true);
+    setError("");
+    try {
+      await updateInternship(id, {
+        ...headerForm,
+        deadline: headerForm.deadline || undefined,
+      });
+      setEditingHeader(false);
+      await load();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e?.response?.data?.message ?? "Failed to update internship.");
+    } finally {
+      setSavingHeader(false);
     }
   };
 
@@ -183,64 +230,159 @@ export default function AdminInternshipDetailPage() {
       )}
 
       <div className="bg-ink-800 border border-white/6 rounded-2xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-          <div className="w-full sm:w-40 h-24 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
-            <Briefcase size={28} className="text-white/20" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h1 className="text-xl font-bold text-white">
-                {internship.title}
-              </h1>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${EMPLOYMENT_COLOR[internship.employmentType]}`}
+        {editingHeader ? (
+          <form onSubmit={submitHeader} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Title" required className="sm:col-span-2">
+                <input
+                  value={headerForm.title}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, title: e.target.value }))}
+                  className={inputCls}
+                  required
+                />
+              </Field>
+              <Field label="Company" required>
+                <input
+                  value={headerForm.company}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, company: e.target.value }))}
+                  className={inputCls}
+                  required
+                />
+              </Field>
+              <Field label="Employment Type" required>
+                <select
+                  value={headerForm.employmentType}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, employmentType: e.target.value as "FULL_TIME" | "PART_TIME" | "REMOTE" }))}
+                  className={inputCls}
+                  required
+                >
+                  <option value="FULL_TIME">Full Time</option>
+                  <option value="PART_TIME">Part Time</option>
+                  <option value="REMOTE">Remote</option>
+                </select>
+              </Field>
+              <Field label="Description" className="sm:col-span-2">
+                <textarea
+                  value={headerForm.description}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={2}
+                  className={`${inputCls} resize-none`}
+                />
+              </Field>
+              <Field label="Location">
+                <input
+                  value={headerForm.location}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, location: e.target.value }))}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Stipend">
+                <input
+                  value={headerForm.stipend}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, stipend: e.target.value }))}
+                  placeholder="e.g. ₹10,000/month"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Domain">
+                <input
+                  value={headerForm.domain}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, domain: e.target.value }))}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Deadline">
+                <input
+                  type="date"
+                  value={headerForm.deadline}
+                  onChange={(e) => setHeaderForm((f) => ({ ...f, deadline: e.target.value }))}
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setEditingHeader(false)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-white/10 text-white/55 text-xs hover:text-white/80 hover:bg-white/4 transition-colors"
               >
-                {internship.employmentType.replace(/_/g, " ")}
-              </span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <X size={13} /> Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingHeader}
+                className={`${primaryBtn} disabled:opacity-50`}
+              >
+                {savingHeader ? <Spinner /> : <Check size={13} />}
+                {savingHeader ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h1 className="text-xl font-bold text-white">
+                  {internship.title}
+                </h1>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${EMPLOYMENT_COLOR[internship.employmentType]}`}
+                >
+                  {internship.employmentType.replace(/_/g, " ")}
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    internship.isPublished
+                      ? "bg-brand-500/10 text-brand-400"
+                      : "bg-white/6 text-white/35"
+                  }`}
+                >
+                  {internship.isPublished ? "Live" : "Draft"}
+                </span>
+              </div>
+              <p className="text-sm text-brand-300/70 font-medium mb-2">
+                {internship.company}
+              </p>
+              {internship.description && (
+                <p className="text-sm text-white/45 mb-3 line-clamp-2">
+                  {internship.description}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-4 text-xs text-white/40">
+                <span>{internship.category.name}</span>
+                {internship.location && <span>{internship.location}</span>}
+                {internship.stipend && <span>{internship.stipend}</span>}
+                <span>{internship._count.applications} applications</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={startEditHeader}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/55 hover:text-white/80 hover:bg-white/4 transition-colors"
+              >
+                <Pencil size={14} /> Edit
+              </button>
+              <button
+                onClick={handlePublish}
+                disabled={togglingPublish}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
                   internship.isPublished
-                    ? "bg-brand-500/10 text-brand-400"
-                    : "bg-white/6 text-white/35"
+                    ? "bg-white/6 text-white/60 hover:bg-white/10 border border-white/10"
+                    : "bg-brand-500 text-ink-950 hover:bg-brand-400"
                 }`}
               >
-                {internship.isPublished ? "Live" : "Draft"}
-              </span>
-            </div>
-            <p className="text-sm text-brand-300/70 font-medium mb-2">
-              {internship.company}
-            </p>
-            {internship.description && (
-              <p className="text-sm text-white/45 mb-3 line-clamp-2">
-                {internship.description}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-4 text-xs text-white/40">
-              <span>{internship.category.name}</span>
-              {internship.location && <span>{internship.location}</span>}
-              {internship.stipend && <span>{internship.stipend}</span>}
-              <span>{internship._count.applications} applications</span>
+                {togglingPublish ? (
+                  <Spinner />
+                ) : internship.isPublished ? (
+                  <EyeOff size={14} />
+                ) : (
+                  <Eye size={14} />
+                )}
+                {internship.isPublished ? "Unpublish" : "Publish"}
+              </button>
             </div>
           </div>
-          <button
-            onClick={handlePublish}
-            disabled={togglingPublish}
-            className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
-              internship.isPublished
-                ? "bg-white/6 text-white/60 hover:bg-white/10 border border-white/10"
-                : "bg-brand-500 text-ink-950 hover:bg-brand-400"
-            }`}
-          >
-            {togglingPublish ? (
-              <Spinner />
-            ) : internship.isPublished ? (
-              <EyeOff size={14} />
-            ) : (
-              <Eye size={14} />
-            )}
-            {internship.isPublished ? "Unpublish" : "Publish"}
-          </button>
-        </div>
+        )}
       </div>
 
       <form
