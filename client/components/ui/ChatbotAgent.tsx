@@ -41,7 +41,9 @@ export default function ChatbotAgent() {
   const [inputValue, setInputValue] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [errorHint, setErrorHint] = useState<string | null>(null);
-  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [ripples, setRipples] = useState<
+    { id: number; x: number; y: number }[]
+  >([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const mutation = useChatbotMutation();
@@ -207,12 +209,17 @@ export default function ChatbotAgent() {
 
         <button
           onClick={(e) => {
-            const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+            const rect = (
+              e.currentTarget as HTMLButtonElement
+            ).getBoundingClientRect();
             const cx = rect.left + rect.width / 2;
             const cy = rect.top + rect.height / 2;
             const id = Date.now();
             setRipples((prev) => [...prev, { id, x: cx, y: cy }]);
-            setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 850);
+            setTimeout(
+              () => setRipples((prev) => prev.filter((r) => r.id !== id)),
+              850,
+            );
             setIsOpen((c) => !c);
           }}
           className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white transition-all duration-300
@@ -241,9 +248,7 @@ export default function ChatbotAgent() {
       </div>
 
       {isOpen && (
-        <div
-          className="fixed bottom-28 sm:bottom-32 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85vh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto"
-        >
+        <div className="fixed bottom-28 sm:bottom-32 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85vh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto">
           {/* Header */}
           <div
             className="relative px-5 py-4 backdrop-blur-md"
@@ -252,12 +257,22 @@ export default function ChatbotAgent() {
               background: "rgba(8,16,30,0.85)",
             }}
           >
-            <div className="absolute top-0 right-0 w-40 h-40 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(ellipse at top right,rgba(0,200,255,0.08) 0%,transparent 70%)" }} />
+            <div
+              className="absolute top-0 right-0 w-40 h-40 rounded-full pointer-events-none"
+              style={{
+                background:
+                  "radial-gradient(ellipse at top right,rgba(0,200,255,0.08) 0%,trarsparent 70%)",
+              }}
+            />
             <div className="flex items-center justify-between gap-3 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl text-[#00C8FF]"
-                  style={{ background: "rgba(0,200,255,0.15)", border: "1px solid rgba(0,200,255,0.35)" }}>
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-[#00C8FF]"
+                  style={{
+                    background: "rgba(0,200,255,0.15)",
+                    border: "1px solid rgba(0,200,255,0.35)",
+                  }}
+                >
                   <Shield className="h-5 w-5 animate-pulse" />
                 </div>
                 <div className="min-w-0">
@@ -271,8 +286,13 @@ export default function ChatbotAgent() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400"
-                  style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.18)" }}>
+                <span
+                  className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400"
+                  style={{
+                    background: "rgba(16,185,129,0.08)",
+                    border: "1px solid rgba(16,185,129,0.18)",
+                  }}
+                >
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Live
                 </span>
@@ -291,8 +311,13 @@ export default function ChatbotAgent() {
           {/* Chat Space Content */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chatbot-messages">
             {/* Quick Context Tip Box */}
-            <div className="flex gap-2.5 rounded-2xl p-3.5 text-xs"
-              style={{ background: "rgba(0,200,255,0.08)", border: "1px solid rgba(0,200,255,0.20)" }}>
+            <div
+              className="flex gap-2.5 rounded-2xl p-3.5 text-xs"
+              style={{
+                background: "rgba(0,200,255,0.08)",
+                border: "1px solid rgba(0,200,255,0.20)",
+              }}
+            >
               <Sparkles className="h-4 w-4 text-[#00C8FF] shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-white/85 mb-0.5">Quick Tip</p>
@@ -334,12 +359,22 @@ export default function ChatbotAgent() {
                       isUser
                         ? {
                             minHeight,
-                            background: "linear-gradient(135deg,#00C8FF 0%,#0062FF 100%)",
+                            background:
+                              "linear-gradient(135deg,#00C8FF 0%,#0062FF 100%)",
                             boxShadow: "0 4px 16px rgba(0,200,255,0.18)",
                           }
                         : message.isError
-                          ? { minHeight, background: "rgba(220,38,38,0.18)", border: "1px solid rgba(220,38,38,0.35)" }
-                          : { minHeight, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,200,255,0.12)", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }
+                          ? {
+                              minHeight,
+                              background: "rgba(220,38,38,0.18)",
+                              border: "1px solid rgba(220,38,38,0.35)",
+                            }
+                          : {
+                              minHeight,
+                              background: "rgba(255,255,255,0.05)",
+                              border: "1px solid rgba(0,200,255,0.12)",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                            }
                     }
                   >
                     <div className="flex-1">
@@ -398,7 +433,10 @@ export default function ChatbotAgent() {
           <form
             onSubmit={handleSendMessage}
             className="px-4 py-3.5"
-            style={{ borderTop: "1px solid rgba(0,200,255,0.12)", background: "rgba(8,16,30,0.98)" }}
+            style={{
+              borderTop: "1px solid rgba(0,200,255,0.12)",
+              background: "rgba(8,16,30,0.98)",
+            }}
           >
             <div
               className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all focus-within:border-[#00C8FF] focus-within:ring-1 focus-within:ring-[#00C8FF]/20"
@@ -419,7 +457,10 @@ export default function ChatbotAgent() {
                 type="submit"
                 disabled={!inputValue.trim() || mutation.isPending}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
-                style={{ background: "linear-gradient(135deg,#00C8FF 0%,#0062FF 100%)", boxShadow: "0 2px 12px rgba(0,200,255,0.25)" }}
+                style={{
+                  background: "linear-gradient(135deg,#00C8FF 0%,#0062FF 100%)",
+                  boxShadow: "0 2px 12px rgba(0,200,255,0.25)",
+                }}
               >
                 {mutation.isPending ? (
                   <Loader className="h-4 w-4 animate-spin" />

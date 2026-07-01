@@ -5,249 +5,302 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Eye, EyeOff, Briefcase, Save } from "lucide-react";
 import {
-    fetchAdminInternship,
-    updateInternship,
-    toggleInternshipPublish,
+  fetchAdminInternship,
+  updateInternship,
+  toggleInternshipPublish,
 } from "@/lib/adminApi";
 import type { OutcomeItem } from "@/lib/internshipsApi";
 import { Field, Spinner, primaryBtn } from "@/components/admin/FormField";
-import { LearnItemEditor, CourseLearnItem } from "@/components/admin/LearnItemEditor";
+import {
+  LearnItemEditor,
+  CourseLearnItem,
+} from "@/components/admin/LearnItemEditor";
 
 interface Internship {
-    id: string;
-    title: string;
-    slug: string;
-    company: string;
-    description?: string;
-    domain?: string;
-    stipend?: string;
-    employmentType: "FULL_TIME" | "PART_TIME" | "REMOTE";
-    location?: string;
-    deadline?: string;
-    isPublished: boolean;
-    keyLearningOutcomes?: OutcomeItem[];
-    majorProject?: OutcomeItem[];
-    whatYouReceive?: OutcomeItem[];
-    category: { id: string; name: string };
-    _count: { applications: number };
+  id: string;
+  title: string;
+  slug: string;
+  company: string;
+  description?: string;
+  domain?: string;
+  stipend?: string;
+  employmentType: "FULL_TIME" | "PART_TIME" | "REMOTE";
+  location?: string;
+  deadline?: string;
+  isPublished: boolean;
+  keyLearningOutcomes?: OutcomeItem[];
+  majorProject?: OutcomeItem[];
+  whatYouReceive?: OutcomeItem[];
+  category: { id: string; name: string };
+  _count: { applications: number };
 }
 
 const EMPLOYMENT_COLOR: Record<string, string> = {
-    FULL_TIME: "text-emerald-400 bg-emerald-400/10",
-    PART_TIME: "text-amber-400 bg-amber-400/10",
-    REMOTE: "text-blue-400 bg-blue-400/10",
+  FULL_TIME: "text-emerald-400 bg-emerald-400/10",
+  PART_TIME: "text-amber-400 bg-amber-400/10",
+  REMOTE: "text-blue-400 bg-blue-400/10",
 };
 
 const toLearnItems = (raw: unknown): CourseLearnItem[] => {
-    if (!Array.isArray(raw)) return [];
-    return (raw as CourseLearnItem[]).map((item) => ({
-        title: item?.title ?? "",
-        body: item?.body ?? "",
-    }));
+  if (!Array.isArray(raw)) return [];
+  return (raw as CourseLearnItem[]).map((item) => ({
+    title: item?.title ?? "",
+    body: item?.body ?? "",
+  }));
 };
 
 const filterItems = (items: CourseLearnItem[]) =>
-    items.filter((item) => item.title.trim() && item.body.trim());
+  items.filter((item) => item.title.trim() && item.body.trim());
 
 export default function AdminInternshipDetailPage() {
-    const { id } = useParams<{ id: string }>();
-    const [internship, setInternship] = useState<Internship | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [togglingPublish, setTogglingPublish] = useState(false);
-    const [error, setError] = useState("");
-    const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const [internship, setInternship] = useState<Internship | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [togglingPublish, setTogglingPublish] = useState(false);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
-    const [keyLearningOutcomes, setKeyLearningOutcomes] = useState<CourseLearnItem[]>([]);
-    const [majorProject, setMajorProject] = useState<CourseLearnItem[]>([]);
-    const [whatYouReceive, setWhatYouReceive] = useState<CourseLearnItem[]>([]);
+  const [keyLearningOutcomes, setKeyLearningOutcomes] = useState<
+    CourseLearnItem[]
+  >([]);
+  const [majorProject, setMajorProject] = useState<CourseLearnItem[]>([]);
+  const [whatYouReceive, setWhatYouReceive] = useState<CourseLearnItem[]>([]);
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        try {
-            const data = await fetchAdminInternship(id);
-            setInternship(data);
-            setKeyLearningOutcomes(toLearnItems(data.keyLearningOutcomes));
-            setMajorProject(toLearnItems(data.majorProject));
-            setWhatYouReceive(toLearnItems(data.whatYouReceive));
-        } catch {
-            setError("Failed to load internship.");
-        } finally {
-            setLoading(false);
-        }
-    }, [id]);
-
-    useEffect(() => { load(); }, [load]);
-
-    useEffect(() => {
-        if (!msg) return;
-        const t = setTimeout(() => setMsg(null), 4000);
-        return () => clearTimeout(t);
-    }, [msg]);
-
-    const handlePublish = async () => {
-        setTogglingPublish(true);
-        try {
-            await toggleInternshipPublish(id);
-            await load();
-        } catch {
-            setError("Failed to toggle publish state.");
-        } finally {
-            setTogglingPublish(false);
-        }
-    };
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        setError("");
-        setMsg(null);
-        try {
-            await updateInternship(id, {
-                keyLearningOutcomes: filterItems(keyLearningOutcomes),
-                majorProject: filterItems(majorProject),
-                whatYouReceive: filterItems(whatYouReceive),
-            });
-            setMsg({ text: "Internship details saved successfully!", ok: true });
-            setTimeout(() => load(), 1500);
-        } catch (err: unknown) {
-            const e = err as { response?: { data?: { message?: string } } };
-            setMsg({ text: e?.response?.data?.message ?? "Failed to save. Please try again.", ok: false });
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="p-8 space-y-4">
-                {[...Array(3)].map((_, i) => (
-                    <div key={i} className={`rounded-2xl bg-ink-800 animate-pulse ${i === 0 ? "h-32" : "h-24"}`} />
-                ))}
-            </div>
-        );
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchAdminInternship(id);
+      setInternship(data);
+      setKeyLearningOutcomes(toLearnItems(data.keyLearningOutcomes));
+      setMajorProject(toLearnItems(data.majorProject));
+      setWhatYouReceive(toLearnItems(data.whatYouReceive));
+    } catch {
+      setError("Failed to load internship.");
+    } finally {
+      setLoading(false);
     }
+  }, [id]);
 
-    if (!internship) {
-        return (
-            <div className="p-8 text-center">
-                <p className="text-red-400 text-sm">{error || "Internship not found."}</p>
-                <Link href="/admin/internships" className="mt-3 inline-block text-xs text-brand-400">
-                    ← Back to internships
-                </Link>
-            </div>
-        );
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!msg) return;
+    const t = setTimeout(() => setMsg(null), 4000);
+    return () => clearTimeout(t);
+  }, [msg]);
+
+  const handlePublish = async () => {
+    setTogglingPublish(true);
+    try {
+      await toggleInternshipPublish(id);
+      await load();
+    } catch {
+      setError("Failed to toggle publish state.");
+    } finally {
+      setTogglingPublish(false);
     }
+  };
 
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    setMsg(null);
+    try {
+      await updateInternship(id, {
+        keyLearningOutcomes: filterItems(keyLearningOutcomes),
+        majorProject: filterItems(majorProject),
+        whatYouReceive: filterItems(whatYouReceive),
+      });
+      setMsg({ text: "Internship details saved successfully!", ok: true });
+      setTimeout(() => load(), 1500);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setMsg({
+        text: e?.response?.data?.message ?? "Failed to save. Please try again.",
+        ok: false,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex items-center gap-2 text-xs text-white/35">
-                <Link href="/admin" className="hover:text-white/60 transition-colors">Admin</Link>
-                <ChevronRight size={12} />
-                <Link href="/admin/internships" className="hover:text-white/60 transition-colors">Internships</Link>
-                <ChevronRight size={12} />
-                <span className="text-white/55 truncate max-w-48">{internship.title}</span>
-            </div>
-
-            {error && (
-                <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
-                    {error}
-                </div>
-            )}
-
-            <div className="bg-ink-800 border border-white/6 rounded-2xl p-6">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="w-full sm:w-40 h-24 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
-                        <Briefcase size={28} className="text-white/20" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <h1 className="text-xl font-bold text-white">{internship.title}</h1>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${EMPLOYMENT_COLOR[internship.employmentType]}`}>
-                                {internship.employmentType.replace(/_/g, " ")}
-                            </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                internship.isPublished ? "bg-brand-500/10 text-brand-400" : "bg-white/6 text-white/35"
-                            }`}>
-                                {internship.isPublished ? "Live" : "Draft"}
-                            </span>
-                        </div>
-                        <p className="text-sm text-brand-300/70 font-medium mb-2">{internship.company}</p>
-                        {internship.description && (
-                            <p className="text-sm text-white/45 mb-3 line-clamp-2">{internship.description}</p>
-                        )}
-                        <div className="flex flex-wrap gap-4 text-xs text-white/40">
-                            <span>{internship.category.name}</span>
-                            {internship.location && <span>{internship.location}</span>}
-                            {internship.stipend && <span>{internship.stipend}</span>}
-                            <span>{internship._count.applications} applications</span>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handlePublish}
-                        disabled={togglingPublish}
-                        className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
-                            internship.isPublished
-                                ? "bg-white/6 text-white/60 hover:bg-white/10 border border-white/10"
-                                : "bg-brand-500 text-ink-950 hover:bg-brand-400"
-                        }`}
-                    >
-                        {togglingPublish ? <Spinner /> : internship.isPublished ? <EyeOff size={14} /> : <Eye size={14} />}
-                        {internship.isPublished ? "Unpublish" : "Publish"}
-                    </button>
-                </div>
-            </div>
-
-            <form onSubmit={handleSave} className="bg-ink-800 border border-white/6 rounded-2xl p-6 space-y-8">
-                <div>
-                    <h2 className="text-sm font-semibold text-white mb-1">Internship Details</h2>
-                    <p className="text-xs text-white/35">
-                        Add key learning outcomes, major projects, and what students will receive.
-                    </p>
-                </div>
-
-                {msg && (
-                    <div className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
-                        msg.ok
-                            ? "border-emerald-500/30 bg-emerald-500/8 text-emerald-300"
-                            : "border-red-500/30 bg-red-500/8 text-red-300"
-                    }`}>
-                        <span className="mt-0.5 text-lg leading-none">{msg.ok ? "✓" : "✕"}</span>
-                        <span>{msg.text}</span>
-                    </div>
-                )}
-
-                <Field label="Key Learning Outcomes">
-                    <LearnItemEditor
-                        label="Key Learning Outcomes"
-                        items={keyLearningOutcomes}
-                        onChange={setKeyLearningOutcomes}
-                    />
-                </Field>
-
-                <Field label="Major Projects">
-                    <LearnItemEditor
-                        label="Major Projects"
-                        items={majorProject}
-                        onChange={setMajorProject}
-                    />
-                </Field>
-
-                <Field label="What You Will Receive">
-                    <LearnItemEditor
-                        label="What You Will Receive"
-                        items={whatYouReceive}
-                        onChange={setWhatYouReceive}
-                    />
-                </Field>
-
-                <div className="flex justify-end pt-2 border-t border-white/5">
-                    <button type="submit" disabled={saving} className={`${primaryBtn} disabled:opacity-50`}>
-                        {saving ? <Spinner /> : <Save size={14} />}
-                        {saving ? "Saving…" : "Save Details"}
-                    </button>
-                </div>
-            </form>
-        </div>
+      <div className="p-8 space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className={`rounded-2xl bg-ink-800 animate-pulse ${i === 0 ? "h-32" : "h-24"}`}
+          />
+        ))}
+      </div>
     );
+  }
+
+  if (!internship) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-400 text-sm">
+          {error || "Internship not found."}
+        </p>
+        <Link
+          href="/admin/internships"
+          className="mt-3 inline-block text-xs text-brand-400"
+        >
+          ← Back to internships
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 space-y-6">
+      <div className="flex items-center gap-2 text-xs text-white/35">
+        <Link href="/admin" className="hover:text-white/60 transition-colors">
+          Admin
+        </Link>
+        <ChevronRight size={12} />
+        <Link
+          href="/admin/internships"
+          className="hover:text-white/60 transition-colors"
+        >
+          Internships
+        </Link>
+        <ChevronRight size={12} />
+        <span className="text-white/55 truncate max-w-48">
+          {internship.title}
+        </span>
+      </div>
+
+      {error && (
+        <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
+      <div className="bg-ink-800 border border-white/6 rounded-2xl p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className="w-full sm:w-40 h-24 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
+            <Briefcase size={28} className="text-white/20" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h1 className="text-xl font-bold text-white">
+                {internship.title}
+              </h1>
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${EMPLOYMENT_COLOR[internship.employmentType]}`}
+              >
+                {internship.employmentType.replace(/_/g, " ")}
+              </span>
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  internship.isPublished
+                    ? "bg-brand-500/10 text-brand-400"
+                    : "bg-white/6 text-white/35"
+                }`}
+              >
+                {internship.isPublished ? "Live" : "Draft"}
+              </span>
+            </div>
+            <p className="text-sm text-brand-300/70 font-medium mb-2">
+              {internship.company}
+            </p>
+            {internship.description && (
+              <p className="text-sm text-white/45 mb-3 line-clamp-2">
+                {internship.description}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-4 text-xs text-white/40">
+              <span>{internship.category.name}</span>
+              {internship.location && <span>{internship.location}</span>}
+              {internship.stipend && <span>{internship.stipend}</span>}
+              <span>{internship._count.applications} applications</span>
+            </div>
+          </div>
+          <button
+            onClick={handlePublish}
+            disabled={togglingPublish}
+            className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
+              internship.isPublished
+                ? "bg-white/6 text-white/60 hover:bg-white/10 border border-white/10"
+                : "bg-brand-500 text-ink-950 hover:bg-brand-400"
+            }`}
+          >
+            {togglingPublish ? (
+              <Spinner />
+            ) : internship.isPublished ? (
+              <EyeOff size={14} />
+            ) : (
+              <Eye size={14} />
+            )}
+            {internship.isPublished ? "Unpublish" : "Publish"}
+          </button>
+        </div>
+      </div>
+
+      <form
+        onSubmit={handleSave}
+        className="bg-ink-800 border border-white/6 rounded-2xl p-6 space-y-8"
+      >
+        <div>
+          <h2 className="text-sm font-semibold text-white mb-1">
+            Internship Details
+          </h2>
+          <p className="text-xs text-white/35">
+            Add key learning outcomes, major projects, and what students will
+            receive.
+          </p>
+        </div>
+
+        {msg && (
+          <div
+            className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
+              msg.ok
+                ? "border-emerald-500/30 bg-emerald-500/8 text-emerald-300"
+                : "border-red-500/30 bg-red-500/8 text-red-300"
+            }`}
+          >
+            <span className="mt-0.5 text-lg leading-none">
+              {msg.ok ? "✓" : "✕"}
+            </span>
+            <span>{msg.text}</span>
+          </div>
+        )}
+
+        <Field label="Key Learning Outcomes">
+          <LearnItemEditor
+            items={keyLearningOutcomes}
+            onChange={setKeyLearningOutcomes}
+          />
+        </Field>
+
+        <Field label="Major Projects">
+          <LearnItemEditor items={majorProject} onChange={setMajorProject} />
+        </Field>
+
+        <Field label="What You Will Receive">
+          <LearnItemEditor
+            items={whatYouReceive}
+            onChange={setWhatYouReceive}
+          />
+        </Field>
+
+        <div className="flex justify-end pt-2 border-t border-white/5">
+          <button
+            type="submit"
+            disabled={saving}
+            className={`${primaryBtn} disabled:opacity-50`}
+          >
+            {saving ? <Spinner /> : <Save size={14} />}
+            {saving ? "Saving…" : "Save Details"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 }

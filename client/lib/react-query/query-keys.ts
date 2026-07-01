@@ -12,4 +12,5 @@ export const queryKeys = {
   internshipApplication: (internshipId: string) =>
     ["internship-application", internshipId] as const,
   myApplications: ["my-applications"] as const,
+  internshipCategories: ["internship-categories"] as const,
 };

@@ -97,21 +97,27 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  count: number;
 }
 
 export const fetchInternshipCategories = async (): Promise<Category[]> => {
   try {
     const response = await apiClient.get("/internships", {
-      params: { page: 1, pageSize: 100 },
+      params: { page: 1, pageSize: 10 },
     });
     const internships: DBInternship[] = response.data.data.data;
     const categoriesMap = new Map<string, Category>();
     internships.forEach((i) => {
-      if (i.category && !categoriesMap.has(i.category.id)) {
-        categoriesMap.set(i.category.id, i.category);
+      if (i.category) {
+        const existing = categoriesMap.get(i.category.id);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          categoriesMap.set(i.category.id, { ...i.category, count: 1 });
+        }
       }
     });
-    return Array.from(categoriesMap.values());
+    return Array.from(categoriesMap.values()).sort((a, b) => b.count - a.count);
   } catch {
     return [];
   }

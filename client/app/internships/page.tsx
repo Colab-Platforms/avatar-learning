@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -13,6 +12,19 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
+  Clock,
+  BookOpen,
+  FolderKanban,
+  Gift,
+  CalendarDays,
+  CheckCircle2,
+  Share2,
+  Bookmark,
+  Code,
+  Megaphone,
+  BarChart3,
+  Database,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui";
@@ -20,59 +32,290 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import {
   type DBInternship,
-  fetchInternshipCategories,
+  type DBInternshipDetail,
+  fetchInternshipBySlug,
 } from "@/lib/internshipsApi";
 import { useInternships } from "@/hooks/queries/useInternships";
+import { useInternshipCategories } from "@/hooks/queries/useInternshipCategories";
 import { useAppSelector } from "@/store/hooks";
 import { useQuery } from "@tanstack/react-query";
 
 type EmploymentFilter = "ALL" | "FULL_TIME" | "PART_TIME" | "REMOTE";
 
 const EMPLOYMENT_OPTIONS: { value: EmploymentFilter; label: string }[] = [
-  { value: "ALL", label: "All Types" },
+  { value: "ALL", label: "All Worktypes" },
   { value: "FULL_TIME", label: "Full Time" },
   { value: "PART_TIME", label: "Part Time" },
   { value: "REMOTE", label: "Remote" },
 ];
 
 const EMPLOYMENT_COLOR: Record<string, string> = {
-  FULL_TIME: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
-  PART_TIME: "bg-amber-500/15  text-amber-400  border-amber-500/25",
-  REMOTE: "bg-blue-500/15    text-blue-400    border-blue-500/25",
+  FULL_TIME: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  PART_TIME: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  REMOTE: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
 };
+
+// ── CUSTOM PRETEXT HEIGHT HOOK ──
+function usePretextHeight(
+  text: string | undefined,
+  font: string = "13px Inter",
+  lineHeight: number = 20,
+) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    if (!ref.current) return;
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setWidth(entries[0].target.clientWidth);
+      }
+    });
+    observer.observe(ref.current);
+    setWidth(ref.current.clientWidth);
+    return () => observer.disconnect();
+  }, []);
+
+  const height = useMemo(() => {
+    if (!isClient || !text || width <= 0) return 0;
+    try {
+      // @ts-ignore
+      const { prepare, layout } = require("@chenglou/pretext");
+      const prepared = prepare(text, font);
+      const res = layout(prepared, width, lineHeight);
+      return res.height;
+    } catch (e) {
+      console.warn("Pretext layout failed", e);
+      return 0;
+    }
+  }, [text, width, font, lineHeight, isClient]);
+
+  return [ref, height] as const;
+}
+
+function PretextAnimatedHeight({
+  text,
+  font = "13px Inter",
+  lineHeight = 20,
+  children,
+  className,
+}: {
+  text: string | undefined;
+  font?: string;
+  lineHeight?: number;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const [ref, height] = usePretextHeight(text, font, lineHeight);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        height: height > 0 ? `${height}px` : "auto",
+        transition: "height 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+      }}
+      className={cn("overflow-hidden", className)}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── CUSTOM DROPDOWN COMPONENT ──
+function FilterDropdown({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selectedOption = options.find((o) => o.value === value);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 block">
+        {label}
+      </label>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between rounded-lg border border-white/8 bg-white/4 px-3 py-2.5 text-[12px] text-white hover:border-brand-500/30 transition-all duration-200 cursor-pointer"
+      >
+        <span className="truncate">
+          {selectedOption ? selectedOption.label : value}
+        </span>
+        <ChevronRight
+          className={cn(
+            "h-3.5 w-3.5 text-white/45 transition-transform duration-200",
+            open ? "rotate-90 text-brand-400" : "rotate-0",
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 mt-1 z-35 max-h-48 overflow-y-auto rounded-lg border border-white/8 bg-ink-900 p-1 shadow-2xl scrollbar-thin">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={cn(
+                "w-full text-left px-3 py-2 rounded-md text-[12px] font-medium transition-colors hover:bg-white/5 cursor-pointer",
+                opt.value === value
+                  ? "text-brand-300 bg-brand-500/10"
+                  : "text-white/60",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CATEGORY CARD COMPONENT ──
+const CATEGORY_PALETTES = [
+  {
+    hover:
+      "hover:border-blue-500/40 hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)]",
+    icon: "bg-blue-500/10 text-blue-400",
+  },
+  {
+    hover:
+      "hover:border-fuchsia-500/40 hover:shadow-[0_4px_20px_rgba(217,70,239,0.15)]",
+    icon: "bg-fuchsia-500/10 text-fuchsia-400",
+  },
+  {
+    hover:
+      "hover:border-emerald-500/40 hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)]",
+    icon: "bg-emerald-500/10 text-emerald-400",
+  },
+  {
+    hover:
+      "hover:border-sky-500/40 hover:shadow-[0_4px_20px_rgba(56,189,248,0.15)]",
+    icon: "bg-sky-500/10 text-sky-400",
+  },
+  {
+    hover:
+      "hover:border-rose-500/40 hover:shadow-[0_4px_20px_rgba(244,63,94,0.15)]",
+    icon: "bg-rose-500/10 text-rose-400",
+  },
+];
+
+const CATEGORY_ICONS = [Code, Megaphone, BarChart3, Database, Palette];
+
+function CategoryCard({
+  name,
+  count,
+  colorIndex,
+  isSelected,
+  onClick,
+}: {
+  name: string;
+  count: string;
+  colorIndex: number;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const palette = CATEGORY_PALETTES[colorIndex % CATEGORY_PALETTES.length];
+  const Icon = CATEGORY_ICONS[colorIndex % CATEGORY_ICONS.length];
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition-all duration-300 w-full hover:-translate-y-1 cursor-pointer",
+        isSelected
+          ? "bg-brand-500 border-brand-500 text-ink-950 shadow-[0_0_25px_rgba(0,200,255,0.35)]"
+          : cn("border-white/5 bg-ink-900 text-white", palette.hover),
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-12 w-12 items-center justify-center rounded-full mb-4 transition-colors duration-300",
+          isSelected ? "bg-ink-950 text-brand-500" : palette.icon,
+        )}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <h4 className="text-[15px] font-bold mb-1">{name}</h4>
+      <p
+        className={cn(
+          "text-[11px] font-medium",
+          isSelected ? "text-ink-950/70" : "text-white/40",
+        )}
+      >
+        {count}
+      </p>
+    </button>
+  );
+}
 
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl border border-white/5 bg-ink-800 overflow-hidden animate-pulse">
-      <div className="aspect-video w-full bg-ink-700" />
-      <div className="p-4 space-y-3">
-        <div className="h-2 w-16 rounded-full bg-white/8" />
-        <div className="h-4 w-3/4 rounded-full bg-white/10" />
-        <div className="h-3 w-full rounded-full bg-white/6" />
-        <div className="h-3 w-2/3 rounded-full bg-white/6" />
-        <div className="h-8 rounded-lg bg-white/6 mt-4" />
+    <div className="rounded-2xl border border-white/5 bg-ink-900 overflow-hidden animate-pulse p-5 space-y-4">
+      <div className="flex gap-2">
+        <div className="h-5 w-16 rounded-full bg-white/10" />
+        <div className="h-5 w-16 rounded-full bg-white/5" />
       </div>
+      <div className="h-5 w-3/4 rounded bg-white/10" />
+      <div className="h-3 w-1/3 rounded bg-white/5" />
+      <div className="space-y-2">
+        <div className="h-3 w-full rounded bg-white/5" />
+        <div className="h-3 w-5/6 rounded bg-white/5" />
+      </div>
+      <div className="h-4 w-1/3 rounded bg-white/10 pt-2" />
     </div>
   );
 }
 
 function SkeletonDetailPanel() {
   return (
-    <div className="rounded-2xl border border-white/5 bg-ink-800 p-6 animate-pulse">
-      <div className="aspect-video w-full bg-ink-700 rounded-lg mb-6" />
-      <div className="space-y-4">
-        <div className="h-6 w-3/4 rounded-full bg-white/8" />
-        <div className="h-4 w-1/2 rounded-full bg-white/6" />
-        <div className="space-y-3 mt-6">
-          <div className="h-4 w-full rounded-full bg-white/6" />
-          <div className="h-4 w-5/6 rounded-full bg-white/6" />
-        </div>
+    <div className="rounded-2xl border border-white/5 bg-ink-800 p-6 animate-pulse space-y-6">
+      <div className="space-y-3">
+        <div className="h-6 w-3/4 rounded bg-white/10" />
+        <div className="h-4 w-1/2 rounded bg-white/5" />
+      </div>
+      <div className="flex gap-3">
+        <div className="h-7 w-20 rounded bg-white/5" />
+        <div className="h-7 w-20 rounded bg-white/5" />
+      </div>
+      <div className="space-y-3 pt-4">
+        <div className="h-4 w-full rounded bg-white/5" />
+        <div className="h-4 w-5/6 rounded bg-white/5" />
       </div>
     </div>
   );
 }
 
-function InternshipCard({
+function InternshipCardComponent({
   internship,
   selected,
   onClick,
@@ -81,12 +324,40 @@ function InternshipCard({
   selected: boolean;
   onClick: () => void;
 }) {
-  const router = useRouter();
-  const { user } = useAppSelector((s) => s.auth);
+  const formattedDate = useMemo(() => {
+    if (!internship.deadline) return "Apply by 30 June";
+    try {
+      const d = new Date(internship.deadline);
+      return `Apply by ${d.toLocaleDateString("en-IN", { day: "numeric", month: "long" })}`;
+    } catch {
+      return "Apply by 30 June";
+    }
+  }, [internship.deadline]);
 
-  const handleApply = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!user) router.push("/login");
+  const getModePillColor = (mode: string) => {
+    switch (mode) {
+      case "FULL_TIME":
+        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+      case "PART_TIME":
+        return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+      case "REMOTE":
+        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+      default:
+        return "bg-white/8 text-white/50 border-white/10";
+    }
+  };
+
+  const getModeLabel = (mode: string) => {
+    switch (mode) {
+      case "FULL_TIME":
+        return "On-Site";
+      case "PART_TIME":
+        return "Hybrid";
+      case "REMOTE":
+        return "Online";
+      default:
+        return "On-Site";
+    }
   };
 
   return (
@@ -94,87 +365,82 @@ function InternshipCard({
       onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
-      className={cn(
-        "group relative flex flex-col rounded-xl border bg-ink-800 overflow-hidden transition-all duration-350 text-left cursor-pointer",
-        selected
-          ? "border-brand-500/50 shadow-[0_12px_40px_rgba(0,200,255,0.2),0_0_0_1px_rgba(0,200,255,0.2)]"
-          : "border-white/8 hover:-translate-y-0.5 hover:border-brand-500/40 hover:shadow-[0_6px_24px_rgba(0,0,0,0.4)]",
-      )}
-      style={{
-        background:
-          "linear-gradient(160deg, rgba(13,23,39,0.95) 0%, rgba(9,18,32,1) 100%)",
-        transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick();
       }}
+      className={cn(
+        "group relative flex flex-col rounded-2xl border p-5 overflow-hidden transition-all duration-300 text-left cursor-pointer",
+        selected
+          ? "border-brand-500/50 bg-ink-800 shadow-[0_8px_30px_rgba(0,200,255,0.15)] animate-none"
+          : "border-white/5 bg-ink-900 hover:border-brand-500/20 hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:-translate-y-0.5",
+      )}
     >
-      <div
-        className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-500/0
-                      to-transparent group-hover:via-brand-500/40 transition-all duration-500 z-10"
-      />
-
-      <div className="flex flex-col flex-1 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          {internship.category && (
-            <span
-              className="inline-flex items-center rounded-full border border-brand-500/20
-                             bg-ink-900/80 backdrop-blur-sm px-2.5 py-0.5 text-[10px]
-                             font-medium text-brand-300/80"
-            >
-              {internship.category.name}
-            </span>
-          )}
+      {/* Top row */}
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="flex gap-2">
           <span
             className={cn(
-              "inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
-              EMPLOYMENT_COLOR[internship.employmentType] ??
-                "bg-white/8 text-white/50 border-white/10",
+              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
+              getModePillColor(internship.employmentType),
             )}
           >
-            {internship.employmentType.charAt(0) +
-              internship.employmentType.slice(1).toLowerCase()}
+            {getModeLabel(internship.employmentType)}
+          </span>
+          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-medium text-white/60">
+            2 Months
           </span>
         </div>
-
-        <h3
-          className="text-[14px] font-semibold leading-snug text-white mb-1
-                       group-hover:text-brand-300 transition-colors duration-300 line-clamp-2 text-left"
+        <div
+          className="flex gap-2.5 relative z-10"
+          onClick={(e) => e.stopPropagation()}
         >
-          {internship.title}
-        </h3>
-
-        <p className="text-[12px] text-brand-300/70 font-medium mb-2 text-left">
-          {internship.company}
-        </p>
-
-        {internship.description && (
-          <p className="text-[12px] text-white/40 leading-relaxed line-clamp-1 mb-3 text-left">
-            {internship.description}
-          </p>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/35 mb-3">
-          {internship.location && (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3 text-brand-500/50" />
-              {internship.location}
-            </span>
-          )}
-          {internship.stipend && (
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3 text-brand-500/50" />
-              {internship.stipend}
-            </span>
-          )}
+          <button
+            className="text-white/40 hover:text-brand-400 transition-colors cursor-pointer"
+            aria-label="Share"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+          <button
+            className="text-white/40 hover:text-brand-400 transition-colors cursor-pointer"
+            aria-label="Bookmark"
+          >
+            <Bookmark className="h-4 w-4" />
+          </button>
         </div>
+      </div>
 
-        <div className="h-px bg-white/5 mb-3" />
+      {/* Title & Company */}
+      <h3 className="text-[16px] font-bold text-white group-hover:text-brand-400 transition-colors duration-250 mb-1 leading-snug line-clamp-1">
+        {internship.title}
+      </h3>
+      <p className="text-[11px] font-bold uppercase tracking-wider text-white/40 mb-3">
+        {internship.company}
+      </p>
 
-        <button
-          onClick={handleApply}
-          className="w-full rounded-lg py-2 text-[12px] font-semibold transition-all duration-250 bg-brand-500 text-ink-950 hover:bg-brand-400"
-        >
-          Apply Now
-        </button>
+      {/* Description */}
+      {internship.description && (
+        <p className="text-[13px] text-white/60 leading-relaxed line-clamp-2 mb-4">
+          {internship.description}
+        </p>
+      )}
+
+      {/* Footer */}
+      <div className="mt-auto pt-2 flex items-center justify-between">
+        <span className="text-[12px] font-semibold text-brand-400/90 group-hover:text-brand-300 transition-colors">
+          {formattedDate}
+        </span>
+      </div>
+
+      {/* Diagonal Accent */}
+      <div className="absolute bottom-0 right-0 w-8 h-8 overflow-hidden pointer-events-none">
+        <div
+          className={cn(
+            "absolute bottom-[-16px] right-[-16px] w-8 h-8 rotate-45 transform origin-bottom-right transition-transform duration-300 group-hover:scale-125",
+            selected
+              ? "bg-brand-500/30"
+              : "bg-white/10 group-hover:bg-brand-500/20",
+          )}
+        />
       </div>
     </div>
   );
@@ -183,9 +449,13 @@ function InternshipCard({
 function DetailPanel({
   internship,
   loading,
+  onApply,
+  onClose,
 }: {
-  internship: DBInternship | null;
+  internship: DBInternshipDetail | null;
   loading: boolean;
+  onApply: () => void;
+  onClose?: () => void;
 }) {
   if (loading) {
     return <SkeletonDetailPanel />;
@@ -195,131 +465,300 @@ function DetailPanel({
     return (
       <div className="rounded-2xl border border-white/5 bg-ink-800/50 p-8 flex flex-col items-center justify-center h-96 text-center">
         <Briefcase className="h-12 w-12 text-white/20 mb-4" />
-        <p className="text-white/40 text-sm">Select an internship to view details</p>
+        <p className="text-white/40 text-sm">
+          Select an internship to view details
+        </p>
       </div>
     );
   }
 
+  const getModePillColor = (mode: string) => {
+    switch (mode) {
+      case "FULL_TIME":
+        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+      case "PART_TIME":
+        return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+      case "REMOTE":
+        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+      default:
+        return "bg-white/8 text-white/50 border-white/10";
+    }
+  };
+
+  const getModeLabel = (mode: string) => {
+    switch (mode) {
+      case "FULL_TIME":
+        return "On-Site";
+      case "PART_TIME":
+        return "Hybrid";
+      case "REMOTE":
+        return "Online";
+      default:
+        return "On-Site";
+    }
+  };
+
   return (
-    <div className="rounded-2xl border border-white/5 bg-ink-800 overflow-hidden">
-      <div className="p-6 space-y-6">
-        <div>
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div>
-              <h2 className="text-xl font-bold text-white mb-1">
+    <div className="rounded-2xl border border-white/5 bg-ink-800 overflow-hidden flex flex-col max-h-[calc(100vh-7rem)]">
+      {/* Scrollable details container */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+        {/* Title / Header */}
+        <div className="relative">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="absolute top-0 right-0 p-1 bg-white/5 hover:bg-white/10 rounded-full text-white/60 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          <div className="flex items-start justify-between gap-3 mb-2 pr-6">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[20px] font-bold text-white leading-snug mb-1">
                 {internship.title}
               </h2>
-              <p className="text-brand-300/70 font-medium">{internship.company}</p>
+              <p className="text-brand-300/70 text-sm font-semibold flex items-center gap-1.5 flex-wrap">
+                {internship.company}
+                {internship.category && (
+                  <>
+                    <span className="text-white/30">•</span>
+                    <span>{internship.category.name}</span>
+                  </>
+                )}
+              </p>
             </div>
-            {internship.category && (
-              <span className="inline-flex items-center rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-medium text-brand-300">
-                {internship.category.name}
-              </span>
+            {!onClose && (
+              <div
+                className="flex gap-2.5 flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="text-white/40 hover:text-brand-400 transition-colors cursor-pointer"
+                  aria-label="Share"
+                >
+                  <Share2 className="h-4.5 w-4.5" />
+                </button>
+                <button
+                  className="text-white/40 hover:text-brand-400 transition-colors cursor-pointer"
+                  aria-label="Bookmark"
+                >
+                  <Bookmark className="h-4.5 w-4.5" />
+                </button>
+              </div>
             )}
           </div>
 
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase",
-              EMPLOYMENT_COLOR[internship.employmentType] ??
-                "bg-white/8 text-white/50 border-white/10",
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 border-b border-white/5 pb-5">
+            <div className="flex gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                  getModePillColor(internship.employmentType),
+                )}
+              >
+                {getModeLabel(internship.employmentType)}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-white/50">
+                2 Months
+              </span>
+            </div>
+            <button
+              onClick={onApply}
+              className="rounded-lg bg-brand-500 hover:bg-brand-400 text-ink-950 font-bold px-5 py-2 text-xs transition-colors cursor-pointer"
+            >
+              Apply Now
+            </button>
+          </div>
+        </div>
+
+        {/* Details Checklist style */}
+        <div>
+          <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3.5">
+            Internship Details
+          </h3>
+          <div className="space-y-3">
+            {internship.stipend && (
+              <div className="flex items-center gap-3 text-white/80">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-brand-400 font-bold text-sm">
+                  ₹
+                </span>
+                <span className="text-[13px] font-bold">
+                  ₹{internship.stipend}
+                </span>
+              </div>
             )}
-          >
-            {internship.employmentType.replace("_", " ")}
-          </span>
+            <div className="flex items-center gap-3 text-white/80">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-white/60">
+                <Briefcase className="h-3.5 w-3.5 text-brand-400" />
+              </span>
+              <span className="text-[13px] font-semibold">
+                {internship.employmentType === "FULL_TIME"
+                  ? "Full Time"
+                  : internship.employmentType === "PART_TIME"
+                    ? "Part Time"
+                    : "Remote"}
+              </span>
+            </div>
+            {internship.location && (
+              <div className="flex items-center gap-3 text-white/80">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-white/60">
+                  <MapPin className="h-3.5 w-3.5 text-brand-400" />
+                </span>
+                <span className="text-[13px] font-semibold">
+                  {internship.location}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="h-px bg-white/5" />
-
-        <div className="grid grid-cols-2 gap-4">
-          {internship.location && (
-            <div>
-              <p className="text-xs text-white/50 mb-1">Location</p>
-              <p className="text-sm text-white/80 font-medium">
-                {internship.location}
-              </p>
-            </div>
-          )}
-          {internship.stipend && (
-            <div>
-              <p className="text-xs text-white/50 mb-1">Stipend</p>
-              <p className="text-sm text-white/80 font-medium">
-                {internship.stipend}
-              </p>
-            </div>
-          )}
-          {internship.domain && (
-            <div>
-              <p className="text-xs text-white/50 mb-1">Domain</p>
-              <p className="text-sm text-white/80 font-medium">
-                {internship.domain}
-              </p>
-            </div>
-          )}
-          {internship.deadline && (
-            <div>
-              <p className="text-xs text-white/50 mb-1">Deadline</p>
-              <p className="text-sm text-white/80 font-medium">
-                {new Date(internship.deadline).toLocaleDateString("en-IN")}
-              </p>
-            </div>
-          )}
-        </div>
-
+        {/* Full Internship Description */}
         {internship.description && (
+          <div>
+            <h3 className="text-xs font-bold text-white/45 uppercase tracking-widest mb-3">
+              Full Internship Description
+            </h3>
+            <PretextAnimatedHeight
+              text={internship.description}
+              font="13px Inter"
+              lineHeight={20}
+            >
+              <p className="text-[13px] text-white/60 leading-relaxed">
+                {internship.description}
+              </p>
+            </PretextAnimatedHeight>
+          </div>
+        )}
+
+        {/* Key Learning Outcomes */}
+        {internship.keyLearningOutcomes &&
+          internship.keyLearningOutcomes.length > 0 && (
+            <>
+              <div className="h-px bg-white/5" />
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="h-4 w-4 text-brand-400" />
+                  <h3 className="text-xs font-bold text-white/45 uppercase tracking-widest">
+                    Key Learning Outcomes
+                  </h3>
+                </div>
+                <ul className="space-y-3.5">
+                  {internship.keyLearningOutcomes.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="h-4.5 w-4.5 text-brand-500/70 flex-shrink-0 mt-0.5" />
+                      <div>
+                        {item.title && (
+                          <p className="text-[13px] font-bold text-white/90 leading-snug">
+                            {item.title}
+                          </p>
+                        )}
+                        {item.body && (
+                          <p className="text-[12px] text-white/50 leading-relaxed mt-0.5">
+                            {item.body}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+
+        {/* Major Project */}
+        {internship.majorProject && internship.majorProject.length > 0 && (
           <>
             <div className="h-px bg-white/5" />
             <div>
-              <h3 className="text-sm font-semibold text-white mb-2">
-                Full Description
-              </h3>
-              <p className="text-sm text-white/60 leading-relaxed">
-                {internship.description}
-              </p>
+              <div className="flex items-center gap-2 mb-4">
+                <FolderKanban className="h-4 w-4 text-brand-400" />
+                <h3 className="text-xs font-bold text-white/45 uppercase tracking-widest">
+                  Major Project
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {internship.majorProject.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col md:flex-row rounded-2xl border border-brand-500/15 bg-gradient-to-r from-ink-950 to-brand-950/20 overflow-hidden"
+                  >
+                    <div className="flex items-center justify-center p-6 md:w-1/3 bg-brand-500/5 md:border-r border-brand-500/15">
+                      <h4 className="text-[18px] font-black text-brand-300 leading-tight uppercase text-center tracking-wider">
+                        Major
+                        <br />
+                        Project
+                      </h4>
+                    </div>
+                    <div className="p-6 md:w-2/3 flex items-center">
+                      <p className="text-[13px] text-white/70 leading-relaxed font-medium">
+                        {item.body || item.title}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
 
-        <div className="h-px bg-white/5" />
-
-        <Link
-          href={`/internships/${internship.slug}`}
-          className="block w-full rounded-lg bg-brand-500 text-ink-950 font-semibold py-3 text-center hover:bg-brand-400 transition-colors duration-250"
-        >
-          View Full Details
-        </Link>
+        {/* What You'll Receive */}
+        {((internship.whatYouReceive && internship.whatYouReceive.length > 0) ||
+          true) && (
+          <>
+            <div className="h-px bg-white/5" />
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Gift className="h-4 w-4 text-brand-400" />
+                <h3 className="text-xs font-bold text-white/45 uppercase tracking-widest">
+                  What You&apos;ll Receive
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {internship.whatYouReceive &&
+                internship.whatYouReceive.length > 0 ? (
+                  internship.whatYouReceive.map((item, i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg border border-white/8 bg-white/4 px-3 py-2"
+                    >
+                      <p className="text-[12px] font-semibold text-white/80">
+                        {item.title}
+                      </p>
+                      {item.body && (
+                        <p className="text-[10px] text-white/40 mt-0.5">
+                          {item.body}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-[12px] font-semibold text-white/80">
+                      Experience Letter
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-[12px] font-semibold text-white/80">
+                      Completion Certificate
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-[12px] font-semibold text-white/80">
+                      Digital Verification Certificate
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/4 px-3 py-2 text-[12px] font-semibold text-white/80">
+                      Professional Portfolio
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-full px-4 py-1.5 text-[13px] font-medium border transition-all duration-250",
-        active
-          ? "bg-brand-500/12 border-brand-500/40 text-brand-300"
-          : "border-white/8 bg-white/3 text-white/40 hover:border-brand-500/25 hover:text-white/70",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+    <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
       <div
         className="h-16 w-16 rounded-2xl border border-white/8 bg-white/4
                       flex items-center justify-center mb-5"
@@ -335,8 +774,8 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       <button
         onClick={onReset}
         className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4
-                   px-5 py-2 text-[13px] text-white/50 hover:text-white/80 hover:border-white/20
-                   transition-all duration-250"
+                   px-5 py-2.5 text-[13px] text-white/65 hover:text-white hover:border-white/20
+                   transition-all duration-250 cursor-pointer"
       >
         <RotateCcw className="h-3.5 w-3.5" /> Reset filters
       </button>
@@ -345,23 +784,36 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 }
 
 export default function InternshipsPage() {
+  const router = useRouter();
+  const { user } = useAppSelector((s) => s.auth);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [employment, setEmployment] = useState<EmploymentFilter>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedInternship, setSelectedInternship] = useState<DBInternship | null>(
-    null,
-  );
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
-  const { data, isLoading: loading, isError, error } = useInternships(
-    currentPage,
-    selectedCategory ?? undefined,
-  );
-  const { data: categories = [] } = useQuery({
-    queryKey: ["internship-categories"],
-    queryFn: fetchInternshipCategories,
-  });
+  // Custom dropdown filters
+  const [selectedField, setSelectedField] = useState("ALL");
+  const [selectedCity, setSelectedCity] = useState("ALL");
+
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+  } = useInternships(currentPage, selectedCategory ?? undefined);
+
+  const { data: categories = [] } = useInternshipCategories();
+
+  const { data: detailData, isLoading: detailLoading } =
+    useQuery<DBInternshipDetail>({
+      queryKey: ["internship-detail", selectedSlug],
+      queryFn: () => fetchInternshipBySlug(selectedSlug!),
+      enabled: !!selectedSlug,
+    });
 
   const internships = data?.data ?? [];
   const pagination = data
@@ -374,6 +826,42 @@ export default function InternshipsPage() {
         hasPreviousPage: data.hasPreviousPage,
       }
     : null;
+
+  // Scan internships list for fields & cities dynamically
+  const fieldOptions = useMemo(() => {
+    const unique = new Set<string>();
+    internships.forEach((i) => {
+      if (i.domain) unique.add(i.domain);
+    });
+    return [
+      { value: "ALL", label: "All Fields" },
+      ...Array.from(unique).map((f) => ({ value: f, label: f })),
+    ];
+  }, [internships]);
+
+  const cityOptions = useMemo(() => {
+    const unique = new Set<string>();
+    internships.forEach((i) => {
+      if (i.location) {
+        const city = i.location.split(",")[0].trim();
+        unique.add(city);
+      }
+    });
+    return [
+      { value: "ALL", label: "All Cities" },
+      ...Array.from(unique).map((c) => ({ value: c, label: c })),
+    ];
+  }, [internships]);
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: "ALL", label: "All Categories" },
+      ...categories.map((c) => ({ value: c.id, label: c.name })),
+    ],
+    [categories],
+  );
+
+  const topCategories = categories.slice(0, 5);
 
   const filtered = useMemo(() => {
     let list = [...internships];
@@ -392,21 +880,60 @@ export default function InternshipsPage() {
       list = list.filter((i) => i.employmentType === employment);
     }
 
+    if (selectedField !== "ALL") {
+      list = list.filter((i) => i.domain === selectedField);
+    }
+
+    if (selectedCity !== "ALL") {
+      list = list.filter((i) =>
+        i.location?.toLowerCase().includes(selectedCity.toLowerCase()),
+      );
+    }
+
+    if (selectedCategory) {
+      list = list.filter((i) => i.category?.id === selectedCategory);
+    }
+
     return list;
-  }, [internships, search, employment]);
+  }, [
+    internships,
+    search,
+    employment,
+    selectedField,
+    selectedCity,
+    selectedCategory,
+  ]);
+
+  // Auto-select first internship on load/filter change
+  useEffect(() => {
+    if (filtered.length > 0) {
+      const exists = filtered.some((i) => i.slug === selectedSlug);
+      if (!exists) {
+        setSelectedSlug(filtered[0].slug);
+      }
+    } else {
+      setSelectedSlug(null);
+    }
+  }, [filtered, selectedSlug]);
 
   const hasActiveFilters =
-    employment !== "ALL" || search.trim().length > 0 || selectedCategory;
+    employment !== "ALL" ||
+    search.trim().length > 0 ||
+    selectedCategory !== null ||
+    selectedField !== "ALL" ||
+    selectedCity !== "ALL";
 
   const resetFilters = () => {
     setSearch("");
     setEmployment("ALL");
     setSelectedCategory(null);
+    setSelectedField("ALL");
+    setSelectedCity("ALL");
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handleApply = () => {
+    if (!user) router.push("/login");
   };
 
   return (
@@ -414,213 +941,194 @@ export default function InternshipsPage() {
       <Navbar />
 
       <main
-        className="min-h-screen text-white overflow-x-hidden pt-16"
+        className="min-h-screen text-white overflow-x-hidden pt-20"
         style={{
           background:
-            "linear-gradient(160deg, #060D1A 0%, #091220 25%, #060D1A 55%, #091525 80%, #060D1A 100%)",
+            "linear-gradient(160deg, #050B14 0%, #080F1C 35%, #050B14 70%, #0D1727 100%)",
         }}
       >
-        {/* ambient layers */}
         <div
-          className="pointer-events-none fixed inset-0 dot-grid-dark opacity-20"
+          className="pointer-events-none fixed inset-0 dot-grid-dark opacity-15"
           aria-hidden
         />
         <div
-          className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] opacity-[0.11]"
+          className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] opacity-[0.12]"
           style={{
             background:
-              "radial-gradient(ellipse at top, rgba(0,200,255,0.45) 0%, transparent 65%)",
-            filter: "blur(70px)",
-          }}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none fixed bottom-0 right-0 w-[600px] h-[500px] opacity-[0.07]"
-          style={{
-            background:
-              "radial-gradient(ellipse at bottom right, rgba(0,80,200,0.7) 0%, transparent 65%)",
-            filter: "blur(90px)",
+              "radial-gradient(ellipse at top, rgba(0,200,255,0.4) 0%, transparent 65%)",
+            filter: "blur(80px)",
           }}
           aria-hidden
         />
 
-        <div className="relative container-x py-10 max-w-7xl">
-          {/* ── PAGE HEADER ── */}
+        <div className="relative container-x py-10 max-w-[1400px]">
+          {/* PAGE HERO */}
           <ScrollReveal animation="fade-up" duration={700}>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span
-                  className="flex h-8 w-8 items-center justify-center rounded-lg
-                                 bg-brand-500/10 border border-brand-500/20"
-                >
-                  <Briefcase className="h-4 w-4 text-brand-400" />
-                </span>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400">
-                  Career Opportunities
-                </p>
-              </div>
-            </div>
-
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-white mb-2">
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white mb-3">
               Our Programs
             </h1>
-            <p className="text-white/40 text-[14px] leading-relaxed max-w-2xl mb-10">
-              Explore curated internship opportunities to launch your career. Filter by employment type and find your perfect fit.
+            <p className="text-white/50 text-[14px] leading-relaxed max-w-2xl mb-12">
+              Explore our comprehensive curriculum designed for the next era of
+              technological mastery. Filter by level, duration, and investment
+              to find your optimal path.
             </p>
           </ScrollReveal>
 
-          {/* ── SECTION 1: CATEGORY FILTER ── */}
-          {categories.length > 0 && (
-            <ScrollReveal animation="fade-up" delay={100} duration={650}>
-              <div className="mb-12">
-                <h3 className="text-sm font-semibold text-white/70 mb-4 uppercase tracking-wide">
-                  Browse by Category
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  <button
+          {/* BROWSE BY CATEGORY */}
+          <ScrollReveal animation="fade-up" delay={100} duration={650}>
+            <div className="mb-14">
+              <h2 className="text-2xl font-bold text-white mb-1.5">
+                Browse by Category
+              </h2>
+              <p className="text-white/40 text-sm mb-6">
+                Find the right opportunity matching your skills and interests
+              </p>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {topCategories.map((cat, idx) => (
+                  <CategoryCard
+                    key={cat.id}
+                    name={cat.name}
+                    count={`${cat.count} Opening${cat.count !== 1 ? "s" : ""}`}
+                    colorIndex={idx}
+                    isSelected={selectedCategory === cat.id}
                     onClick={() => {
-                      setSelectedCategory(null);
+                      setSelectedCategory(cat.id);
                       setCurrentPage(1);
                     }}
-                    className={cn(
-                      "rounded-full px-5 py-2.5 text-[13px] font-medium border transition-all duration-250 hover:scale-105",
-                      !selectedCategory
-                        ? "bg-brand-500/15 border-brand-500/50 text-brand-200 shadow-[0_0_20px_rgba(0,200,255,0.15)]"
-                        : "border-white/10 bg-white/5 text-white/50 hover:border-brand-500/30 hover:text-white/70",
-                    )}
-                  >
-                    All
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        setCurrentPage(1);
-                      }}
-                      className={cn(
-                        "rounded-full px-5 py-2.5 text-[13px] font-medium border transition-all duration-250 hover:scale-105",
-                        selectedCategory === cat.id
-                          ? "bg-brand-500/15 border-brand-500/50 text-brand-200 shadow-[0_0_20px_rgba(0,200,255,0.15)]"
-                          : "border-white/10 bg-white/5 text-white/50 hover:border-brand-500/30 hover:text-white/70",
-                      )}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
+                  />
+                ))}
+                <CategoryCard
+                  name="View All"
+                  count={`${categories.reduce((s, c) => s + c.count, 0)}+ Openings`}
+                  colorIndex={5}
+                  isSelected={selectedCategory === null}
+                  onClick={() => {
+                    setSelectedCategory(null);
+                    setCurrentPage(1);
+                  }}
+                />
               </div>
-            </ScrollReveal>
-          )}
+            </div>
+          </ScrollReveal>
 
-          {/* ── SECTION 2 & 3: FILTERS + CARDS + DETAIL PANEL ── */}
+          {/* FILTERS + CARDS + DETAIL PANEL */}
           <ScrollReveal animation="fade-up" delay={150} duration={650}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* LEFT SIDEBAR: FILTERS */}
-              <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_460px] gap-8">
+              {/* LEFT: FILTERS COLUMN */}
+              <div>
                 <div
                   className={cn(
-                    "rounded-2xl border border-white/5 bg-ink-800/50 p-6",
-                    "lg:block",
-                    "lg:sticky lg:top-24",
-                    filtersOpen ? "block" : "hidden",
+                    "rounded-2xl border border-white/5 bg-ink-900/60 backdrop-blur-md p-5 sticky top-24",
+                    filtersOpen ? "block" : "hidden lg:block",
                   )}
                 >
-                  <div className="flex items-center justify-between mb-5 lg:mb-6 lg:hidden">
-                    <h3 className="font-semibold text-white text-sm">Filters</h3>
+                  <div className="flex items-center justify-between mb-5 lg:hidden">
+                    <h3 className="font-bold text-white text-sm">Filters</h3>
                     <button
                       onClick={() => setFiltersOpen(false)}
-                      className="text-white/40 hover:text-white/60"
+                      className="text-white/40 hover:text-white/60 cursor-pointer"
                     >
                       <X className="h-5 w-5" />
                     </button>
                   </div>
 
-                  <h3 className="hidden lg:block text-sm font-semibold text-white mb-6 uppercase tracking-wide">Filters</h3>
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="hidden lg:block text-xs font-bold text-white uppercase tracking-widest">
+                      Filters
+                    </h3>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={resetFilters}
+                        className="text-[11px] font-semibold text-brand-400 hover:text-brand-300 transition-colors cursor-pointer"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
 
-                  <div className="space-y-6">
-                    {/* search */}
+                  <div className="space-y-5">
+                    {/* Search Role */}
                     <div>
-                      <label className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-2 block">
+                      <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 block">
                         Search
                       </label>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30 pointer-events-none" />
                         <input
                           type="text"
-                          placeholder="Internship name..."
+                          placeholder="Search by role..."
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
-                          className="w-full rounded-lg border border-white/8 bg-white/[0.04] pl-10 pr-4 py-2.5
-                                     text-[13px] text-white placeholder-white/22
-                                     focus:outline-none focus:border-brand-500/50 focus:bg-white/[0.06]
+                          className="w-full rounded-lg border border-white/8 bg-white/4 pl-9 pr-3 py-2.5
+                                     text-[12px] text-white placeholder-white/20
+                                     focus:outline-none focus:border-brand-500/50
                                      transition-all duration-200"
                         />
                       </div>
                     </div>
 
-                    {/* employment type */}
-                    <div>
-                      <label className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-3 block">
-                        Employment Type
-                      </label>
-                      <div className="space-y-2">
-                        {EMPLOYMENT_OPTIONS.map((e) => (
-                          <button
-                            key={e.value}
-                            onClick={() => setEmployment(e.value)}
-                            className={cn(
-                              "w-full text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-250",
-                              employment === e.value
-                                ? "bg-brand-500/12 border border-brand-500/40 text-brand-300"
-                                : "border border-white/8 text-white/60 hover:border-brand-500/25 hover:text-white/80",
-                            )}
-                          >
-                            {e.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Field Dropdown */}
+                    <FilterDropdown
+                      label="Field"
+                      value={selectedField}
+                      options={fieldOptions}
+                      onChange={setSelectedField}
+                    />
 
-                    {/* reset */}
-                    {hasActiveFilters && (
-                      <button
-                        onClick={resetFilters}
-                        className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/8 px-3 py-2.5
-                                   text-[13px] text-white/40 hover:text-white/70 hover:border-white/20
-                                   transition-all duration-250"
-                      >
-                        <RotateCcw className="h-4 w-4" /> Reset Filters
-                      </button>
-                    )}
+                    {/* Work Type Dropdown */}
+                    <FilterDropdown
+                      label="Work Type"
+                      value={employment}
+                      options={EMPLOYMENT_OPTIONS}
+                      onChange={(v) => setEmployment(v as EmploymentFilter)}
+                    />
+
+                    {/* City Dropdown */}
+                    <FilterDropdown
+                      label="City"
+                      value={selectedCity}
+                      options={cityOptions}
+                      onChange={setSelectedCity}
+                    />
+
+                    {/* Category Dropdown */}
+                    <FilterDropdown
+                      label="Category"
+                      value={selectedCategory || "ALL"}
+                      options={categoryOptions}
+                      onChange={(v) => {
+                        setSelectedCategory(v === "ALL" ? null : v);
+                      }}
+                    />
                   </div>
                 </div>
 
-                {/* filter toggle button (mobile) */}
+                {/* Mobile Filter Toggle */}
                 <button
                   onClick={() => setFiltersOpen(!filtersOpen)}
                   className="lg:hidden w-full flex items-center justify-center gap-2 rounded-lg border border-white/8 px-4 py-3
-                             text-[13px] font-medium text-white/50 hover:text-white/70 mb-4"
+                             text-[13px] font-semibold text-white/60 hover:text-white mb-4 cursor-pointer"
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                   {filtersOpen ? "Hide Filters" : "Show Filters"}
                 </button>
               </div>
 
-              {/* CENTER: CARD GRID */}
-              <div className="lg:col-span-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <p className="text-[12px] text-white/40 uppercase tracking-wide font-medium">
+              {/* CENTER: CARD LIST COLUMN */}
+              <div>
+                <div className="mb-4">
+                  <p className="text-[11px] text-white/40 uppercase tracking-widest font-semibold">
                     {loading
                       ? "Loading..."
-                      : `${filtered.length} internship${filtered.length !== 1 ? "s" : ""}`}
+                      : `${filtered.length} opportunity${filtered.length !== 1 ? "ies" : ""}`}
                   </p>
                 </div>
 
                 {isError && (
-                  <div className="rounded-2xl border border-red-500/20 bg-red-500/8 p-8 text-center">
-                    <X className="h-8 w-8 text-red-400/70 mx-auto mb-3" />
-                    <h3 className="text-[14px] font-semibold text-white/50 mb-1">
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center">
+                    <X className="h-8 w-8 text-red-400/60 mx-auto mb-3" />
+                    <h3 className="text-[14px] font-bold text-white/50 mb-1">
                       Something went wrong
                     </h3>
                     <p className="text-[12px] text-white/30">
@@ -639,47 +1147,48 @@ export default function InternshipsPage() {
                       <EmptyState onReset={resetFilters} />
                     ) : (
                       filtered.map((internship) => (
-                        <InternshipCard
+                        <InternshipCardComponent
                           key={internship.id}
                           internship={internship}
-                          selected={selectedInternship?.id === internship.id}
-                          onClick={() => setSelectedInternship(internship)}
+                          selected={selectedSlug === internship.slug}
+                          onClick={() => {
+                            setSelectedSlug(internship.slug);
+                            setMobileDetailOpen(true);
+                          }}
                         />
                       ))
                     )}
                   </div>
                 )}
 
-                {/* pagination */}
                 {!isError && !loading && filtered.length > 0 && pagination && (
-                  <div className="mt-6 flex items-center justify-center gap-2">
+                  <div className="mt-8 flex items-center justify-center gap-2">
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
+                      onClick={() => setCurrentPage((p) => p - 1)}
                       disabled={!pagination.hasPreviousPage}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer",
                         pagination.hasPreviousPage
-                          ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300"
-                          : "border border-white/5 text-white/20 cursor-not-allowed",
+                          ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 bg-white/2"
+                          : "border border-white/5 text-white/20 cursor-not-allowed bg-transparent",
                       )}
                     >
-                      <ChevronLeft className="h-3 w-3" />
-                      Prev
+                      <ChevronLeft className="h-3 w-3" /> Prev
                     </button>
 
                     <div className="flex items-center gap-1">
                       {Array.from(
-                        { length: Math.min(pagination.totalPages, 3) },
+                        { length: pagination.totalPages },
                         (_, i) => i + 1,
                       ).map((page) => (
                         <button
                           key={page}
-                          onClick={() => handlePageChange(page)}
+                          onClick={() => setCurrentPage(page)}
                           className={cn(
-                            "h-8 w-8 rounded-lg text-xs font-medium transition-all duration-200",
+                            "h-8 w-8 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer",
                             currentPage === page
-                              ? "bg-brand-500 text-ink-950 font-semibold"
-                              : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300",
+                              ? "bg-brand-500 text-ink-950 font-black"
+                              : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 bg-white/2",
                           )}
                         >
                           {page}
@@ -688,28 +1197,28 @@ export default function InternshipsPage() {
                     </div>
 
                     <button
-                      onClick={() => handlePageChange(currentPage + 1)}
+                      onClick={() => setCurrentPage((p) => p + 1)}
                       disabled={!pagination.hasNextPage}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                        "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 cursor-pointer",
                         pagination.hasNextPage
-                          ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300"
-                          : "border border-white/5 text-white/20 cursor-not-allowed",
+                          ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 bg-white/2"
+                          : "border border-white/5 text-white/20 cursor-not-allowed bg-transparent",
                       )}
                     >
-                      Next
-                      <ChevronRight className="h-3 w-3" />
+                      Next <ChevronRight className="h-3 w-3" />
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* RIGHT: DETAIL PANEL */}
-              <div className="lg:col-span-4 hidden lg:block">
+              {/* RIGHT: DESKTOP DETAIL PANEL */}
+              <div className="hidden lg:block">
                 <div className="sticky top-24">
                   <DetailPanel
-                    internship={selectedInternship}
-                    loading={loading && !selectedInternship}
+                    internship={detailData ?? null}
+                    loading={detailLoading && !!selectedSlug}
+                    onApply={handleApply}
                   />
                 </div>
               </div>
@@ -717,6 +1226,23 @@ export default function InternshipsPage() {
           </ScrollReveal>
         </div>
       </main>
+
+      {/* MOBILE DRAWER / OVERLAY PANEL */}
+      {mobileDetailOpen && selectedSlug && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm lg:hidden">
+          <div className="relative w-full max-h-[85vh] bg-ink-950 rounded-t-3xl border-t border-white/10 overflow-hidden shadow-2xl animate-fade-up-in">
+            <div className="h-1.5 w-12 bg-white/10 rounded-full mx-auto my-3 pointer-events-none" />
+            <div className="p-4 overflow-y-auto max-h-[80vh]">
+              <DetailPanel
+                internship={detailData ?? null}
+                loading={detailLoading && !!selectedSlug}
+                onApply={handleApply}
+                onClose={() => setMobileDetailOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
