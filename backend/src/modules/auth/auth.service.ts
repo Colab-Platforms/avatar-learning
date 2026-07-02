@@ -96,8 +96,6 @@ class AuthService {
             throw new ApiError("This phone number is already registered to another account.", STATUS_CODES.CONFLICT);
         }
 
-        let userId: string;
-
         //email not verfied
         if (existingUser) {
             await prisma.user.update({
@@ -112,11 +110,10 @@ class AuthService {
                     isPhoneVerified: false,
                 },
             });
-            userId = existingUser.id;
         }
         //new user
         else {
-            const user = await prisma.$transaction(async (tx) => { //creating user and mapping role in a transaction
+            await prisma.$transaction(async (tx) => { //creating user and mapping role in a transaction
                 const created = await tx.user.create({
                     data: {
                         firstName: data.firstName,
@@ -135,7 +132,6 @@ class AuthService {
                 });
                 return created;
             });
-            userId = user.id;
         }
 
         return { message: "Account created. Please choose a verification method to continue." };

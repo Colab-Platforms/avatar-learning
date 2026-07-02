@@ -41,21 +41,6 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
         const device = req.headers["user-agent"];
         const result = await authService.verifyOtp(value, device);
 
-        if ("requiresPhoneVerification" in result) {
-            sendResponse(
-                res,
-                true,
-                {
-                    requiresPhoneVerification: true,
-                    email: result.email,
-                    phoneNo: result.phoneNo,
-                },
-                result.message,
-                STATUS_CODES.OK
-            );
-            return;
-        }
-
         sendResponse(
             res,
             true,
