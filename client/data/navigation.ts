@@ -3,7 +3,8 @@ import type { NavItem, FooterColumn, SocialLink } from "@/types";
 export const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Learning", href: "/courses" },
-  { label: "Marketplace", href: "#" },
+  { label: "Internships", href: "/internships" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Contact", href: "/contact" },
   { label: "About", href: "/about" },
 ];

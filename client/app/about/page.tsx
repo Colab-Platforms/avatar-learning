@@ -13,6 +13,20 @@ import {
   Briefcase,
   FlaskConical,
 } from "lucide-react";
+import {
+  SiGooglecloud,
+  SiNvidia,
+  SiIntel,
+  SiSnowflake,
+  SiUipath,
+  SiGithub,
+  SiCisco,
+  SiPaloaltonetworks,
+  SiHuggingface,
+  SiPytorch,
+  SiTensorflow,
+  SiDatabricks,
+} from "react-icons/si";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollReveal, AnimateOnScroll } from "@/components/ui";
@@ -52,29 +66,29 @@ const DIVISIONS = [
   },
   {
     icon: Briefcase,
-    label: "Enterprise AI",
-    desc: "End-to-end AI infrastructure for organizations at scale.",
+    label: "Internship",
+    desc: "Real projects. Real mentors. Real industry experience.",
   },
   {
     icon: FlaskConical,
-    label: "AI Research",
-    desc: "Building multilingual and responsible AI for the real world.",
+    label: "Counselling",
+    desc: "Expert guidance to turn your ambitions into a successful career",
   },
 ];
 
 const PARTNERS = [
-  "Google Cloud",
-  "Microsoft Azure",
-  "AWS",
-  "NVIDIA",
-  "Intel",
-  "IBM Watson",
-  "Snowflake",
-  "Salesforce",
-  "UiPath",
-  "GitHub",
-  "Cisco",
-  "Palo Alto",
+  { name: "Google Cloud", Icon: SiGooglecloud, color: "#4285F4" },
+  { name: "NVIDIA", Icon: SiNvidia, color: "#76B900" },
+  { name: "Intel", Icon: SiIntel, color: "#0071C5" },
+  { name: "Snowflake", Icon: SiSnowflake, color: "#29B5E8" },
+  { name: "UiPath", Icon: SiUipath, color: "#FA4616" },
+  { name: "GitHub", Icon: SiGithub, color: "#E6EDF3" },
+  { name: "Cisco", Icon: SiCisco, color: "#1BA0D7" },
+  { name: "Palo Alto", Icon: SiPaloaltonetworks, color: "#FA582D" },
+  { name: "Hugging Face", Icon: SiHuggingface, color: "#FFD21E" },
+  { name: "PyTorch", Icon: SiPytorch, color: "#EE4C2C" },
+  { name: "TensorFlow", Icon: SiTensorflow, color: "#FF6F00" },
+  { name: "Databricks", Icon: SiDatabricks, color: "#FF3621" },
 ];
 
 /* ─── page ──────────────────────────────────────────────────────────── */
@@ -109,7 +123,7 @@ export default function AboutPage() {
         {/* ══════════════════════════════
             HERO
         ══════════════════════════════ */}
-        <section className="relative py-24 sm:py-32 overflow-hidden">
+        <section className="relative py-12 sm:pt-25 overflow-hidden">
           <div
             className="pointer-events-none absolute inset-0 line-grid opacity-20"
             aria-hidden
@@ -255,7 +269,7 @@ export default function AboutPage() {
         {/* ══════════════════════════════
             OUR STORY
         ══════════════════════════════ */}
-        <section className="py-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-12 border-t border-white/5 relative overflow-hidden">
           <div
             className="pointer-events-none absolute inset-0 dot-grid-dark opacity-25"
             aria-hidden
@@ -280,8 +294,8 @@ export default function AboutPage() {
               <p className="text-white/45 text-[16px] leading-relaxed mb-5">
                 Avatar started with a simple but powerful question:{" "}
                 <span className="text-white/70 font-medium">
-                  What if anyone — regardless of background, budget, or
-                  technical expertise — could harness the power of AI?
+                  What if anyone regardless of background, budget, or technical
+                  expertise could harness the power of AI?
                 </span>{" "}
                 That question sparked a journey to build the most comprehensive
                 AI platform in the world.
@@ -301,7 +315,7 @@ export default function AboutPage() {
             VISION & MISSION
         ══════════════════════════════ */}
         <section
-          className="py-24 border-t border-white/5 relative overflow-hidden"
+          className="py-12 border-t border-white/5 relative overflow-hidden"
           id="vision-mission"
         >
           <div
@@ -425,7 +439,7 @@ export default function AboutPage() {
         {/* ══════════════════════════════
             DIVISIONS
         ══════════════════════════════ */}
-        <section className="py-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-12 border-t border-white/5 relative overflow-hidden">
           <div
             className="pointer-events-none absolute inset-0 dot-grid-dark opacity-20"
             aria-hidden
@@ -435,7 +449,7 @@ export default function AboutPage() {
             <ScrollReveal animation="fade-up" className="text-center mb-14">
               <p className="eyebrow mb-4">Our Ecosystem</p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-                Eight Divisions, One Platform
+                Four Divisions, One Platform
               </h2>
               <p className="mt-3 text-white/38 max-w-xl mx-auto">
                 End-to-end AI capabilities that grow with our users — from first
@@ -483,7 +497,7 @@ export default function AboutPage() {
         {/* ══════════════════════════════
             PARTNERS
         ══════════════════════════════ */}
-        <section className="py-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-12 border-t border-white/5 relative overflow-hidden">
           <div
             className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[300px] opacity-[0.06]"
             style={{
@@ -508,19 +522,24 @@ export default function AboutPage() {
 
             <ScrollReveal animation="fade-up" delay={100}>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                {PARTNERS.map((name, i) => (
+                {PARTNERS.map(({ name, Icon, color }) => (
                   <div
                     key={name}
-                    className="group rounded-xl border border-white/5 px-4 py-5 flex items-center justify-center
-                               hover:border-brand-500/25 hover:bg-brand-500/4 transition-all duration-300"
+                    title={name}
+                    className="group relative rounded-xl border border-white/5 px-4 py-6 flex flex-col items-center justify-center gap-2
+                               hover:border-white/15 hover:bg-white/3 transition-all duration-300 cursor-default"
                     style={{
                       background:
                         "linear-gradient(145deg,rgba(13,23,39,0.7) 0%,rgba(9,18,32,0.85) 100%)",
                     }}
                   >
+                    <Icon
+                      className="h-7 w-7 transition-all duration-300 text-white/55 group-hover:text-[var(--brand-color)] group-hover:scale-110"
+                      style={{ "--brand-color": color } as React.CSSProperties}
+                    />
                     <span
-                      className="text-[12px] font-medium text-white/30 group-hover:text-white/60
-                                     text-center leading-snug transition-colors duration-300"
+                      className="text-[10px] font-medium text-white/0 group-hover:text-white/50
+                                 text-center leading-snug transition-all duration-300 absolute bottom-2"
                     >
                       {name}
                     </span>
@@ -552,7 +571,7 @@ export default function AboutPage() {
         {/* ══════════════════════════════
             CTA
         ══════════════════════════════ */}
-        <section className="py-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-12 border-t border-white/5 relative overflow-hidden">
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div

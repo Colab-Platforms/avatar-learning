@@ -12,6 +12,9 @@ import {
   CheckCircle,
   Clock,
   Users,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react";
 import {
   fetchAdminCourse,
@@ -19,6 +22,7 @@ import {
   deleteLesson,
   deleteResource,
   toggleCoursePublish,
+  updateCourse,
 } from "@/lib/adminApi";
 import {
   Field,
@@ -102,6 +106,15 @@ export default function CourseDetailPage() {
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
   const [editingModules, setEditingModules] = useState<string | null>(null);
+  const [editingHeader, setEditingHeader] = useState(false);
+  const [savingHeader, setSavingHeader] = useState(false);
+  const [headerForm, setHeaderForm] = useState({
+    title: "",
+    description: "",
+    level: "",
+    price: 0,
+    totalWeeks: 1,
+  });
   const [lessonForm, setLessonForm] = useState({
     weekNumber: 1,
     title: "",
@@ -135,6 +148,34 @@ export default function CourseDetailPage() {
       setError("Failed to toggle publish state.");
     } finally {
       setTogglingPublish(false);
+    }
+  };
+
+  const startEditHeader = () => {
+    if (!course) return;
+    setHeaderForm({
+      title: course.title,
+      description: course.description ?? "",
+      level: course.level,
+      price: course.price,
+      totalWeeks: course.totalWeeks,
+    });
+    setEditingHeader(true);
+  };
+
+  const submitHeader = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingHeader(true);
+    setError("");
+    try {
+      await updateCourse(id, headerForm);
+      setEditingHeader(false);
+      await load();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e?.response?.data?.message ?? "Failed to update course.");
+    } finally {
+      setSavingHeader(false);
     }
   };
 
@@ -248,82 +289,181 @@ export default function CourseDetailPage() {
 
       {/* Course Header */}
       <div className="bg-ink-800 border border-white/6 rounded-2xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-          {course.thumbnail ? (
-            <img
-              src={course.thumbnail}
-              alt={course.title}
-              className="w-full sm:w-40 h-24 object-cover rounded-xl shrink-0 bg-ink-700"
-            />
-          ) : (
-            <div className="w-full sm:w-40 h-24 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
-              <FileText size={28} className="text-white/20" />
+        {editingHeader ? (
+          <form onSubmit={submitHeader} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Title" required className="sm:col-span-2">
+                <input
+                  value={headerForm.title}
+                  onChange={(e) =>
+                    setHeaderForm((f) => ({ ...f, title: e.target.value }))
+                  }
+                  className={inputCls}
+                  required
+                />
+              </Field>
+              <Field label="Description" className="sm:col-span-2">
+                <textarea
+                  value={headerForm.description}
+                  onChange={(e) =>
+                    setHeaderForm((f) => ({
+                      ...f,
+                      description: e.target.value,
+                    }))
+                  }
+                  rows={2}
+                  className={`${inputCls} resize-none`}
+                />
+              </Field>
+              <Field label="Level" required>
+                <select
+                  value={headerForm.level}
+                  onChange={(e) =>
+                    setHeaderForm((f) => ({ ...f, level: e.target.value }))
+                  }
+                  className={inputCls}
+                  required
+                >
+                  <option value="BEGINNER">Beginner</option>
+                  <option value="INTERMEDIATE">Intermediate</option>
+                  <option value="ADVANCED">Advanced</option>
+                </select>
+              </Field>
+              <Field label="Price (₹)" required>
+                <input
+                  type="number"
+                  min={0}
+                  value={headerForm.price}
+                  onChange={(e) =>
+                    setHeaderForm((f) => ({
+                      ...f,
+                      price: Number(e.target.value),
+                    }))
+                  }
+                  className={inputCls}
+                  required
+                />
+              </Field>
+              <Field label="Total Weeks" required>
+                <input
+                  type="number"
+                  min={1}
+                  value={headerForm.totalWeeks}
+                  onChange={(e) =>
+                    setHeaderForm((f) => ({
+                      ...f,
+                      totalWeeks: Number(e.target.value),
+                    }))
+                  }
+                  className={inputCls}
+                  required
+                />
+              </Field>
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h1 className="text-xl font-bold text-white">{course.title}</h1>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${LEVEL_COLOR[course.level]}`}
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setEditingHeader(false)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-white/10 text-white/55 text-xs hover:text-white/80 hover:bg-white/4 transition-colors"
               >
-                {course.level}
-              </span>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <X size={13} /> Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingHeader}
+                className={`${primaryBtn} disabled:opacity-50`}
+              >
+                {savingHeader ? <Spinner /> : <Check size={13} />}
+                {savingHeader ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            {/* {course.thumbnail ? (
+              <img
+                src={course.thumbnail}
+                alt={course.title}
+                className="w-full sm:w-40 h-24 object-cover rounded-xl shrink-0 bg-ink-700"
+              />
+            ) : (
+              <div className="w-full sm:w-40 h-24 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
+                <FileText size={28} className="text-white/20" />
+              </div>
+            )} */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h1 className="text-xl font-bold text-white">{course.title}</h1>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${LEVEL_COLOR[course.level]}`}
+                >
+                  {course.level}
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    course.isPublished
+                      ? "bg-brand-500/10 text-brand-400"
+                      : "bg-white/6 text-white/35"
+                  }`}
+                >
+                  {course.isPublished ? "Live" : "Draft"}
+                </span>
+              </div>
+              {course.description && (
+                <p className="text-sm text-white/45 mb-3 ">
+                  {course.description}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-4 text-xs text-white/40">
+                <span className="flex items-center gap-1.5">
+                  <Users size={12} /> {course._count.enrollments} enrolled
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Clock size={12} /> {course.totalWeeks} weeks
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <FileText size={12} /> {course.lessons.length} weeks added
+                </span>
+                <span className="flex items-center gap-1.5">
+                  {course.price === 0 ? (
+                    <>
+                      <CheckCircle size={12} className="text-brand-400" />
+                      <span className="text-brand-400">Free</span>
+                    </>
+                  ) : (
+                    `₹${course.price}`
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={startEditHeader}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/55 hover:text-white/80 hover:bg-white/4 transition-colors"
+              >
+                <Pencil size={14} /> Edit
+              </button>
+              <button
+                onClick={handlePublish}
+                disabled={togglingPublish}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
                   course.isPublished
-                    ? "bg-brand-500/10 text-brand-400"
-                    : "bg-white/6 text-white/35"
+                    ? "bg-white/6 text-white/60 hover:bg-white/10 border border-white/10"
+                    : "bg-brand-500 text-ink-950 hover:bg-brand-400"
                 }`}
               >
-                {course.isPublished ? "Live" : "Draft"}
-              </span>
-            </div>
-            {course.description && (
-              <p className="text-sm text-white/45 mb-3 ">
-                {course.description}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-4 text-xs text-white/40">
-              <span className="flex items-center gap-1.5">
-                <Users size={12} /> {course._count.enrollments} enrolled
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock size={12} /> {course.totalWeeks} weeks
-              </span>
-              <span className="flex items-center gap-1.5">
-                <FileText size={12} /> {course.lessons.length} weeks added
-              </span>
-              <span className="flex items-center gap-1.5">
-                {course.price === 0 ? (
-                  <>
-                    <CheckCircle size={12} className="text-brand-400" />
-                    <span className="text-brand-400">Free</span>
-                  </>
+                {togglingPublish ? (
+                  <Spinner />
+                ) : course.isPublished ? (
+                  <EyeOff size={14} />
                 ) : (
-                  `₹${course.price}`
+                  <Eye size={14} />
                 )}
-              </span>
+                {course.isPublished ? "Unpublish" : "Publish"}
+              </button>
             </div>
           </div>
-          <button
-            onClick={handlePublish}
-            disabled={togglingPublish}
-            className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
-              course.isPublished
-                ? "bg-white/6 text-white/60 hover:bg-white/10 border border-white/10"
-                : "bg-brand-500 text-ink-950 hover:bg-brand-400"
-            }`}
-          >
-            {togglingPublish ? (
-              <Spinner />
-            ) : course.isPublished ? (
-              <EyeOff size={14} />
-            ) : (
-              <Eye size={14} />
-            )}
-            {course.isPublished ? "Unpublish" : "Publish"}
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Tabs */}

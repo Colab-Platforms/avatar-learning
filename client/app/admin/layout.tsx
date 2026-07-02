@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, FolderOpen, BookOpen, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, FolderOpen, BookOpen, Briefcase, ArrowLeft } from "lucide-react";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
     try {
@@ -18,6 +18,7 @@ const NAV = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/categories", label: "Categories", icon: FolderOpen, exact: false },
     { href: "/admin/courses", label: "Courses", icon: BookOpen, exact: false },
+    { href: "/admin/internships", label: "Internships", icon: Briefcase, exact: false },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
