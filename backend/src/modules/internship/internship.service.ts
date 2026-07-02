@@ -223,6 +223,16 @@ export class PublicInternshipService {
   }
 
   async apply(internshipId: string, userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user || !user.resumeUrl) {
+      throw new ApiError(
+        "Please upload your resume before applying",
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+
     const internship = await prisma.internship.findUnique({
       where: { id: internshipId },
     });

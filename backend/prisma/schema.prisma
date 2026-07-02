@@ -61,6 +61,8 @@ model User {
   state             String?
   country           String?
   profileImage      String?             @map("profile_image")
+  resumeUrl         String?             @map("resume_url")
+  resumePublicId    String?             @map("resume_public_id")
 
   currentStudyLevel CurrentStudyLevel?  @map("current_studylevel")
 
@@ -71,6 +73,7 @@ model User {
   authProvider      AuthProvider        @default(LOCAL) @map("auth_provider")
 
   isEmailVerified   Boolean             @default(false) @map("is_email_verified")
+  isPhoneVerified   Boolean             @default(false) @map("is_phone_verified")
   isActive          Boolean             @default(true) @map("is_active")
   isDeleted         Boolean             @default(false) @map("is_deleted")
 
