@@ -11,12 +11,14 @@ import {
     validateRefreshTokenSchema,
     validateForgotPasswordSchema,
     validateResetPasswordSchema,
+    validateVerifyPhoneSchema,
 } from "./auth.validators.js";
 
 const authService = new AuthService();
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
+
         const { error, value } = validateRegisterSchema(req.body);
         if (error) {
             sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
@@ -38,7 +40,29 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
         }
         const device = req.headers["user-agent"];
         const result = await authService.verifyOtp(value, device);
-        sendResponse(res, true, { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }, result.message, STATUS_CODES.OK);
+
+        if ("requiresPhoneVerification" in result) {
+            sendResponse(
+                res,
+                true,
+                {
+                    requiresPhoneVerification: true,
+                    email: result.email,
+                    phoneNo: result.phoneNo,
+                },
+                result.message,
+                STATUS_CODES.OK
+            );
+            return;
+        }
+
+        sendResponse(
+            res,
+            true,
+            { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken },
+            result.message,
+            STATUS_CODES.OK
+        );
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
@@ -138,6 +162,37 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
         }
         const result = await authService.resetPassword(value.token, value.password);
         sendResponse(res, true, null, result.message, STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const verifyPhone = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { error, value } = validateVerifyPhoneSchema(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const device = req.headers["user-agent"];
+        const result = await authService.verifyPhone(value, device);
+        sendResponse(
+            res,
+            true,
+            { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken },
+            result.message,
+            STATUS_CODES.OK
+        );
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const getMsg91Config = async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const config = authService.getMsg91Config();
+        sendResponse(res, true, config, "MSG91 config loaded.", STATUS_CODES.OK);
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }

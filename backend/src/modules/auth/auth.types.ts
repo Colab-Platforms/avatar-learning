@@ -37,6 +37,11 @@ export interface RefreshTokenBody {
     refreshToken: string;
 }
 
+export interface VerifyPhoneBody {
+    email: string;
+    accessToken: string;
+}
+
 export interface JwtPayload {
     id: string;
     role: "USER" | "ADMIN" | "SUPERADMIN";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
@@ -22,10 +22,10 @@ const inputCls = cn(
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const router   = useRouter();
-  const { loading, error, user } = useAppSelector((s) => s.auth);
+  const { loading, error, user, pendingEmail } = useAppSelector((s) => s.auth);
 
   const [step,           setStep]           = useState<"form" | "otp">("form");
-  const [pendingEmail,   setPendingEmail]   = useState("");
+  const [localEmail,     setLocalEmail]     = useState("");
   const [email,          setEmail]          = useState("");
   const [password,       setPassword]       = useState("");
   const [showPassword,   setShowPassword]   = useState(false);
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [resendSuccess,  setResendSuccess]  = useState(false);
 
   useEffect(() => { if (user) router.push("/"); }, [user, router]);
+
 
   useEffect(() => {
     if (!resendCooldown) return;
@@ -46,7 +47,7 @@ export default function LoginPage() {
     dispatch(clearError());
     const result = await dispatch(login({ email, password }));
     if (login.fulfilled.match(result) && result.payload.requiresVerification) {
-      setPendingEmail(email);
+      setLocalEmail(email);
       setStep("otp");
     }
   };
@@ -56,14 +57,14 @@ export default function LoginPage() {
     const code = otp.replace(/\D/g, "");
     if (code.length < 6) return;
     dispatch(clearError());
-    dispatch(verifyOtp({ email: pendingEmail, otp: code, type: "LOGIN" }));
+    dispatch(verifyOtp({ email: localEmail, otp: code, type: "LOGIN" }));
   };
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setResendSuccess(false);
     dispatch(clearError());
-    const result = await dispatch(resendOtp({ email: pendingEmail, type: "LOGIN" }));
+    const result = await dispatch(resendOtp({ email: localEmail, type: "LOGIN" }));
     if (resendOtp.fulfilled.match(result)) {
       setResendSuccess(true);
       setResendCooldown(60);
@@ -91,7 +92,7 @@ export default function LoginPage() {
           <h2 className="text-xl font-semibold text-white">Check your email</h2>
           <p className="text-[13px] text-white/45">
             We sent a 6-digit code to{" "}
-            <span className="text-brand-300 font-medium">{pendingEmail}</span>
+            <span className="text-brand-300 font-medium">{localEmail}</span>
           </p>
         </div>
 

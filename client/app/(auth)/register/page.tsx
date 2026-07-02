@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, ArrowRight, Loader2,Check, X as XIcon } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Loader2, Check, X as XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OtpInput } from "../OtpInput";
+import { Msg91PhoneWidget } from "../Msg91PhoneWidget";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { register, verifyOtp, resendOtp, clearError } from "@/store/authSlice";
+import { register, verifyOtp, verifyPhone, resendOtp, clearError } from "@/store/authSlice";
 import { Button } from "@/components/ui/Button";
 
 const inputCls = cn(
@@ -18,8 +19,6 @@ const inputCls = cn(
   "focus:ring-2 focus:ring-brand-500/20 focus:shadow-[0_0_12px_rgba(0,200,255,0.10)]",
   "transition-all duration-200"
 );
-
-// ─── Password strength rules ──────────────────────────────────────────────────
 
 const RULES = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -46,15 +45,16 @@ function PasswordStrength({ password }: { password: string }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+type RegisterStep = "form" | "choose-method" | "email-otp" | "phone-verify";
 
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const router   = useRouter();
   const { loading, error, user } = useAppSelector((s) => s.auth);
 
-  const [step,           setStep]           = useState<"form" | "otp">("form");
-  const [pendingEmail,   setPendingEmail]   = useState("");
+  const [step,           setStep]           = useState<RegisterStep>("form");
+  const [localEmail,     setLocalEmail]     = useState("");
+  const [localPhone,     setLocalPhone]     = useState("");
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "",
     phoneNo: "", state: "", country: "", password: "",
@@ -64,8 +64,10 @@ export default function RegisterPage() {
   const [otp,            setOtp]            = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess,  setResendSuccess]  = useState(false);
+  const [phoneError,     setPhoneError]     = useState<string | null>(null);
 
   useEffect(() => { if (user) router.push("/"); }, [user, router]);
+
 
   useEffect(() => {
     if (!resendCooldown) return;
@@ -84,38 +86,180 @@ export default function RegisterPage() {
     if (!isPasswordValid || !agreed) return;
     dispatch(clearError());
     const result = await dispatch(register(form));
-    console.log("Register result:", result);
     if (register.fulfilled.match(result)) {
-      setPendingEmail(form.email);
-      setStep("otp");
+      setLocalEmail(form.email);
+      setLocalPhone(form.phoneNo);
+      setStep("choose-method");
     }
-    console.log("Switching to OTP screen");
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
+  const handleChooseEmail = async () => {
+    dispatch(clearError());
+    const result = await dispatch(resendOtp({ email: localEmail, type: "REGISTER" }));
+    if (resendOtp.fulfilled.match(result)) {
+      setResendCooldown(60);
+      setStep("email-otp");
+    }
+  };
+
+  const handleVerifyEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.replace(/\D/g, "");
     if (code.length < 6) return;
     dispatch(clearError());
-    dispatch(verifyOtp({ email: pendingEmail, otp: code, type: "REGISTER" }));
+    dispatch(verifyOtp({ email: localEmail, otp: code, type: "REGISTER" }));
   };
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setResendSuccess(false);
     dispatch(clearError());
-    const result = await dispatch(resendOtp({ email: pendingEmail, type: "REGISTER" }));
+    const result = await dispatch(resendOtp({ email: localEmail, type: "REGISTER" }));
     if (resendOtp.fulfilled.match(result)) {
       setResendSuccess(true);
       setResendCooldown(60);
     }
   };
-  console.log("Current step:", step);
-  // ── OTP step ───────────────────────────────────────────────────────────────
-  if (step === "otp") {
+
+  const handlePhoneVerified = useCallback(
+    (accessToken: string) => {
+      setPhoneError(null);
+      dispatch(clearError());
+      dispatch(verifyPhone({ email: localEmail, accessToken }));
+    },
+    [dispatch, localEmail]
+  );
+
+  const handlePhoneError = useCallback((message: string) => {
+    setPhoneError(message);
+  }, []);
+
+  if (step === "choose-method") {
     return (
       <div className="w-full space-y-6">
-        {/* Icon */}
+        <div className="flex justify-center">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(0,128,255,0.10) 100%)",
+              border: "1px solid rgba(0,200,255,0.20)",
+              boxShadow: "0 0 20px rgba(0,200,255,0.10)",
+            }}
+          >
+            🔐
+          </div>
+        </div>
+        <div className="text-center space-y-1.5">
+          <h2 className="text-xl font-semibold text-white">Verify your account</h2>
+          <p className="text-[13px] text-white/45">Choose how you&apos;d like to verify</p>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={handleChooseEmail}
+            disabled={loading}
+            className="w-full rounded-xl border border-white/10 bg-ink-800/60 px-5 py-4 text-left hover:border-brand-500/40 hover:bg-ink-800/80 transition-all duration-200 group disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">✉️</span>
+              <div>
+                <p className="text-[14px] font-medium text-white">Email OTP</p>
+                <p className="text-[12px] text-white/40">Send a 6-digit code to {localEmail}</p>
+              </div>
+              {loading
+                ? <Loader2 className="h-4 w-4 animate-spin text-brand-400 ml-auto" />
+                : <ArrowRight className="h-4 w-4 text-white/20 group-hover:text-brand-400 ml-auto transition-colors" />}
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { dispatch(clearError()); setStep("phone-verify"); }}
+            className="w-full rounded-xl border border-white/10 bg-ink-800/60 px-5 py-4 text-left hover:border-brand-500/40 hover:bg-ink-800/80 transition-all duration-200 group"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">📱</span>
+              <div>
+                <p className="text-[14px] font-medium text-white">Mobile OTP</p>
+                <p className="text-[12px] text-white/40">Verify via OTP on {localPhone}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/20 group-hover:text-brand-400 ml-auto transition-colors" />
+            </div>
+          </button>
+        </div>
+
+        {error && <p className="text-[13px] text-red-400 text-center">{error}</p>}
+
+        <p className="text-center text-[13px]">
+          <button
+            type="button"
+            onClick={() => { setStep("form"); dispatch(clearError()); }}
+            className="text-white/40 hover:text-white/70 transition-colors duration-200"
+          >
+            ← Back to registration
+          </button>
+        </p>
+      </div>
+    );
+  }
+
+  if (step === "phone-verify") {
+    return (
+      <div className="w-full space-y-6">
+        <div className="flex justify-center">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(0,128,255,0.10) 100%)",
+              border: "1px solid rgba(0,200,255,0.20)",
+              boxShadow: "0 0 20px rgba(0,200,255,0.10)",
+            }}
+          >
+            📱
+          </div>
+        </div>
+
+        <div className="text-center space-y-1.5">
+          <h2 className="text-xl font-semibold text-white">Verify your phone</h2>
+          <p className="text-[13px] text-white/45">
+            Complete OTP verification for{" "}
+            <span className="text-brand-300 font-medium">{localPhone}</span>
+          </p>
+        </div>
+
+        <Msg91PhoneWidget
+          phoneNo={localPhone}
+          onVerified={handlePhoneVerified}
+          onError={handlePhoneError}
+        />
+
+        {(error || phoneError) && (
+          <p className="text-[13px] text-red-400 text-center">{error ?? phoneError}</p>
+        )}
+
+        {loading && (
+          <div className="flex justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-brand-400" />
+          </div>
+        )}
+
+        <p className="text-center text-[13px]">
+          <button
+            type="button"
+            onClick={() => { setStep("choose-method"); setPhoneError(null); dispatch(clearError()); }}
+            className="text-white/40 hover:text-white/70 transition-colors duration-200"
+          >
+            ← Back to email verification
+          </button>
+        </p>
+      </div>
+    );
+  }
+
+  if (step === "email-otp") {
+    return (
+      <div className="w-full space-y-6">
         <div className="flex justify-center">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
@@ -132,11 +276,11 @@ export default function RegisterPage() {
           <h2 className="text-xl font-semibold text-white">Verify your email</h2>
           <p className="text-[13px] text-white/45">
             We sent a 6-digit code to{" "}
-            <span className="text-brand-300 font-medium">{pendingEmail}</span>
+            <span className="text-brand-300 font-medium">{localEmail}</span>
           </p>
         </div>
 
-        <form onSubmit={handleVerify} className="space-y-5">
+        <form onSubmit={handleVerifyEmail} className="space-y-5">
           <OtpInput value={otp} onChange={setOtp} disabled={loading} />
 
           {error        && <p className="text-[13px] text-red-400 text-center">{error}</p>}
@@ -149,7 +293,7 @@ export default function RegisterPage() {
           >
             {loading
               ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <>Verify &amp; Create Account <ArrowRight className="h-4 w-4" /></>}
+              : <>Verify Email <ArrowRight className="h-4 w-4" /></>}
           </Button>
         </form>
 
@@ -172,31 +316,25 @@ export default function RegisterPage() {
         <p className="text-center text-[13px]">
           <button
             type="button"
-            onClick={() => { setStep("form"); setOtp(""); dispatch(clearError()); }}
+            onClick={() => { setStep("choose-method"); setOtp(""); dispatch(clearError()); }}
             className="text-white/40 hover:text-white/70 transition-colors duration-200"
           >
-            ← Back to registration
+            ← Back
           </button>
         </p>
       </div>
     );
   }
 
-  // ── Registration form ─────────────────────────────────────────────────────
   return (
     <div className="w-full space-y-6">
-      {/* Header with icon */}
       <div className="text-center space-y-3">
-        <div className="flex justify-center mb-2">
-   
-        </div>
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold text-white tracking-tight">Create your account</h2>
           <p className="text-[13px] text-white/40">Join Avatar and start your AI journey</p>
         </div>
       </div>
 
-      {/* Divider */}
       <div className="divider-glow" />
 
       <form onSubmit={handleRegister} className="space-y-4">
@@ -264,7 +402,6 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Consent checkbox */}
         <label className="flex items-start gap-3 cursor-pointer group">
           <div className="relative mt-0.5 shrink-0">
             <input
