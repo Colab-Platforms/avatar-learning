@@ -423,6 +423,11 @@ model InternshipApplication {
 
   status        ApplicationStatus @default(PENDING)
 
+  // Snapshot of the resume at time of application — survives later profile
+  // resume replacement/deletion so admins can always see what was submitted.
+  resumeUrl       String?   @map("resume_url")
+  resumePublicId  String?   @map("resume_public_id")
+
   appliedAt     DateTime  @default(now()) @map("applied_at")
 
   internship    Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)

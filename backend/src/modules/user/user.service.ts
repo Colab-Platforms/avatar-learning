@@ -162,6 +162,17 @@ class UserService {
         return updatedUser;
     }
 
+    // A resume that's already been submitted with an internship application is
+    // kept in Cloudinary (soft delete) so admins can still open it later, even
+    // if the user replaces or removes it from their profile.
+    async isResumeReferencedByApplication(publicId: string): Promise<boolean> {
+        const referenced = await prisma.internshipApplication.findFirst({
+            where: { resumePublicId: publicId },
+            select: { id: true },
+        });
+        return !!referenced;// true if a record is found, false otherwise
+    }
+
     async saveResume(userId: string, publicId: string, secureUrl: string) {
         if (!publicId.startsWith(RESUME_FOLDER + '/')) {
             throw new ApiError('Invalid resume upload', STATUS_CODES.BAD_REQUEST);
@@ -171,7 +182,10 @@ class UserService {
         if (!user) throw new ApiError('User not found', STATUS_CODES.NOT_FOUND);
 
         if (user.resumePublicId && user.resumePublicId !== publicId) {
-            await deleteFromCloudinary(user.resumePublicId);
+            const referenced = await this.isResumeReferencedByApplication(user.resumePublicId);
+            if (!referenced) {
+                await deleteFromCloudinary(user.resumePublicId);
+            }
         }
 
         const updated = await prisma.user.update({
@@ -189,7 +203,10 @@ class UserService {
         if (!user.resumeUrl) throw new ApiError('No resume found', STATUS_CODES.NOT_FOUND);
 
         if (user.resumePublicId) {
-            await deleteFromCloudinary(user.resumePublicId);
+            const referenced = await this.isResumeReferencedByApplication(user.resumePublicId);
+            if (!referenced) {
+                await deleteFromCloudinary(user.resumePublicId);
+            }
         }
 
         const updated = await prisma.user.update({

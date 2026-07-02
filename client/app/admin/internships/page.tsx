@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Search, Eye, EyeOff, Trash2, Briefcase, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, Trash2, Briefcase, ChevronLeft, ChevronRight, Settings2, Users } from "lucide-react";
 import Link from "next/link";
 import {
     fetchAdminInternships,
@@ -337,6 +337,13 @@ export default function AdminInternshipsPage() {
                                                 title="Manage"
                                             >
                                                 <Settings2 size={14} />
+                                            </Link>
+                                            <Link
+                                                href={`/admin/internships/${i.id}/applicants`}
+                                                className="p-1.5 rounded-lg text-white/35 hover:text-brand-400 hover:bg-brand-500/8 transition-colors"
+                                                title="View Applicants"
+                                            >
+                                                <Users size={14} />
                                             </Link>
                                             <button
                                                 onClick={() => handleToggle(i.id)}

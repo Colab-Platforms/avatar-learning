@@ -142,6 +142,8 @@ export class AdminInternshipService {
             firstName: true,
             lastName: true,
             email: true,
+            phoneNo: true,
+            resumeUrl: true,
           },
         },
       },
@@ -249,7 +251,12 @@ export class PublicInternshipService {
       );
 
     return prisma.internshipApplication.create({
-      data: { internshipId, userId },
+      data: {
+        internshipId,
+        userId,
+        resumeUrl: user.resumeUrl,
+        resumePublicId: user.resumePublicId,
+      },
       include: { internship: true, user: true },
     });
   }

@@ -3,7 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Eye, EyeOff, Save, Pencil, X, Check } from "lucide-react";
+import {
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Save,
+  Pencil,
+  X,
+  Check,
+  Users,
+} from "lucide-react";
 import {
   fetchAdminInternship,
   updateInternship,
@@ -356,6 +365,12 @@ export default function AdminInternshipDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href={`/admin/internships/${id}/applicants`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/55 hover:text-white/80 hover:bg-white/4 transition-colors"
+              >
+                <Users size={14} /> Applicants
+              </Link>
               <button
                 onClick={startEditHeader}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/55 hover:text-white/80 hover:bg-white/4 transition-colors"

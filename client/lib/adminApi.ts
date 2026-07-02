@@ -171,3 +171,41 @@ export const deleteInternship = (id: string) =>
 
 export const toggleInternshipPublish = (id: string) =>
     apiClient.patch(`/admin/internships/${id}/publish`).then((r) => r.data.data);
+
+// ─── Internship Applications ───────────────────────────────────────────────────
+
+export interface AdminApplicant {
+    id: string;
+    internshipId: string;
+    userId: string;
+    status: "PENDING" | "ACCEPTED" | "REJECTED";
+    appliedAt: string;
+    // Snapshot of the resume at the time of application — stays valid even if
+    // the user later replaces or deletes their profile resume.
+    resumeUrl?: string;
+    user: {
+        id: string;
+        firstName?: string;
+        lastName?: string;
+        email: string;
+        phoneNo?: string;
+        resumeUrl?: string;
+    };
+}
+
+export const fetchInternshipApplications = (
+    internshipId: string,
+    page: number = 1,
+    pageSize: number = 20
+): Promise<PaginatedResponse<AdminApplicant>> =>
+    apiClient
+        .get(`/admin/internships/${internshipId}/applications`, { params: { page, pageSize } })
+        .then((r) => r.data.data);
+
+export const updateApplicationStatus = (
+    applicationId: string,
+    status: "PENDING" | "ACCEPTED" | "REJECTED"
+) =>
+    apiClient
+        .patch(`/admin/applications/${applicationId}/status`, { status })
+        .then((r) => r.data.data);
