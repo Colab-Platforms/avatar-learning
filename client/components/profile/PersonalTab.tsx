@@ -53,6 +53,12 @@ export function PersonalTab({
             icon={<Phone className="h-4 w-4 text-white/20 shrink-0" />}
             label="Phone Number"
             value={user.phoneNo}
+            badge={user.isPhoneVerified && (
+              <span className="hidden xs:inline-flex shrink-0 items-center gap-1 text-[11px] text-emerald-400
+                               bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2 py-0.5">
+                <BadgeCheck className="h-3 w-3" /> Verified
+              </span>
+            )}
           />
         </div>
 

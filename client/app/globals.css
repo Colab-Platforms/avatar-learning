@@ -25,6 +25,8 @@
   --color-elec-600: #0066CC;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --breakpoint-xs: 480px;
 }
 
 /* ════════════════════════════════════════════

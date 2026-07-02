@@ -104,6 +104,7 @@ export const register = createAsyncThunk(
       return {
         message: res.message,
         email: data.email,
+        phoneNo: data.phoneNo,
       };
     } catch (err) {
       return rejectWithValue(extractError(err));
@@ -154,22 +155,11 @@ export const verifyOtp = createAsyncThunk(
     try {
       const { data: res } = await apiClient.post<
         ApiResponse<{
-          user?: AuthUser;
-          accessToken?: string;
-          refreshToken?: string;
-          requiresPhoneVerification?: boolean;
-          email?: string;
-          phoneNo?: string | null;
+          user: AuthUser;
+          accessToken: string;
+          refreshToken: string;
         }>
       >("/auth/verify-otp", data);
-
-      if (res.data?.requiresPhoneVerification) {
-        return {
-          requiresPhoneVerification: true,
-          email: res.data.email ?? data.email,
-          phoneNo: res.data.phoneNo ?? null,
-        };
-      }
 
       if (!res.data?.user || !res.data.accessToken || !res.data.refreshToken) {
         throw new Error("Verification response was incomplete.");
@@ -425,6 +415,7 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
         state.pendingEmail = action.payload.email;
+        state.pendingPhone = action.payload.phoneNo;
         state.pendingOtpType = "REGISTER";
       })
       .addCase(register.rejected, (state, action) => {
@@ -473,12 +464,6 @@ const authSlice = createSlice({
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.loading = false;
-
-        if ("requiresPhoneVerification" in action.payload && action.payload.requiresPhoneVerification) {
-          state.pendingEmail = action.payload.email;
-          state.pendingPhone = action.payload.phoneNo;
-          return;
-        }
 
         state.user = action.payload.user!;
         state.accessToken = action.payload.accessToken!;

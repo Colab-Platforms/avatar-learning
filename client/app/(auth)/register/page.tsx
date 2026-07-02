@@ -45,12 +45,12 @@ function PasswordStrength({ password }: { password: string }) {
   );
 }
 
-type RegisterStep = "form" | "email-otp" | "phone-verify";
+type RegisterStep = "form" | "choose-method" | "email-otp" | "phone-verify";
 
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const router   = useRouter();
-  const { loading, error, user, pendingEmail, pendingPhone } = useAppSelector((s) => s.auth);
+  const { loading, error, user } = useAppSelector((s) => s.auth);
 
   const [step,           setStep]           = useState<RegisterStep>("form");
   const [localEmail,     setLocalEmail]     = useState("");
@@ -68,13 +68,6 @@ export default function RegisterPage() {
 
   useEffect(() => { if (user) router.push("/"); }, [user, router]);
 
-  useEffect(() => {
-    if (pendingPhone && pendingEmail) {
-      setLocalEmail(pendingEmail);
-      setLocalPhone(pendingPhone);
-      setStep("phone-verify");
-    }
-  }, [pendingEmail, pendingPhone]);
 
   useEffect(() => {
     if (!resendCooldown) return;
@@ -96,6 +89,15 @@ export default function RegisterPage() {
     if (register.fulfilled.match(result)) {
       setLocalEmail(form.email);
       setLocalPhone(form.phoneNo);
+      setStep("choose-method");
+    }
+  };
+
+  const handleChooseEmail = async () => {
+    dispatch(clearError());
+    const result = await dispatch(resendOtp({ email: localEmail, type: "REGISTER" }));
+    if (resendOtp.fulfilled.match(result)) {
+      setResendCooldown(60);
       setStep("email-otp");
     }
   };
@@ -105,13 +107,7 @@ export default function RegisterPage() {
     const code = otp.replace(/\D/g, "");
     if (code.length < 6) return;
     dispatch(clearError());
-    const result = await dispatch(
-      verifyOtp({ email: localEmail, otp: code, type: "REGISTER" })
-    );
-    if (verifyOtp.fulfilled.match(result) && "requiresPhoneVerification" in result.payload && result.payload.requiresPhoneVerification) {
-      setLocalPhone(result.payload.phoneNo ?? localPhone);
-      setStep("phone-verify");
-    }
+    dispatch(verifyOtp({ email: localEmail, otp: code, type: "REGISTER" }));
   };
 
   const handleResend = async () => {
@@ -137,6 +133,76 @@ export default function RegisterPage() {
   const handlePhoneError = useCallback((message: string) => {
     setPhoneError(message);
   }, []);
+
+  if (step === "choose-method") {
+    return (
+      <div className="w-full space-y-6">
+        <div className="flex justify-center">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(0,128,255,0.10) 100%)",
+              border: "1px solid rgba(0,200,255,0.20)",
+              boxShadow: "0 0 20px rgba(0,200,255,0.10)",
+            }}
+          >
+            🔐
+          </div>
+        </div>
+        <div className="text-center space-y-1.5">
+          <h2 className="text-xl font-semibold text-white">Verify your account</h2>
+          <p className="text-[13px] text-white/45">Choose how you&apos;d like to verify</p>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={handleChooseEmail}
+            disabled={loading}
+            className="w-full rounded-xl border border-white/10 bg-ink-800/60 px-5 py-4 text-left hover:border-brand-500/40 hover:bg-ink-800/80 transition-all duration-200 group disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">✉️</span>
+              <div>
+                <p className="text-[14px] font-medium text-white">Email OTP</p>
+                <p className="text-[12px] text-white/40">Send a 6-digit code to {localEmail}</p>
+              </div>
+              {loading
+                ? <Loader2 className="h-4 w-4 animate-spin text-brand-400 ml-auto" />
+                : <ArrowRight className="h-4 w-4 text-white/20 group-hover:text-brand-400 ml-auto transition-colors" />}
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { dispatch(clearError()); setStep("phone-verify"); }}
+            className="w-full rounded-xl border border-white/10 bg-ink-800/60 px-5 py-4 text-left hover:border-brand-500/40 hover:bg-ink-800/80 transition-all duration-200 group"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">📱</span>
+              <div>
+                <p className="text-[14px] font-medium text-white">Mobile OTP</p>
+                <p className="text-[12px] text-white/40">Verify via OTP on {localPhone}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/20 group-hover:text-brand-400 ml-auto transition-colors" />
+            </div>
+          </button>
+        </div>
+
+        {error && <p className="text-[13px] text-red-400 text-center">{error}</p>}
+
+        <p className="text-center text-[13px]">
+          <button
+            type="button"
+            onClick={() => { setStep("form"); dispatch(clearError()); }}
+            className="text-white/40 hover:text-white/70 transition-colors duration-200"
+          >
+            ← Back to registration
+          </button>
+        </p>
+      </div>
+    );
+  }
 
   if (step === "phone-verify") {
     return (
@@ -181,7 +247,7 @@ export default function RegisterPage() {
         <p className="text-center text-[13px]">
           <button
             type="button"
-            onClick={() => { setStep("email-otp"); setPhoneError(null); dispatch(clearError()); }}
+            onClick={() => { setStep("choose-method"); setPhoneError(null); dispatch(clearError()); }}
             className="text-white/40 hover:text-white/70 transition-colors duration-200"
           >
             ← Back to email verification
@@ -250,10 +316,10 @@ export default function RegisterPage() {
         <p className="text-center text-[13px]">
           <button
             type="button"
-            onClick={() => { setStep("form"); setOtp(""); dispatch(clearError()); }}
+            onClick={() => { setStep("choose-method"); setOtp(""); dispatch(clearError()); }}
             className="text-white/40 hover:text-white/70 transition-colors duration-200"
           >
-            ← Back to registration
+            ← Back
           </button>
         </p>
       </div>

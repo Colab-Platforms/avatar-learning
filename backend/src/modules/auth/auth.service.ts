@@ -74,7 +74,7 @@ class AuthService {
             where: { email: data.email, isDeleted: false },
         });
 
-        if (existingUser?.isEmailVerified) {
+        if (existingUser?.isEmailVerified || existingUser?.isPhoneVerified) {
             throw new ApiError("Email already registered", STATUS_CODES.CONFLICT);
         }
         
@@ -138,28 +138,7 @@ class AuthService {
             userId = user.id;
         }
 
-        //mark any existing OTPs as used
-        await prisma.otpVerification.updateMany({
-            where: { email: data.email, type: OtpType.REGISTER, used: false },
-            data: { used: true },
-        });
-
-        const otp = generateOtp();
-        await prisma.otpVerification.create({
-            data: {
-                email: data.email,
-                otpCode: hashOtp(otp),
-                type: OtpType.REGISTER,
-                userId,
-                expiresAt: dayjs().add(10, "minute").toDate(),
-            },
-        });
-
-        await sendOtpEmail(data.email, otp, "REGISTER").catch((err) =>
-            console.error("[Auth] Failed to send registration OTP email:", err)
-        );
-
-        return { message: "OTP sent to your email. Please verify to continue registration." };
+        return { message: "Account created. Please choose a verification method to continue." };
     }
 
     async verifyOtp(data: VerifyOtpBody, device?: string) {
@@ -199,15 +178,6 @@ class AuthService {
             user.isEmailVerified = true;
         }
 
-        if (data.type === "REGISTER" && !user.isPhoneVerified) {
-            return {
-                requiresPhoneVerification: true,
-                email: user.email,
-                phoneNo: user.phoneNo,
-                message: "Email verified. Please verify your phone number to complete registration.",
-            };
-        }
-
         const tokens = await issueAuthTokens(user, device);
 
         return {
@@ -226,10 +196,6 @@ class AuthService {
         });
 
         if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
-
-        if (!user.isEmailVerified) {
-            throw new ApiError("Please verify your email first.", STATUS_CODES.BAD_REQUEST);
-        }
 
         if (user.isPhoneVerified) {
             throw new ApiError("Phone number is already verified.", STATUS_CODES.CONFLICT);
@@ -306,7 +272,7 @@ class AuthService {
             throw new ApiError("Your account has been deactivated. Contact support.", STATUS_CODES.FORBIDDEN);
         }
 
-        if (!user.isEmailVerified) {
+        if (!user.isEmailVerified && !user.isPhoneVerified) {
             await prisma.otpVerification.updateMany({
                 where: { email: data.email, type: OtpType.LOGIN, used: false },
                 data: { used: true },
