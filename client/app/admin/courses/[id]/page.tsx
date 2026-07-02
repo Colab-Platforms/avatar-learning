@@ -24,6 +24,7 @@ import {
   toggleCoursePublish,
   updateCourse,
 } from "@/lib/adminApi";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import {
   Field,
   Spinner,
@@ -114,6 +115,7 @@ export default function CourseDetailPage() {
     level: "",
     price: 0,
     totalWeeks: 1,
+    thumbnail: "",
   });
   const [lessonForm, setLessonForm] = useState({
     weekNumber: 1,
@@ -159,6 +161,7 @@ export default function CourseDetailPage() {
       level: course.level,
       price: course.price,
       totalWeeks: course.totalWeeks,
+      thumbnail: course.thumbnail ?? "",
     });
     setEditingHeader(true);
   };
@@ -168,7 +171,10 @@ export default function CourseDetailPage() {
     setSavingHeader(true);
     setError("");
     try {
-      await updateCourse(id, headerForm);
+      await updateCourse(id, {
+        ...headerForm,
+        thumbnail: headerForm.thumbnail || undefined,
+      });
       setEditingHeader(false);
       await load();
     } catch (err: unknown) {
@@ -292,6 +298,13 @@ export default function CourseDetailPage() {
         {editingHeader ? (
           <form onSubmit={submitHeader} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <ImageUploadField
+                  label="Thumbnail"
+                  value={headerForm.thumbnail}
+                  onChange={(url) => setHeaderForm((f) => ({ ...f, thumbnail: url }))}
+                />
+              </div>
               <Field label="Title" required className="sm:col-span-2">
                 <input
                   value={headerForm.title}
@@ -379,18 +392,18 @@ export default function CourseDetailPage() {
             </div>
           </form>
         ) : (
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            {/* {course.thumbnail ? (
+          <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+            {course.thumbnail ? (
               <img
                 src={course.thumbnail}
                 alt={course.title}
-                className="w-full sm:w-40 h-24 object-cover rounded-xl shrink-0 bg-ink-700"
+                className="w-full sm:w-48 h-32 object-cover rounded-xl shrink-0 bg-ink-700"
               />
             ) : (
-              <div className="w-full sm:w-40 h-24 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
+              <div className="w-full sm:w-48 h-32 rounded-xl bg-ink-700 border border-white/5 flex items-center justify-center shrink-0">
                 <FileText size={28} className="text-white/20" />
               </div>
-            )} */}
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <h1 className="text-xl font-bold text-white">{course.title}</h1>

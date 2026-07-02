@@ -44,6 +44,23 @@ export const uploadToCloudinary = async (fileBuffer: Buffer, folder: string = 'a
 };
 
 export const RESUME_FOLDER = 'resumes';
+export const COURSE_IMAGES_FOLDER = 'course-images';
+
+export const getCourseImageUploadSignature = () => {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = COURSE_IMAGES_FOLDER;
+    const signature = cloudinary.utils.api_sign_request(
+        { timestamp, folder },
+        process.env.CLOUDINARY_API_SECRET!
+    );
+    return {
+        timestamp,
+        signature,
+        apiKey: process.env.CLOUDINARY_API_KEY!,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+        folder,
+    };
+};
 
 export const getResumeUploadSignature = () => {
     const timestamp = Math.round(Date.now() / 1000);

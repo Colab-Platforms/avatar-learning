@@ -12,6 +12,7 @@ import {
     toggleCoursePublish,
 } from "@/lib/adminApi";
 import type { PaginatedResponse } from "@/lib/coursesApi";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 
 interface Category { id: string; name: string; slug: string; }
 interface Course {
@@ -159,10 +160,13 @@ export default function AdminCoursesPage() {
                             <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                                 placeholder="Short course description" rows={2} className={`${inputCls} resize-none`} />
                         </Field>
-                        <Field label="Thumbnail URL">
-                            <input value={form.thumbnail} onChange={(e) => setForm((f) => ({ ...f, thumbnail: e.target.value }))}
-                                placeholder="https://..." type="url" className={inputCls} />
-                        </Field>
+                        <div className="sm:col-span-2">
+                            <ImageUploadField
+                                label="Thumbnail"
+                                value={form.thumbnail}
+                                onChange={(url) => setForm((f) => ({ ...f, thumbnail: url }))}
+                            />
+                        </div>
                         <Field label="Level" required>
                             <select value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value as Course["level"] }))}
                                 className={selectCls} required>

@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import axios from "axios";
 import type { PaginatedResponse } from "./coursesApi";
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -118,6 +119,26 @@ export const uploadVideo = async (
 
 export const deleteResource = (resourceId: string) =>
     apiClient.delete(`/admin/resources/${resourceId}`).then((r) => r.data);
+
+// ─── Course Image Upload (signed direct upload to Cloudinary) ─────────────────
+
+export const uploadCourseImage = async (file: File): Promise<string> => {
+    const { data: signRes } = await apiClient.get<{ success: boolean; data: {
+        timestamp: number; signature: string; apiKey: string; cloudName: string; folder: string;
+    } }>("/admin/courses/images/sign");
+    const { timestamp, signature, apiKey, cloudName, folder } = signRes.data;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", apiKey);
+    form.append("timestamp", String(timestamp));
+    form.append("signature", signature);
+    form.append("folder", folder);
+    const res = await axios.post<{ secure_url: string }>(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        form
+    );
+    return res.data.secure_url;
+};
 
 // ─── Internships ──────────────────────────────────────────────────────────────
 

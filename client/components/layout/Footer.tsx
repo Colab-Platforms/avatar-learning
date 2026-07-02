@@ -139,7 +139,7 @@ export function Footer() {
 
       <div className="container-x py-16">
         {/* Main grid */}
-        <div className="grid gap-10 md:grid-cols-5 border border-white/5 rounded-3xl bg-white/1.5 p-8 sm:p-10">
+        <div className="grid gap-10 md:grid-cols-4 border border-white/5 rounded-3xl bg-white/1.5 p-8 sm:p-10">
           {/* Brand column */}
           <div className="md:col-span-1">
             <AvatarWordmark />

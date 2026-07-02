@@ -3,6 +3,7 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { AdminCourseService, PublicCourseService } from "./course.service.js";
+import { getCourseImageUploadSignature } from "@/utils/cloudinary.js";
 import {
   getPaginationOptions,
   formatPaginationResponse,
@@ -359,6 +360,15 @@ export const deleteResource = async (
       err.message,
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
+  }
+};
+
+export const signCourseImageUpload = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const signData = getCourseImageUploadSignature();
+    sendResponse(res, true, signData, "Upload signature generated", STATUS_CODES.OK);
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
   }
 };
 
