@@ -135,29 +135,15 @@ export function CourseCard({ course }: CourseCardProps) {
                       src={mod.image}
                       alt={mod.title}
                       fill
-                      sizes="180px"
+                      sizes="(max-width: 768px) 80vw, 400px"
+                      quality={100}
                       className="object-cover transition-transform duration-600 group-hover/mod:scale-110"
                     />
                     <div
-                      className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent
-                                    opacity-0 group-hover/mod:opacity-100 transition-opacity duration-350
-                                    flex items-end p-2"
-                    >
-                      <span
-                        className="text-white text-[10px] font-semibold bg-brand-500/80 rounded-md px-1.5 py-0.5
-                                       translate-y-2 group-hover/mod:translate-y-0 transition-transform duration-300"
-                      >
-                        Preview →
-                      </span>
-                    </div>
+                      className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent
+                                    opacity-0 group-hover/mod:opacity-100 transition-opacity duration-350"
+                    />
                   </div>
-                  <p
-                    className="mt-2 text-[13px] font-medium leading-snug text-white/75
-                                 group-hover/mod:text-brand-300 transition-colors duration-250"
-                  >
-                    {mod.title}
-                  </p>
-                  <p className="text-[11px] text-white/30 mt-0.5">{mod.week}</p>
                 </Link>
               ))}
             </div>

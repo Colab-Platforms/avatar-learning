@@ -32,16 +32,16 @@ export const COURSES: Course[] = [
         week: "week 2 of 4",
         image: "/landingpage-images/course-2.png",
       },
-      {
-        title: "Prompt Essentials",
-        week: "week 3 of 4",
-        image: "/landingpage-images/course-3.png",
-      },
-      {
-        title: "AI Productivity",
-        week: "week 4 of 4",
-        image: "/landingpage-images/course-4.jpg",
-      },
+      // {
+      //   title: "Prompt Essentials",
+      //   week: "week 3 of 4",
+      //   image: "/landingpage-images/course-3.png",
+      // },
+      // {
+      //   title: "AI Productivity",
+      //   week: "week 4 of 4",
+      //   image: "/landingpage-images/course-4.jpg",
+      // },
     ],
 
     /* ── Detail fields ── */
@@ -152,11 +152,11 @@ export const COURSES: Course[] = [
         week: "week 2 of 3",
         image: "/landingpage-images/course-6.jpg",
       },
-      {
-        title: "Industry Applications",
-        week: "week 3 of 3",
-        image: "/landingpage-images/course-7.jpg",
-      },
+      // {
+      //   title: "Industry Applications",
+      //   week: "week 3 of 3",
+      //   image: "/landingpage-images/course-7.jpg",
+      // },
     ],
 
     /* ── Detail fields ── */
