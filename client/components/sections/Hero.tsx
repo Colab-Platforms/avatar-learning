@@ -47,7 +47,14 @@ export function Hero() {
             <h1 className="mt-8 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.15] anim-fade-up stagger-1">
               Learn AI on Weekends.<br />
               Build Real Projects.<br />
-              <span className="text-brand-600">Get Certified + Internships.</span>
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >Get Certified + Internships.</span>
             </h1>
 
             {/* Subtitle */}

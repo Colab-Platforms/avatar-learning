@@ -1065,34 +1065,31 @@ export default function InternshipsPage() {
       <Navbar />
 
       <main className="min-h-screen overflow-x-hidden bg-white text-slate-800">
-        {/* HERO SECTION - Dark Background */}
+        {/* HERO SECTION - Light Brand Background */}
         <div
-          className="relative text-white pt-28 pb-14"
+          className="relative pt-28 pb-14"
           style={{
-            background: "linear-gradient(160deg, #050B14 0%, #080F1C 100%)",
+            background: "linear-gradient(135deg, #f0f7ff 0%, #e8f2ff 50%, #dceeff 100%)",
           }}
         >
           <div
-            className="pointer-events-none absolute inset-0 dot-grid-dark opacity-15"
+            className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-blue-200/30"
+            style={{ filter: "blur(80px)" }}
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[400px] opacity-[0.12]"
-            style={{
-              background:
-                "radial-gradient(ellipse at top, rgba(0,200,255,0.4) 0%, transparent 65%)",
-              filter: "blur(80px)",
-            }}
+            className="pointer-events-none absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-blue-300/20"
+            style={{ filter: "blur(60px)" }}
             aria-hidden
           />
 
           <div className="relative container-x max-w-[1400px]">
             {/* PAGE HERO */}
             <ScrollReveal animation="fade-up" duration={700}>
-              <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white mb-3">
+              <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-slate-800 mb-3">
                 Our Programs
               </h1>
-              <p className="text-white/50 text-[14px] leading-relaxed max-w-2xl">
+              <p className="text-slate-500 text-[14px] leading-relaxed max-w-2xl">
                 Explore our comprehensive curriculum designed for the next era
                 of technological mastery. Filter by level, duration, and
                 investment to find your optimal path.

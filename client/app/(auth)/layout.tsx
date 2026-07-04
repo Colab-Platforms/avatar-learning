@@ -27,11 +27,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="container-x h-16 flex items-center shrink-0 relative z-10">
         <Link href="/" aria-label="Avatar India home" className="hover:opacity-75 transition-opacity duration-250">
           <Image
-            src="/landingpage-images/Avatar_logo_Light.svg"
+            src="/landingpage-images/Avatar_dark_logo.png"
             alt="Avatar India"
-            width={119}
-            height={32}
-            className="h-7 w-auto invert"
+            width={160}
+            height={44}
+            className="h-11 w-auto"
             priority
           />
         </Link>

@@ -168,7 +168,7 @@ function CourseCard({ course }: { course: DBCourse }) {
             className={cn(
               "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
               LEVEL_COLOR[course.level] ??
-                "bg-slate-100 text-slate-650 border-slate-200",
+              "bg-slate-100 text-slate-650 border-slate-200",
             )}
           >
             {course.level.charAt(0) + course.level.slice(1).toLowerCase()}
@@ -312,13 +312,13 @@ export default function CoursesPage() {
   const courses = data?.data ?? [];
   const pagination = data
     ? {
-        currentPage: data.currentPage,
-        pageSize: data.pageSize,
-        totalRecords: data.totalRecords,
-        totalPages: data.totalPages,
-        hasNextPage: data.hasNextPage,
-        hasPreviousPage: data.hasPreviousPage,
-      }
+      currentPage: data.currentPage,
+      pageSize: data.pageSize,
+      totalRecords: data.totalRecords,
+      totalPages: data.totalPages,
+      hasNextPage: data.hasNextPage,
+      hasPreviousPage: data.hasPreviousPage,
+    }
     : null;
 
   /* derived filtered + sorted list */
@@ -370,46 +370,27 @@ export default function CoursesPage() {
       <Navbar />
 
       <main className="min-h-screen overflow-x-hidden bg-white text-slate-800">
-        {/* HERO SECTION - Dark Background */}
-        <div
-          className="relative text-white pt-28 pb-14"
-          style={{
-            background: "linear-gradient(160deg, #050B14 0%, #080F1C 100%)",
-          }}
-        >
-          <div
-            className="pointer-events-none absolute inset-0 dot-grid-dark opacity-15"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[400px] opacity-[0.12]"
-            style={{
-              background:
-                "radial-gradient(ellipse at top, rgba(0,200,255,0.4) 0%, transparent 65%)",
-              filter: "blur(80px)",
-            }}
-            aria-hidden
-          />
-
+        {/* HERO SECTION - Light Brand Background */}
+        <div className="relative pt-28 pb-14 bg-slate-50 border-b border-slate-100">
           <div className="relative container-x max-w-7xl">
             {/* ── PAGE HEADER ── */}
             <ScrollReveal animation="fade-up" duration={700}>
               <div className="mb-3 flex items-center gap-3">
                 <span
                   className="flex h-8 w-8 items-center justify-center rounded-lg
-                             bg-brand-500/10 border border-brand-500/20"
+                              bg-brand-50 border border-brand-200"
                 >
-                  <Layers className="h-4 w-4 text-brand-400" />
+                  <Layers className="h-4 w-4 text-brand-600" />
                 </span>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-600">
                   AI Learning Division
                 </p>
               </div>
 
-              <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white mb-4">
+              <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-slate-800 mb-4">
                 Our Programs
               </h1>
-              <p className="text-white/50 text-[14px] leading-relaxed max-w-xl">
+              <p className="text-slate-500 text-[14px] leading-relaxed max-w-xl">
                 Explore our comprehensive curriculum designed for the next era of
                 technological mastery. Filter by level, duration, and investment
                 to find your optimal path.

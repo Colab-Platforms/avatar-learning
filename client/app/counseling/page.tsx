@@ -241,7 +241,7 @@ export default function CounselingPage() {
                                hover:border-brand-300 transition-all duration-500 group shadow-[0_8px_30px_rgba(15,23,42,0.08)]"
                   >
                     <Image
-                      src="/counseling-images/banner.png"
+                      src="/counselling-images/banner.png"
                       alt="AI-powered career guidance"
                       fill
                       sizes="(max-width:1024px) 100vw, 50vw"
@@ -313,7 +313,7 @@ export default function CounselingPage() {
                 <div className="group h-full rounded-2xl border border-red-200 bg-white overflow-hidden card-lift">
                   <div className="relative aspect-16/9 overflow-hidden">
                     <Image
-                      src="/counseling-images/without.png"
+                      src="/counselling-images/without.png"
                       alt="Without a plan"
                       fill
                       sizes="(max-width:1024px) 100vw, 50vw"
