@@ -588,9 +588,9 @@ function DetailPanel({
               style={
                 !applied
                   ? {
-                      background:
-                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
-                    }
+                    background:
+                      "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                  }
                   : undefined
               }
             >
@@ -739,81 +739,81 @@ function DetailPanel({
         {/* What You'll Receive */}
         {((internship.whatYouReceive && internship.whatYouReceive.length > 0) ||
           true) && (
-          <>
-            <div className="h-px bg-slate-100" />
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Gift className="h-4 w-4 text-blue-600" />
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  What You&apos;ll Receive
-                </h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {internship.whatYouReceive &&
-                internship.whatYouReceive.length > 0 ? (
-                  internship.whatYouReceive.map((item, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg px-3 py-2 border border-slate-700/50 shadow-sm text-white"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
-                      }}
-                    >
-                      <p className="text-[12px] font-semibold text-white">
-                        {item.title}
-                      </p>
-                      {item.body && (
-                        <p className="text-[10px] text-white/60 mt-0.5">
-                          {item.body}
+            <>
+              <div className="h-px bg-slate-100" />
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Gift className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    What You&apos;ll Receive
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {internship.whatYouReceive &&
+                    internship.whatYouReceive.length > 0 ? (
+                    internship.whatYouReceive.map((item, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg px-3 py-2 border border-slate-700/50 shadow-sm text-white"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
+                        }}
+                      >
+                        <p className="text-[12px] font-semibold text-white">
+                          {item.title}
                         </p>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div
-                      className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
-                      }}
-                    >
-                      Experience Letter
-                    </div>
-                    <div
-                      className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
-                      }}
-                    >
-                      Completion Certificate
-                    </div>
-                    <div
-                      className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
-                      }}
-                    >
-                      Digital Verification Certificate
-                    </div>
-                    <div
-                      className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
-                      }}
-                    >
-                      Professional Portfolio
-                    </div>
-                  </>
-                )}
+                        {item.body && (
+                          <p className="text-[10px] text-white/60 mt-0.5">
+                            {item.body}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div
+                        className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
+                        }}
+                      >
+                        Experience Letter
+                      </div>
+                      <div
+                        className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
+                        }}
+                      >
+                        Completion Certificate
+                      </div>
+                      <div
+                        className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
+                        }}
+                      >
+                        Digital Verification Certificate
+                      </div>
+                      <div
+                        className="rounded-lg px-3 py-2 text-[12px] font-semibold text-white border border-slate-700/50 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #0F172B 0%, rgba(51, 65, 99, 0.95) 95%)",
+                        }}
+                      >
+                        Professional Portfolio
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
       </div>
     </div>
   );
@@ -898,13 +898,13 @@ export default function InternshipsPage() {
   const internships = data?.data ?? [];
   const pagination = data
     ? {
-        currentPage: data.currentPage,
-        pageSize: data.pageSize,
-        totalRecords: data.totalRecords,
-        totalPages: data.totalPages,
-        hasNextPage: data.hasNextPage,
-        hasPreviousPage: data.hasPreviousPage,
-      }
+      currentPage: data.currentPage,
+      pageSize: data.pageSize,
+      totalRecords: data.totalRecords,
+      totalPages: data.totalPages,
+      hasNextPage: data.hasNextPage,
+      hasPreviousPage: data.hasPreviousPage,
+    }
     : null;
 
   // Scan internships list for fields & cities dynamically
@@ -1066,23 +1066,7 @@ export default function InternshipsPage() {
 
       <main className="min-h-screen overflow-x-hidden bg-white text-slate-800">
         {/* HERO SECTION - Light Brand Background */}
-        <div
-          className="relative pt-28 pb-14"
-          style={{
-            background: "linear-gradient(135deg, #f0f7ff 0%, #e8f2ff 50%, #dceeff 100%)",
-          }}
-        >
-          <div
-            className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-blue-200/30"
-            style={{ filter: "blur(80px)" }}
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-blue-300/20"
-            style={{ filter: "blur(60px)" }}
-            aria-hidden
-          />
-
+        <div className="relative pt-28 pb-14 bg-slate-50 border-b border-slate-100">
           <div className="relative container-x max-w-[1400px]">
             {/* PAGE HERO */}
             <ScrollReveal animation="fade-up" duration={700}>
