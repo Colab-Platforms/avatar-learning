@@ -144,10 +144,7 @@ export function TimelineSection() {
   const clampedFill = Math.min(100, Math.max(0, fillPercent));
 
   return (
-    <section className="relative bg-ink-950 overflow-hidden py-12 sm:py-16 md:py-24 lg:py-32">
-      {/* Top divider line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-brand-500/30 to-transparent" />
-
+    <section className="relative bg-white overflow-hidden py-10 sm:py-12 md:py-16">
       {/* Local keyframes for the student rider — bobbing while walking, a settle-pop on landing */}
       <style jsx>{`
         @keyframes student-bob {
@@ -164,26 +161,25 @@ export function TimelineSection() {
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0 opacity-60"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(0,200,255,0.08) 0%, transparent 60%)",
+              "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(42,120,204,0.05) 0%, transparent 60%)",
           }}
         />
-        <div className="absolute inset-0 line-grid opacity-10 pointer-events-none" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Header */}
         <AnimateOnScroll className="text-center mb-10 sm:mb-12 md:mb-16 lg:mb-20">
-          <p className="eyebrow eyebrow-dark mb-3 sm:mb-4 inline-block text-xs sm:text-sm">
+          <p className="eyebrow mb-3 sm:mb-4 inline-block text-xs sm:text-sm">
             ✓ GUARANTEED INTERNSHIPS
           </p>
-          <h2 className="h-display text-white mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+          <h2 className="h-display text-text mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
             Top Performers Get{" "}
             <span className="text-gradient-brand">Real Internships.</span>
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-[1.6] sm:leading-[1.8]">
+          <p className="text-sm sm:text-base md:text-lg text-text-muted max-w-2xl mx-auto leading-[1.6] sm:leading-[1.8]">
             Complete any of our paid programs with strong performance and get a
             chance to work on live projects with our partner companies. Real
             experience. Real outcomes.
@@ -194,9 +190,9 @@ export function TimelineSection() {
         <div ref={containerRef} className="relative">
           {/* Desktop connecting line — track + animated fill */}
           <div className="hidden lg:block absolute top-12 left-[8.33%] right-[8.33%] h-0.5 z-0">
-            <div className="absolute inset-0 bg-white/10 rounded-full" />
+            <div className="absolute inset-0 bg-border rounded-full" />
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 shadow-[0_0_12px_rgba(0,200,255,0.6)]"
+              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400"
               style={{
                 width: `${clampedFill}%`,
                 transition: reduceMotion
@@ -212,7 +208,7 @@ export function TimelineSection() {
                   left: `${clampedFill}%`,
                   transform: "translate(-50%, -50%)",
                   transition: "left 0.4s cubic-bezier(0.22,1,0.36,1)",
-                  filter: "drop-shadow(0 0 10px rgba(0,200,255,0.45))",
+                  filter: "drop-shadow(0 2px 6px rgba(42,120,204,0.35))",
                 }}
               >
                 <StudentRider completed={completed} />
@@ -222,7 +218,7 @@ export function TimelineSection() {
 
           {/* Mobile/tablet connecting line — vertical track + fill (phones + tablets, hidden on lg+) */}
           <div className="lg:hidden absolute top-0 bottom-0 left-1/2 w-0.5 -translate-x-1/2 z-0">
-            <div className="absolute inset-0 bg-white/10 rounded-full" />
+            <div className="absolute inset-0 bg-border rounded-full" />
             <div
               className="absolute inset-x-0 top-0 rounded-full bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400"
               style={{
@@ -240,7 +236,7 @@ export function TimelineSection() {
                   top: `${clampedFill}%`,
                   transform: "translate(-50%, -50%)",
                   transition: "top 0.4s cubic-bezier(0.22,1,0.36,1)",
-                  filter: "drop-shadow(0 0 10px rgba(0,200,255,0.45))",
+                  filter: "drop-shadow(0 2px 6px rgba(42,120,204,0.35))",
                 }}
               >
                 <StudentRider completed={completed} />
@@ -263,8 +259,8 @@ export function TimelineSection() {
                       className="absolute -top-4 left-1/2 w-0.5 h-4 lg:hidden transform -translate-x-1/2 transition-colors duration-500"
                       style={{
                         background: isActive
-                          ? "linear-gradient(to bottom, rgba(0,200,255,0.8), rgba(0,200,255,0.2))"
-                          : "linear-gradient(to bottom, rgba(255,255,255,0.15), transparent)",
+                          ? "linear-gradient(to bottom, rgba(42,120,204,0.8), rgba(42,120,204,0.2))"
+                          : "linear-gradient(to bottom, rgba(15,23,42,0.12), transparent)",
                       }}
                     />
                   )}
@@ -285,8 +281,8 @@ export function TimelineSection() {
                         className="absolute inset-0 rounded-full scale-110 transition-all duration-500"
                         style={{
                           background: isActive
-                            ? "rgba(0,200,255,0.22)"
-                            : "rgba(0,200,255,0.06)",
+                            ? "rgba(42,120,204,0.14)"
+                            : "rgba(42,120,204,0.04)",
                         }}
                       />
 
@@ -295,12 +291,12 @@ export function TimelineSection() {
                         className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-500 ease-out"
                         style={{
                           border: isActive
-                            ? "1px solid rgba(0,200,255,0.9)"
-                            : "1px solid rgba(0,200,255,0.25)",
-                          background: isActive ? "#00C8FF" : "#080F1C",
-                          color: isActive ? "#050B14" : "rgba(0,200,255,0.45)",
+                            ? "1px solid #2A78CC"
+                            : "1px solid #D3DCE6",
+                          background: isActive ? "#2A78CC" : "#F8FAFC",
+                          color: isActive ? "#FFFFFF" : "#94A3B8",
                           boxShadow: isActive
-                            ? "0 0 22px rgba(0,200,255,0.55)"
+                            ? "0 4px 16px rgba(42,120,204,0.35)"
                             : "none",
                           transform: isActive ? "scale(1)" : "scale(0.92)",
                         }}
@@ -311,11 +307,9 @@ export function TimelineSection() {
                         <div
                           className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-500"
                           style={{
-                            background: isActive ? "#00C8FF" : "#152034",
-                            color: isActive ? "#050B14" : "rgba(255,255,255,0.5)",
-                            boxShadow: isActive
-                              ? "0 0 10px rgba(0,200,255,0.7)"
-                              : "none",
+                            background: isActive ? "#153C66" : "#D3DCE6",
+                            color: isActive ? "#FFFFFF" : "#475569",
+                            boxShadow: "none",
                             transform: isActive ? "scale(1)" : "scale(0.85)",
                           }}
                         >
@@ -332,13 +326,13 @@ export function TimelineSection() {
                     <div className="flex-1 min-h-0">
                       <h3
                         className="font-semibold text-xs sm:text-sm md:text-base mb-1.5 sm:mb-2 transition-colors duration-500"
-                        style={{ color: isActive ? "#ffffff" : "rgba(255,255,255,0.45)" }}
+                        style={{ color: isActive ? "#0F172A" : "#94A3B8" }}
                       >
                         {step.title}
                       </h3>
                       <p
                         className="text-xs leading-normal sm:leading-relaxed transition-colors duration-500"
-                        style={{ color: isActive ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.3)" }}
+                        style={{ color: isActive ? "#475569" : "#94A3B8" }}
                       >
                         {step.description}
                       </p>
@@ -352,11 +346,9 @@ export function TimelineSection() {
 
         {/* CTA Button */}
         <AnimateOnScroll delay={600} className="flex justify-center mt-10 sm:mt-12 md:mt-16 lg:mt-20">
-          <a href="/courses"
-            className={`relative px-6 py-2.5 sm:px-8 sm:py-3 md:px-10 md:py-3.5 rounded-lg bg-brand-500 text-ink-950 font-semibold text-xs sm:text-sm md:text-base
-            hover:bg-brand-400 transition-all duration-300 group
-            shadow-lg hover:shadow-xl hover:shadow-brand-500/30
-            hover:scale-105 ${completed && !reduceMotion ? "btn-glow" : ""}`}
+          <a
+            href="/courses"
+            className="relative px-6 py-2.5 sm:px-8 sm:py-3 md:px-10 md:py-3.5 rounded-lg bg-brand-500 text-white font-semibold text-xs sm:text-sm md:text-base hover:bg-brand-600 transition-colors duration-200 group shadow-sm hover:shadow-md"
           >
             <span className="flex items-center gap-2">
               Explore Programs

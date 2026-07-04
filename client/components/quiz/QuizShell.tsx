@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { QUIZ_QUESTIONS, computeResult } from "@/data/quizQuestions";
-import { PageBackground } from "@/components/layout";
+import { Navbar } from "@/components/layout/Navbar";
 import { QuizQuestion } from "./QuizQuestion";
 import { QuizResult } from "./QuizResult";
-import { QuizNav } from "./QuizNav";
 import { QuizPanel } from "./QuizPanel";
-import { Brain, Sparkles } from "lucide-react";
+import { Brain } from "lucide-react";
 
 // answers stores string[] per question (single-select = 1-item array)
 export function QuizShell() {
@@ -57,18 +56,18 @@ export function QuizShell() {
   }
 
   return (
-    <PageBackground variant="rich" className="flex flex-col">
-      <QuizNav />
+    <div className="min-h-screen bg-surface-alt flex flex-col">
+      <Navbar />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-5 py-12 sm:py-16">
+      <main className="flex-1 flex flex-col items-center justify-center px-5 pt-28 pb-12 sm:pb-16">
         <div className="w-full max-w-3xl flex flex-col gap-6 sm:gap-8">
           <div className="text-center">
-            <p className="eyebrow eyebrow-dark justify-center mb-3">
+            <p className="eyebrow justify-center mb-3">
               <Brain className="h-3.5 w-3.5" />
               Career Path Quiz
             </p>
-            <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight">
-              <span className="text-shimmer">Discover your AI career path</span>
+            <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-text">
+              Discover your AI career path
             </h2>
           </div>
 
@@ -85,6 +84,6 @@ export function QuizShell() {
           </QuizPanel>
         </div>
       </main>
-    </PageBackground>
+    </div>
   );
 }
