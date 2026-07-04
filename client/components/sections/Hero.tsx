@@ -1,490 +1,129 @@
-"use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Users,
-  Star,
-  TrendingUp,
-  ArrowRight,
-  ChevronDown,
-} from "lucide-react";
-import { Button, Badge, CountUp, HeroParticles } from "@/components/ui";
-// import { HERO_SLIDES } from "@/data/hero";
-import { DBCourse, fetchHeroCourses } from "@/lib/coursesApi";
-import { HeroCardSkeleton } from "../ui/HeroCardSkeleton";
-import { AnimatePresence, motion } from "framer-motion";
-import { useHeroCourses } from "@/hooks/queries/courseQueries";
+import { ArrowRight, CheckCircle2, Star, Users } from "lucide-react";
+import { Button } from "@/components/ui";
 
-const SLIDE_DURATION = 4000;
-
-const STATS = [
-  { icon: Users, value: "10,000+", label: "Students enrolled" },
-  { icon: Star, value: "4.9", label: "Average rating" },
-  { icon: TrendingUp, value: "95%", label: "Completion rate" },
-];
-
-const TICKER_ITEMS = [
-  "AI Fundamentals",
-  "Prompt Engineering",
-  "LangChain & Agents",
-  "Computer Vision",
-  "GPT-4 API",
-  "Midjourney",
-  "AutoGPT",
-  "Fine-tuning LLMs",
+const CARDS = [
+  {
+    title: "Weekend Live Sessions",
+    description: "Every Saturday & Sunday. Learn without pausing your job or studies."
+  },
+  {
+    title: "Real Projects + Certificate",
+    description: "Build portfolio projects and earn industry-recognized certificates."
+  },
+  {
+    title: "Guaranteed Internships",
+    description: "Top performers get real internship opportunities with partner companies."
+  },
+  {
+    title: "Built for Busy People",
+    description: "Focused 3-5 week programs designed for students and working professionals."
+  }
 ];
 
 export function Hero() {
-  // const slide = HERO_SLIDES[0];
-  // const [courses, setCourses] = useState<DBCourse[]>([]);
-  const [direction, setDirection] = useState(1);
-  // const [loading, setLoading] = useState(true);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const vid1Ref = useRef<HTMLVideoElement>(null);
-  const vid2Ref = useRef<HTMLVideoElement>(null);
-
-  const { data: courses = [], isLoading, error } = useHeroCourses();
-
-  const course = courses[activeIdx] ?? null;
-
-  // useEffect(() => {
-  //   const loadCourses = async () => {
-  //     try {
-  //       const data = await fetchHeroCourses();
-  //       console.log("Hero:", data);
-
-  //       setCourses(data);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   loadCourses();
-  // }, []);
-
-  //2nd time
-  // useEffect(() => {
-  //   if (courses.length <= 1) return;
-
-  //   timerRef.current = setTimeout(() => {
-  //     setActiveIdx((i) => (i + 1) % courses.length);
-  //   }, SLIDE_DURATION);
-
-  //   return () => {
-  //     if (timerRef.current) clearTimeout(timerRef.current);
-  //   };
-  // }, [activeIdx, courses.length]);
-
-  // useEffect(() => {
-  //   const activeVid = activeIdx % 2 === 0 ? vid1Ref.current : vid2Ref.current;
-
-  //   if (activeVid) {
-  //     activeVid.currentTime = 0;
-  //     activeVid.play().catch(() => {});
-  //   }
-
-  //   if (courses.length <= 1) return;
-
-  //   timerRef.current = setTimeout(() => {
-  //     setActiveIdx((i) => (i + 1) % courses.length);
-  //   }, SLIDE_DURATION);
-
-  //   return () => {
-  //     if (timerRef.current) clearTimeout(timerRef.current);
-  //   };
-  // }, [activeIdx, courses.length]);
-
-  useEffect(() => {
-    if (courses.length <= 1) return;
-
-    // Determine which video belongs to the current index
-    // Even indices play Video 1, Odd indices play Video 2
-    const currentVid = activeIdx % 2 === 0 ? vid1Ref.current : vid2Ref.current;
-    const nextVid = activeIdx % 2 === 0 ? vid2Ref.current : vid1Ref.current;
-
-    // Fast-start current video
-    if (currentVid) {
-      currentVid.currentTime = 0;
-      currentVid.play().catch(() => {});
-    }
-
-    // Pre-buffer the hidden video so it's instantly warm for the next transition
-    if (nextVid) {
-      nextVid.play().catch(() => {});
-    }
-
-    // Standard auto slide timer
-    timerRef.current = setTimeout(() => {
-      setDirection(1);
-      setActiveIdx((i) => (i + 1) % courses.length);
-    }, SLIDE_DURATION);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [activeIdx, courses.length]);
-
-  // useEffect(() => {
-  //   const activeVid = activeIdx % 2 === 0 ? vid1Ref.current : vid2Ref.current;
-
-  //   activeVid?.play().catch(() => {});
-  // }, [activeIdx]);
-
-  // useEffect(() => {
-  //   if (courses.length <= 1) return;
-
-  //   const id = setInterval(() => {
-  //     setActiveIdx((i) => (i + 1) % courses.length);
-  //   }, SLIDE_DURATION);
-
-  //   return () => clearInterval(id);
-  // }, [courses.length]);
-
-  //Button for changing the slides in hero card of courses
-  const nextSlide = () => {
-    if (courses.length <= 1) return;
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setDirection(1);
-    setActiveIdx((prev) => (prev + 1) % courses.length);
-  };
-
-  const prevSlide = () => {
-    if (courses.length <= 1) return;
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setDirection(-1);
-    setActiveIdx((prev) => (prev - 1 + courses.length) % courses.length);
-  };
-
-  // Helper variables to determine visibility regardless of 3-item constraints
-  const isVid1Active = activeIdx % 2 === 0;
-  const isVid2Active = activeIdx % 2 !== 0;
-
   return (
-    <section className="relative isolate overflow-hidden bg-ink-950 text-white min-h-screen flex flex-col">
-      {/* ── Video 1: full background, plays for 4 s then fades out ── */}
-      <video
-        ref={vid1Ref}
-        autoPlay
-        muted
-        playsInline
-        loop
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover video-pos transition-opacity duration-1000"
-        // style={{ opacity: activeIdx === 0 ? 0.8 : 0 }}
-        style={{ opacity: isVid1Active ? 0.8 : 0 }}
-      >
-        <source src="/landing-vid/robot-vid.mp4" type="video/mp4" />
-      </video>
+    <section className="relative bg-white pt-6 pb-20 overflow-hidden">
+      {/* Light gradient hero container */}
+      <div className="mx-4 md:mx-6 lg:mx-8 bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 rounded-[32px] pt-16 pb-44 px-6 md:px-16 relative overflow-hidden flex flex-col items-start border border-brand-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        
+        {/* Glow Effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-300/20 rounded-full blur-[100px] pointer-events-none translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-300/20 rounded-full blur-[80px] pointer-events-none -translate-x-1/2 translate-y-1/2" />
 
-      {/* ── Video 2: avatar — full-width on mobile, right-half on md+ ── */}
-      <video
-        ref={vid2Ref}
-        autoPlay
-        muted
-        playsInline
-        loop
-        aria-hidden="true"
-        className="absolute inset-0 md:left-auto md:right-0 h-full w-full md:w-1/2 object-cover object-center transition-opacity duration-1000"
-        style={{
-          // opacity: activeIdx === 1 ? 0.85 : 0,
-          opacity: isVid2Active ? 0.85 : 0,
-          maskImage: "linear-gradient(to right, transparent 0%, black 20%)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent 0%, black 20%)",
-        }}
-      >
-        <source src="/landing-vid/avatar_video.mp4" type="video/mp4" />
-      </video>
-
-      {/* ── Gradient overlays ── */}
-      <div className="absolute inset-0 bg-linear-to-r from-ink-950 via-ink-950/75 to-transparent" />
-      <div className="absolute inset-0 bg-linear-to-t from-ink-950/95 via-transparent to-transparent" />
-      <div className="absolute top-0 inset-x-0 h-40 bg-linear-to-b from-ink-950/70 to-transparent" />
-
-      {/* ── Neon ambient orbs ── */}
-      {/* Primary neon cyan orb — top left */}
-      <div
-        className="orb w-[680px] h-[680px] -top-48 -left-52 opacity-[0.22]"
-        style={{
-          background: "radial-gradient(circle, #00C8FF 0%, transparent 60%)",
-          filter: "blur(100px)",
-        }}
-      />
-      {/* Secondary electric blue orb — bottom left */}
-      <div
-        className="orb w-[420px] h-[420px] bottom-16 -left-20 opacity-[0.18]"
-        style={{
-          background: "radial-gradient(circle, #0080FF 0%, transparent 65%)",
-          filter: "blur(80px)",
-          animationDelay: "3.2s",
-        }}
-      />
-      {/* Accent cyan orb — centre right */}
-      <div
-        className="orb-breathe absolute top-1/3 right-1/4 w-[320px] h-[320px] rounded-full opacity-[0.12]"
-        style={{
-          background: "radial-gradient(circle, #00D4FF 0%, transparent 65%)",
-          filter: "blur(65px)",
-          animationDelay: "1.5s",
-        }}
-      />
-
-      {/* ── Neon dot grid ── */}
-      <div className="absolute inset-0 dot-grid opacity-40 pointer-events-none" />
-
-      {/* ── Floating particles ── */}
-      <HeroParticles count={28} />
-
-      {/* ══════════ MAIN CONTENT ══════════ */}
-      <div className="relative flex-1 flex items-center">
-        <div className="container-x pt-36 pb-20 md:pt-44 md:pb-28 w-full">
-          {/* ── Eyebrow pill ── */}
-          {/* <div className="anim-fade-up stagger-1">
-            <span className="pill-tag border-brand-500/35 bg-brand-500/10 text-brand-300 backdrop-blur-sm">
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="live-dot text-emerald-400 h-full w-full" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center relative z-10">
+          
+          {/* Left Column (Text) */}
+          <div className="max-w-2xl">
+            {/* Eyebrow */}
+            <div className="anim-fade-up flex">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-brand-200 text-brand-700 text-xs font-semibold tracking-wider shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                ALL NEW UPCOMING COURSES
               </span>
-              <Sparkles className="h-3 w-3 text-brand-400" />
-              {slide.eyebrow}
-            </span>
-          </div> */}
-
-          {/* ── Heading ── */}
-          <h1 className="h-display mt-7 max-w-[700px] anim-fade-up stagger-2">
-            {/* {slide.heading.split("\n").map((line, i, arr) => (
-              <span key={i}>
-                {i === arr.length - 1 ? (
-                  <span className="text-shimmer">{line}</span>
-                ) : (
-                  <span className="text-white">{line} </span>
-                )}
-                {i < arr.length - 1 && <br />}
-              </span>
-            ))} */}
-            {"Your AI Journey Starts\nThis Weekend."
-              .split("\n")
-              .map((line, i, arr) => (
-                <span key={i}>
-                  {i === arr.length - 1 ? (
-                    <span className="text-shimmer">{line}</span>
-                  ) : (
-                    <span>{line} </span>
-                  )}
-                  {i < arr.length - 1 && <br />}
-                </span>
-              ))}
-          </h1>
-
-          {/* ── Sub-copy ── */}
-          <p className="mt-6 max-w-[440px] text-white/48 text-[15px] leading-[1.85] anim-fade-up stagger-3">
-            Hands-on AI programs built for the weekend — live sessions, real
-            projects, and career-moving certifications.
-          </p>
-
-          {/* ── Course card — neon animated border ── */}
-
-          <div className=" relative mt-10 max-w-[476px] min-h-[240px]">
-            {isLoading || !course ? (
-              <HeroCardSkeleton />
-            ) : (
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={course.id}
-                  className="absolute inset-0"
-                  initial={{
-                    // x: "100%",
-                    x: direction > 0 ? "100%" : "-100%",
-                    opacity: 1,
-                    scale: 0.97,
-                  }}
-                  animate={{
-                    x: 0,
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  exit={{
-                    // x: "-25%",
-                    x: direction > 0 ? "-25%" : "25%",
-                    opacity: 0,
-                    scale: 0.96,
-                  }}
-                  transition={{
-                    duration: 0.65,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  {/* Your complete card here */}
-                  <div className="hero-card-border  rounded-2xl">
-                    <div className="hero-card-border p-[1.5px] rounded-2xl">
-                      <div
-                        className="group/hcard relative rounded-[14px] bg-ink-900/95 backdrop-blur-xl p-6 overflow-hidden
-                            transition-all duration-500 hover:bg-ink-800/95"
-                        style={{
-                          boxShadow:
-                            "0 32px 80px -16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(0,200,255,0.08)",
-                        }}
-                      >
-                        {/* Neon corner glow */}
-                        <div
-                          className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none
-                              opacity-30 group-hover/hcard:opacity-60 transition-opacity duration-500"
-                          style={{
-                            background:
-                              "radial-gradient(circle, rgba(0,200,255,0.35) 0%, transparent 70%)",
-                            filter: "blur(22px)",
-                          }}
-                        />
-
-                        <div className="relative">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {course.price === 0
-                              ? "Free - Enroll Now"
-                              : "Enroll Now"}
-                            <Badge variant="level-dark">{course.level}</Badge>
-                            {/* <span className="ml-auto text-[11px] text-white/30 font-medium tabular-nums">
-                              {course.startDate ?? "Coming Soon"}
-                            </span> */}
-                          </div>
-
-                          <h3
-                            className="mt-4 text-[17px] font-semibold leading-snug text-white
-                                  group-hover/hcard:text-brand-300 transition-colors duration-300"
-                          >
-                            {course.title}
-                          </h3>
-                          <p className="mt-1.5 text-[13px] text-white/35">
-                            {course.totalWeeks} Weeks • {course._count.lessons}{" "}
-                            Lessons
-                          </p>
-
-                          <div className="mt-6 flex flex-wrap items-center gap-3">
-                            <Link href={`/courses/${course.slug}`}>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                className="btn-glow"
-                              >
-                                {/* {course.price === 0 && <Badge>FREE</Badge>} */}
-                                {course.price === 0
-                                  ? "Free - Enroll Now"
-                                  : "Enroll Now"}
-                                <ArrowRight className="h-3.5 w-3.5" />
-                              </Button>
-                            </Link>
-                            {/* <Link href="/courses/from-zero-to-ai-ready-at-your-own-pace">
-                    <Button variant="ghost-light" size="sm">{slide.secondaryCta}</Button>
-                    </Link> */}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            )}
-          </div>
-
-          {/* ── Slider nav ── */}
-          <div className="anim-fade-up stagger-5  flex items-center gap-4">
-            <Button
-              variant="ghost-light"
-              size="icon"
-              onClick={prevSlide}
-              aria-label="Previous"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost-light"
-              size="icon"
-              aria-label="Next"
-              onClick={nextSlide}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            {/* <div className="flex items-center gap-1.5 ml-1">
-              <span className="h-1.5 w-6 rounded-full bg-brand-500 shadow-[0_0_10px_rgba(0,200,255,1)]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-white/18 hover:bg-brand-500/50 transition-colors cursor-pointer" />
-              <span className="h-1.5 w-1.5 rounded-full bg-white/18 hover:bg-brand-500/50 transition-colors cursor-pointer" />
-            </div> */}
-          </div>
-
-          {/* ── Stats strip — neon ── */}
-          {/* <div className="anim-fade-up stagger-6 mt-12 w-fit">
-            <div
-              className="flex flex-wrap items-stretch rounded-2xl border border-brand-500/15 bg-ink-900/80
-                          backdrop-blur-sm overflow-hidden divide-x divide-brand-500/10"
-              style={{ boxShadow: "inset 0 1px 0 rgba(0,200,255,0.06), 0 0 40px rgba(0,200,255,0.05)" }}
-            >
-              {STATS.map(({ icon: Icon, value, label }, i) => (
-                <div
-                  key={label}
-                  className="group/stat flex items-center gap-3 px-5 py-3.5
-                              hover:bg-brand-500/6 transition-colors duration-300 cursor-default"
-                >
-                  <span
-                    className="flex items-center justify-center h-8 w-8 rounded-lg border
-                                bg-brand-500/12 border-brand-500/25
-                                group-hover/stat:bg-brand-500/22 group-hover/stat:border-brand-500/40
-                                group-hover/stat:shadow-[0_0_12px_rgba(0,200,255,0.25)]
-                                transition-all duration-300 group-hover/stat:scale-110"
-                  >
-                    <Icon className="h-3.5 w-3.5 text-brand-400" />
-                  </span>
-                  <div>
-                    <div
-                      className="text-[17px] font-semibold leading-tight tracking-tight text-brand-300"
-                      style={{ animationDelay: `${600 + i * 120}ms` }}
-                    >
-                      <CountUp value={value} duration={1800} />
-                    </div>
-                    <div className="text-[11px] text-white/35 mt-px">{label}</div>
-                  </div>
-                </div>
-              ))}
             </div>
-          </div> */}
+
+            {/* Heading */}
+            <h1 className="mt-8 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.15] anim-fade-up stagger-1">
+              Learn AI on Weekends.<br />
+              Build Real Projects.<br />
+              <span className="text-brand-600">Get Certified + Internships.</span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="mt-6 max-w-xl text-lg text-slate-600 leading-relaxed anim-fade-up stagger-2">
+              Practical weekend programs designed for students and working professionals who want real skills and career outcomes.
+            </p>
+
+            {/* CTAs */}
+            <div className="mt-10 flex flex-wrap items-center gap-4 anim-fade-up stagger-3">
+              <Link href="/courses">
+                <Button variant="primary" size="lg" className="h-14 px-8 text-base font-semibold shadow-lg shadow-brand-500/25 rounded-xl">
+                  Explore Programs
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/quiz">
+                <Button variant="outline" size="lg" className="h-14 px-8 text-base font-semibold border-brand-200 text-brand-700 hover:bg-brand-50 rounded-xl transition-all bg-white">
+                  Take 2-min Career Quiz
+                </Button>
+              </Link>
+            </div>
+
+            {/* Social Proof */}
+            <div className="mt-12 flex items-center gap-4 text-sm text-slate-600 anim-fade-up stagger-4">
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-100 overflow-hidden relative shadow-sm">
+                     <img src={`https://i.pravatar.cc/100?img=${i + 15}`} alt="Student" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+              <span className="font-medium tracking-wide">600+ Students Already Enrolled</span>
+            </div>
+          </div>
+
+          {/* Right Column (Visuals) */}
+          <div className="relative w-full h-full min-h-[350px] sm:min-h-[450px] lg:min-h-[550px] anim-fade-up stagger-3 hidden lg:flex items-center justify-center">
+            
+            {/* Main Video Animation */}
+            <div className="relative w-[85%] rounded-[32px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.1)] z-10 bg-white border border-white/50">
+               <video 
+                 src="/landing-vid/pencil-animation.mp4" 
+                 autoPlay 
+                 loop 
+                 muted 
+                 playsInline 
+                 className="w-full h-auto object-contain scale-[1.02]"
+                 style={{ mixBlendMode: 'darken' }}
+               />
+            </div>
+            
+            {/* Decorative element behind */}
+            <div className="absolute top-[10%] right-[5%] w-32 h-32 bg-brand-400/20 rounded-full blur-[50px] z-0" />
+          </div>
+
         </div>
       </div>
 
-      {/* ── Scroll indicator ── */}
-      <div
-        className="absolute bottom-[5.5rem] left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-2
-                    text-white/20 z-10 pointer-events-none anim-fade-up stagger-8"
-      >
-        <div className="relative h-10 w-[22px] rounded-full border border-brand-500/25 overflow-hidden">
-          <div
-            className="absolute left-1/2 top-1.5 h-[7px] w-[2.5px] rounded-full bg-brand-400/70"
-            style={{ animation: "scroll-dot 2s ease-in-out infinite" }}
-          />
-        </div>
-        <ChevronDown
-          className="h-3.5 w-3.5 text-brand-500/50"
-          style={{ animation: "float-up 2s ease-in-out infinite alternate" }}
-        />
-      </div>
-
-      {/* ══════════ TICKER BAR ══════════ */}
-      <div className="relative border-t border-brand-500/10 bg-ink-900/70 backdrop-blur-sm py-3 overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-20 bg-linear-to-r from-ink-950 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 bg-linear-to-l from-ink-950 to-transparent z-10 pointer-events-none" />
-        <div className="ticker-track">
-          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-3 px-7 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/25 whitespace-nowrap
-                          hover:text-brand-400 transition-colors duration-300 cursor-default"
+      {/* Overlapping Cards */}
+      <div className="container-x relative z-20 -mt-28 md:-mt-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {CARDS.map((card, idx) => (
+            <div 
+              key={card.title} 
+              className={`bg-white rounded-[24px] p-8 shadow-[0_12px_40px_rgba(0,0,0,0.12)] border-2 border-brand-100 anim-fade-up hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(0,0,0,0.18)] transition-all duration-300 relative z-30`}
+              style={{ animationDelay: `${200 + idx * 100}ms` }}
             >
-              <span className="h-[3px] w-[3px] rounded-full bg-brand-500/60 shrink-0" />
-              {item}
-            </span>
+              <div className="w-12 h-12 rounded-2xl bg-brand-50 mb-6 flex items-center justify-center border border-brand-100/50 text-brand-600">
+                {idx === 0 && <CheckCircle2 className="w-6 h-6" />}
+                {idx === 1 && <Star className="w-6 h-6" />}
+                {idx === 2 && <Users className="w-6 h-6" />}
+                {idx === 3 && <ArrowRight className="w-6 h-6" />}
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3 leading-snug">{card.title}</h3>
+              <p className="text-[15px] text-gray-500 leading-relaxed">{card.description}</p>
+            </div>
           ))}
         </div>
       </div>

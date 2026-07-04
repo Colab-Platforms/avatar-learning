@@ -1,28 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Ultra-dark navy-black backgrounds ── */
+  /* ── Ultra-dark navy-black backgrounds (kept — still used by
+       admin/auth/course-detail/about/contact/counseling pages,
+       not redesigned in this pass) ── */
   --color-ink-950: #050B14;
   --color-ink-900: #080F1C;
   --color-ink-800: #0D1727;
   --color-ink-700: #152034;
   --color-ink-600: #1D2C45;
 
-  /* ── Neon Cyan / Electric Blue — avatarindia.com brand ── */
-  --color-brand: #00C8FF;
-  --color-brand-50: #E0F9FF;
-  --color-brand-100: #B3F0FF;
-  --color-brand-200: #66E2FF;
-  --color-brand-300: #38D9FF;
-  --color-brand-400: #00D4FF;
-  --color-brand-500: #00C8FF;
-  --color-brand-600: #00A0D0;
+  /* ── Brand sky blue — sitewide accent ── */
+  --color-brand: #2A78CC;
+  --color-brand-50: #F0F6FB;
+  --color-brand-100: #D9E7F6;
+  --color-brand-200: #B4D0ED;
+  --color-brand-300: #8AB5E3;
+  --color-brand-400: #5F9AD9;
+  --color-brand-500: #2A78CC;
+  --color-brand-600: #205A99;
+  --color-brand-700: #153C66;
 
-  /* Secondary electric blue for depth */
+  /* Secondary electric blue for depth (kept — used by not-yet-redesigned pages) */
   --color-elec: #0080FF;
   --color-elec-500: #0080FF;
   --color-elec-400: #3399FF;
   --color-elec-600: #0066CC;
+
+  /* ── Light-mode surface / text tokens — used only by redesigned
+       (landing page + shared Navbar/Footer/Button/Badge) components ── */
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F8FAFC;
+  --color-surface-sunken: #F1F5F9;
+  --color-border: #D3DCE6;
+  --color-border-strong: #AAB9C8;
+  --color-text: #0F172A;
+  --color-text-muted: #475569;
+  --color-text-subtle: #94A3B8;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
@@ -157,7 +171,7 @@
   }
 }
 
-/* Neon cyan pulsing glow — CTAs */
+/* Neon cyan pulsing glow — CTAs (kept for not-yet-redesigned pages) */
 @keyframes glow-breathe {
 
   0%,
@@ -266,20 +280,6 @@
 
   40% {
     transform: translateY(-4px) scale(1.1);
-  }
-}
-
-@keyframes chatbotFloat {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-
-  45% {
-    transform: translateY(-5px) scale(1.05);
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
   }
 }
 
@@ -470,7 +470,7 @@
 .typing-dot {
   width: 6px;
   height: 6px;
-  background-color: #00C8FF;
+  background-color: var(--color-brand-500);
   border-radius: 50%;
   animation: typingBounce 1.4s infinite ease-in-out both;
 }
@@ -492,7 +492,7 @@
 }
 
 .chatbot-messages::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-border-strong);
   border-radius: 3px;
 }
 
@@ -650,18 +650,16 @@
 
 /* ════════════════════════════════════════════
    HERO VIDEO — responsive object-position
+   (kept: class definitions are harmless if unused after Hero rewrite)
 ════════════════════════════════════════════ */
-/* Video 1: robot — always centered */
 .hero-vid-1 {
   object-position: center center;
 }
 
-/* Video 2: avatar — desktop shows right portion where the face sits */
 .hero-vid-2 {
   object-position: 65% center;
 }
 
-/* Mobile: both videos center on the narrow viewport */
 @media (max-width: 767px) {
 
   .hero-vid-1,
@@ -675,7 +673,7 @@
 ════════════════════════════════════════════ */
 :root {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 200, 255, 0.30) transparent;
+  scrollbar-color: #205A99 transparent;
 }
 
 ::-webkit-scrollbar {
@@ -688,7 +686,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 200, 255, 0.30);
+  background: rgba(20, 54, 63, 0.3);
   border-radius: 9999px;
 }
 
@@ -713,8 +711,8 @@
 
   html,
   body {
-    background-color: #050B14;
-    color: #ffffff;
+    background-color: #FFFFFF;
+    color: #0F172A;
   }
 
   body {
@@ -744,7 +742,7 @@
 
   /* ── Typography ── */
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-brand-400;
+    @apply inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-brand-600;
   }
 
   .eyebrow-dark {
@@ -755,7 +753,7 @@
     @apply text-[38px] leading-[1.06] sm:text-5xl md:text-[58px] font-semibold tracking-[-0.03em];
   }
 
-  /* ── Filter pills (dark neon) ── */
+  /* ── Filter pills (dark neon, used by not-yet-redesigned pages) ── */
   .filter-pill {
     @apply rounded-full px-4 py-1.5 text-[13px] border border-white/10 text-white/45 hover:bg-brand-500/8 hover:border-brand-500/30 hover:text-brand-300 transition-all duration-250 cursor-pointer;
   }
@@ -764,18 +762,19 @@
     @apply bg-brand-500/15 text-brand-300 border-brand-500/40 shadow-sm;
   }
 
-  /* ── Gradient text — electric cyan ── */
+  /* ── Gradient text ── */
   .text-gradient-white {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(135deg, #fff 0%, #b3f0ff 50%, #66e2ff 100%);
   }
 
+  /* Used by redesigned light components for a single highlighted headline phrase */
   .text-gradient-brand {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #38d9ff 0%, #00c8ff 45%, #0080ff 100%);
+    background-image: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
   }
 
-  /* Neon cyan shimmer on headings */
+  /* Neon cyan shimmer on headings (kept for not-yet-redesigned pages) */
   .text-shimmer {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(90deg,
@@ -837,21 +836,20 @@
     animation-delay: 800ms;
   }
 
-  /* ── Card lift — neon hover glow ── */
+  /* ── Card lift ── */
   .card-lift {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
     transition:
-      transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 0.35s ease;
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.3s ease;
   }
 
+  /* Light-mode hover: subtle elevation, no glow (used by redesigned components) */
   .card-lift:hover {
-    transform: translateY(-6px);
-    box-shadow:
-      0 30px 70px -15px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(0, 200, 255, 0.30),
-      0 0 20px 0 rgba(0, 200, 255, 0.08);
-    border-color: rgba(0, 200, 255, 0.30) !important;
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px -12px rgba(15, 23, 42, 0.16);
+    border-color: var(--color-border-strong) !important;
   }
 
   .card-lift-dark {
@@ -870,12 +868,12 @@
     border-color: rgba(0, 200, 255, 0.35) !important;
   }
 
-  /* ── Neon glow breathe for CTAs ── */
+  /* ── Neon glow breathe for CTAs (kept for not-yet-redesigned pages) ── */
   .btn-glow {
     animation: glow-breathe 3s ease-in-out infinite;
   }
 
-  /* ── Section dividers — neon cyan glow ── */
+  /* ── Section dividers — neon cyan glow (kept for not-yet-redesigned pages) ── */
   .divider-glow {
     height: 1px;
     background: linear-gradient(90deg,
@@ -886,7 +884,7 @@
         transparent 100%);
   }
 
-  /* ── Background patterns ── */
+  /* ── Background patterns (kept for not-yet-redesigned pages) ── */
   .dot-grid {
     background-image: radial-gradient(rgba(0, 200, 255, 0.10) 1px, transparent 1px);
     background-size: 26px 26px;
@@ -911,7 +909,7 @@
     background-size: 128px 128px;
   }
 
-  /* ── Marquee ticker ── */
+  /* ── Marquee ticker (kept, unused after Hero rewrite) ── */
   .ticker-track {
     display: flex;
     width: max-content;
@@ -932,7 +930,7 @@
     animation: number-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  /* ── Neon animated conic-gradient border — cyan + electric blue ── */
+  /* ── Neon animated conic-gradient border — cyan + electric blue (kept — used by auth layout) ── */
   .hero-card-border {
     background: conic-gradient(from var(--angle) at 50% 50%,
         rgba(0, 200, 255, 0) 0deg,
@@ -948,7 +946,7 @@
     animation: ambient-breathe 7s ease-in-out infinite;
   }
 
-  /* ── Neon mesh gradient ── */
+  /* ── Neon mesh gradient (kept for not-yet-redesigned pages) ── */
   .mesh-gradient {
     background: linear-gradient(-45deg,
         rgba(0, 200, 255, 0.07) 0%,
@@ -994,7 +992,7 @@
     pointer-events: none;
   }
 
-  /* ── Hero video — responsive object-position ── */
+  /* ── Hero video — responsive object-position (kept, unused after Hero rewrite) ── */
   .video-pos {
     object-position: 78% top;
   }

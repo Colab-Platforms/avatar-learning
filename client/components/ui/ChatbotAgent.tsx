@@ -312,22 +312,9 @@ export default function ChatbotAgent() {
         )}
 
         <button
-          onClick={(e) => {
-            const rect = (
-              e.currentTarget as HTMLButtonElement
-            ).getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const id = Date.now();
-            setRipples((prev) => [...prev, { id, x: cx, y: cy }]);
-            setTimeout(
-              () => setRipples((prev) => prev.filter((r) => r.id !== id)),
-              850,
-            );
-            setIsOpen((c) => !c);
-          }}
-          className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white transition-all duration-300
-            ${!isOpen ? "chatbot-toggle-button hover:scale-110" : "hover:rotate-90 hover:scale-105 active:scale-95"}`}
+          onClick={() => setIsOpen((c) => !c)}
+          className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-200
+            ${!isOpen ? "hover:scale-105" : "hover:rotate-90 active:scale-95"}`}
           style={{
             background: "linear-gradient(135deg, #00C8FF 0%, #0062FF 100%)",
             boxShadow: isOpen ? "0 6px 20px rgba(0,0,0,0.4)" : undefined,

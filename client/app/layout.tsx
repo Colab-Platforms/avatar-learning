@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { SITE } from "@/data/site";
-import { ScrollProgress } from "@/components/ui";
 import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
 import ChatbotAgent from "@/components/ui/ChatbotAgent";
@@ -53,7 +52,6 @@ export default function RootLayout({
       <body>
         <StoreProvider>
           <QueryProvider>
-            <ScrollProgress />
             {children}
             <ChatbotAgent />
           </QueryProvider>
