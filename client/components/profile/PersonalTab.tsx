@@ -15,7 +15,7 @@ export function PersonalTab({
 }) {
   return (
     <TabPanel>
-      <PanelHeader icon={<User className="h-3.5 w-3.5 text-brand-400" />} title="Personal Information" editing={editing} />
+      <PanelHeader icon={<User className="h-3.5 w-3.5 text-brand-600" />} title="Personal Information" editing={editing} />
 
       <div className="p-4 sm:p-6 space-y-5">
         {/* name row */}
@@ -34,35 +34,35 @@ export function PersonalTab({
           />
         </div>
 
-        <div className="divider-glow" />
+        <div className="h-px bg-border" />
 
         {/* email + phone — read-only rows */}
         <div className="grid sm:grid-cols-2 gap-4">
           <ReadOnlyRow
-            icon={<Mail className="h-4 w-4 text-white/20 shrink-0" />}
+            icon={<Mail className="h-4 w-4 text-text-subtle shrink-0" />}
             label="Email Address"
             value={user.email}
             badge={user.isEmailVerified && (
-              <span className="hidden xs:inline-flex shrink-0 items-center gap-1 text-[11px] text-emerald-400
-                               bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2 py-0.5">
+              <span className="hidden xs:inline-flex shrink-0 items-center gap-1 text-[11px] text-emerald-700
+                               bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
                 <BadgeCheck className="h-3 w-3" /> Verified
               </span>
             )}
           />
           <ReadOnlyRow
-            icon={<Phone className="h-4 w-4 text-white/20 shrink-0" />}
+            icon={<Phone className="h-4 w-4 text-text-subtle shrink-0" />}
             label="Phone Number"
             value={user.phoneNo}
             badge={user.isPhoneVerified && (
-              <span className="hidden xs:inline-flex shrink-0 items-center gap-1 text-[11px] text-emerald-400
-                               bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2 py-0.5">
+              <span className="hidden xs:inline-flex shrink-0 items-center gap-1 text-[11px] text-emerald-700
+                               bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
                 <BadgeCheck className="h-3 w-3" /> Verified
               </span>
             )}
           />
         </div>
 
-        <div className="divider-glow" />
+        <div className="h-px bg-border" />
 
         {/* gender */}
         <div className="grid sm:grid-cols-2 gap-4">

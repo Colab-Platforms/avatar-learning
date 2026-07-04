@@ -13,10 +13,7 @@ export function ProfileTabs({
   activeTab, onChange, coursesCount,
 }: { activeTab: Tab; onChange: (tab: Tab) => void; coursesCount: number }) {
   return (
-    <div
-      className="flex items-center gap-1 rounded-xl border border-white/6 p-1 overflow-x-auto hide-scrollbar"
-      style={{ background: "linear-gradient(145deg, rgba(9,21,37,0.90) 0%, rgba(6,13,26,0.96) 100%)" }}
-    >
+    <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-1 overflow-x-auto hide-scrollbar shadow-sm">
       {TAB_DEFS.map((t) => (
         <button
           key={t.id}
@@ -25,8 +22,8 @@ export function ProfileTabs({
             "flex items-center gap-1.5 px-3.5 sm:px-5 py-2 rounded-lg text-[12px] sm:text-[13px] font-medium whitespace-nowrap shrink-0",
             "transition-all duration-250",
             activeTab === t.id
-              ? "bg-brand-500/12 border border-brand-500/25 text-brand-300"
-              : "text-white/35 hover:text-white/60 hover:bg-white/4 border border-transparent"
+              ? "bg-brand-50 border border-brand-200 text-brand-700"
+              : "text-text-subtle hover:text-text hover:bg-surface-alt border border-transparent"
           )}
         >
           {t.icon} {t.label}{t.id === "courses" && coursesCount > 0 ? ` (${coursesCount})` : ""}

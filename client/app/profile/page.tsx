@@ -111,31 +111,21 @@ export default function ProfilePage() {
     <>
       <Navbar />
 
-      <main
-        className="min-h-screen text-white overflow-x-hidden pt-16"
-        style={{ background: "linear-gradient(160deg,#060D1A 0%,#091220 30%,#060D1A 60%,#091525 100%)" }}
-      >
-        {/* fixed ambient glows */}
-        <div className="pointer-events-none fixed inset-0 dot-grid-dark opacity-25" aria-hidden />
-        <div className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] opacity-[0.13]"
-          style={{ background: "radial-gradient(ellipse at top, rgba(0,200,255,0.35) 0%, transparent 65%)", filter: "blur(60px)" }} aria-hidden />
-        <div className="pointer-events-none fixed bottom-0 right-0 w-[500px] h-[400px] opacity-[0.08]"
-          style={{ background: "radial-gradient(ellipse at bottom right, rgba(0,80,200,0.6) 0%, transparent 65%)", filter: "blur(90px)" }} aria-hidden />
-
-        <div className="relative container-x py-6 sm:py-10 max-w-6xl">
+      <main className="min-h-screen bg-surface-alt text-text overflow-x-hidden pt-16">
+        <div className="container-x py-6 sm:py-10 max-w-6xl">
 
           {/* ── toast banners ── */}
           <div className="space-y-3 mb-6">
             {saveOk && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/25
-                              bg-emerald-500/8 px-4 py-3 text-[13px] text-emerald-300"
+              <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200
+                              bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700"
                 style={{ animation: "fade-up-in 0.4s cubic-bezier(0.22,1,0.36,1) both" }}>
                 <Check className="h-4 w-4 shrink-0" /> Profile updated successfully!
               </div>
             )}
             {error && !saveOk && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-red-500/25
-                              bg-red-500/8 px-4 py-3 text-[13px] text-red-300"
+              <div className="flex items-center gap-2.5 rounded-xl border border-red-200
+                              bg-red-50 px-4 py-3 text-[13px] text-red-700"
                 style={{ animation: "fade-up-in 0.4s cubic-bezier(0.22,1,0.36,1) both" }}>
                 <X className="h-4 w-4 shrink-0" /> {error}
               </div>
