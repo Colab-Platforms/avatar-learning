@@ -92,9 +92,8 @@ model User {
   resourceDownloads ResourceDownload[]
   createdInternships Internship[]        @relation("InternshipCreator")
   internshipApplications InternshipApplication[]
-  createdInternships Internship[]        @relation("InternshipCreator")
-  internshipApplications InternshipApplication[]
   paymentOrders     PaymentOrder[]
+  direct2HireEnrollments Direct2HireEnrollment[]
 
   @@index([email])
   @@index([isActive])
@@ -377,11 +376,40 @@ enum PaymentTransactionStatus {
   REFUNDED
 }
 
+enum PaymentProductType {
+  COURSE
+  DIRECT2HIRE
+}
+
+enum Direct2HireStatus {
+  PENDING
+  PAID
+}
+
+model Direct2HireEnrollment {
+  id        String            @id @default(cuid())
+
+  userId    String            @map("user_id")
+  status    Direct2HireStatus @default(PENDING)
+
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentOrders PaymentOrder[]
+
+  @@index([userId])
+  @@map("direct2hire_enrollments")
+}
+
 model PaymentOrder {
   id               String             @id @default(cuid())
 
   userId           String             @map("user_id")
-  courseId         String             @map("course_id")
+  courseId         String?            @map("course_id")
+  direct2HireEnrollmentId String?      @map("direct2hire_enrollment_id")
+
+  productType      PaymentProductType @default(COURSE) @map("product_type")
 
   provider         PaymentProvider    @default(RAZORPAY)
   gatewayOrderId   String             @unique @map("gateway_order_id")
@@ -394,13 +422,15 @@ model PaymentOrder {
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
 
-  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course           Courses            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                Courses?               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  direct2HireEnrollment Direct2HireEnrollment? @relation(fields: [direct2HireEnrollmentId], references: [id], onDelete: Cascade)
 
   transactions     PaymentTransaction[]
 
   @@index([userId])
   @@index([courseId])
+  @@index([direct2HireEnrollmentId])
   @@index([gatewayOrderId])
   @@index([status])
   @@map("payment_orders")

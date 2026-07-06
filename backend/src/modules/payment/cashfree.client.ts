@@ -20,5 +20,7 @@ export function getCashfree(): Cashfree {
       ? CFEnvironment.PRODUCTION
       : CFEnvironment.SANDBOX;
 
-  return new Cashfree(environment, appId, secretKey);
+  const cashfree = new Cashfree(environment, appId, secretKey);
+  cashfree.XApiVersion = CASHFREE_API_VERSION;
+  return cashfree;
 }

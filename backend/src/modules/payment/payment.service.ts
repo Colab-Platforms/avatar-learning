@@ -1,4 +1,5 @@
 import Razorpay from "razorpay";
+import type { Prisma } from "@prisma/client";
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
@@ -13,6 +14,16 @@ import type {
   VerifyCashfreePaymentBody,
   VerifyRazorpayPaymentBody,
 } from "./payment.types.js";
+
+const DIRECT2HIRE_PRICE_RUPEES = 499;
+
+interface OrderContext {
+  productType: "COURSE" | "DIRECT2HIRE";
+  courseId?: string;
+  direct2HireEnrollmentId?: string;
+  description: string;
+  returnPath: string;
+}
 
 function getRazorpay(): Razorpay {
   const keyId = process.env.RAZORPAY_KEY_ID;
@@ -53,30 +64,45 @@ async function completePayment(params: {
   });
   if (existingTx) return;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.paymentTransaction.create({
-      data: {
-        paymentOrderId: order.id,
-        gatewayPaymentId,
-        gatewaySignature,
-        paymentMethod,
-        amount: order.amount,
-        status: "SUCCESS",
-        metadata,
-      },
-    });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.paymentTransaction.create({
+        data: {
+          paymentOrderId: order.id,
+          gatewayPaymentId,
+          gatewaySignature,
+          paymentMethod,
+          amount: order.amount,
+          status: "SUCCESS",
+          metadata,
+        },
+      });
 
-    await tx.paymentOrder.update({
-      where: { id: order.id },
-      data: { status: "PAID" },
-    });
+      await tx.paymentOrder.update({
+        where: { id: order.id },
+        data: { status: "PAID" },
+      });
 
-    await tx.courseUserMapper.upsert({
-      where: { userId_courseId: { userId: order.userId, courseId: order.courseId } },
-      create: { userId: order.userId, courseId: order.courseId },
-      update: {},
+      if (order.productType === "DIRECT2HIRE" && order.direct2HireEnrollmentId) {
+        await tx.direct2HireEnrollment.update({
+          where: { id: order.direct2HireEnrollmentId },
+          data: { status: "PAID" },
+        });
+      } else if (order.courseId) {
+        await tx.courseUserMapper.upsert({
+          where: { userId_courseId: { userId: order.userId, courseId: order.courseId } },
+          create: { userId: order.userId, courseId: order.courseId },
+          update: {},
+        });
+      }
     });
-  });
+  } catch (err: any) {
+    if (err.code === "P2002") {
+      // Concurrent webhook/verify call already recorded this payment — safe to ignore.
+      return;
+    }
+    throw err;
+  }
 }
 
 export class PaymentService {
@@ -98,44 +124,92 @@ export class PaymentService {
 
     const provider = getPaymentProvider();
     const amountInPaise = course.price * 100;
+    const ctx: OrderContext = {
+      productType: "COURSE",
+      courseId,
+      description: course.title,
+      returnPath: `/courses/${courseId}`,
+    };
 
     if (provider === "cashfree") {
-      return this.createCashfreeOrder(userId, courseId, course.price, amountInPaise, pendingOrder?.id);
+      return this.createCashfreeOrder(userId, ctx, course.price, amountInPaise, pendingOrder?.id);
     }
 
-    return this.createRazorpayOrder(userId, courseId, amountInPaise, pendingOrder?.id);
+    return this.createRazorpayOrder(userId, ctx, amountInPaise, pendingOrder?.id);
+  }
+
+  async createDirect2HireOrder(userId: string): Promise<CreateOrderResponse> {
+    const paidEnrollment = await prisma.direct2HireEnrollment.findFirst({
+      where: { userId, status: "PAID" },
+    });
+    if (paidEnrollment) {
+      throw new ApiError("You have already enrolled in the Direct2Hire programme", STATUS_CODES.CONFLICT);
+    }
+
+    let enrollment = await prisma.direct2HireEnrollment.findFirst({
+      where: { userId, status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!enrollment) {
+      enrollment = await prisma.direct2HireEnrollment.create({ data: { userId } });
+    }
+
+    const pendingOrder = await prisma.paymentOrder.findFirst({
+      where: { userId, direct2HireEnrollmentId: enrollment.id, status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const provider = getPaymentProvider();
+    const amountInPaise = DIRECT2HIRE_PRICE_RUPEES * 100;
+    const ctx: OrderContext = {
+      productType: "DIRECT2HIRE",
+      direct2HireEnrollmentId: enrollment.id,
+      description: "Direct2Hire Programme",
+      returnPath: "/direct2hire",
+    };
+
+    if (provider === "cashfree") {
+      return this.createCashfreeOrder(userId, ctx, DIRECT2HIRE_PRICE_RUPEES, amountInPaise, pendingOrder?.id);
+    }
+
+    return this.createRazorpayOrder(userId, ctx, amountInPaise, pendingOrder?.id);
   }
 
   private async createRazorpayOrder(
     userId: string,
-    courseId: string,
+    ctx: OrderContext,
     amountInPaise: number,
     pendingOrderId?: string,
   ): Promise<CreateOrderResponse> {
     const razorpay = getRazorpay();
 
+    const notes: Record<string, string> = { userId, productType: ctx.productType };
+    if (ctx.courseId) notes.courseId = ctx.courseId;
+    if (ctx.direct2HireEnrollmentId) notes.direct2HireEnrollmentId = ctx.direct2HireEnrollmentId;
+
     const rzpOrder = await razorpay.orders.create({
       amount: amountInPaise,
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
-      notes: { courseId, userId },
+      notes,
     });
 
     if (pendingOrderId) {
       await markPendingOrderFailed(pendingOrderId);
     }
 
-    await prisma.paymentOrder.create({
-      data: {
-        userId,
-        courseId,
-        provider: "RAZORPAY",
-        gatewayOrderId: rzpOrder.id,
-        amount: amountInPaise,
-        currency: "INR",
-        status: "PENDING",
-      },
-    });
+    const orderData: Prisma.PaymentOrderUncheckedCreateInput = {
+      userId,
+      provider: "RAZORPAY",
+      gatewayOrderId: rzpOrder.id,
+      amount: amountInPaise,
+      currency: "INR",
+      status: "PENDING",
+      productType: ctx.productType,
+      courseId: ctx.courseId,
+      direct2HireEnrollmentId: ctx.direct2HireEnrollmentId,
+    };
+    await prisma.paymentOrder.create({ data: orderData });
 
     return {
       provider: "razorpay",
@@ -148,7 +222,7 @@ export class PaymentService {
 
   private async createCashfreeOrder(
     userId: string,
-    courseId: string,
+    ctx: OrderContext,
     amountInRupees: number,
     amountInPaise: number,
     pendingOrderId?: string,
@@ -163,22 +237,29 @@ export class PaymentService {
     const customerPhone = user.phoneNo?.replace(/\D/g, "") || "9999999999";
     const customerName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Customer";
 
-    const response = await cashfree.PGCreateOrder({
-      order_id: gatewayOrderId,
-      order_amount: amountInRupees,
-      order_currency: "INR",
-      customer_details: {
-        customer_id: userId,
-        customer_name: customerName,
-        customer_email: user.email ?? undefined,
-        customer_phone: customerPhone,
-      },
-      order_meta: {
-        notify_url: `${backendUrl}/api/payment/webhook/cashfree`,
-        return_url: `${frontendUrl}/courses/${courseId}?payment=success&order_id={order_id}`,
-      },
-      order_note: courseId,
-    });
+    let response;
+    try {
+      response = await cashfree.PGCreateOrder({
+        order_id: gatewayOrderId,
+        order_amount: amountInRupees,
+        order_currency: "INR",
+        customer_details: {
+          customer_id: userId,
+          customer_name: customerName,
+          customer_email: user.email ?? undefined,
+          customer_phone: customerPhone,
+        },
+        order_meta: {
+          notify_url: `${backendUrl}/api/payment/webhook/cashfree`,
+          return_url: `${frontendUrl}${ctx.returnPath}?payment=success&order_id={order_id}`,
+        },
+        order_note: ctx.description,
+      });
+    } catch (err: any) {
+      const detail = err?.response?.data ?? err?.message ?? err;
+      console.error("[createCashfreeOrder] PGCreateOrder failed:", JSON.stringify(detail));
+      throw new ApiError(`Cashfree order creation failed: ${JSON.stringify(detail)}`, STATUS_CODES.BAD_REQUEST);
+    }
 
     const paymentSessionId = response.data.payment_session_id;
     if (!paymentSessionId) {
@@ -189,17 +270,18 @@ export class PaymentService {
       await markPendingOrderFailed(pendingOrderId);
     }
 
-    await prisma.paymentOrder.create({
-      data: {
-        userId,
-        courseId,
-        provider: "CASHFREE",
-        gatewayOrderId,
-        amount: amountInPaise,
-        currency: "INR",
-        status: "PENDING",
-      },
-    });
+    const orderData: Prisma.PaymentOrderUncheckedCreateInput = {
+      userId,
+      provider: "CASHFREE",
+      gatewayOrderId,
+      amount: amountInPaise,
+      currency: "INR",
+      status: "PENDING",
+      productType: ctx.productType,
+      courseId: ctx.courseId,
+      direct2HireEnrollmentId: ctx.direct2HireEnrollmentId,
+    };
+    await prisma.paymentOrder.create({ data: orderData });
 
     return {
       provider: "cashfree",
@@ -213,10 +295,10 @@ export class PaymentService {
 
   async verifyRazorpayPayment(
     userId: string,
-    courseId: string,
     razorpayOrderId: string,
     razorpayPaymentId: string,
     razorpaySignature: string,
+    courseId?: string,
   ): Promise<void> {
     const secret = process.env.RAZORPAY_KEY_SECRET;
     if (!secret) throw new ApiError("Razorpay secret not configured", STATUS_CODES.SERVER_ERROR);
@@ -234,47 +316,24 @@ export class PaymentService {
     });
     if (!order) throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
     if (order.userId !== userId) throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
-    if (order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
-    if (order.status === "PAID") throw new ApiError("Payment already processed", STATUS_CODES.CONFLICT);
+    if (courseId && order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
 
-    const existingTx = await prisma.paymentTransaction.findUnique({
-      where: { gatewayPaymentId: razorpayPaymentId },
-    });
-    if (existingTx) throw new ApiError("Payment already processed", STATUS_CODES.CONFLICT);
-
-    await prisma.$transaction(async (tx) => {
-      await tx.paymentTransaction.create({
-        data: {
-          paymentOrderId: order.id,
-          gatewayPaymentId: razorpayPaymentId,
-          gatewaySignature: razorpaySignature,
-          amount: order.amount,
-          status: "SUCCESS",
-        },
-      });
-
-      await tx.paymentOrder.update({
-        where: { id: order.id },
-        data: { status: "PAID" },
-      });
-
-      await tx.courseUserMapper.upsert({
-        where: { userId_courseId: { userId, courseId } },
-        create: { userId, courseId },
-        update: {},
-      });
+    await completePayment({
+      orderId: razorpayOrderId,
+      gatewayPaymentId: razorpayPaymentId,
+      gatewaySignature: razorpaySignature,
     });
   }
 
-  async verifyCashfreePayment(userId: string, courseId: string, orderId: string): Promise<void> {
-    console.log(`[verifyCashfreePayment] orderId=${orderId} userId=${userId} courseId=${courseId}`);
+  async verifyCashfreePayment(userId: string, orderId: string, courseId?: string): Promise<void> {
+    console.log(`[verifyCashfreePayment] orderId=${orderId} userId=${userId} courseId=${courseId ?? "-"}`);
 
     const order = await prisma.paymentOrder.findUnique({
       where: { gatewayOrderId: orderId },
     });
     if (!order) throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
     if (order.userId !== userId) throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
-    if (order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
+    if (courseId && order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
     if (order.status === "PAID") return;
 
     const cashfree = getCashfree();
@@ -314,17 +373,17 @@ export class PaymentService {
 
     if (provider === "cashfree") {
       const cashfreeBody = body as VerifyCashfreePaymentBody;
-      await this.verifyCashfreePayment(userId, cashfreeBody.courseId, cashfreeBody.order_id);
+      await this.verifyCashfreePayment(userId, cashfreeBody.order_id, cashfreeBody.courseId);
       return;
     }
 
     const razorpayBody = body as VerifyRazorpayPaymentBody;
     await this.verifyRazorpayPayment(
       userId,
-      razorpayBody.courseId,
       razorpayBody.razorpay_order_id,
       razorpayBody.razorpay_payment_id,
       razorpayBody.razorpay_signature,
+      razorpayBody.courseId,
     );
   }
 

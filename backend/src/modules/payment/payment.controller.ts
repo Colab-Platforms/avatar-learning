@@ -83,7 +83,7 @@ export const handleRazorpayWebhook = async (req: Request, res: Response): Promis
 
 export const handleCashfreeWebhook = async (req: Request, res: Response): Promise<void> => {
   try {
-    const secret = process.env.CASHFREE_WEBHOOK_SECRET;
+    const secret = process.env.CASHFREE_SECRET_KEY;
     if (!secret) {
       res.status(STATUS_CODES.SERVER_ERROR).json({ success: false });
       return;
@@ -104,9 +104,9 @@ export const handleCashfreeWebhook = async (req: Request, res: Response): Promis
 
     const isValid = verifyCashfreeWebhookSignature(rawBody, signature, timestamp, secret);
     if (!isValid) {
-      console.warn("Cashfree Webhook Signature Invalid. Proceeding anyway for testing...");
-      // res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: "Invalid signature" });
-      // return;
+      // console.warn("Cashfree Webhook Signature Invalid. Rejecting.");
+      res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: "Invalid signature" });
+      return;
     }
 
     const payload = req.body as CashfreeWebhookPayload;

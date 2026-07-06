@@ -43,7 +43,7 @@ app.use(helmet());
 app.use(compression());
 app.use(
   express.json({
-    verify: (req: any, res: any, buf) => {
+    verify: (req: any, _res: any, buf) => {
       (req as any).rawBody = buf.toString("utf8");
     },
   })

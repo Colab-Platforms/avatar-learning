@@ -30,7 +30,7 @@ export function validateVerifyPayment(data: unknown): {
 
   if (provider === "cashfree") {
     const schema = Joi.object<VerifyCashfreePaymentBody>({
-      courseId: Joi.string().trim().required(),
+      courseId: Joi.string().trim().optional(),
       order_id: Joi.string().trim().required(),
     });
     const { error, value } = schema.validate(data, { abortEarly: true });
@@ -39,7 +39,7 @@ export function validateVerifyPayment(data: unknown): {
   }
 
   const schema = Joi.object<VerifyRazorpayPaymentBody>({
-    courseId: Joi.string().trim().required(),
+    courseId: Joi.string().trim().optional(),
     razorpay_order_id: Joi.string().trim().required(),
     razorpay_payment_id: Joi.string().trim().required(),
     razorpay_signature: Joi.string().trim().required(),

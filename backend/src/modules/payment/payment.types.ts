@@ -3,14 +3,14 @@ export interface CreateOrderBody {
 }
 
 export interface VerifyRazorpayPaymentBody {
-  courseId: string;
+  courseId?: string;
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
 }
 
 export interface VerifyCashfreePaymentBody {
-  courseId: string;
+  courseId?: string;
   order_id: string;
 }
 
