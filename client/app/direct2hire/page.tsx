@@ -24,19 +24,53 @@ import {
   Briefcase,
   MessageCircle,
   Users,
+  Award,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollReveal, AnimateOnScroll, Button } from "@/components/ui";
+import { ScrollReveal, AnimateOnScroll, Button, HelpWidget } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
 const STATS = [
-  { value: "2300+", label: "Students Guided" },
-  { value: "4.9/5 ★", label: "Average Rating" },
+  { value: "10,000+", label: "Students Guided" },
+  { value: "500+", label: "Hiring Partners" },
+  { value: "95%", label: "Placement Rate" },
   { value: "₹12L+", label: "Avg Package Secured" },
-  { value: "150+", label: "Colleges & Schools" },
+];
+
+const JOURNEY_STEPS = [
+  {
+    num: "01",
+    icon: Users,
+    title: "Career Counselling",
+    desc: "A 1-on-1 session with an experienced counselor to understand your goals, strengths, and constraints — no generic advice.",
+  },
+  {
+    num: "02",
+    icon: BrainCircuit,
+    title: "AI-Powered Assessment",
+    desc: "A data-backed assessment maps your personality, aptitude, and interests to the careers where you're most likely to succeed.",
+  },
+  {
+    num: "03",
+    icon: Sparkles,
+    title: "AI Fundamentals Program",
+    desc: "A structured, mentor-guided program that builds the practical AI and digital skills employers are actively hiring for.",
+  },
+  {
+    num: "04",
+    icon: Briefcase,
+    title: "Guaranteed Internship",
+    desc: "Apply what you've learned in a real internship with a partner company — the experience that makes your resume stand out.",
+  },
+  {
+    num: "05",
+    icon: Award,
+    title: "Job Placement Support",
+    desc: "Get matched with hiring partners, prepped for interviews, and supported until you land an offer.",
+  },
 ];
 
 const WITHOUT_PLAN = [
@@ -92,29 +126,6 @@ const BONUS_BENEFITS = [
   "Community Access",
 ];
 
-const STEPS = [
-  {
-    num: "01",
-    title: "Career Assessment",
-    desc: "Complete our AI-powered career assessment to understand your strengths, interests, personality, and suitable career paths.",
-  },
-  {
-    num: "02",
-    title: "Expert Counseling",
-    desc: "Discuss your assessment results with an experienced counselor and get clear answers to every career question you have.",
-  },
-  {
-    num: "03",
-    title: "Get Your Roadmap",
-    desc: "Get access to internship opportunities (many of which are free or low-commitment) to gain real-world experience and build your profile.",
-  },
-  {
-    num: "04",
-    title: "Start Executing",
-    desc: "Receive guidance on resume building, interview preparation, and placement opportunities as you move closer to your career goals.",
-  },
-];
-
 const VALUE_STACK = [
   { icon: Users, label: "Career Counseling Session", price: "₹999/-" },
   { icon: BrainCircuit, label: "AI Powered Assessment + Feedback", price: "₹999/-" },
@@ -147,6 +158,14 @@ const DIFFERENTIATORS = [
 ];
 
 const FAQS = [
+  {
+    q: "Is the ₹499 session the entire Direct2Hire program?",
+    a: "It's Step 1. The ₹499 session covers your counselling and AI assessment. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step Direct2Hire journey.",
+  },
+  {
+    q: "Am I locked into the full program after the session?",
+    a: "No. The ₹499 session stands on its own — you walk away with real clarity and a roadmap either way. Continuing to the AI program, internship, and placement is entirely optional and depends on fit.",
+  },
   {
     q: "Is ₹499 really enough for proper guidance?",
     a: "Yes. The session is compact but complete — you get an AI-powered assessment, a 30-minute 1-on-1 consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
@@ -195,19 +214,22 @@ export default function Direct2HirePage() {
               <div>
                 <ScrollReveal animation="fade-up" delay={0}>
                   <p className="eyebrow mb-4">
-                    India&apos;s AI-Powered Career Platform
+                    Avatar&apos;s End-to-End Career Program
                   </p>
                   <h1 className="h-display text-text mb-6">
                     Stop guessing.{" "}
                     <span className="text-gradient-brand">
-                      Start planning your future.
+                      Get Direct2Hire.
                     </span>
                   </h1>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={80}>
                   <p className="text-text-muted text-[16px] leading-relaxed mb-8">
-                    Discover the right career path based on your interests, strengths, personality, and future job opportunities.{" "}
+                    Direct2Hire is Avatar&apos;s complete career program — counselling,
+                    AI-powered assessment, hands-on AI skilling, a real internship, and
+                    placement support, in one structured journey. It starts with a
+                    30-minute session for only{" "}
                     <span className="text-text-subtle line-through">₹12,995</span>{" "}
                     <span className="text-brand-600 font-semibold">₹499/-</span>
                   </p>
@@ -220,9 +242,9 @@ export default function Direct2HirePage() {
                         Book Your Session <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Link href="#whats-included">
+                    <Link href="#journey">
                       <Button variant="outline" size="lg">
-                        Learn More
+                        See the 5-Step Journey
                       </Button>
                     </Link>
                   </div>
@@ -349,7 +371,7 @@ export default function Direct2HirePage() {
                   <div className="relative aspect-16/9 overflow-hidden">
                     <Image
                       src="/counselling-images/with.png"
-                      alt="With Avatar's session"
+                      alt="With Direct2Hire"
                       fill
                       sizes="(max-width:1024px) 100vw, 50vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -361,7 +383,7 @@ export default function Direct2HirePage() {
                         <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                       </span>
                       <h3 className="text-xl font-bold text-emerald-600">
-                        With Avatar&apos;s Session
+                        With Direct2Hire
                       </h3>
                     </div>
                     <ul className="space-y-4">
@@ -383,6 +405,75 @@ export default function Direct2HirePage() {
         </section>
 
         {/* ══════════════════════════════
+            THE DIRECT2HIRE JOURNEY
+        ══════════════════════════════ */}
+        <section
+          id="journey"
+          className="py-14 bg-surface-alt border-t border-border relative overflow-hidden scroll-mt-20"
+        >
+          <div className="relative container-x">
+            <ScrollReveal animation="fade-up" className="mb-14">
+              <p className="eyebrow mb-4">The Complete Program</p>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                One Program.{" "}
+                <span className="text-gradient-brand">Five Guided Steps.</span>
+              </h2>
+              <p className="mt-3 text-text-muted max-w-2xl">
+                Direct2Hire isn&apos;t just a single session — it&apos;s a structured
+                journey from figuring out your path to actually getting hired.
+              </p>
+            </ScrollReveal>
+
+            <div className="relative">
+              {/* connector line (desktop) */}
+              <div className="absolute top-[22px] left-[10%] right-[10%] hidden lg:block">
+                <div className="h-[2px] w-full bg-gradient-to-r from-brand-200 via-brand-400 to-brand-200" />
+              </div>
+
+              <div className="relative grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                {JOURNEY_STEPS.map((step, i) => (
+                  <AnimateOnScroll key={step.num} delay={i * 80}>
+                    <div className="group h-full flex flex-col items-start">
+                      <div
+                        className="relative z-10 mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white text-[13px] font-bold shadow-md shadow-brand-500/25"
+                      >
+                        {step.num}
+                      </div>
+                      <div className="h-full w-full rounded-2xl border border-border bg-white p-6 card-lift cursor-default">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl mb-4 bg-brand-50 border border-brand-200 group-hover:bg-brand-100 transition-all duration-300">
+                          <step.icon className="h-5 w-5 text-brand-600" />
+                        </div>
+                        <h3 className="font-semibold text-[15px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
+                          {step.title}
+                        </h3>
+                        <p className="text-[13px] text-text-muted leading-relaxed">
+                          {step.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </AnimateOnScroll>
+                ))}
+              </div>
+            </div>
+
+            <ScrollReveal animation="fade-up" delay={120} className="mt-10">
+              <div className="rounded-2xl border border-brand-200 bg-brand-50 px-7 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <p className="text-[14px] text-text-muted max-w-xl">
+                  Every journey starts with{" "}
+                  <span className="font-semibold text-text">Step 1: the ₹499 counselling &amp; assessment session</span>{" "}
+                  below. You decide how far you take it from there.
+                </p>
+                <Link href="/contact">
+                  <Button variant="primary" size="md" className="shrink-0 w-fit">
+                    Start With Step 1 <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
             WHAT'S INCLUDED
         ══════════════════════════════ */}
         <section
@@ -391,13 +482,14 @@ export default function Direct2HirePage() {
         >
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="mb-12">
-              <p className="eyebrow mb-4">What&apos;s Included</p>
+              <p className="eyebrow mb-4">Step 1 of Your Journey</p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                What You Get in Your{" "}
-                <span className="text-gradient-brand">30-Minute Session</span>
+                What You Get in the{" "}
+                <span className="text-gradient-brand">₹499 Starter Session</span>
               </h2>
-              <p className="mt-3 text-text-muted">
-                Everything you need to move forward with clarity.
+              <p className="mt-3 text-text-muted max-w-2xl">
+                Your Direct2Hire journey begins here — the counselling and
+                assessment that unlock the rest of the program.
               </p>
             </ScrollReveal>
 
@@ -450,46 +542,6 @@ export default function Direct2HirePage() {
         </section>
 
         {/* ══════════════════════════════
-            HOW IT WORKS
-        ══════════════════════════════ */}
-          {/* <section className="py-14 bg-surface-alt border-t border-border relative overflow-hidden">
-            <div className="relative container-x">
-              <ScrollReveal animation="fade-up" className="mb-12">
-                <p className="eyebrow mb-4">Simple &amp; Clear Process</p>
-                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                  How It <span className="text-gradient-brand">Works</span>
-                </h2>
-                <p className="mt-3 text-text-muted max-w-2xl">
-                  From booking your session to walking away with a clear plan,
-                  everything happens in just 4 easy steps. Get expert guidance, a
-                  personalized roadmap and ongoing support without any complexity.
-                </p>
-              </ScrollReveal>
-
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {STEPS.map((step, i) => (
-                  <AnimateOnScroll key={step.num} delay={i * 80}>
-                    <div className="group h-full rounded-2xl border border-border bg-white p-7 card-lift cursor-default">
-                      <p
-                        className="text-4xl font-black text-transparent mb-5"
-                        style={{ WebkitTextStroke: "1px #2A78CC" }}
-                      >
-                        {step.num}
-                      </p>
-                      <h3 className="font-semibold text-[16px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
-                        {step.title}
-                      </h3>
-                      <p className="text-[13px] text-text-muted leading-relaxed">
-                        {step.desc}
-                      </p>
-                    </div>
-                  </AnimateOnScroll>
-                ))}
-              </div>
-            </div>
-          </section> */}
-
-        {/* ══════════════════════════════
             COMPLETE BREAKDOWN / PRICING
         ══════════════════════════════ */}
         <section className="py-14 bg-white border-t border-border relative overflow-hidden">
@@ -499,13 +551,14 @@ export default function Direct2HirePage() {
                 <div>
                   <p className="eyebrow mb-4">Complete Breakdown</p>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                    Everything You Get{" "}
-                    <span className="text-gradient-brand">For Just ₹499/-</span>
+                    The Full Direct2Hire Journey{" "}
+                    <span className="text-gradient-brand">Starts at ₹499/-</span>
                   </h2>
-                  <p className="mt-3 text-text-muted">
-                    Real value worth{" "}
-                    <span className="line-through text-text-subtle">₹12,995</span>.
-                    Now available at a fraction of the cost.
+                  <p className="mt-3 text-text-muted max-w-xl">
+                    Counselling, assessment, AI skilling, internship, and
+                    placement — real value worth{" "}
+                    <span className="line-through text-text-subtle">₹12,995</span>,
+                    now available at a fraction of the cost.
                   </p>
                 </div>
                 <Link href="/contact">
@@ -743,6 +796,7 @@ export default function Direct2HirePage() {
       </main>
 
       <Footer />
+      <HelpWidget />
     </>
   );
 }
