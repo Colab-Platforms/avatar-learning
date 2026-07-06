@@ -1,11 +1,13 @@
 import type { NavItem, FooterColumn, SocialLink } from "@/types";
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Home",        href: "/" },
-  { label: "Learning",       href: "/courses" },
-  { label: "Marketplace",    href: "#" },
-  { label: "Contact",    href: "/contact" },
-  { label: "About",     href: "/about" },
+  { label: "Home", href: "/" },
+  { label: "Learning", href: "/courses" },
+  { label: "Counseling", href: "/counseling" },
+  { label: "Internships", href: "/internships" },
+  { label: "Marketplace", href: "/marketplace" },
+  { label: "Contact", href: "/contact" },
+  { label: "About", href: "/about" },
 ];
 
 export const FOOTER_COLUMNS: FooterColumn[] = [
@@ -13,26 +15,19 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Platforms",
     items: [
       { label: "Learning", href: "/courses" },
-      { label: "Marketplace", href: "#" },
-      { label: "Solutions", href: "#" },
+      { label: "Counseling", href: "/counseling" },
+      { label: "Marketplace", href: "/marketplace" },
     ],
   },
   {
     title: "Company",
     items: [
       { label: "About Us", href: "/about" },
-      { label: "Careers",  href: "#" },
-      { label: "Blog",     href: "#" },
-      { label: "Contact",  href: "/contact" },
+      { label: "Careers", href: "/internships" },
+      { label: "Contact", href: "/contact" },
     ],
   },
-  {
-    title: "Resources",
-    items: [
-      { label: "Community", href: "#" },
-      { label: "Talent network", href: "#" },
-    ],
-  },
+
   {
     title: "Legal",
     items: [
@@ -43,7 +38,24 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 ];
 
 export const SOCIAL_LINKS: SocialLink[] = [
-  { platform: "facebook", href: "#", label: "Facebook" },
-  { platform: "instagram", href: "#", label: "Instagram" },
-  { platform: "linkedin", href: "#", label: "LinkedIn" },
+  {
+    platform: "facebook",
+    href: "https://www.facebook.com/share/1JpYwqS4jQ/",
+    label: "Facebook",
+  },
+  {
+    platform: "instagram",
+    href: "https://www.instagram.com/avatar.india/",
+    label: "Instagram",
+  },
+  {
+    platform: "linkedin",
+    href: "https://linkedin.com/in/avatar-india-358b39413/",
+    label: "LinkedIn",
+  },
+  {
+    platform: "youtube",
+    href: "https://www.youtube.com/@AvatarIndia-g1i",
+    label: "YouTube",
+  },
 ];

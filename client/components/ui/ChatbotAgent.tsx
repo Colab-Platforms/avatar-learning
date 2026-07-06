@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import {
-  Bot,
   X,
   Send,
   Loader,
-  Shield,
   RefreshCw,
   Sparkles,
+  Bot,
+  RotateCcw,
 } from "lucide-react";
 import { layout, prepare } from "@chenglou/pretext";
 import { useChatbotMutation } from "@/hooks/mutations/useChatbot";
@@ -23,6 +25,7 @@ type ChatMessage = {
   timestamp: string;
   isError?: boolean;
   canRetry?: boolean;
+  isNew?: boolean;
 };
 
 const STORAGE_KEY = "avatar-chatbot-session";
@@ -30,10 +33,127 @@ const DEFAULT_MESSAGES: ChatMessage[] = [
   {
     id: "welcome",
     type: "bot",
-    text: "🤖 **Welcome to Avatar Learning Assistant!**\n\nAsk me about courses, enrollment, certification, or the platform and I’ll give you a fast answer.",
+    text: "Welcome to **Avatar Learning**! I'm **Ava**, your AI learning companion.\n\nAsk me about courses, enrollment, certifications, or anything about the platform.",
     timestamp: new Date().toISOString(),
   },
 ];
+
+const SUGGESTION_CHIPS = [
+  "Tell me about course tracks",
+  "How does certification work?",
+  "What is Avatar Learning?",
+  "How do I enroll?",
+];
+
+/* ── Typewriter hook ── */
+function useTypewriter(text: string, enabled: boolean, speed = 18) {
+  const [displayed, setDisplayed] = useState(enabled ? "" : text);
+
+  useEffect(() => {
+    if (!enabled) {
+      setDisplayed(text);
+      return;
+    }
+    setDisplayed("");
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) clearInterval(id);
+    }, speed);
+    return () => clearInterval(id);
+  }, [text, enabled, speed]);
+
+  return displayed;
+}
+
+/* ── Bot bubble with typewriter ── */
+function BotBubble({
+  message,
+  isNew,
+  computedHeight,
+  onRetry,
+}: {
+  message: ChatMessage;
+  isNew: boolean;
+  computedHeight: number;
+  onRetry: () => void;
+}) {
+  const displayed = useTypewriter(message.text, isNew, 14);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="flex justify-start gap-2.5 items-start"
+    >
+      {/* Avatar */}
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-md"
+        style={{
+          background: message.isError
+            ? "rgba(220,38,38,0.15)"
+            : "rgba(0,200,255,0.1)",
+          border: message.isError
+            ? "1px solid rgba(220,38,38,0.3)"
+            : "1px solid rgba(0,200,255,0.3)",
+        }}
+      >
+        <Bot
+          className="h-4 w-4"
+          style={{ color: message.isError ? "#f87171" : "#00C8FF" }}
+        />
+      </div>
+
+      {/* Bubble */}
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: "auto", opacity: 1 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-[82%] rounded-2xl rounded-tl-none px-4 py-3 text-sm overflow-hidden"
+        style={
+          message.isError
+            ? {
+                background: "rgba(220,38,38,0.14)",
+                border: "1px solid rgba(220,38,38,0.30)",
+              }
+            : {
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(0,200,255,0.12)",
+                borderLeft: "2px solid rgba(0,200,255,0.55)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+              }
+        }
+      >
+        <div
+          className={`leading-relaxed ${message.isError ? "text-red-300" : "text-white/88"} chatbot-markdown`}
+        >
+          <ReactMarkdown>{displayed}</ReactMarkdown>
+        </div>
+
+        <div className="mt-2 flex items-center justify-between gap-4 text-[10px] text-white/25">
+          <span>
+            {new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          {message.canRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="inline-flex items-center gap-1 rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-[#00C8FF] transition hover:bg-white/10"
+            >
+              <RefreshCw className="h-2.5 w-2.5" />
+              Retry
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function ChatbotAgent() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,15 +161,19 @@ export default function ChatbotAgent() {
   const [inputValue, setInputValue] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [errorHint, setErrorHint] = useState<string | null>(null);
+  const [ripples, setRipples] = useState<
+    { id: number; x: number; y: number }[]
+  >([]);
+  const [newBotId, setNewBotId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const mutation = useChatbotMutation();
 
+  const showSuggestions = messages.length === 1 && messages[0].id === "welcome";
+
   useEffect(() => {
     const stored = window.sessionStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setSessionId(stored);
-    }
+    if (stored) setSessionId(stored);
   }, []);
 
   useEffect(() => {
@@ -58,10 +182,10 @@ export default function ChatbotAgent() {
 
   useEffect(() => {
     if (mutation.isError && mutation.error) {
-      const failed = {
+      const failed: ChatMessage = {
         id: `error-${Date.now()}`,
-        type: "bot" as const,
-        text: `⚠️ **Error:** ${mutation.error.message}`,
+        type: "bot",
+        text: `**Error:** ${mutation.error.message}`,
         timestamp: new Date().toISOString(),
         isError: true,
         canRetry: true,
@@ -74,11 +198,11 @@ export default function ChatbotAgent() {
     return new Map(
       messages.map((message) => {
         try {
-          const prepared = prepare(message.text, "16px Inter", {
+          const prepared = prepare(message.text, "14px Inter", {
             whiteSpace: "pre-wrap",
           });
-          const { height } = layout(prepared, 280, 24);
-          return [message.id, Math.max(height, 48) + 16];
+          const { height } = layout(prepared, 260, 20);
+          return [message.id, Math.max(height, 40) + 24];
         } catch {
           return [message.id, 56];
         }
@@ -86,57 +210,56 @@ export default function ChatbotAgent() {
     );
   }, [messages]);
 
-  const handleSendMessage = async (
-    event?: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
+
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        type: "user",
+        text: text.trim(),
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setInputValue("");
+      setErrorHint(null);
+
+      await mutation
+        .mutateAsync({
+          message: text.trim(),
+          sessionId: sessionId || undefined,
+          user: {},
+        } as ChatbotPayload)
+        .then((reply) => {
+          const id = `bot-${Date.now()}`;
+          const botMessage: ChatMessage = {
+            id,
+            type: "bot",
+            text: reply.reply,
+            timestamp: new Date().toISOString(),
+            isNew: true,
+          };
+          setNewBotId(id);
+          setMessages((prev) => [...prev, botMessage]);
+          if (reply.sessionId && reply.sessionId !== sessionId) {
+            setSessionId(reply.sessionId);
+            window.sessionStorage.setItem(STORAGE_KEY, reply.sessionId);
+          }
+        })
+        .catch((error) => {
+          setErrorHint(error.message);
+        });
+    },
+    [mutation, sessionId],
+  );
+
+  const handleSendMessage = (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-
-    if (!inputValue.trim()) {
-      return;
-    }
-
-    const userText = inputValue.trim();
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      type: "user",
-      text: userText,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue("");
-    setErrorHint(null);
-
-    await mutation
-      .mutateAsync({
-        message: userText,
-        sessionId: sessionId || undefined,
-        user: {},
-      } as ChatbotPayload)
-      .then((reply) => {
-        const botMessage: ChatMessage = {
-          id: `bot-${Date.now()}`,
-          type: "bot",
-          text: reply.reply,
-          timestamp: new Date().toISOString(),
-        };
-
-        setMessages((prev) => [...prev, botMessage]);
-
-        if (reply.sessionId && reply.sessionId !== sessionId) {
-          setSessionId(reply.sessionId);
-          window.sessionStorage.setItem(STORAGE_KEY, reply.sessionId);
-        }
-      })
-      .catch((error) => {
-        setErrorHint(error.message);
-      });
+    sendMessage(inputValue);
   };
 
   const retryLastMessage = async () => {
-    const lastUser = [...messages]
-      .reverse()
-      .find((message) => message.type === "user");
+    const lastUser = [...messages].reverse().find((m) => m.type === "user");
     if (!lastUser) return;
     setErrorHint(null);
     await mutation
@@ -146,193 +269,346 @@ export default function ChatbotAgent() {
         user: {},
       } as ChatbotPayload)
       .then((reply) => {
+        const id = `bot-retry-${Date.now()}`;
         const botMessage: ChatMessage = {
-          id: `bot-retry-${Date.now()}`,
+          id,
           type: "bot",
           text: reply.reply,
           timestamp: new Date().toISOString(),
+          isNew: true,
         };
+        setNewBotId(id);
         setMessages((prev) => [...prev, botMessage]);
       })
-      .catch((error) => {
-        setErrorHint(error.message);
-      });
+      .catch((error) => setErrorHint(error.message));
   };
 
-  const renderFormattedMessage = (text: string) => {
-    const escaped = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-
-    const formatted = escaped
-      .replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong class='font-semibold text-cyan-200'>$1</strong>",
-      )
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\n/g, "<br />");
-
-    return (
-      <div
-        dangerouslySetInnerHTML={{ __html: formatted }}
-        className="whitespace-pre-wrap text-sm leading-relaxed"
-      />
-    );
+  const clearChat = () => {
+    setMessages(DEFAULT_MESSAGES);
+    setNewBotId(null);
+    setErrorHint(null);
   };
 
   return (
     <>
-      {/* Floating Toggle Button */}
-      <button
-        onClick={() => setIsOpen((current) => !current)}
-        className="fixed md:right-8 md:bottom-8 right-4 bottom-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:scale-110 active:scale-95"
-        aria-label={isOpen ? "Close chat" : "Open chat"}
-      >
-        {isOpen ? (
-          <X className="h-6 w-6 transform rotate-0 transition-transform duration-200" />
-        ) : (
-          <Bot className="h-6 w-6 transform scale-110" />
+      {/* Ripple layer */}
+      {ripples.map((r) => (
+        <span
+          key={r.id}
+          className="chatbot-ripple"
+          style={{ top: r.y, left: r.x }}
+        />
+      ))}
+
+      {/* ── Toggle Button ── */}
+      <div className="fixed md:right-19 md:bottom-16 right-4 bottom-12 z-50 group">
+        {!isOpen && (
+          <>
+            <div className="chatbot-backlight" />
+            <span className="chatbot-ring chatbot-ring-1" />
+            <span className="chatbot-ring chatbot-ring-2" />
+            <span className="chatbot-ring chatbot-ring-3" />
+          </>
         )}
-      </button>
 
-      {isOpen && (
-        <div
-          className="fixed bottom-24 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85vh] overflow-hidden rounded-3xl border border-slate-800 shadow-2xl bg-slate-950/95 backdrop-blur-xl sm:right-8 sm:left-auto"
+        <button
+          onClick={() => setIsOpen((c) => !c)}
+          className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-200
+            ${!isOpen ? "hover:scale-105" : "hover:rotate-90 active:scale-95"}`}
           style={{
-            animation:
-              "chatbotPanelReveal 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            background: "linear-gradient(135deg, #00C8FF 0%, #0062FF 100%)",
+            boxShadow: isOpen ? "0 6px 20px rgba(0,0,0,0.4)" : undefined,
           }}
+          aria-label={isOpen ? "Close chat" : "Open chat"}
         >
-          {/* Header */}
-          <div className="relative border-b border-slate-800/60 bg-slate-900/40 px-5 py-4 backdrop-blur-md">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="flex items-center justify-between gap-3 relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 text-cyan-400 ring-1 ring-cyan-500/30">
-                  <Shield className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Learning assistant
-                  </p>
-                  <p className="truncate text-sm font-semibold text-white">
-                    AI Course Companion
-                  </p>
-                </div>
-              </div>
+          <AnimatePresence mode="wait" initial={false}>
+            {isOpen ? (
+              <motion.span
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="h-6 w-6" />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="open"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Bot className="h-6 w-6 scale-110" />
+              </motion.span>
+            )}
+          </AnimatePresence>
 
-              <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live
-              </span>
-            </div>
-          </div>
-
-          {/* Chat Space Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
-            {/* Quick Context Tip Box */}
-            <div className="flex gap-2.5 rounded-2xl bg-slate-900/50 p-3.5 text-xs text-slate-400 ring-1 ring-slate-800/80">
-              <Sparkles className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-slate-200 mb-0.5">Quick Tip</p>
-                <p className="leading-normal text-slate-400">
-                  You can ask about course tracks, module support, enrollment
-                  windows, or certificate completions.
-                </p>
+          {/* Tooltip */}
+          {!isOpen && (
+            <div className="absolute right-full mr-4 top-1/2 -translate-y-[58%] whitespace-nowrap opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out">
+              <div className="px-4 py-2 rounded-2xl text-xs font-semibold text-white/95 border border-cyan-500/30 shadow-xl flex items-center bg-[#0b1528]/95 backdrop-blur-md">
+                <span>Try using Ava!</span>
+                <div className="absolute top-1/2 -translate-y-1/2 left-full w-2 h-2 border-r border-t border-cyan-500/30 bg-[#0b1528] rotate-45 -ml-1" />
               </div>
             </div>
+          )}
+        </button>
+      </div>
 
-            {/* Rendered Messages */}
-            {messages.map((message) => {
-              const minHeight = computedHeights.get(message.id) ?? 56;
-              const isUser = message.type === "user";
+      {/* ── Chat Panel ── */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="chatbot-panel"
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-28 sm:bottom-32 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85dvh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto"
+          >
+            {/* ── Header ── */}
+            <div
+              className="relative px-5 py-4 shrink-0"
+              style={{
+                borderBottom: "1px solid rgba(0,200,255,0.12)",
+                background: "rgba(8,16,30,0.92)",
+              }}
+            >
+              {/* Corner glow */}
+              <div
+                className="absolute top-0 right-0 w-48 h-32 pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at top right, rgba(0,200,255,0.09) 0%, transparent 70%)",
+                }}
+              />
 
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    style={{ minHeight }}
-                    className={`max-w-[85%] flex flex-col rounded-2xl px-4 py-3 text-sm shadow-md transition-all ${
-                      isUser
-                        ? "bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-tr-none shadow-cyan-950/10"
-                        : message.isError
-                          ? "bg-red-950/40 border border-red-900/50 text-red-200 rounded-tl-none"
-                          : "bg-slate-900/80 border border-slate-800/80 text-slate-100 rounded-tl-none"
-                    }`}
-                  >
-                    <div className="flex-1">
-                      {isUser ? (
-                        <p className="whitespace-pre-wrap leading-relaxed">
-                          {message.text}
-                        </p>
-                      ) : (
-                        renderFormattedMessage(message.text)
-                      )}
-                    </div>
-
+              <div className="relative z-10 flex items-center justify-between gap-3">
+                {/* Left: AI avatar + name */}
+                <div className="flex items-center gap-3">
+                  {/* Glowing AI core */}
+                  <div className="relative shrink-0">
                     <div
-                      className={`mt-2 flex items-center justify-between gap-4 text-[10px] ${isUser ? "text-cyan-200/70" : "text-slate-400"}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-full"
+                      style={{
+                        background:
+                          "radial-gradient(circle, rgba(0,200,255,0.22) 0%, rgba(0,98,255,0.18) 100%)",
+                        border: "1px solid rgba(0,200,255,0.40)",
+                        boxShadow:
+                          "0 0 16px rgba(0,200,255,0.25), inset 0 0 12px rgba(0,200,255,0.12)",
+                      }}
                     >
-                      <span>
+                      <Sparkles className="h-4.5 w-4.5 text-[#00C8FF] chatbot-avatar-breathe" />
+                    </div>
+                    {/* Pulse ring */}
+                    <span className="absolute inset-0 rounded-full chatbot-avatar-ring" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                      AI Learning Companion
+                    </p>
+                    <p className="text-sm font-semibold text-white leading-tight">
+                      Ava
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: status + actions */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-emerald-400"
+                    style={{
+                      background: "rgba(16,185,129,0.08)",
+                      border: "1px solid rgba(16,185,129,0.18)",
+                    }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Active
+                  </span>
+
+                  {/* Clear chat */}
+                  <button
+                    type="button"
+                    onClick={clearChat}
+                    title="Clear chat"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 hover:text-[#00C8FF] hover:bg-white/8 transition-all duration-200 group/clear"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 group-hover/clear:rotate-[-360deg] transition-transform duration-500" />
+                  </button>
+
+                  {/* Close */}
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/8 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Messages ── */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chatbot-messages">
+              {messages.map((message) => {
+                const minH = computedHeights.get(message.id) ?? 56;
+                const isUser = message.type === "user";
+
+                if (!isUser) {
+                  return (
+                    <BotBubble
+                      key={message.id}
+                      message={message}
+                      isNew={message.id === newBotId}
+                      computedHeight={minH}
+                      onRetry={retryLastMessage}
+                    />
+                  );
+                }
+
+                return (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex justify-end"
+                  >
+                    <div
+                      className="max-w-[80%] rounded-2xl rounded-tr-none px-4 py-3 text-sm text-white leading-relaxed"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #00C8FF 0%, #0062FF 100%)",
+                        boxShadow: "0 4px 20px rgba(0,200,255,0.20)",
+                        minHeight: minH,
+                      }}
+                    >
+                      <p className="whitespace-pre-wrap">{message.text}</p>
+                      <p className="mt-2 text-[10px] text-white/50">
                         {new Date(message.timestamp).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
-                      </span>
-                      {message.canRetry && (
-                        <button
-                          type="button"
-                          onClick={retryLastMessage}
-                          className="inline-flex items-center gap-1 rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-cyan-400 transition hover:bg-white/10"
-                        >
-                          <RefreshCw className="h-2.5 w-2.5" />
-                          Retry
-                        </button>
-                      )}
+                      </p>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
+                  </motion.div>
+                );
+              })}
 
-          {/* Form Input Footer Container */}
-          <form
-            onSubmit={handleSendMessage}
-            className="border-t border-slate-900 bg-slate-950 px-4 py-3.5"
-          >
-            <div className="flex items-center gap-2 bg-slate-900/60 rounded-full border border-slate-800 px-3 py-1.5 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
-              <input
-                value={inputValue}
-                onChange={(event) => setInputValue(event.target.value)}
-                placeholder="Ask something..."
-                disabled={mutation.isPending}
-                className="flex-1 bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
-              />
-              <button
-                type="submit"
-                disabled={!inputValue.trim() || mutation.isPending}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md shadow-cyan-500/10 transition hover:bg-cyan-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                {mutation.isPending ? (
-                  <Loader className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-3.5 w-3.5" />
+              {/* Suggestion chips — only on welcome state */}
+              <AnimatePresence>
+                {showSuggestions && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.3, delay: 0.15 }}
+                    className="flex flex-col gap-2 pt-1"
+                  >
+                    <p className="text-[11px] text-white/30 font-medium px-1">
+                      Suggested questions
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {SUGGESTION_CHIPS.map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => sendMessage(chip)}
+                          className="chatbot-chip"
+                        >
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
                 )}
-              </button>
+              </AnimatePresence>
+
+              {/* Typing indicator */}
+              {mutation.isPending && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-start gap-2.5 items-start"
+                >
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+                    style={{
+                      background: "rgba(0,200,255,0.1)",
+                      border: "1px solid rgba(0,200,255,0.25)",
+                    }}
+                  >
+                    <Bot className="h-4 w-4 text-[#00C8FF] animate-pulse" />
+                  </div>
+                  <div
+                    className="flex items-center gap-1.5 rounded-2xl rounded-tl-none px-4 py-3"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(0,200,255,0.10)",
+                    }}
+                  >
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                </motion.div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-            {errorHint && (
-              <p className="mt-2 pl-3 text-xs text-red-400 font-medium">
-                {errorHint}
-              </p>
-            )}
-          </form>
-        </div>
-      )}
+
+            {/* ── Input Footer ── */}
+            <form
+              onSubmit={handleSendMessage}
+              className="px-4 py-3.5 shrink-0"
+              style={{
+                borderTop: "1px solid rgba(0,200,255,0.10)",
+                background: "rgba(6,12,24,0.98)",
+              }}
+            >
+              <div
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all duration-200 focus-within:border-[#00C8FF]/50 focus-within:ring-1 focus-within:ring-[#00C8FF]/15"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(0,200,255,0.20)",
+                }}
+              >
+                <input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Ask Ava anything..."
+                  disabled={mutation.isPending}
+                  className="flex-1 bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-white/35 outline-none disabled:cursor-not-allowed"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim() || mutation.isPending}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #00C8FF 0%, #0062FF 100%)",
+                    boxShadow: "0 2px 12px rgba(0,200,255,0.22)",
+                  }}
+                >
+                  {mutation.isPending ? (
+                    <Loader className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
+              {errorHint && (
+                <p className="mt-2 pl-3 text-xs text-red-400 font-medium">
+                  {errorHint}
+                </p>
+              )}
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

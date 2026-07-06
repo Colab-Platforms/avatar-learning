@@ -14,6 +14,8 @@ router.post("/categories", courseController.createCategory);
 // ─── Courses ──────────────────────────────────────────────────────────────────
 router.get("/courses", courseController.adminGetAllCourses);
 router.post("/courses", courseController.createCourse);
+// Static routes must come before /:id to avoid being shadowed
+router.get("/courses/images/sign", courseController.signCourseImageUpload);
 router.get("/courses/:id", courseController.adminGetCourse);
 router.put("/courses/:id", courseController.updateCourse);
 router.delete("/courses/:id", courseController.deleteCourse);

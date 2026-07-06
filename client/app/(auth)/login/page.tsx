@@ -1,31 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button} from "@/components/ui";
 import { OtpInput } from "../OtpInput";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, verifyOtp, resendOtp, clearError } from "@/store/authSlice";
 
+const primaryBtn = [
+  "w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl",
+  "text-[14px] font-semibold text-white",
+  "hover:brightness-110 active:scale-95 transition-all duration-200",
+  "disabled:opacity-50 disabled:cursor-not-allowed shadow-sm cursor-pointer",
+].join(" ");
+
 const inputCls = cn(
-  "w-full rounded-xl border px-4 py-3 text-[14px] text-white",
-  "placeholder-white/20 border-white/10",
-  "bg-ink-800/60 backdrop-blur-sm",
-  "focus:outline-none focus:border-brand-500/70 focus:bg-ink-800/80",
-  "focus:ring-2 focus:ring-brand-500/20 focus:shadow-[0_0_12px_rgba(0,200,255,0.10)]",
+  "w-full rounded-xl border px-4 py-3 text-[14px] text-slate-800",
+  "placeholder-slate-300 border-slate-200",
+  "bg-white",
+  "focus:outline-none focus:border-blue-400 focus:bg-white",
+  "focus:ring-2 focus:ring-blue-500/15",
   "transition-all duration-200"
 );
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const router   = useRouter();
-  const { loading, error, user } = useAppSelector((s) => s.auth);
+  const { loading, error, user, pendingEmail } = useAppSelector((s) => s.auth);
 
   const [step,           setStep]           = useState<"form" | "otp">("form");
-  const [pendingEmail,   setPendingEmail]   = useState("");
+  const [localEmail,     setLocalEmail]     = useState("");
   const [email,          setEmail]          = useState("");
   const [password,       setPassword]       = useState("");
   const [showPassword,   setShowPassword]   = useState(false);
@@ -46,7 +52,7 @@ export default function LoginPage() {
     dispatch(clearError());
     const result = await dispatch(login({ email, password }));
     if (login.fulfilled.match(result) && result.payload.requiresVerification) {
-      setPendingEmail(email);
+      setLocalEmail(email);
       setStep("otp");
     }
   };
@@ -56,75 +62,66 @@ export default function LoginPage() {
     const code = otp.replace(/\D/g, "");
     if (code.length < 6) return;
     dispatch(clearError());
-    dispatch(verifyOtp({ email: pendingEmail, otp: code, type: "LOGIN" }));
+    dispatch(verifyOtp({ email: localEmail, otp: code, type: "LOGIN" }));
   };
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setResendSuccess(false);
     dispatch(clearError());
-    const result = await dispatch(resendOtp({ email: pendingEmail, type: "LOGIN" }));
+    const result = await dispatch(resendOtp({ email: localEmail, type: "LOGIN" }));
     if (resendOtp.fulfilled.match(result)) {
       setResendSuccess(true);
       setResendCooldown(60);
     }
   };
 
-  // ── OTP step ───────────────────────────────────────────────────────────────
+  // ── OTP step ──────────────────────────────────────────────────────────────
   if (step === "otp") {
     return (
       <div className="w-full space-y-6">
-        {/* Icon */}
         <div className="flex justify-center">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-            style={{
-              background: "linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(0,128,255,0.10) 100%)",
-              border: "1px solid rgba(0,200,255,0.20)",
-              boxShadow: "0 0 20px rgba(0,200,255,0.10)",
-            }}
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border border-blue-100 bg-blue-50"
+            style={{ boxShadow: "0 4px 14px rgba(59,130,246,0.10)" }}
           >
             ✉️
           </div>
         </div>
         <div className="text-center space-y-1.5">
-          <h2 className="text-xl font-semibold text-white">Check your email</h2>
-          <p className="text-[13px] text-white/45">
+          <h2 className="text-xl font-semibold text-slate-900">Check your email</h2>
+          <p className="text-[13px] text-slate-500">
             We sent a 6-digit code to{" "}
-            <span className="text-brand-300 font-medium">{pendingEmail}</span>
+            <span className="text-blue-600 font-medium">{localEmail}</span>
           </p>
         </div>
 
         <form onSubmit={handleVerify} className="space-y-5">
           <OtpInput value={otp} onChange={setOtp} disabled={loading} />
 
-          {error        && <p className="text-[13px] text-red-400 text-center">{error}</p>}
-          {resendSuccess && <p className="text-[13px] text-brand-300 text-center">New code sent!</p>}
+          {error        && <p className="text-[13px] text-red-500 text-center">{error}</p>}
+          {resendSuccess && <p className="text-[13px] text-blue-600 text-center">New code sent!</p>}
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            size="md"
             disabled={loading || otp.replace(/\D/g, "").length < 6}
-            className="w-full"
+            className={primaryBtn}
+            style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
           >
-            {loading
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <>Verify &amp; Sign In <ArrowRight className="h-4 w-4" /></>}
-          </Button>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Verify &amp; Sign In <ArrowRight className="h-4 w-4" /></>}
+          </button>
         </form>
 
-        <p className="text-center text-[13px] text-white/40">
+        <p className="text-center text-[13px] text-slate-400">
           Didn&apos;t get a code?{" "}
           <button
-            type="button"
-            onClick={handleResend}
+            type="button" onClick={handleResend}
             disabled={resendCooldown > 0 || loading}
             className={cn(
               "font-medium transition-colors duration-200",
               resendCooldown > 0 || loading
-                ? "text-white/25 cursor-not-allowed"
-                : "text-brand-300 hover:text-brand-200"
+                ? "text-slate-300 cursor-not-allowed"
+                : "text-blue-600 hover:text-blue-700"
             )}
           >
             {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
@@ -135,7 +132,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => { setStep("form"); setOtp(""); dispatch(clearError()); }}
-            className="text-white/40 hover:text-white/70 transition-colors duration-200"
+            className="text-slate-400 hover:text-slate-600 transition-colors duration-200"
           >
             ← Back to sign in
           </button>
@@ -144,23 +141,19 @@ export default function LoginPage() {
     );
   }
 
-  // ── Login form ─────────────────────────────────────────────────────────────
+  // ── Login form ────────────────────────────────────────────────────────────
   return (
     <div className="w-full space-y-6">
-      {/* Header with icon */}
-      <div className="text-center space-y-3">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold text-white tracking-tight">Get Back To Your Learning</h2>
-          <p className="text-[13px] text-white/40">Sign in to your Avatar account</p>
-        </div>
+      <div className="text-center space-y-1">
+        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Get Back To Your Learning</h2>
+        <p className="text-[13px] text-slate-400">Sign in to your Avatar account</p>
       </div>
 
-      {/* Divider */}
-      <div className="divider-glow" />
+      <div className="h-px bg-slate-100" />
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-1.5">
-          <label htmlFor="email" className="text-[12px] font-semibold tracking-wide uppercase text-white/40">
+          <label htmlFor="email" className="text-[12px] font-semibold tracking-wide uppercase text-slate-400">
             Email
           </label>
           <input
@@ -172,10 +165,10 @@ export default function LoginPage() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-[12px] font-semibold tracking-wide uppercase text-white/40">
+            <label htmlFor="password" className="text-[12px] font-semibold tracking-wide uppercase text-slate-400">
               Password
             </label>
-            <Link href="/forgot-password" className="text-[12px] text-brand-400/70 hover:text-brand-300 transition-colors duration-200">
+            <Link href="/forgot-password" className="text-[12px] text-blue-500 hover:text-blue-600 transition-colors duration-200">
               Forgot password?
             </Link>
           </div>
@@ -188,7 +181,7 @@ export default function LoginPage() {
             />
             <button
               type="button" onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors duration-200"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors duration-200"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -197,23 +190,26 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="rounded-lg px-3.5 py-2.5 text-[13px] text-red-300 bg-red-500/10 border border-red-500/20">
+          <div className="rounded-lg px-3.5 py-2.5 text-[13px] text-red-600 bg-red-50 border border-red-200">
             {error}
           </div>
         )}
 
-        <Button type="submit" variant="primary" size="md" disabled={loading} className="w-full mt-2">
-          {loading
-            ? <Loader2 className="h-4 w-4 animate-spin" />
-            : <>Sign In <ArrowRight className="h-4 w-4" /></>}
-        </Button>
+        <button
+          type="submit"
+          disabled={loading}
+          className={primaryBtn + " mt-2"}
+          style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign In <ArrowRight className="h-4 w-4" /></>}
+        </button>
       </form>
 
-      <div className="divider-glow" />
+      <div className="h-px bg-slate-100" />
 
-      <p className="text-center text-[13px] text-white/35">
+      <p className="text-center text-[13px] text-slate-400">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-semibold text-brand-400 hover:text-brand-300 transition-colors duration-200">
+        <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200">
           Create one
         </Link>
       </p>

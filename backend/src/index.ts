@@ -11,32 +11,38 @@ const app = express();
 dotenv.config();
 
 const allowedOrigins = [
-    "https://www.avatarindia.com",
-    "https://avatar-learning.vercel.app/",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    process.env.FRONTEND_URL,
-    process.env.FRONTEND_URL?.replace(/\/$/, ""),
+  "https://www.avatarindia.com",
+  "https://avatar-learning.vercel.app/",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL?.replace(/\/$/, ""),
 ].filter(Boolean) as string[];
 
-app.use(cors({
+app.use(
+  cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log("Origin not allowed by CORS:", origin);
-            callback(new Error("Not allowed by CORS"));
-        }
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("Origin not allowed by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-}));
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+  }),
+);
 app.use(helmet());
 app.use(compression());
 app.use(express.json());
 app.use(sanitizeMiddleware);
-
 
 app.use("/api", routes);
 
@@ -45,5 +51,5 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

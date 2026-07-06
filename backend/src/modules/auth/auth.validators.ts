@@ -20,8 +20,13 @@ const registerSchema = Joi.object({
         "any.required": "Password is required",
         "string.pattern.base": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
     }),
-    phoneNo: Joi.string().trim().required().messages({
+  phoneNo: Joi.string()
+    .trim()
+    .pattern(/^[6-9]\d{9}$/)
+    .required()
+    .messages({
         "string.empty": "Phone number is required",
+        "string.pattern.base": "Enter a valid 10-digit Indian mobile number",
         "any.required": "Phone number is required",
     }),
     state: Joi.string().trim().required().messages({
@@ -101,10 +106,23 @@ const resetPasswordSchema = Joi.object({
     }),
 });
 
+const verifyPhoneSchema = Joi.object({
+    email: Joi.string().trim().lowercase().email().required().messages({
+        "string.email": "A valid email is required",
+        "string.empty": "Email is required",
+        "any.required": "Email is required",
+    }),
+    accessToken: Joi.string().trim().required().messages({
+        "string.empty": "Phone verification token is required",
+        "any.required": "Phone verification token is required",
+    }),
+});
+
 export const validateRegisterSchema = (data: unknown) => registerSchema.validate(data, { abortEarly: false });
 export const validateLoginSchema = (data: unknown) => loginSchema.validate(data, { abortEarly: false });
 export const validateVerifyOtpSchema = (data: unknown) => verifyOtpSchema.validate(data, { abortEarly: false });
 export const validateResendOtpSchema = (data: unknown) => resendOtpSchema.validate(data, { abortEarly: false });
+export const validateVerifyPhoneSchema = (data: unknown) => verifyPhoneSchema.validate(data, { abortEarly: false });
 export const validateRefreshTokenSchema = (data: unknown) => refreshTokenSchema.validate(data, { abortEarly: false });
 export const validateForgotPasswordSchema = (data: unknown) => forgotPasswordSchema.validate(data, { abortEarly: false });
 export const validateResetPasswordSchema = (data: unknown) => resetPasswordSchema.validate(data, { abortEarly: false });

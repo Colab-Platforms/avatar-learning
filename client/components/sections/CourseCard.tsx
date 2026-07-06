@@ -3,16 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ChevronLeft,
-  ChevronRight,
-  BadgeCheck,
-  Zap,
-  Clock,
-  ArrowRight,
-} from "lucide-react";
-import { Badge, Button } from "@/components/ui";
-import { useAppSelector } from "@/store/hooks";
+import { Star, Zap } from "lucide-react";
 import type { Course } from "@/types";
 
 interface CourseCardProps {
@@ -21,157 +12,74 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   const router = useRouter();
-  const { user } = useAppSelector((s) => s.auth);
 
   const handleEnroll = () => {
-    if (!user) {
-      router.push("/login");
-    } else {
-      router.push(`/courses/${course.slug}`);
-    }
+    router.push(`/courses/${course.slug}`);
   };
 
+  // Use heroImage if available, else fallback to first module image
+  const coverImage = course.heroImage || course.modules?.[0]?.image || "/placeholder.jpg";
+
   return (
-    <>
-      <article
-        className="group/card relative rounded-2xl border border-white/6 bg-ink-800 overflow-hidden card-lift"
-        style={{ boxShadow: "0 2px 24px rgba(0,0,0,0.3)" }}
-      >
-        {/* Hover shimmer top line */}
-        <div
-          className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-brand-500/0 to-transparent
-                        group-hover/card:via-brand-500/55 transition-all duration-600 origin-center"
+    <article
+      onClick={handleEnroll}
+      className="group/card relative rounded-2xl border border-border bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col h-full card-lift"
+    >
+      {/* ── Top Half: Image ── */}
+      <div className="relative h-[200px] w-full overflow-hidden bg-surface-sunken">
+        <Image
+          src={coverImage}
+          alt={course.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 400px"
+          quality={100}
+          className="object-cover transition-transform duration-500 group-hover/card:scale-105"
         />
-
-        {/* Hover glow */}
-        <div
-          className="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
-          style={{
-            background:
-              "radial-gradient(ellipse at 75% 50%, rgba(57,130,198,0.06) 0%, transparent 60%)",
-          }}
-        />
-
-        <div className="relative p-6 sm:p-8 grid gap-8 md:grid-cols-[1fr_2fr]">
-          {/* ── Left ── */}
-          <div className="flex flex-col">
-            <div className="flex flex-wrap items-center gap-2">
-              {course.free && <Badge variant="free">FREE</Badge>}
-              <Badge variant="level-light">{course.level}</Badge>
-            </div>
-
-            <h3
-              className="mt-4 text-xl sm:text-[22px] font-semibold tracking-tight leading-snug text-white
-                            group-hover/card:text-brand-300 transition-colors duration-350"
-            >
-              {course.title}
-            </h3>
-
-            {/* Tool tags */}
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {course.tools.map((tool) => (
-                <span
-                  key={tool}
-                  className="rounded-lg border border-white/8 bg-white/4 px-2.5 py-1 text-[11px] font-medium text-white/45
-                             transition-all duration-250 hover:border-brand-500/30 hover:bg-brand-500/8 hover:text-brand-300 cursor-default"
-                >
-                  {tool}
-                </span>
-              ))}
-            </div>
-
-            {/* Meta */}
-            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <span className="flex items-center justify-center h-5 w-5 rounded-md bg-brand-500/12">
-                  <Zap className="h-3 w-3 text-brand-400" />
-                </span>
-                {course.weeks} Weeks
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-sm text-white/42">
-                <Clock className="h-3.5 w-3.5" />
-                {course.sessions}
-              </span>
-              {course.certificate && (
-                <span className="inline-flex items-center gap-1.5 text-sm text-emerald-400 font-medium">
-                  <BadgeCheck className="h-4 w-4" />
-                  Certificate
-                </span>
-              )}
-            </div>
-
-            {/* CTAs */}
-            <div className="mt-auto pt-8 flex items-center gap-3">
-              <Button variant="primary" size="sm" onClick={handleEnroll}>
-                Enroll Now
-              </Button>
-              <Link
-                href={`/courses/${course.slug}`}
-                className="group/lnk inline-flex items-center gap-1 text-sm font-medium text-white/40 hover:text-brand-400 transition-colors duration-250"
-              >
-                View details
-                <ArrowRight className="h-3.5 w-3.5 group-hover/lnk:translate-x-1 transition-transform duration-250" />
-              </Link>
-            </div>
-          </div>
-
-          {/* ── Right: module grid ── */}
-          <div>
-            <div
-              className="grid gap-3"
-              style={{
-                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-              }}
-            >
-              {course.modules.map((mod, i) => (
-                <Link
-                  key={i}
-                  href={`/courses/${course.slug}`}
-                  className="group/mod cursor-pointer"
-                  style={{ transitionDelay: `${i * 30}ms` }}
-                >
-                  <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-ink-700">
-                    <Image
-                      src={mod.image}
-                      alt={mod.title}
-                      fill
-                      sizes="180px"
-                      className="object-cover transition-transform duration-600 group-hover/mod:scale-110"
-                    />
-                    <div
-                      className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent
-                                    opacity-0 group-hover/mod:opacity-100 transition-opacity duration-350
-                                    flex items-end p-2"
-                    >
-                      <span
-                        className="text-white text-[10px] font-semibold bg-brand-500/80 rounded-md px-1.5 py-0.5
-                                       translate-y-2 group-hover/mod:translate-y-0 transition-transform duration-300"
-                      >
-                        Preview →
-                      </span>
-                    </div>
-                  </div>
-                  <p
-                    className="mt-2 text-[13px] font-medium leading-snug text-white/75
-                                 group-hover/mod:text-brand-300 transition-colors duration-250"
-                  >
-                    {mod.title}
-                  </p>
-                  <p className="text-[11px] text-white/30 mt-0.5">{mod.week}</p>
-                </Link>
-              ))}
-            </div>
-            {/* <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost-dark" size="icon" aria-label="Previous">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost-dark" size="icon" aria-label="Next">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div> */}
+        
+        {/* Avatar / Watermark marker (top left) */}
+        <div className="absolute top-0 left-4 bg-white px-2.5 py-4 rounded-b-xl shadow-sm flex items-center justify-center z-10">
+          <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-sm border border-brand-100">
+            AL
           </div>
         </div>
-      </article>
-    </>
+
+        {/* Badge (bottom right) */}
+        <div className="absolute bottom-3 right-3 bg-brand-600 text-white text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full shadow-sm z-10">
+          {course.level}
+        </div>
+      </div>
+
+      {/* ── Bottom Half: Content ── */}
+      <div className="p-5 flex flex-col flex-1">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-5 w-5 rounded bg-brand-50 border border-brand-100 flex items-center justify-center overflow-hidden">
+             <span className="text-[10px] font-bold text-brand-600">AL</span>
+          </div>
+          <span className="text-sm text-text-muted font-medium">Avatar Learning</span>
+        </div>
+
+        <h3 className="text-lg font-bold text-text leading-tight mb-2 line-clamp-2 group-hover/card:text-brand-600 transition-colors">
+          {course.title}
+        </h3>
+
+        <p className="text-[14px] text-text-muted mb-4 line-clamp-1">
+          {course.weeks} Weeks Specialization
+        </p>
+
+        <div className="mt-auto flex items-center justify-between pt-4 border-t border-border/50">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-text">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span>{course.rating || "4.8"}</span>
+            <span className="text-text-muted font-normal text-xs ml-1">({course.reviews || "1.2k"})</span>
+          </div>
+          
+          {course.free && (
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+              FREE
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }

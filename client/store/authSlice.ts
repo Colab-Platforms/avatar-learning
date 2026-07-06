@@ -12,10 +12,12 @@ export interface AuthUser {
   address: string | null;
   gender: string | null;
   profileImage: string | null;
+  resumeUrl: string | null;
   currentStudyLevel: string | null;
   state: string | null;
   country: string | null;
   isEmailVerified: boolean;
+  isPhoneVerified: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -36,9 +38,11 @@ export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   pendingEmail: string | null;
+  pendingPhone: string | null;
   pendingOtpType: "REGISTER" | "LOGIN" | null;
   loading: boolean;
   error: string | null;
+  hasHydrated: boolean;
 }
 
 const STORAGE_KEY = "auth";
@@ -100,6 +104,7 @@ export const register = createAsyncThunk(
       return {
         message: res.message,
         email: data.email,
+        phoneNo: data.phoneNo,
       };
     } catch (err) {
       return rejectWithValue(extractError(err));
@@ -123,6 +128,7 @@ export const login = createAsyncThunk(
           accessToken?: string;
           refreshToken?: string;
           requiresVerification?: boolean;
+          email?: string;
         }>
       >("/auth/login", data);
 
@@ -154,6 +160,43 @@ export const verifyOtp = createAsyncThunk(
           refreshToken: string;
         }>
       >("/auth/verify-otp", data);
+
+      if (!res.data?.user || !res.data.accessToken || !res.data.refreshToken) {
+        throw new Error("Verification response was incomplete.");
+      }
+
+      return {
+        user: res.data.user,
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken,
+      };
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
+export const verifyPhone = createAsyncThunk(
+  "auth/verifyPhone",
+  async (
+    data: {
+      email: string;
+      accessToken: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { data: res } = await apiClient.post<
+        ApiResponse<{
+          user: AuthUser;
+          accessToken: string;
+          refreshToken: string;
+        }>
+      >("/auth/verify-phone", data);
+
+      if (!res.data?.user || !res.data.accessToken || !res.data.refreshToken) {
+        throw new Error("Phone verification response was incomplete.");
+      }
 
       return res.data;
     } catch (err) {
@@ -251,14 +294,67 @@ export const updateUser = createAsyncThunk(
   }
 );
 
+export const uploadResume = createAsyncThunk(
+  "auth/uploadResume",
+  async (file: File, { rejectWithValue }) => {
+    try {
+      // get a signed upload token from our backend
+      const { data: signRes } = await apiClient.get<ApiResponse<{
+        timestamp: number;
+        signature: string;
+        apiKey: string;
+        cloudName: string;
+        folder: string;
+      }>>("/users/me/resume/sign");
+      const { timestamp, signature, apiKey, cloudName, folder } = signRes.data!;
+
+      //upload directly to Cloudinary 
+      const form = new FormData();
+      form.append("file", file);
+      form.append("api_key", apiKey);
+      form.append("timestamp", String(timestamp));
+      form.append("signature", signature);
+      form.append("folder", folder);
+      const cloudinaryRes = await axios.post<{ public_id: string; secure_url: string }>(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        form
+      );
+      const { public_id, secure_url } = cloudinaryRes.data;
+
+      //  save the Cloudinary result
+      const { data: res } = await apiClient.post<ApiResponse<AuthUser>>(
+        "/users/me/resume/complete",
+        { publicId: public_id, secureUrl: secure_url }
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
+export const deleteResume = createAsyncThunk(
+  "auth/deleteResume",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data: res } = await apiClient.delete<ApiResponse<AuthUser>>("/users/me/resume");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
 const initialState: AuthState = {
   user: null,
   accessToken: null,
   refreshToken: null,
   pendingEmail: null,
+  pendingPhone: null,
   pendingOtpType: null,
   loading: false,
   error: null,
+  hasHydrated: false,
 };
 
 const authSlice = createSlice({
@@ -277,6 +373,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
+      state.hasHydrated = true;
     },
 
     logout(state) {
@@ -284,6 +381,7 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.pendingEmail = null;
+      state.pendingPhone = null;
       state.pendingOtpType = null;
       state.error = null;
 
@@ -317,6 +415,7 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
         state.pendingEmail = action.payload.email;
+        state.pendingPhone = action.payload.phoneNo;
         state.pendingOtpType = "REGISTER";
       })
       .addCase(register.rejected, (state, action) => {
@@ -366,11 +465,39 @@ const authSlice = createSlice({
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.loading = false;
 
+        state.user = action.payload.user!;
+        state.accessToken = action.payload.accessToken!;
+        state.refreshToken = action.payload.refreshToken!;
+
+        state.pendingEmail = null;
+        state.pendingPhone = null;
+        state.pendingOtpType = null;
+
+        persist(
+          action.payload.user!,
+          action.payload.accessToken!,
+          action.payload.refreshToken!
+        );
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // VERIFY PHONE
+      .addCase(verifyPhone.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyPhone.fulfilled, (state, action) => {
+        state.loading = false;
+
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
 
         state.pendingEmail = null;
+        state.pendingPhone = null;
         state.pendingOtpType = null;
 
         persist(
@@ -379,7 +506,7 @@ const authSlice = createSlice({
           action.payload.refreshToken
         );
       })
-      .addCase(verifyOtp.rejected, (state, action) => {
+      .addCase(verifyPhone.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -461,6 +588,52 @@ const authSlice = createSlice({
         state.loading = false;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // UPLOAD RESUME
+      .addCase(uploadResume.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadResume.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.user) {
+          state.user = { ...state.user, ...action.payload };
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+              const { accessToken, refreshToken } = JSON.parse(stored);
+              persist(state.user, accessToken, refreshToken);
+            }
+          } catch { /* ignore */ }
+        }
+      })
+      .addCase(uploadResume.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // DELETE RESUME
+      .addCase(deleteResume.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteResume.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.user) {
+          state.user = { ...state.user, ...action.payload };
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+              const { accessToken, refreshToken } = JSON.parse(stored);
+              persist(state.user, accessToken, refreshToken);
+            }
+          } catch { /* ignore */ }
+        }
+      })
+      .addCase(deleteResume.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

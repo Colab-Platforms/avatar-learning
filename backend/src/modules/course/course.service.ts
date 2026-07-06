@@ -274,7 +274,7 @@ export class PublicCourseService {
         category: { select: { id: true, name: true, slug: true } },
         _count: { select: { lessons: true, enrollments: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
       ...(take !== undefined && { take }),
       ...(skip !== undefined && { skip }),
     });

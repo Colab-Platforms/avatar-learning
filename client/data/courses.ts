@@ -32,16 +32,16 @@ export const COURSES: Course[] = [
         week: "week 2 of 4",
         image: "/landingpage-images/course-2.png",
       },
-      {
-        title: "Prompt Essentials",
-        week: "week 3 of 4",
-        image: "/landingpage-images/course-3.png",
-      },
-      {
-        title: "AI Productivity",
-        week: "week 4 of 4",
-        image: "/landingpage-images/course-4.jpg",
-      },
+      // {
+      //   title: "Prompt Essentials",
+      //   week: "week 3 of 4",
+      //   image: "/landingpage-images/course-3.png",
+      // },
+      // {
+      //   title: "AI Productivity",
+      //   week: "week 4 of 4",
+      //   image: "/landingpage-images/course-4.jpg",
+      // },
     ],
 
     /* ── Detail fields ── */
@@ -152,11 +152,11 @@ export const COURSES: Course[] = [
         week: "week 2 of 3",
         image: "/landingpage-images/course-6.jpg",
       },
-      {
-        title: "Industry Applications",
-        week: "week 3 of 3",
-        image: "/landingpage-images/course-7.jpg",
-      },
+      // {
+      //   title: "Industry Applications",
+      //   week: "week 3 of 3",
+      //   image: "/landingpage-images/course-7.jpg",
+      // },
     ],
 
     /* ── Detail fields ── */
@@ -231,6 +231,99 @@ export const COURSES: Course[] = [
       {
         title: "Freelancers & Consultants",
         body: "Offer high-value AI consulting and automation services backed by real engineering knowledge.",
+      },
+    ],
+  },
+
+  /* ────────────────────────────────────────────────
+     Building AI Agents
+  ──────────────────────────────────────────────── */
+  {
+    id: "building-ai-agents",
+    slug: "building-ai-agents",
+    title: "Building AI Agents",
+    level: "Advanced",
+    free: false,
+    tools: ["LangChain", "CrewAI", "AutoGPT", "FastAPI", "Docker"],
+    weeks: 6,
+    sessions: "12 Sessions (Sat & Sun)",
+    certificate: true,
+    modules: [
+      {
+        title: "Agent Foundations",
+        week: "week 1 of 6",
+        image: "/landingpage-images/course-3.png", // fallback placeholder
+      },
+      {
+        title: "Deploying Agents",
+        week: "week 6 of 6",
+        image: "/landingpage-images/course-4.jpg", // fallback placeholder
+      },
+    ],
+    description:
+      "Deploy autonomous AI agents that complete multi-step tasks. Master LangChain, CrewAI, and AutoGPT frameworks, connect agents to real-world tools and databases, and deploy production-ready agents on cloud infrastructure — then list and monetize your own agent on the Avatar Marketplace.",
+    rating: 4.2,
+    reviews: "805 Reviews",
+    startDate: "Coming Soon",
+    seats: "Limited Seats",
+    heroImage: "/landingpage-images/course-3.png",
+    bannerImage: "/landingpage-images/course-4.jpg",
+    whatYouLearn: [
+      {
+        title: "Autonomous Agents",
+        body: "Understand the core concepts of autonomous AI agents and how they differ from simple chatbots.",
+      },
+      {
+        title: "Framework Mastery",
+        body: "Build complex multi-agent systems using CrewAI, LangChain, and AutoGPT.",
+      },
+      {
+        title: "Tool Integration",
+        body: "Connect your agents to external APIs, databases, and real-world tools to automate workflows.",
+      },
+      {
+        title: "Production Deployment",
+        body: "Deploy your agents securely using FastAPI and Docker, and list them on the Avatar Marketplace.",
+      },
+    ],
+    weekData: [
+      {
+        title: "Week 1-2 — Foundations of AI Agents",
+        modules: [
+          "Introduction to Autonomous Agents",
+          "Working with LangChain for Agentic Workflows",
+          "Building Your First Simple Agent",
+        ],
+      },
+      {
+        title: "Week 3-4 — Multi-Agent Systems",
+        modules: [
+          "Deep Dive into CrewAI",
+          "Designing Multi-Agent Collaboration",
+          "Integrating External Tools and APIs",
+        ],
+      },
+      {
+        title: "Week 5-6 — Production and Monetization",
+        modules: [
+          "Packaging Agents with Docker & FastAPI",
+          "Deploying to Cloud Infrastructure",
+          "Listing on Avatar Marketplace & Final Project",
+        ],
+      },
+    ],
+    audience: [
+      {
+        title: "AI Engineers",
+        body: "Learn to build production-ready agentic systems and scale them effectively.",
+      },
+      {
+        title: "Full Stack Developers",
+        body: "Expand your skill set into the cutting edge of AI application development.",
+      },
+      {
+        title: "Tech Entrepreneurs",
+        body: "Build autonomous workflows that can be monetized as SaaS or marketplace products.",
       },
     ],
   },

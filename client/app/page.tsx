@@ -1,29 +1,25 @@
 import { Navbar, Footer } from "@/components/layout";
 import {
   Hero,
-  CoursesSection,
-  WebinarsSection,
   QuizBanner,
-  HackathonBanner,
-  InternshipBanner,
   TimelineSection,
+  CoursesSection,
   WhyChooseUs,
   AdvisorCTA,
+  Direct2HireBanner,
 } from "@/components/sections";
 
 export default function Page() {
   return (
-    <main className="bg-ink-950">
+    <main className="bg-white">
       <Navbar />
       <Hero />
+      <Direct2HireBanner />
       <QuizBanner />
-      {/* <InternshipBanner /> */}
       <TimelineSection />
       <CoursesSection />
-      <WebinarsSection />
-      <HackathonBanner />
-      <WhyChooseUs />
-      <AdvisorCTA />
+      {/* <WhyChooseUs /> */}
+      {/* <AdvisorCTA /> */}
       <Footer />
     </main>
   );

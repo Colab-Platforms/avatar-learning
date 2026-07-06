@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import axios from "axios";
 import type { PaginatedResponse } from "./coursesApi";
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -118,3 +119,93 @@ export const uploadVideo = async (
 
 export const deleteResource = (resourceId: string) =>
     apiClient.delete(`/admin/resources/${resourceId}`).then((r) => r.data);
+
+// ─── Course Image Upload (signed direct upload to Cloudinary) ─────────────────
+
+export const uploadCourseImage = async (file: File): Promise<string> => {
+    const { data: signRes } = await apiClient.get<{ success: boolean; data: {
+        timestamp: number; signature: string; apiKey: string; cloudName: string; folder: string;
+    } }>("/admin/courses/images/sign");
+    const { timestamp, signature, apiKey, cloudName, folder } = signRes.data;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", apiKey);
+    form.append("timestamp", String(timestamp));
+    form.append("signature", signature);
+    form.append("folder", folder);
+    const res = await axios.post<{ secure_url: string }>(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        form
+    );
+    return res.data.secure_url;
+};
+
+// ─── Internships ──────────────────────────────────────────────────────────────
+
+export const fetchAdminInternships = () =>
+    apiClient.get("/admin/internships").then((r) => r.data.data.data ?? r.data.data);
+
+export const fetchAdminInternshipsPaginated = (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<any>> =>
+    apiClient.get("/admin/internships", { params: { page, pageSize } }).then((r) => r.data.data);
+
+export const fetchAdminInternship = (id: string) =>
+    apiClient.get(`/admin/internships/${id}`).then((r) => r.data.data);
+
+export const createInternship = (payload: {
+    categoryId: string;
+    title: string;
+    company: string;
+    description?: string;
+    domain?: string;
+    stipend?: string;
+    employmentType: "FULL_TIME" | "PART_TIME" | "REMOTE";
+    location?: string;
+    deadline?: string;
+}) => apiClient.post("/admin/internships", payload).then((r) => r.data.data);
+
+export const updateInternship = (id: string, payload: Record<string, unknown>) =>
+    apiClient.put(`/admin/internships/${id}`, payload).then((r) => r.data.data);
+
+export const deleteInternship = (id: string) =>
+    apiClient.delete(`/admin/internships/${id}`).then((r) => r.data);
+
+export const toggleInternshipPublish = (id: string) =>
+    apiClient.patch(`/admin/internships/${id}/publish`).then((r) => r.data.data);
+
+// ─── Internship Applications ───────────────────────────────────────────────────
+
+export interface AdminApplicant {
+    id: string;
+    internshipId: string;
+    userId: string;
+    status: "PENDING" | "ACCEPTED" | "REJECTED";
+    appliedAt: string;
+    // Snapshot of the resume at the time of application — stays valid even if
+    // the user later replaces or deletes their profile resume.
+    resumeUrl?: string;
+    user: {
+        id: string;
+        firstName?: string;
+        lastName?: string;
+        email: string;
+        phoneNo?: string;
+        resumeUrl?: string;
+    };
+}
+
+export const fetchInternshipApplications = (
+    internshipId: string,
+    page: number = 1,
+    pageSize: number = 20
+): Promise<PaginatedResponse<AdminApplicant>> =>
+    apiClient
+        .get(`/admin/internships/${internshipId}/applications`, { params: { page, pageSize } })
+        .then((r) => r.data.data);
+
+export const updateApplicationStatus = (
+    applicationId: string,
+    status: "PENDING" | "ACCEPTED" | "REJECTED"
+) =>
+    apiClient
+        .patch(`/admin/applications/${applicationId}/status`, { status })
+        .then((r) => r.data.data);

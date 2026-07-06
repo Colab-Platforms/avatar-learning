@@ -7,6 +7,8 @@ const router = Router();
 // Registration flow
 router.post("/register", authController.register);
 router.post("/verify-otp", authController.verifyOtp);
+router.post("/verify-phone", authController.verifyPhone);
+router.get("/msg91-config", authController.getMsg91Config);
 router.post("/resend-otp", authController.resendOtp);
 
 // Login
@@ -20,5 +22,6 @@ router.post("/logout-all", auth("USER", "ADMIN", "SUPERADMIN"), authController.l
 // Password reset
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
+
 
 export default router;

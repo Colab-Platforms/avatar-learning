@@ -39,16 +39,30 @@ enum OtpType {
   LOGIN
 }
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  REMOTE
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id                String              @id @default(cuid())
   firstName         String?             @map("first_name")
   lastName          String?             @map("last_name")
-  phoneNo           String?             @map("phone_no")
+  phoneNo           String?             @unique @map("phone_no")
   address           String?
   gender            String?
   state             String?
   country           String?
   profileImage      String?             @map("profile_image")
+  resumeUrl         String?             @map("resume_url")
+  resumePublicId    String?             @map("resume_public_id")
 
   currentStudyLevel CurrentStudyLevel?  @map("current_studylevel")
 
@@ -59,6 +73,7 @@ model User {
   authProvider      AuthProvider        @default(LOCAL) @map("auth_provider")
 
   isEmailVerified   Boolean             @default(false) @map("is_email_verified")
+  isPhoneVerified   Boolean             @default(false) @map("is_phone_verified")
   isActive          Boolean             @default(true) @map("is_active")
   isDeleted         Boolean             @default(false) @map("is_deleted")
 
@@ -75,6 +90,8 @@ model User {
 
   createdCourses    Courses[]           @relation("CourseCreator")
   resourceDownloads ResourceDownload[]
+  createdInternships Internship[]        @relation("InternshipCreator")
+  internshipApplications InternshipApplication[]
   paymentOrders     PaymentOrder[]
 
   @@index([email])
@@ -185,6 +202,7 @@ model Category {
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
   courses     Courses[]
+  internships Internship[]
 
   @@index([isActive])
   @@map("categories")
@@ -423,4 +441,70 @@ model ResourceDownload {
   @@index([resourceId])
 
   @@map("resource_downloads")
+}
+
+model Internship {
+  id            String    @id @default(cuid())
+
+  categoryId    String    @map("category_id")
+
+  title         String
+  slug          String    @unique
+  company       String
+
+  description   String?
+
+  domain        String?
+  stipend       String?
+  employmentType EmploymentType
+  location      String?
+  deadline      String?
+
+  keyLearningOutcomes Json?  @map("key_learning_outcomes")
+  majorProject        Json?  @map("major_project")
+  whatYouReceive      Json?  @map("what_you_receive")
+
+  isPublished   Boolean   @default(false) @map("is_published")
+
+  createdBy     String?   @map("created_by")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @updatedAt @map("updated_at")
+
+  category      Category  @relation(fields: [categoryId], references: [id])
+  creator       User?     @relation("InternshipCreator", fields: [createdBy], references: [id])
+
+  applications  InternshipApplication[]
+
+  @@index([categoryId])
+  @@index([createdBy])
+  @@index([isPublished])
+  @@index([categoryId, isPublished])
+  @@map("internships")
+}
+
+model InternshipApplication {
+  id            String    @id @default(cuid())
+
+  internshipId  String    @map("internship_id")
+  userId        String    @map("user_id")
+
+  status        ApplicationStatus @default(PENDING)
+
+  // Snapshot of the resume at time of application — survives later profile
+  // resume replacement/deletion so admins can always see what was submitted.
+  resumeUrl       String?   @map("resume_url")
+  resumePublicId  String?   @map("resume_public_id")
+
+  appliedAt     DateTime  @default(now()) @map("applied_at")
+
+  internship    Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, internshipId])
+
+  @@index([userId])
+  @@index([internshipId])
+
+  @@map("internship_applications")
 }

@@ -32,4 +32,23 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const hadAuthHeader = Boolean(error.config?.headers?.Authorization);
+
+    if (typeof window !== "undefined" && error.response?.status === 401 && hadAuthHeader) {
+      const { store } = await import("@/store");
+      const { logout } = await import("@/store/authSlice");
+      store.dispatch(logout());
+
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;
