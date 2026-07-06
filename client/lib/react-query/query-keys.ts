@@ -13,4 +13,5 @@ export const queryKeys = {
     ["internship-application", internshipId] as const,
   myApplications: ["my-applications"] as const,
   internshipCategories: ["internship-categories"] as const,
+  direct2hireStatus: ["direct2hire-status"] as const,
 };

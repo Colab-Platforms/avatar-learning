@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Video,
@@ -24,11 +25,20 @@ import {
   Briefcase,
   MessageCircle,
   Users,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollReveal, AnimateOnScroll, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/store/hooks";
+import { useRazorpay } from "@/hooks/useRazorpay";
+import { useCashfree } from "@/hooks/useCashfree";
+import { useCreateDirect2HireOrder } from "@/hooks/mutations/useCreateDirect2HireOrder";
+import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
+import { useDirect2HireStatus } from "@/hooks/queries/useDirect2HireStatus";
+import type { CreateOrderResponse } from "@/lib/paymentApi";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -177,6 +187,158 @@ const FAQS = [
 
 export default function CounselingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const router = useRouter();
+  const { user } = useAppSelector((s) => s.auth);
+  const [enrolling, setEnrolling] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const razorpayLoaded = useRazorpay();
+  const cashfreeLoaded = useCashfree();
+  const { mutateAsync: createOrder } = useCreateDirect2HireOrder();
+  const { mutateAsync: verifyPayment } = useVerifyPayment();
+  const {
+    data: statusData,
+    isLoading: statusLoading,
+    refetch: refetchStatus,
+  } = useDirect2HireStatus(!!user);
+
+  const enrolled = statusData?.enrolled ?? false;
+
+  const handleRazorpayCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.key,
+          amount: order.amount,
+          currency: order.currency,
+          name: "Avatar India",
+          description: "Direct2Hire Programme",
+          order_id: order.orderId,
+          prefill: {
+            name: `${(user as any)?.firstName ?? ""} ${(user as any)?.lastName ?? ""}`.trim(),
+            email: (user as any)?.email ?? "",
+          },
+          theme: { color: "#00C8FF" },
+          retry: { enabled: true, max_count: 3 },
+          handler: async (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) => {
+            try {
+              await verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              await refetchStatus();
+              resolve();
+            } catch (verifyErr: unknown) {
+              const e = verifyErr as { response?: { data?: { message?: string } } };
+              reject(new Error(e?.response?.data?.message ?? "Payment verification failed"));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error("cancelled")),
+          },
+        });
+
+        rzp.open();
+      });
+    },
+    [user, verifyPayment, refetchStatus],
+  );
+
+  const handleCashfreeCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!order.paymentSessionId) {
+        throw new Error("Missing Cashfree payment session");
+      }
+
+      const cashfree = window.Cashfree({ mode: order.mode ?? "sandbox" });
+      const result = await cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: "_modal",
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message ?? "Payment failed");
+      }
+
+      await verifyPayment({ order_id: order.orderId });
+      await refetchStatus();
+    },
+    [verifyPayment, refetchStatus],
+  );
+
+  const handleGetPlacement = useCallback(async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (enrolled) return;
+
+    setEnrolling(true);
+    setErrorMsg("");
+
+    try {
+      const order = await createOrder();
+
+      if (order.provider === "cashfree") {
+        if (!cashfreeLoaded) {
+          setErrorMsg("Payment SDK is still loading. Please try again.");
+          return;
+        }
+        await handleCashfreeCheckout(order);
+        return;
+      }
+
+      if (!razorpayLoaded) {
+        setErrorMsg("Payment SDK is still loading. Please try again.");
+        return;
+      }
+      await handleRazorpayCheckout(order);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = e?.response?.data?.message ?? e?.message ?? "Payment failed";
+      setErrorMsg(msg === "cancelled" ? "Payment was cancelled." : msg);
+    } finally {
+      setEnrolling(false);
+    }
+  }, [
+    user,
+    enrolled,
+    router,
+    createOrder,
+    cashfreeLoaded,
+    razorpayLoaded,
+    handleCashfreeCheckout,
+    handleRazorpayCheckout,
+  ]);
+
+  const renderCta = (label: string, size: "sm" | "md" | "lg" = "lg", className?: string) => (
+    <Button
+      variant="primary"
+      size={size}
+      className={className}
+      onClick={handleGetPlacement}
+      disabled={enrolling || statusLoading || enrolled}
+    >
+      {enrolled ? (
+        <>
+          <CheckCircle2 className="h-4 w-4" /> Enrolled
+        </>
+      ) : enrolling ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" /> Processing…
+        </>
+      ) : (
+        <>
+          {label} <ArrowRight className="h-4 w-4" />
+        </>
+      )}
+    </Button>
+  );
 
   return (
     <>
@@ -216,17 +378,14 @@ export default function CounselingPage() {
 
                 <ScrollReveal animation="fade-up" delay={150}>
                   <div className="flex flex-wrap items-center gap-3">
-                    <Link href="/contact">
-                      <Button variant="primary" size="lg">
-                        Book Your Session <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    {renderCta("Get Placement")}
                     <Link href="#whats-included">
                       <Button variant="outline" size="lg">
                         Learn More
                       </Button>
                     </Link>
                   </div>
+                  {errorMsg && <p className="mt-3 text-[12px] text-red-500">{errorMsg}</p>}
                   <p className="mt-4 text-[12px] text-text-subtle">
                     Limited slots • Instant confirmation
                   </p>
@@ -284,6 +443,46 @@ export default function CounselingPage() {
             </ScrollReveal>
           </div>
         </section>
+
+        {/* ══════════════════════════════
+            POST-PAYMENT CONFIRMATION
+        ══════════════════════════════ */}
+        {enrolled && (
+          <section className="py-14 bg-brand-50/40 border-t border-border relative overflow-hidden">
+            <div className="container-x max-w-2xl mx-auto text-center">
+              <ScrollReveal animation="fade-up" duration={700}>
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-text mb-3">You're all set!</h2>
+                <p className="text-text-muted leading-relaxed mb-8">
+                  Your payment for the Direct2Hire programme is confirmed. Our team will reach
+                  out with your onboarding details shortly.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-4 text-left">
+                  <div className="rounded-2xl border border-border bg-white p-5 flex gap-3">
+                    <Mail className="h-5 w-5 text-brand-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-text text-sm mb-1">Check your email</p>
+                      <p className="text-text-muted text-sm">
+                        We'll send programme details and next steps to your registered email address.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-white p-5 flex gap-3">
+                    <MessageCircle className="h-5 w-5 text-brand-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-text text-sm mb-1">WhatsApp group</p>
+                      <p className="text-text-muted text-sm">
+                        You'll be added to the Direct2Hire WhatsApp group soon for live updates.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+          </section>
+        )}
 
         {/* ══════════════════════════════
             THE COST OF CONFUSION
@@ -440,11 +639,7 @@ export default function CounselingPage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/contact">
-                  <Button variant="primary" size="md" className="shrink-0 w-fit">
-                    Book now for ₹499/- <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                {renderCta("Get Placement — ₹499/-", "md", "shrink-0 w-fit")}
               </div>
             </ScrollReveal>
           </div>
@@ -509,12 +704,7 @@ export default function CounselingPage() {
                     Now available at a fraction of the cost.
                   </p>
                 </div>
-                <Link href="/contact">
-                  <Button variant="primary" size="md" className="shrink-0 w-fit">
-                    Get Your Career Plan For ₹499/-{" "}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                {renderCta("Get Placement — ₹499/-", "md", "shrink-0 w-fit")}
               </div>
             </ScrollReveal>
 
@@ -557,11 +747,7 @@ export default function CounselingPage() {
                     <IndianRupee className="h-3 w-3" />
                     Save ₹12,495 (96% OFF)
                   </span>
-                  <Link href="/contact">
-                    <Button variant="primary" size="md" className="relative mt-7">
-                      Book Your Session <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  {renderCta("Get Placement", "md", "relative mt-7")}
                 </div>
               </AnimateOnScroll>
             </div>
@@ -628,11 +814,7 @@ export default function CounselingPage() {
                   and expert support — starting at just ₹499.
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
-                  <Link href="/contact">
-                    <Button variant="primary" size="lg">
-                      Book Your Session Now <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  {renderCta("Get Placement Now")}
                 </div>
                 <p className="relative mt-5 text-[12px] text-text-subtle">
                   30-minute call • Limited slots this month

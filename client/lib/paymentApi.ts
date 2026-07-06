@@ -13,14 +13,14 @@ export interface CreateOrderResponse {
 }
 
 export interface VerifyRazorpayPayload {
-  courseId: string;
+  courseId?: string;
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
 }
 
 export interface VerifyCashfreePayload {
-  courseId: string;
+  courseId?: string;
   order_id: string;
 }
 
@@ -38,3 +38,16 @@ export const createPaymentOrder = (courseId: string): Promise<CreateOrderRespons
 
 export const verifyPayment = (payload: VerifyPaymentPayload): Promise<void> =>
   apiClient.post("/payment/verify", payload).then((r) => r.data);
+
+export type Direct2HireStatus = "PENDING" | "PAID" | null;
+
+export interface Direct2HireStatusResponse {
+  enrolled: boolean;
+  status: Direct2HireStatus;
+}
+
+export const getDirect2HireStatus = (): Promise<Direct2HireStatusResponse> =>
+  apiClient.get("/direct2hire/status").then((r) => r.data.data);
+
+export const createDirect2HireOrder = (): Promise<CreateOrderResponse> =>
+  apiClient.post("/direct2hire/create-order", {}).then((r) => r.data.data);

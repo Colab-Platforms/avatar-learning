@@ -8,6 +8,7 @@ import internshipRoutes from "./modules/internship/internship.route.js";
 import adminInternshipRoutes from "./modules/internship/admin.route.js";
 import userRoutes from "./modules/user/user.route.js";
 import paymentRoutes from "./modules/payment/payment.route.js";
+import direct2hireRoutes from "./modules/direct2hire/direct2hire.route.js";
 
 router.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", message: "Server is healthy" });
@@ -23,5 +24,6 @@ router.use("/admin", adminInternshipRoutes);
 router.use("/chatbot", chatbotRoutes);
 router.use("/users", userRoutes);
 router.use("/payment", paymentRoutes);
+router.use("/direct2hire", direct2hireRoutes);
 
 export default router;
