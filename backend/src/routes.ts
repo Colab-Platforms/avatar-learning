@@ -16,7 +16,9 @@ router.get("/health", (_req: Request, res: Response) => {
 router.use("/auth", authRoutes);
 router.use("/courses", courseRoutes);
 router.use("/internships", internshipRoutes);
+router.use("/internships", internshipRoutes);
 router.use("/admin", adminCourseRoutes);
+router.use("/admin", adminInternshipRoutes);
 router.use("/admin", adminInternshipRoutes);
 router.use("/chatbot", chatbotRoutes);
 router.use("/users", userRoutes);

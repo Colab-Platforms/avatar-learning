@@ -92,6 +92,8 @@ model User {
   resourceDownloads ResourceDownload[]
   createdInternships Internship[]        @relation("InternshipCreator")
   internshipApplications InternshipApplication[]
+  createdInternships Internship[]        @relation("InternshipCreator")
+  internshipApplications InternshipApplication[]
   paymentOrders     PaymentOrder[]
 
   @@index([email])
