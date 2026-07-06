@@ -175,7 +175,7 @@ const FAQS = [
 
 /* ─── page ──────────────────────────────────────────────────────────── */
 
-export default function CounselingPage() {
+export default function Direct2HirePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
@@ -207,8 +207,7 @@ export default function CounselingPage() {
 
                 <ScrollReveal animation="fade-up" delay={80}>
                   <p className="text-text-muted text-[16px] leading-relaxed mb-8">
-                    Get a personalized career roadmap, AI assessment, and
-                    6-month action plan in just 30 minutes — for only{" "}
+                    Discover the right career path based on your interests, strengths, personality, and future job opportunities.{" "}
                     <span className="text-text-subtle line-through">₹12,995</span>{" "}
                     <span className="text-brand-600 font-semibold">₹499/-</span>
                   </p>
@@ -245,7 +244,7 @@ export default function CounselingPage() {
                       alt="AI-powered career guidance"
                       fill
                       sizes="(max-width:1024px) 100vw, 50vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="object-cover object-right transition-transform duration-700 group-hover:scale-105"
                     />
                   </div>
 
@@ -453,42 +452,42 @@ export default function CounselingPage() {
         {/* ══════════════════════════════
             HOW IT WORKS
         ══════════════════════════════ */}
-        <section className="py-14 bg-surface-alt border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up" className="mb-12">
-              <p className="eyebrow mb-4">Simple &amp; Clear Process</p>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                How It <span className="text-gradient-brand">Works</span>
-              </h2>
-              <p className="mt-3 text-text-muted max-w-2xl">
-                From booking your session to walking away with a clear plan,
-                everything happens in just 4 easy steps. Get expert guidance, a
-                personalized roadmap and ongoing support without any complexity.
-              </p>
-            </ScrollReveal>
+          {/* <section className="py-14 bg-surface-alt border-t border-border relative overflow-hidden">
+            <div className="relative container-x">
+              <ScrollReveal animation="fade-up" className="mb-12">
+                <p className="eyebrow mb-4">Simple &amp; Clear Process</p>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                  How It <span className="text-gradient-brand">Works</span>
+                </h2>
+                <p className="mt-3 text-text-muted max-w-2xl">
+                  From booking your session to walking away with a clear plan,
+                  everything happens in just 4 easy steps. Get expert guidance, a
+                  personalized roadmap and ongoing support without any complexity.
+                </p>
+              </ScrollReveal>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {STEPS.map((step, i) => (
-                <AnimateOnScroll key={step.num} delay={i * 80}>
-                  <div className="group h-full rounded-2xl border border-border bg-white p-7 card-lift cursor-default">
-                    <p
-                      className="text-4xl font-black text-transparent mb-5"
-                      style={{ WebkitTextStroke: "1px #2A78CC" }}
-                    >
-                      {step.num}
-                    </p>
-                    <h3 className="font-semibold text-[16px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
-                      {step.title}
-                    </h3>
-                    <p className="text-[13px] text-text-muted leading-relaxed">
-                      {step.desc}
-                    </p>
-                  </div>
-                </AnimateOnScroll>
-              ))}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {STEPS.map((step, i) => (
+                  <AnimateOnScroll key={step.num} delay={i * 80}>
+                    <div className="group h-full rounded-2xl border border-border bg-white p-7 card-lift cursor-default">
+                      <p
+                        className="text-4xl font-black text-transparent mb-5"
+                        style={{ WebkitTextStroke: "1px #2A78CC" }}
+                      >
+                        {step.num}
+                      </p>
+                      <h3 className="font-semibold text-[16px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
+                        {step.title}
+                      </h3>
+                      <p className="text-[13px] text-text-muted leading-relaxed">
+                        {step.desc}
+                      </p>
+                    </div>
+                  </AnimateOnScroll>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section> */}
 
         {/* ══════════════════════════════
             COMPLETE BREAKDOWN / PRICING

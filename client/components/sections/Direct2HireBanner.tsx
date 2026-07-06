@@ -139,7 +139,7 @@ export function Direct2HireBanner() {
                 style={{ animation: "fade-up-in 0.7s 0.4s ease both" }}
               >
                 <Link
-                  href="/counseling"
+                  href="/direct2hire"
                   className="group inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:-translate-y-0.5 active:translate-y-0"
                   style={{ boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }}
                 >
@@ -147,7 +147,7 @@ export function Direct2HireBanner() {
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
                 {/* <Link
-                  href="/counseling"
+                  href="/direct2hire"
                   className="group inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white/80 px-6 py-3 text-[14px] font-semibold text-blue-700 backdrop-blur-sm transition-all duration-200 hover:border-blue-400 hover:bg-white hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
                 >
                   Learn More
