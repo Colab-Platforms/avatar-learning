@@ -357,6 +357,11 @@ model Resource {
   @@map("resources")
 }
 
+enum PaymentProvider {
+  RAZORPAY
+  CASHFREE
+}
+
 enum PaymentOrderStatus {
   PENDING
   PAID
@@ -376,7 +381,8 @@ model PaymentOrder {
   userId           String             @map("user_id")
   courseId         String             @map("course_id")
 
-  razorpayOrderId  String             @unique @map("razorpay_order_id")
+  provider         PaymentProvider    @default(RAZORPAY)
+  gatewayOrderId   String             @unique @map("gateway_order_id")
 
   amount           Int
   currency         String             @default("INR")
@@ -393,7 +399,7 @@ model PaymentOrder {
 
   @@index([userId])
   @@index([courseId])
-  @@index([razorpayOrderId])
+  @@index([gatewayOrderId])
   @@index([status])
   @@map("payment_orders")
 }
@@ -403,8 +409,8 @@ model PaymentTransaction {
 
   paymentOrderId      String                   @map("payment_order_id")
 
-  razorpayPaymentId   String                   @unique @map("razorpay_payment_id")
-  razorpaySignature   String                   @map("razorpay_signature")
+  gatewayPaymentId    String                   @unique @map("gateway_payment_id")
+  gatewaySignature    String                   @map("gateway_signature")
 
   paymentMethod       String?                  @map("payment_method")
 
@@ -419,7 +425,7 @@ model PaymentTransaction {
   paymentOrder        PaymentOrder             @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
 
   @@index([paymentOrderId])
-  @@index([razorpayPaymentId])
+  @@index([gatewayPaymentId])
   @@map("payment_transactions")
 }
 

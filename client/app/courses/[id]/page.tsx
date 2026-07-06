@@ -25,8 +25,10 @@ import { useCourse } from "@/hooks/queries/useCourse";
 import { useEnrollment } from "@/hooks/queries/useEnrollment";
 import { useAppSelector } from "@/store/hooks";
 import { useRazorpay } from "@/hooks/useRazorpay";
+import { useCashfree } from "@/hooks/useCashfree";
 import { useCreateOrder } from "@/hooks/mutations/useCreateOrder";
 import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
+import type { CreateOrderResponse } from "@/lib/paymentApi";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -42,6 +44,7 @@ export default function CoursePage({ params }: PageProps) {
   const { user } = useAppSelector((s) => s.auth);
 
   const razorpayLoaded = useRazorpay();
+  const cashfreeLoaded = useCashfree();
   const { mutateAsync: createOrder } = useCreateOrder();
   const { mutateAsync: verifyPayment } = useVerifyPayment();
 
@@ -78,18 +81,9 @@ export default function CoursePage({ params }: PageProps) {
     }
   }, [course, refetchEnrollment]);
 
-  const handlePaidEnroll = useCallback(async () => {
-    if (!course || !user) return;
-    if (!razorpayLoaded) {
-      showMsg("Payment SDK is still loading. Please try again.", "error");
-      return;
-    }
-
-    setEnrolling(true);
-    showMsg("");
-
-    try {
-      const order = await createOrder(course.id);
+  const handleRazorpayCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!course || !user) return;
 
       await new Promise<void>((resolve, reject) => {
         const rzp = new window.Razorpay({
@@ -134,6 +128,61 @@ export default function CoursePage({ params }: PageProps) {
 
         rzp.open();
       });
+    },
+    [course, user, verifyPayment, refetchEnrollment, id, router],
+  );
+
+  const handleCashfreeCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!course) return;
+      if (!order.paymentSessionId) {
+        throw new Error("Missing Cashfree payment session");
+      }
+
+      const cashfree = window.Cashfree({ mode: order.mode ?? "sandbox" });
+      const result = await cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: "_modal",
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message ?? "Payment failed");
+      }
+
+      await verifyPayment({
+        courseId: course.id,
+        order_id: order.orderId,
+      });
+      await refetchEnrollment();
+      showMsg("Payment successful! Redirecting to your course…", "success");
+      setTimeout(() => router.push(`/courses/${id}/learn`), 1500);
+    },
+    [course, verifyPayment, refetchEnrollment, id, router],
+  );
+
+  const handlePaidEnroll = useCallback(async () => {
+    if (!course || !user) return;
+
+    setEnrolling(true);
+    showMsg("");
+
+    try {
+      const order = await createOrder(course.id);
+
+      if (order.provider === "cashfree") {
+        if (!cashfreeLoaded) {
+          showMsg("Payment SDK is still loading. Please try again.", "error");
+          return;
+        }
+        await handleCashfreeCheckout(order);
+        return;
+      }
+
+      if (!razorpayLoaded) {
+        showMsg("Payment SDK is still loading. Please try again.", "error");
+        return;
+      }
+      await handleRazorpayCheckout(order);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Payment failed";
       if (msg === "cancelled") {
@@ -144,7 +193,15 @@ export default function CoursePage({ params }: PageProps) {
     } finally {
       setEnrolling(false);
     }
-  }, [course, user, razorpayLoaded, createOrder, verifyPayment, refetchEnrollment, id, router]);
+  }, [
+    course,
+    user,
+    razorpayLoaded,
+    cashfreeLoaded,
+    createOrder,
+    handleRazorpayCheckout,
+    handleCashfreeCheckout,
+  ]);
 
   const handleEnroll = useCallback(async () => {
     if (!user) {
@@ -365,7 +422,7 @@ export default function CoursePage({ params }: PageProps) {
                   )}
                   <button
                     onClick={handleEnroll}
-                    disabled={enrolling || (course.price > 0 && !enrolled)}
+                    disabled={enrolling}
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold
                                transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
                     style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
@@ -514,7 +571,7 @@ export default function CoursePage({ params }: PageProps) {
                     <div className="flex flex-col gap-2.5 pt-1">
                       <button
                         onClick={handleEnroll}
-                        disabled={enrolling || (course.price > 0 && !enrolled)}
+                        disabled={enrolling}
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
                                    transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
                         style={{

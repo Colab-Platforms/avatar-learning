@@ -3,9 +3,15 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "./payment.utils.js";
+import { getPaymentProvider, getBackendBaseUrl } from "./payment.config.js";
+import { getCashfree, getCashfreeEnvironment } from "./cashfree.client.js";
 import type {
   CreateOrderResponse,
   RazorpayWebhookPayload,
+  CashfreeWebhookPayload,
+  VerifyPaymentBody,
+  VerifyCashfreePaymentBody,
+  VerifyRazorpayPaymentBody,
 } from "./payment.types.js";
 
 function getRazorpay(): Razorpay {
@@ -15,6 +21,62 @@ function getRazorpay(): Razorpay {
     throw new ApiError("Razorpay credentials not configured", STATUS_CODES.SERVER_ERROR);
   }
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
+}
+
+function generateCashfreeOrderId(): string {
+  return `order_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function markPendingOrderFailed(pendingOrderId: string): Promise<void> {
+  await prisma.paymentOrder.update({
+    where: { id: pendingOrderId },
+    data: { status: "FAILED" },
+  });
+}
+
+async function completePayment(params: {
+  orderId: string;
+  gatewayPaymentId: string;
+  gatewaySignature: string;
+  paymentMethod?: string;
+  metadata?: object;
+}): Promise<void> {
+  const { orderId, gatewayPaymentId, gatewaySignature, paymentMethod, metadata } = params;
+
+  const order = await prisma.paymentOrder.findUnique({
+    where: { gatewayOrderId: orderId },
+  });
+  if (!order || order.status === "PAID") return;
+
+  const existingTx = await prisma.paymentTransaction.findUnique({
+    where: { gatewayPaymentId },
+  });
+  if (existingTx) return;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.paymentTransaction.create({
+      data: {
+        paymentOrderId: order.id,
+        gatewayPaymentId,
+        gatewaySignature,
+        paymentMethod,
+        amount: order.amount,
+        status: "SUCCESS",
+        metadata,
+      },
+    });
+
+    await tx.paymentOrder.update({
+      where: { id: order.id },
+      data: { status: "PAID" },
+    });
+
+    await tx.courseUserMapper.upsert({
+      where: { userId_courseId: { userId: order.userId, courseId: order.courseId } },
+      create: { userId: order.userId, courseId: order.courseId },
+      update: {},
+    });
+  });
 }
 
 export class PaymentService {
@@ -29,14 +91,28 @@ export class PaymentService {
     });
     if (existing) throw new ApiError("You are already enrolled in this course", STATUS_CODES.CONFLICT);
 
-    // Check if there's already a pending order for this user+course to avoid duplicates
     const pendingOrder = await prisma.paymentOrder.findFirst({
       where: { userId, courseId, status: "PENDING" },
       orderBy: { createdAt: "desc" },
     });
 
-    const razorpay = getRazorpay();
+    const provider = getPaymentProvider();
     const amountInPaise = course.price * 100;
+
+    if (provider === "cashfree") {
+      return this.createCashfreeOrder(userId, courseId, course.price, amountInPaise, pendingOrder?.id);
+    }
+
+    return this.createRazorpayOrder(userId, courseId, amountInPaise, pendingOrder?.id);
+  }
+
+  private async createRazorpayOrder(
+    userId: string,
+    courseId: string,
+    amountInPaise: number,
+    pendingOrderId?: string,
+  ): Promise<CreateOrderResponse> {
+    const razorpay = getRazorpay();
 
     const rzpOrder = await razorpay.orders.create({
       amount: amountInPaise,
@@ -45,19 +121,16 @@ export class PaymentService {
       notes: { courseId, userId },
     });
 
-    // If a stale pending order exists, mark it failed before creating new one
-    if (pendingOrder) {
-      await prisma.paymentOrder.update({
-        where: { id: pendingOrder.id },
-        data: { status: "FAILED" },
-      });
+    if (pendingOrderId) {
+      await markPendingOrderFailed(pendingOrderId);
     }
 
     await prisma.paymentOrder.create({
       data: {
         userId,
         courseId,
-        razorpayOrderId: rzpOrder.id,
+        provider: "RAZORPAY",
+        gatewayOrderId: rzpOrder.id,
         amount: amountInPaise,
         currency: "INR",
         status: "PENDING",
@@ -65,6 +138,7 @@ export class PaymentService {
     });
 
     return {
+      provider: "razorpay",
       orderId: rzpOrder.id,
       amount: amountInPaise,
       currency: "INR",
@@ -72,7 +146,72 @@ export class PaymentService {
     };
   }
 
-  async verifyPayment(
+  private async createCashfreeOrder(
+    userId: string,
+    courseId: string,
+    amountInRupees: number,
+    amountInPaise: number,
+    pendingOrderId?: string,
+  ): Promise<CreateOrderResponse> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
+
+    const cashfree = getCashfree();
+    const gatewayOrderId = generateCashfreeOrderId();
+    const backendUrl = getBackendBaseUrl();
+    const frontendUrl = (process.env.FRONTEND_URL ?? "http://localhost:3000").replace(/\/$/, "");
+    const customerPhone = user.phoneNo?.replace(/\D/g, "") || "9999999999";
+    const customerName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Customer";
+
+    const response = await cashfree.PGCreateOrder({
+      order_id: gatewayOrderId,
+      order_amount: amountInRupees,
+      order_currency: "INR",
+      customer_details: {
+        customer_id: userId,
+        customer_name: customerName,
+        customer_email: user.email ?? undefined,
+        customer_phone: customerPhone,
+      },
+      order_meta: {
+        notify_url: `${backendUrl}/api/payment/webhook/cashfree`,
+        return_url: `${frontendUrl}/courses/${courseId}?payment=success&order_id={order_id}`,
+      },
+      order_note: courseId,
+    });
+
+    const paymentSessionId = response.data.payment_session_id;
+    if (!paymentSessionId) {
+      throw new ApiError("Failed to create Cashfree payment session", STATUS_CODES.SERVER_ERROR);
+    }
+
+    if (pendingOrderId) {
+      await markPendingOrderFailed(pendingOrderId);
+    }
+
+    await prisma.paymentOrder.create({
+      data: {
+        userId,
+        courseId,
+        provider: "CASHFREE",
+        gatewayOrderId,
+        amount: amountInPaise,
+        currency: "INR",
+        status: "PENDING",
+      },
+    });
+
+    return {
+      provider: "cashfree",
+      orderId: gatewayOrderId,
+      amount: amountInPaise,
+      currency: "INR",
+      paymentSessionId,
+      mode: getCashfreeEnvironment(),
+    };
+  }
+
+  async verifyRazorpayPayment(
     userId: string,
     courseId: string,
     razorpayOrderId: string,
@@ -91,16 +230,15 @@ export class PaymentService {
     if (!isValid) throw new ApiError("Payment signature verification failed", STATUS_CODES.BAD_REQUEST);
 
     const order = await prisma.paymentOrder.findUnique({
-      where: { razorpayOrderId },
+      where: { gatewayOrderId: razorpayOrderId },
     });
     if (!order) throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
     if (order.userId !== userId) throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
     if (order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
     if (order.status === "PAID") throw new ApiError("Payment already processed", STATUS_CODES.CONFLICT);
 
-    // Check idempotency — if this payment ID was already recorded
     const existingTx = await prisma.paymentTransaction.findUnique({
-      where: { razorpayPaymentId },
+      where: { gatewayPaymentId: razorpayPaymentId },
     });
     if (existingTx) throw new ApiError("Payment already processed", STATUS_CODES.CONFLICT);
 
@@ -108,8 +246,8 @@ export class PaymentService {
       await tx.paymentTransaction.create({
         data: {
           paymentOrderId: order.id,
-          razorpayPaymentId,
-          razorpaySignature,
+          gatewayPaymentId: razorpayPaymentId,
+          gatewaySignature: razorpaySignature,
           amount: order.amount,
           status: "SUCCESS",
         },
@@ -120,7 +258,6 @@ export class PaymentService {
         data: { status: "PAID" },
       });
 
-      // Upsert enrollment — safe even if somehow already exists
       await tx.courseUserMapper.upsert({
         where: { userId_courseId: { userId, courseId } },
         create: { userId, courseId },
@@ -129,46 +266,81 @@ export class PaymentService {
     });
   }
 
-  async handleWebhook(payload: RazorpayWebhookPayload): Promise<void> {
+  async verifyCashfreePayment(userId: string, courseId: string, orderId: string): Promise<void> {
+    console.log(`[verifyCashfreePayment] orderId=${orderId} userId=${userId} courseId=${courseId}`);
+
+    const order = await prisma.paymentOrder.findUnique({
+      where: { gatewayOrderId: orderId },
+    });
+    if (!order) throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
+    if (order.userId !== userId) throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
+    if (order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
+    if (order.status === "PAID") return;
+
+    const cashfree = getCashfree();
+    let cfOrder: any;
+    try {
+      const response = await cashfree.PGFetchOrder(orderId);
+      cfOrder = response.data;
+      console.log(`[verifyCashfreePayment] Cashfree order_status=${cfOrder.order_status}`, JSON.stringify(cfOrder));
+    } catch (err: any) {
+      const detail = err?.response?.data ?? err?.message ?? err;
+      console.error("[verifyCashfreePayment] PGFetchOrder failed:", JSON.stringify(detail));
+      throw new ApiError(`Cashfree order fetch failed: ${JSON.stringify(detail)}`, STATUS_CODES.BAD_REQUEST);
+    }
+
+    if (cfOrder.order_status !== "PAID") {
+      console.warn(`[verifyCashfreePayment] order_status is "${cfOrder.order_status}", not PAID`);
+      throw new ApiError(`Payment not completed yet (status: ${cfOrder.order_status})`, STATUS_CODES.BAD_REQUEST);
+    }
+
+    const paymentId = String(
+      cfOrder.cf_payment_id ??
+        cfOrder.payments?.[0]?.cf_payment_id ??
+        cfOrder.payment_session_id ??
+        orderId,
+    );
+
+    await completePayment({
+      orderId,
+      gatewayPaymentId: paymentId,
+      gatewaySignature: "client-verify",
+      metadata: { order_status: cfOrder.order_status },
+    });
+  }
+
+  async verifyPayment(userId: string, body: VerifyPaymentBody): Promise<void> {
+    const provider = getPaymentProvider();
+
+    if (provider === "cashfree") {
+      const cashfreeBody = body as VerifyCashfreePaymentBody;
+      await this.verifyCashfreePayment(userId, cashfreeBody.courseId, cashfreeBody.order_id);
+      return;
+    }
+
+    const razorpayBody = body as VerifyRazorpayPaymentBody;
+    await this.verifyRazorpayPayment(
+      userId,
+      razorpayBody.courseId,
+      razorpayBody.razorpay_order_id,
+      razorpayBody.razorpay_payment_id,
+      razorpayBody.razorpay_signature,
+    );
+  }
+
+  async handleRazorpayWebhook(payload: RazorpayWebhookPayload): Promise<void> {
     const event = payload.event;
 
     if (event === "payment.captured") {
       const payment = payload.payload.payment?.entity;
       if (!payment) return;
 
-      const order = await prisma.paymentOrder.findUnique({
-        where: { razorpayOrderId: payment.order_id },
-      });
-      if (!order || order.status === "PAID") return;
-
-      const existingTx = await prisma.paymentTransaction.findUnique({
-        where: { razorpayPaymentId: payment.id },
-      });
-      if (existingTx) return;
-
-      await prisma.$transaction(async (tx) => {
-        await tx.paymentTransaction.create({
-          data: {
-            paymentOrderId: order.id,
-            razorpayPaymentId: payment.id,
-            razorpaySignature: "webhook",
-            paymentMethod: payment.method,
-            amount: payment.amount,
-            status: "SUCCESS",
-            metadata: payment.notes as object,
-          },
-        });
-
-        await tx.paymentOrder.update({
-          where: { id: order.id },
-          data: { status: "PAID" },
-        });
-
-        await tx.courseUserMapper.upsert({
-          where: { userId_courseId: { userId: order.userId, courseId: order.courseId } },
-          create: { userId: order.userId, courseId: order.courseId },
-          update: {},
-        });
+      await completePayment({
+        orderId: payment.order_id,
+        gatewayPaymentId: payment.id,
+        gatewaySignature: "webhook",
+        paymentMethod: payment.method,
+        metadata: payment.notes as object,
       });
     }
 
@@ -177,7 +349,7 @@ export class PaymentService {
       if (!payment) return;
 
       const order = await prisma.paymentOrder.findUnique({
-        where: { razorpayOrderId: payment.order_id },
+        where: { gatewayOrderId: payment.order_id },
       });
       if (!order || order.status !== "PENDING") return;
 
@@ -192,7 +364,7 @@ export class PaymentService {
       if (!refund) return;
 
       const tx = await prisma.paymentTransaction.findUnique({
-        where: { razorpayPaymentId: refund.payment_id },
+        where: { gatewayPaymentId: refund.payment_id },
       });
       if (!tx) return;
 
@@ -205,6 +377,38 @@ export class PaymentService {
           where: { id: tx.paymentOrderId },
           data: { status: "REFUNDED" },
         });
+      });
+    }
+  }
+
+  async handleCashfreeWebhook(payload: CashfreeWebhookPayload): Promise<void> {
+    const eventType = payload.type;
+    const orderId = payload.data?.order?.order_id;
+    if (!orderId) return;
+
+    if (eventType === "PAYMENT_SUCCESS_WEBHOOK") {
+      const payment = payload.data.payment;
+      if (!payment || payment.payment_status !== "SUCCESS") return;
+
+      await completePayment({
+        orderId,
+        gatewayPaymentId: String(payment.cf_payment_id),
+        gatewaySignature: "webhook",
+        paymentMethod: payment.payment_group,
+        metadata: payload.data as object,
+      });
+      return;
+    }
+
+    if (eventType === "PAYMENT_FAILED_WEBHOOK" || eventType === "PAYMENT_USER_DROPPED_WEBHOOK") {
+      const order = await prisma.paymentOrder.findUnique({
+        where: { gatewayOrderId: orderId },
+      });
+      if (!order || order.status !== "PENDING") return;
+
+      await prisma.paymentOrder.update({
+        where: { id: order.id },
+        data: { status: "FAILED" },
       });
     }
   }
