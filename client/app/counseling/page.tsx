@@ -255,6 +255,9 @@ export default function CounselingPage() {
         throw new Error("Missing Cashfree payment session");
       }
 
+      if (!window.Cashfree) {
+        throw new Error("Cashfree SDK not loaded");
+      }
       const cashfree = window.Cashfree({ mode: order.mode ?? "sandbox" });
       const result = await cashfree.checkout({
         paymentSessionId: order.paymentSessionId,
