@@ -25,11 +25,17 @@ import {
   MessageCircle,
   Users,
   Award,
+  GraduationCap,
+  BookOpen,
+  UserCheck,
+  Repeat,
+  Landmark,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollReveal, AnimateOnScroll, Button, HelpWidget } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { StickyBuyBar } from "./StickyBuyBar";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -38,6 +44,32 @@ const STATS = [
   { value: "500+", label: "Hiring Partners" },
   { value: "95%", label: "Placement Rate" },
   { value: "₹12L+", label: "Avg Package Secured" },
+];
+
+const WHO_FOR = [
+  {
+    icon: BookOpen,
+    title: "College Students",
+    desc: "Already picked a degree but unsure if it leads to a career you'll actually enjoy.",
+  },
+  {
+    icon: UserCheck,
+    title: "Final-Year Students & Freshers",
+    desc: "Need real skills, an internship, and a job plan before — or right after — graduating.",
+  },
+  {
+    icon: Repeat,
+    title: "Early Professionals",
+    desc: "Feel stuck in the wrong job and ready to switch to a high-growth, future-proof career.",
+  },
+];
+
+const OUTCOMES = [
+  "Complete clarity on the right career path for you — no more second-guessing",
+  "A personalized, step-by-step roadmap mapped to your goals and timeline",
+  "Practical, in-demand AI skills that employers are actively hiring for",
+  "Real, hands-on experience through a guided internship, not just theory",
+  "Active placement support until you land an offer, not just a certificate",
 ];
 
 const JOURNEY_STEPS = [
@@ -205,97 +237,124 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             HERO
         ══════════════════════════════ */}
-        <section className="relative pt-28 pb-14 sm:pt-32 overflow-hidden">
+        <section className="relative pt-24 pb-10 sm:pt-32 sm:pb-14 overflow-hidden">
           <div className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] bg-brand-200/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" aria-hidden />
 
           <div className="relative container-x">
-            <div className="grid lg:grid-cols-2 gap-14 items-center">
+            <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
               {/* left */}
-              <div>
+              <div className="lg:col-span-5 xl:col-span-5">
                 <ScrollReveal animation="fade-up" delay={0}>
-                  <p className="eyebrow mb-4">
-                    Avatar&apos;s End-to-End Career Program
-                  </p>
-                  <h1 className="h-display text-text mb-6">
-                    Stop guessing.{" "}
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700 mb-4">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    </span>
+                    Only a few 1-on-1 slots open this week
+                  </span>
+                  <h1 className="h-display text-text mb-5 sm:mb-6">
+                    Become AI Job Ready in{" "}
                     <span className="text-gradient-brand">
-                      Get Direct2Hire.
+                      Just 90 Days.
                     </span>
                   </h1>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={80}>
-                  <p className="text-text-muted text-[16px] leading-relaxed mb-8">
+                  <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-3">
                     Direct2Hire is Avatar&apos;s complete career program — counselling,
                     AI-powered assessment, hands-on AI skilling, a real internship, and
-                    placement support, in one structured journey. It starts with a
-                    30-minute session for only{" "}
-                    <span className="text-text-subtle line-through">₹12,995</span>{" "}
-                    <span className="text-brand-600 font-semibold">₹499/-</span>
+                    placement support, in one structured journey that ends with you
+                    getting hired.
                   </p>
+                  <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-6 sm:mb-8">
+                    It all starts with one 30-minute session for only{" "}
+                    <span className="text-text-subtle line-through">₹12,995</span>{" "}
+                    <span className="text-brand-600 font-bold">₹499/-</span>
+                  </p>
+                </ScrollReveal>
+
+                <ScrollReveal animation="fade-up" delay={120}>
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-white px-3.5 py-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                        <Sparkles className="h-4 w-4 text-brand-600" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-text-subtle leading-tight">
+                          Powered by
+                        </p>
+                        <p className="text-[12.5px] font-bold text-text leading-tight truncate">
+                          Avatar India
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-white px-3.5 py-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                        <Landmark className="h-4 w-4 text-brand-600" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-text-subtle leading-tight">
+                          Backed by an
+                        </p>
+                        <p className="text-[12.5px] font-bold text-text leading-tight truncate">
+                          NSE Listed Company
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={150}>
                   <div className="flex flex-wrap items-center gap-3">
-                    <Link href="/contact">
-                      <Button variant="primary" size="lg">
-                        Book Your Session <ArrowRight className="h-4 w-4" />
+                    <Link href="/contact" className="w-full sm:w-auto">
+                      <Button variant="primary" size="lg" className="w-full sm:w-auto">
+                        Enroll Now - ₹499 <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Link href="#journey">
-                      <Button variant="outline" size="lg">
+                    <Link href="#journey" className="w-full sm:w-auto">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
                         See the 5-Step Journey
                       </Button>
                     </Link>
                   </div>
                   <p className="mt-4 text-[12px] text-text-subtle">
-                    Limited slots • Instant confirmation
+                    96% OFF today • Instant WhatsApp confirmation • No hidden costs
                   </p>
                 </ScrollReveal>
               </div>
 
               {/* right — image */}
-              <ScrollReveal animation="fade-left" delay={200} duration={900}>
-                <div className="relative">
-                  <div
-                    className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border
-                               hover:border-brand-300 transition-all duration-500 group shadow-[0_8px_30px_rgba(15,23,42,0.08)]"
-                  >
-                    <Image
-                      src="/counselling-images/banner.png"
-                      alt="AI-powered career guidance"
-                      fill
-                      sizes="(max-width:1024px) 100vw, 50vw"
-                      className="object-cover object-right transition-transform duration-700 group-hover:scale-105"
-                    />
+              <div className="lg:col-span-7 xl:col-span-7 relative">
+                <ScrollReveal animation="fade-left" delay={200} duration={900}>
+                  <div className="relative w-full sm:w-[110%] lg:w-[120%] xl:w-[130%]">
+                    <div
+                      className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden sm:mask-[linear-gradient(to_right,transparent_0%,black_15%,black_100%)]"
+                    >
+                      <Image
+                        src="/counselling-images/banner.png"
+                        alt="AI-powered career guidance"
+                        fill
+                        priority
+                        sizes="(max-width:640px) 100vw, (max-width:1024px) 100vw, 70vw"
+                        className="object-cover object-center"
+                      />
+                    </div>
                   </div>
-
-                  {/* floating price card */}
-                  <div className="absolute -bottom-5 -left-4 rounded-xl border border-border bg-white px-4 py-3 shadow-md hidden md:block">
-                    <p className="text-[10px] text-brand-600 uppercase tracking-wider">
-                      Full Session
-                    </p>
-                    <p className="text-2xl font-bold text-text mt-0.5">
-                      ₹499/-
-                    </p>
-                    <p className="text-[10px] text-text-subtle mt-0.5 line-through">
-                      Worth ₹12,995
-                    </p>
-                  </div>
-                </div>
-              </ScrollReveal>
+                </ScrollReveal>
+              </div>
             </div>
 
             {/* stat strip */}
-            <ScrollReveal animation="fade-up" delay={200} className="mt-20">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <ScrollReveal animation="fade-up" delay={200} className="mt-14 sm:mt-10">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {STATS.map((s, i) => (
                   <AnimateOnScroll key={s.label} delay={i * 70}>
-                    <div className="rounded-2xl border border-border bg-surface-alt p-6 text-center card-lift">
-                      <p className="text-3xl font-bold text-text mb-1">
+                    <div className="rounded-2xl border border-border bg-surface-alt p-4 sm:p-6 text-center card-lift">
+                      <p className="text-2xl sm:text-3xl font-bold text-text mb-1">
                         {s.value}
                       </p>
-                      <p className="text-[12px] text-text-subtle uppercase tracking-wider">
+                      <p className="text-[11px] sm:text-[12px] text-text-subtle uppercase tracking-wider">
                         {s.label}
                       </p>
                     </div>
@@ -303,6 +362,43 @@ export default function Direct2HirePage() {
                 ))}
               </div>
             </ScrollReveal>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            WHO IT'S FOR
+        ══════════════════════════════ */}
+        <section className="py-12 bg-white border-t border-border relative overflow-hidden">
+          <div className="relative container-x">
+            <ScrollReveal animation="fade-up" className="mb-12 text-center">
+              <p className="eyebrow mb-4">Is This For You?</p>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                Direct2Hire Is Built For{" "}
+                <span className="text-gradient-brand">Anyone Facing Career Confusion.</span>
+              </h2>
+              <p className="mt-3 text-text-muted max-w-2xl mx-auto">
+                Wherever you are in your journey, if you don&apos;t have a clear
+                plan, this program gives you one.
+              </p>
+            </ScrollReveal>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {WHO_FOR.map((p, i) => (
+                <AnimateOnScroll key={p.title} delay={i * 80}>
+                  <div className="group h-full rounded-2xl border border-border bg-surface-alt p-6 card-lift cursor-default">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-5 bg-brand-50 border border-brand-200 group-hover:bg-brand-100 transition-all duration-350">
+                      <p.icon className="h-5 w-5 text-brand-600" />
+                    </div>
+                    <h3 className="font-semibold text-[15px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
+                      {p.title}
+                    </h3>
+                    <p className="text-[13px] text-text-muted leading-relaxed">
+                      {p.desc}
+                    </p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -425,8 +521,10 @@ export default function Direct2HirePage() {
             </ScrollReveal>
 
             <div className="relative">
-              {/* connector line (desktop) */}
-              <div className="absolute top-[22px] left-[10%] right-[10%] hidden lg:block">
+              {/* connector line (desktop) — spans from the center of the first
+                  step circle to the center of the last, matching the 5-col grid
+                  (44px circle, gap-5 = 20px gap) */}
+              <div className="absolute top-[22px] left-5.5 right-[calc(20%-38px)] hidden lg:block">
                 <div className="h-[2px] w-full bg-gradient-to-r from-brand-200 via-brand-400 to-brand-200" />
               </div>
 
@@ -455,42 +553,22 @@ export default function Direct2HirePage() {
                 ))}
               </div>
             </div>
-
-            <ScrollReveal animation="fade-up" delay={120} className="mt-10">
-              <div className="rounded-2xl border border-brand-200 bg-brand-50 px-7 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                <p className="text-[14px] text-text-muted max-w-xl">
-                  Every journey starts with{" "}
-                  <span className="font-semibold text-text">Step 1: the ₹499 counselling &amp; assessment session</span>{" "}
-                  below. You decide how far you take it from there.
-                </p>
-                <Link href="/contact">
-                  <Button variant="primary" size="md" className="shrink-0 w-fit">
-                    Start With Step 1 <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </ScrollReveal>
           </div>
         </section>
 
         {/* ══════════════════════════════
             WHAT'S INCLUDED
         ══════════════════════════════ */}
-        <section
+        {/* <section
           id="whats-included"
           className="py-14 bg-white border-t border-border relative overflow-hidden scroll-mt-20"
         >
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="mb-12">
-              <p className="eyebrow mb-4">Step 1 of Your Journey</p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 What You Get in the{" "}
-                <span className="text-gradient-brand">₹499 Starter Session</span>
+                <span className="text-gradient-brand">₹499</span>
               </h2>
-              <p className="mt-3 text-text-muted max-w-2xl">
-                Your Direct2Hire journey begins here — the counselling and
-                assessment that unlock the rest of the program.
-              </p>
             </ScrollReveal>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -515,7 +593,7 @@ export default function Direct2HirePage() {
               ))}
             </div>
 
-            {/* bonus bar */}
+            bonus bar
             <ScrollReveal animation="fade-up" delay={120} className="mt-6">
               <div className="rounded-2xl border border-brand-200 bg-brand-50 px-7 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                 <div className="flex items-center gap-4">
@@ -531,13 +609,65 @@ export default function Direct2HirePage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/contact">
-                  <Button variant="primary" size="md" className="shrink-0 w-fit">
+                <Link href="/contact" className="w-full sm:w-fit shrink-0">
+                  <Button variant="primary" size="md" className="w-full sm:w-fit">
                     Book now for ₹499/- <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </ScrollReveal>
+          </div>
+        </section> */}
+
+        {/* ══════════════════════════════
+            THE OUTCOME
+        ══════════════════════════════ */}
+        <section className="py-14 bg-surface-alt border-t border-border relative overflow-hidden">
+          <div className="relative container-x">
+            <div className="grid lg:grid-cols-5 gap-10 items-center">
+              <div className="lg:col-span-2">
+                <ScrollReveal animation="fade-up">
+                  <p className="eyebrow mb-4">The Outcome</p>
+                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text mb-4">
+                    You Don&apos;t Just Get Advice.{" "}
+                    <span className="text-gradient-brand">You Get Hired.</span>
+                  </h2>
+                  <p className="text-text-muted leading-relaxed mb-6">
+                    Most sessions end with a PDF and a goodbye. Direct2Hire is
+                    built to end with an offer letter — here&apos;s exactly
+                    what changes for you.
+                  </p>
+                  <Link href="/contact" className="block w-full sm:inline-block sm:w-fit">
+                    <Button variant="primary" size="lg" className="w-full sm:w-auto">
+                      Start Your Transformation <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </ScrollReveal>
+              </div>
+
+              <div className="lg:col-span-3">
+                <AnimateOnScroll delay={100}>
+                  <div className="rounded-2xl border border-border bg-white p-2 sm:p-3">
+                    {OUTCOMES.map((outcome, i) => (
+                      <div
+                        key={outcome}
+                        className={cn(
+                          "flex items-start gap-3.5 px-4 sm:px-5 py-4",
+                          i !== OUTCOMES.length - 1 && "border-b border-border",
+                        )}
+                      >
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200 mt-0.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        </span>
+                        <p className="text-[14px] sm:text-[15px] text-text leading-relaxed">
+                          {outcome}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </AnimateOnScroll>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -561,8 +691,8 @@ export default function Direct2HirePage() {
                     now available at a fraction of the cost.
                   </p>
                 </div>
-                <Link href="/contact">
-                  <Button variant="primary" size="md" className="shrink-0 w-fit">
+                <Link href="/contact" className="w-full sm:w-fit shrink-0">
+                  <Button variant="primary" size="md" className="w-full sm:w-fit">
                     Get Your Career Plan For ₹499/-{" "}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -609,11 +739,14 @@ export default function Direct2HirePage() {
                     <IndianRupee className="h-3 w-3" />
                     Save ₹12,495 (96% OFF)
                   </span>
-                  <Link href="/contact">
-                    <Button variant="primary" size="md" className="relative mt-7">
+                  <Link href="/contact" className="relative mt-7 w-full sm:w-fit">
+                    <Button variant="primary" size="md" className="w-full sm:w-fit">
                       Book Your Session <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
+                  <p className="relative mt-3 text-[11px] text-text-subtle">
+                    Instant confirmation on WhatsApp
+                  </p>
                 </div>
               </AnimateOnScroll>
             </div>
@@ -665,10 +798,10 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             CTA
         ══════════════════════════════ */}
-        <section className="py-14 bg-white border-t border-border relative overflow-hidden">
+        <section className="py-1 bg-white border-t border-border relative overflow-hidden">
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
-              <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-10 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+              <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-8 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
                 <p className="relative eyebrow mb-3">Your Future Starts Here</p>
                 <h2 className="relative text-3xl sm:text-4xl font-bold text-text mb-4">
                   Ready to take control{" "}
@@ -680,8 +813,8 @@ export default function Direct2HirePage() {
                   and expert support — starting at just ₹499.
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
-                  <Link href="/contact">
-                    <Button variant="primary" size="lg">
+                  <Link href="/contact" className="w-full sm:w-auto">
+                    <Button variant="primary" size="lg" className="w-full sm:w-auto">
                       Book Your Session Now <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -797,6 +930,7 @@ export default function Direct2HirePage() {
 
       <Footer />
       <HelpWidget />
+      <StickyBuyBar />
     </>
   );
 }

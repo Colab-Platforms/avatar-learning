@@ -35,7 +35,7 @@ export function HelpWidget() {
   return (
     <div
       ref={containerRef}
-      className="fixed right-4 bottom-30 md:right-19 md:bottom-40  z-50 flex flex-col items-end gap-3"
+      className="fixed right-4 bottom-44 md:right-19 md:bottom-40  z-50 flex flex-col items-end gap-3"
     >
       {/* Panel */}
       <AnimatePresence>
