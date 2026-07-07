@@ -55,7 +55,7 @@ const WHO_FOR = [
   {
     icon: UserCheck,
     title: "Final-Year Students & Freshers",
-    desc: "Need real skills, an internship, and a job plan before — or right after — graduating.",
+    desc: "Need real skills, an internship, and a job plan before or right after graduating.",
   },
   {
     icon: Repeat,
@@ -250,7 +250,7 @@ export default function Direct2HirePage() {
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     </span>
-                    Only a few 1-on-1 slots open this week
+                    Only a few slots left for this month
                   </span>
                   <h1 className="h-display text-text mb-5 sm:mb-6">
                     Become AI Job Ready in{" "}
@@ -261,22 +261,20 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={80}>
-                  <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-3">
-                    Direct2Hire is Avatar&apos;s complete career program — counselling,
-                    AI-powered assessment, hands-on AI skilling, a real internship, and
-                    placement support, in one structured journey that ends with you
-                    getting hired.
-                  </p>
+           <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-3">
+            <strong>Direct2Hire</strong> helps you build the right skills, gain real experience, and land your first job with expert guidance every step of the way.
+                </p>
                   <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-6 sm:mb-8">
-                    It all starts with one 30-minute session for only{" "}
+                   Start with a 30-minute career session for just {" "}
+                   <br></br>
                     <span className="text-text-subtle line-through">₹12,995</span>{" "}
-                    <span className="text-brand-600 font-bold">₹499/-</span>
+                    <span className="text-brand-600 font-bold text-xl">₹499/-</span>
                   </p>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={120}>
                   <div className="grid grid-cols-2 gap-3 mb-5">
-                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-white px-3.5 py-2.5">
+                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 h-full">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
                         <Sparkles className="h-4 w-4 text-brand-600" />
                       </span>
@@ -284,12 +282,12 @@ export default function Direct2HirePage() {
                         <p className="text-[10px] text-text-subtle leading-tight">
                           Powered by
                         </p>
-                        <p className="text-[12.5px] font-bold text-text leading-tight truncate">
+                        <p className="text-[11.5px] sm:text-[12.5px] font-bold text-text leading-tight">
                           Avatar India
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-white px-3.5 py-2.5">
+                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 h-full">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
                         <Landmark className="h-4 w-4 text-brand-600" />
                       </span>
@@ -297,7 +295,7 @@ export default function Direct2HirePage() {
                         <p className="text-[10px] text-text-subtle leading-tight">
                           Backed by an
                         </p>
-                        <p className="text-[12.5px] font-bold text-text leading-tight truncate">
+                        <p className="text-[11.5px] sm:text-[12.5px] font-bold text-text leading-tight">
                           NSE Listed Company
                         </p>
                       </div>
@@ -309,17 +307,17 @@ export default function Direct2HirePage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <Link href="/contact" className="w-full sm:w-auto">
                       <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                        Enroll Now - ₹499 <ArrowRight className="h-4 w-4" />
+                        Enroll Now for ₹499 <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
                     <Link href="#journey" className="w-full sm:w-auto">
                       <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                        See the 5-Step Journey
+                        See our 5-Step Journey
                       </Button>
                     </Link>
                   </div>
                   <p className="mt-4 text-[12px] text-text-subtle">
-                    96% OFF today • Instant WhatsApp confirmation • No hidden costs
+                  Instant WhatsApp confirmation • No hidden costs
                   </p>
                 </ScrollReveal>
               </div>
@@ -332,7 +330,7 @@ export default function Direct2HirePage() {
                       className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden sm:mask-[linear-gradient(to_right,transparent_0%,black_15%,black_100%)]"
                     >
                       <Image
-                        src="/counselling-images/banner.png"
+                        src="/counselling-images/banner.jpeg"
                         alt="AI-powered career guidance"
                         fill
                         priority
@@ -366,46 +364,9 @@ export default function Direct2HirePage() {
         </section>
 
         {/* ══════════════════════════════
-            WHO IT'S FOR
-        ══════════════════════════════ */}
-        <section className="py-12 bg-white border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up" className="mb-12 text-center">
-              <p className="eyebrow mb-4">Is This For You?</p>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                Direct2Hire Is Built For{" "}
-                <span className="text-gradient-brand">Anyone Facing Career Confusion.</span>
-              </h2>
-              <p className="mt-3 text-text-muted max-w-2xl mx-auto">
-                Wherever you are in your journey, if you don&apos;t have a clear
-                plan, this program gives you one.
-              </p>
-            </ScrollReveal>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {WHO_FOR.map((p, i) => (
-                <AnimateOnScroll key={p.title} delay={i * 80}>
-                  <div className="group h-full rounded-2xl border border-border bg-surface-alt p-6 card-lift cursor-default">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-5 bg-brand-50 border border-brand-200 group-hover:bg-brand-100 transition-all duration-350">
-                      <p.icon className="h-5 w-5 text-brand-600" />
-                    </div>
-                    <h3 className="font-semibold text-[15px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
-                      {p.title}
-                    </h3>
-                    <p className="text-[13px] text-text-muted leading-relaxed">
-                      {p.desc}
-                    </p>
-                  </div>
-                </AnimateOnScroll>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
             THE COST OF CONFUSION
         ══════════════════════════════ */}
-        <section className="py-14 bg-surface-alt border-t border-border relative overflow-hidden">
+        <section className="py-10  bg-surface-alt border-t border-border relative overflow-hidden">
           <div className="relative container-x">
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
@@ -426,7 +387,7 @@ export default function Direct2HirePage() {
 
             <div className="grid md:grid-cols-2 gap-6">
               {/* Without a plan */}
-              <AnimateOnScroll delay={0}>
+              <AnimateOnScroll delay={0} className="order-2 md:order-1">
                 <div className="group h-full rounded-2xl border border-red-200 bg-white overflow-hidden card-lift">
                   <div className="relative aspect-16/9 overflow-hidden">
                     <Image
@@ -462,7 +423,7 @@ export default function Direct2HirePage() {
               </AnimateOnScroll>
 
               {/* With Avatar's session */}
-              <AnimateOnScroll delay={120}>
+              <AnimateOnScroll delay={120} className="order-1 md:order-2">
                 <div className="group h-full rounded-2xl border border-emerald-200 bg-white overflow-hidden card-lift">
                   <div className="relative aspect-16/9 overflow-hidden">
                     <Image
@@ -496,6 +457,43 @@ export default function Direct2HirePage() {
                   </div>
                 </div>
               </AnimateOnScroll>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            WHO IT'S FOR
+        ══════════════════════════════ */}
+        <section className="py-12 bg-white border-t border-border relative overflow-hidden">
+          <div className="relative container-x">
+            <ScrollReveal animation="fade-up" className="mb-12 text-center">
+              <p className="eyebrow mb-4">Who Is This For ?</p>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                Direct2Hire Is Built For{" "}
+                <span className="text-gradient-brand">Anyone Facing Career Confusion.</span>
+              </h2>
+              <p className="mt-3 text-text-muted max-w-2xl mx-auto">
+                Wherever you are in your journey, if you don&apos;t have a clear
+                plan, this program gives you one.
+              </p>
+            </ScrollReveal>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {WHO_FOR.map((p, i) => (
+                <AnimateOnScroll key={p.title} delay={i * 80}>
+                  <div className="group h-full rounded-2xl border border-border bg-surface-alt p-6 card-lift cursor-default">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-5 bg-brand-50 border border-brand-200 group-hover:bg-brand-100 transition-all duration-350">
+                      <p.icon className="h-5 w-5 text-brand-600" />
+                    </div>
+                    <h3 className="font-semibold text-[15px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
+                      {p.title}
+                    </h3>
+                    <p className="text-[13px] text-text-muted leading-relaxed">
+                      {p.desc}
+                    </p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
             </div>
           </div>
         </section>
@@ -700,25 +698,25 @@ export default function Direct2HirePage() {
               </div>
             </ScrollReveal>
 
-            <div className="grid lg:grid-cols-5 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch w-full">
               {/* value stack */}
-              <AnimateOnScroll delay={0} className="lg:col-span-3">
-                <div className="h-full rounded-2xl border border-border bg-surface-alt p-4 sm:p-6 flex flex-col justify-center divide-y divide-border">
+              <AnimateOnScroll delay={0} className="w-full lg:col-span-3">
+                <div className="h-full w-full rounded-2xl border border-border bg-surface-alt p-4 sm:p-6 flex flex-col justify-center divide-y divide-border">
                   {VALUE_STACK.map((item) => (
                     <div
                       key={item.label}
-                      className="flex items-center justify-between gap-4 px-2 sm:px-4 py-4
+                      className="flex items-center justify-between gap-3 sm:gap-4 px-2 sm:px-4 py-4
                                  hover:bg-brand-50 transition-colors duration-250 rounded-lg"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0 bg-white border border-brand-200">
+                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                        <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg shrink-0 bg-white border border-brand-200">
                           <item.icon className="h-4 w-4 text-brand-600" />
                         </span>
-                        <p className="text-[14px] text-text font-medium truncate">
+                        <p className="text-[13px] sm:text-[14px] text-text font-medium truncate">
                           {item.label}
                         </p>
                       </div>
-                      <p className="text-[14px] text-text-subtle font-semibold line-through shrink-0">
+                      <p className="text-[13px] sm:text-[14px] text-text-subtle font-semibold line-through shrink-0 pl-2">
                         {item.price}
                       </p>
                     </div>
@@ -727,24 +725,24 @@ export default function Direct2HirePage() {
               </AnimateOnScroll>
 
               {/* you pay only card */}
-              <AnimateOnScroll delay={120} className="lg:col-span-2">
-                <div className="relative h-full rounded-2xl border border-brand-200 p-8 sm:p-10 overflow-hidden flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand-50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-                  <p className="relative text-[12px] text-text-subtle uppercase tracking-[0.16em] mb-3">
+              <AnimateOnScroll delay={120} className="w-full lg:col-span-2">
+                <div className="relative w-full h-full rounded-2xl border border-brand-200 p-5 sm:p-10 overflow-hidden flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand-50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+                  <p className="relative text-[11px] sm:text-[12px] text-text-subtle uppercase tracking-[0.16em] mb-3">
                     You Pay Only
                   </p>
-                  <p className="relative text-5xl sm:text-6xl font-black text-gradient-brand">
+                  <p className="relative text-4xl sm:text-6xl font-black text-gradient-brand">
                     ₹499/-
                   </p>
-                  <span className="relative mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[12px] font-semibold text-emerald-700">
-                    <IndianRupee className="h-3 w-3" />
+                  <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
+                    <IndianRupee className="h-3 w-3 shrink-0" />
                     Save ₹12,495 (96% OFF)
                   </span>
-                  <Link href="/contact" className="relative mt-7 w-full sm:w-fit">
-                    <Button variant="primary" size="md" className="w-full sm:w-fit">
-                      Book Your Session <ArrowRight className="h-4 w-4" />
+                  <Link href="/contact" className="relative mt-6 sm:mt-7 w-full sm:w-fit">
+                    <Button variant="primary" size="md" className="w-full">
+                      Book Your Session <ArrowRight className="h-4 w-4 shrink-0" />
                     </Button>
                   </Link>
-                  <p className="relative mt-3 text-[11px] text-text-subtle">
+                  <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
                     Instant confirmation on WhatsApp
                   </p>
                 </div>
