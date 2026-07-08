@@ -284,12 +284,12 @@ export default function Direct2HirePage() {
 
                 <ScrollReveal animation="fade-up" delay={120}>
                   <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 mb-4 sm:mb-5 w-fit">
-                    <span className="relative flex sm:h-12 sm:w-12 w-10 h-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 overflow-hidden">
+                    <span className="relative flex sm:h-11 sm:w-11 w-9 h-9 shrink-0 items-center justify-center">
                       <Image
                         src="/nse-logo.png"
                         alt="NSE"
                         fill
-                        sizes="50px"
+                        sizes="38px"
                         className="object-contain p-0.5"
                       />
                     </span>
