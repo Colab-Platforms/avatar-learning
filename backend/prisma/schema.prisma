@@ -51,6 +51,34 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum Direct2HireStatus {
+  PENDING
+  PAID
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProductType {
+  COURSE
+  DIRECT2HIRE
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  CASHFREE
+}
+
+enum PaymentTransactionStatus {
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
 model User {
   id                String              @id @default(cuid())
   firstName         String?             @map("first_name")
@@ -92,6 +120,10 @@ model User {
   resourceDownloads ResourceDownload[]
   createdInternships Internship[]        @relation("InternshipCreator")
   internshipApplications InternshipApplication[]
+  createdInvestorDocs InvestorDocument[] @relation("InvestorDocCreatedBy")
+
+  direct2hireEnrollments Direct2HireEnrollment[]
+  paymentOrders          PaymentOrder[]
 
   @@index([email])
   @@index([isActive])
@@ -250,6 +282,7 @@ model Courses {
 
   lessons      Lessons[]
   enrollments  CourseUserMapper[]
+  paymentOrders PaymentOrder[]
 
   @@index([categoryId])
   @@index([createdBy])
@@ -439,4 +472,104 @@ model InternshipApplication {
   @@index([internshipId])
 
   @@map("internship_applications")
+}
+
+model InvestorCategory {
+  id        String   @id @default(cuid())
+
+  name      String
+  slug      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  documents InvestorDocument[]
+
+  @@index([isActive])
+  @@map("investor_categories")
+}
+
+model InvestorDocument {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(300)
+  url         String   @db.Text
+
+  categoryId  String           @map("category_id")
+  category    InvestorCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdById String   @map("created_by")
+  createdBy   User     @relation("InvestorDocCreatedBy", fields: [createdById], references: [id])
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@map("investor_documents")
+}
+
+model Direct2HireEnrollment {
+  id     String            @id @default(cuid())
+  userId String            @map("user_id")
+  status Direct2HireStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentOrders PaymentOrder[]
+
+  @@index([userId])
+  @@map("direct2hire_enrollments")
+}
+
+model PaymentOrder {
+  id                      String             @id @default(cuid())
+  userId                  String             @map("user_id")
+  courseId                String?            @map("course_id")
+  direct2hireEnrollmentId String?            @map("direct2hire_enrollment_id")
+  productType             PaymentProductType @default(COURSE) @map("product_type")
+  provider                PaymentProvider    @default(RAZORPAY)
+  gatewayOrderId          String             @unique @map("gateway_order_id")
+  amount                  Int
+  currency                String             @default("INR")
+  status                  PaymentOrderStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                Courses?               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  direct2hireEnrollment Direct2HireEnrollment? @relation(fields: [direct2hireEnrollmentId], references: [id], onDelete: Cascade)
+  transactions          PaymentTransaction[]
+
+  @@index([courseId])
+  @@index([direct2hireEnrollmentId])
+  @@index([gatewayOrderId])
+  @@index([status])
+  @@index([userId])
+  @@map("payment_orders")
+}
+
+model PaymentTransaction {
+  id               String                   @id @default(cuid())
+  paymentOrderId   String                   @map("payment_order_id")
+  gatewayPaymentId String                   @unique @map("gateway_payment_id")
+  gatewaySignature String                   @map("gateway_signature")
+  paymentMethod    String?                  @map("payment_method")
+  amount           Int
+  status           PaymentTransactionStatus
+  metadata         Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  paymentOrder PaymentOrder @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
+
+  @@index([gatewayPaymentId])
+  @@index([paymentOrderId])
+  @@map("payment_transactions")
 }
