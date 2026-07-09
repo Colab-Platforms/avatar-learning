@@ -209,3 +209,78 @@ export const updateApplicationStatus = (
     apiClient
         .patch(`/admin/applications/${applicationId}/status`, { status })
         .then((r) => r.data.data);
+
+// ─── Investors ──────────────────────────────────────────────────────────────
+
+export interface AdminInvestorCategory {
+    id: string;
+    name: string;
+    slug: string;
+    sortOrder: number;
+    isActive: boolean;
+    _count: { documents: number };
+}
+
+export interface AdminInvestorDocument {
+    id: string;
+    name: string;
+    url: string;
+    categoryId: string;
+    category: { id: string; name: string };
+    createdAt: string;
+}
+
+export const fetchInvestorCategoriesAdmin = (): Promise<AdminInvestorCategory[]> =>
+    apiClient.get("/admin/investors/categories").then((r) => r.data.data);
+
+export const createInvestorCategory = (payload: {
+    name: string;
+    slug?: string;
+    sortOrder?: number;
+}) => apiClient.post("/admin/investors/categories", payload).then((r) => r.data.data);
+
+export const updateInvestorCategory = (id: string, payload: Record<string, unknown>) =>
+    apiClient.put(`/admin/investors/categories/${id}`, payload).then((r) => r.data.data);
+
+export const deleteInvestorCategory = (id: string) =>
+    apiClient.delete(`/admin/investors/categories/${id}`).then((r) => r.data);
+
+export const fetchInvestorDocumentsPaginated = (
+    categoryId?: string,
+    page: number = 1,
+    pageSize: number = 10
+): Promise<PaginatedResponse<AdminInvestorDocument>> =>
+    apiClient
+        .get("/admin/investors/documents", { params: { page, pageSize, ...(categoryId && { categoryId }) } })
+        .then((r) => r.data.data);
+
+export const createInvestorDocument = (payload: {
+    categoryId: string;
+    name: string;
+    url: string;
+}) => apiClient.post("/admin/investors/documents", payload).then((r) => r.data.data);
+
+export const updateInvestorDocument = (id: string, payload: Record<string, unknown>) =>
+    apiClient.put(`/admin/investors/documents/${id}`, payload).then((r) => r.data.data);
+
+export const deleteInvestorDocument = (id: string) =>
+    apiClient.delete(`/admin/investors/documents/${id}`).then((r) => r.data);
+
+// Signed direct upload to Cloudinary (raw resource type, for PDFs)
+export const uploadInvestorDocumentFile = async (file: File): Promise<string> => {
+    const { data: signRes } = await apiClient.get<{ status: boolean; data: {
+        timestamp: number; signature: string; apiKey: string; cloudName: string; folder: string;
+    } }>("/admin/investors/documents/upload/sign");
+    const { timestamp, signature, apiKey, cloudName, folder } = signRes.data;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", apiKey);
+    form.append("timestamp", String(timestamp));
+    form.append("signature", signature);
+    form.append("folder", folder);
+    const res = await axios.post<{ secure_url: string }>(
+        `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+        form
+    );
+    return res.data.secure_url;
+};

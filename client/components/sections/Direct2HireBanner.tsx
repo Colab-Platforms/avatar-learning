@@ -85,13 +85,13 @@ export function Direct2HireBanner() {
           />
 
           {/* ════════ TOP SECTION ════════ */}
-          <div className="relative grid lg:grid-cols-[420px_1fr] min-h-[360px]">
+          <div className="relative grid lg:grid-cols-[420px_1fr] min-h-0 lg:min-h-90">
 
             {/* ── LEFT: Text ── */}
-            <div className="flex flex-col justify-center p-10 sm:p-12 lg:border-r border-blue-200/50">
+            <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12 lg:border-r border-blue-200/50">
               {/* Eyebrow */}
               <span
-                className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-blue-200/80 bg-white/70 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600 backdrop-blur-sm shadow-sm"
+                className="mb-5 sm:mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-blue-200/80 bg-white/70 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600 backdrop-blur-sm shadow-sm"
                 style={{ animation: "fade-up-in 0.6s ease both" }}
               >
                 <Sparkles className="h-3 w-3" />
@@ -100,7 +100,7 @@ export function Direct2HireBanner() {
 
               {/* Heading */}
               <h2
-                className="text-[40px] sm:text-[52px] font-extrabold leading-[1.05] tracking-tight text-slate-800"
+                className="text-[30px] sm:text-[40px] lg:text-[52px] font-extrabold leading-[1.1] lg:leading-[1.05] tracking-tight text-slate-800"
                 style={{ animation: "fade-up-in 0.7s 0.1s ease both" }}
               >
                 Direct2Hire
@@ -110,7 +110,7 @@ export function Direct2HireBanner() {
 
               {/* Description */}
               <p
-                className="mt-5 text-[14px] leading-[1.85] text-slate-500 max-w-[340px]"
+                className="mt-4 sm:mt-5 text-[13.5px] sm:text-[14px] leading-[1.75] sm:leading-[1.85] text-slate-500 max-w-[340px]"
                 style={{ animation: "fade-up-in 0.7s 0.2s ease both" }}
               >
                 AI-powered career guidance, skill development, internships, and
@@ -139,7 +139,7 @@ export function Direct2HireBanner() {
                 style={{ animation: "fade-up-in 0.7s 0.4s ease both" }}
               >
                 <Link
-                  href="/counseling"
+                  href="/direct2hire"
                   className="group inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:-translate-y-0.5 active:translate-y-0"
                   style={{ boxShadow: "0 4px 14px rgba(59,130,246,0.35)" }}
                 >
@@ -147,7 +147,7 @@ export function Direct2HireBanner() {
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
                 {/* <Link
-                  href="/counseling"
+                  href="/direct2hire"
                   className="group inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white/80 px-6 py-3 text-[14px] font-semibold text-blue-700 backdrop-blur-sm transition-all duration-200 hover:border-blue-400 hover:bg-white hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
                 >
                   Learn More
@@ -157,7 +157,7 @@ export function Direct2HireBanner() {
             </div>
 
             {/* ── RIGHT: Steps ── */}
-            <div className="relative flex items-center px-6 py-10 sm:px-10">
+            <div className="relative flex items-center px-6 py-8 sm:px-10 sm:py-10">
               {/* Steps row */}
               <div className="relative w-full">
                 {/* Horizontal connector line (desktop) */}
@@ -166,13 +166,17 @@ export function Direct2HireBanner() {
                 </div>
 
                 {/* Cards */}
-                <div className="relative grid grid-cols-5 gap-3">
+                <div className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                   {STEPS.map((step, idx) => {
                     const Icon = step.icon;
                     return (
                       <div
                         key={idx}
-                        className={`group flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2`}
+                        className={`group flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 ${
+                          idx === STEPS.length - 1
+                            ? "col-span-2 sm:col-span-1 w-1/2 sm:w-full mx-auto sm:mx-0"
+                            : ""
+                        }`}
                         style={{ animation: `card-enter 0.5s ${0.1 + idx * 0.1}s ease both` }}
                       >
                         {/* Number bubble */}

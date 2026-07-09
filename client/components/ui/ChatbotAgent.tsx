@@ -301,7 +301,7 @@ export default function ChatbotAgent() {
       ))}
 
       {/* ── Toggle Button ── */}
-      <div className="fixed md:right-19 md:bottom-16 right-4 bottom-12 z-50 group">
+      <div className="fixed md:right-19 md:bottom-16 right-4 bottom-[108px] z-50 group">
         {!isOpen && (
           <>
             <div className="chatbot-backlight" />
@@ -366,7 +366,7 @@ export default function ChatbotAgent() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-28 sm:bottom-32 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85dvh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto"
+            className="fixed bottom-44 sm:bottom-32 left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85dvh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto"
           >
             {/* ── Header ── */}
             <div

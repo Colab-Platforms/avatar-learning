@@ -72,7 +72,7 @@ export default function RegisterPage() {
   const [resendSuccess,  setResendSuccess]  = useState(false);
   const [phoneError,     setPhoneError]     = useState<string | null>(null);
 
-  useEffect(() => { if (user) router.push("/"); }, [user, router]);
+  useEffect(() => { if (user) router.push("/onboarded"); }, [user, router]);
 
   useEffect(() => {
     if (!resendCooldown) return;

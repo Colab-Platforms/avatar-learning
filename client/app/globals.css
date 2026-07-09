@@ -2,7 +2,7 @@
 
 @theme {
   /* ── Ultra-dark navy-black backgrounds (kept — still used by
-       admin/auth/course-detail/about/contact/counseling pages,
+       admin/auth/course-detail/about/contact/direct2hire pages,
        not redesigned in this pass) ── */
   --color-ink-950: #050B14;
   --color-ink-900: #080F1C;
@@ -112,6 +112,12 @@
 @keyframes border-spin {
   to {
     --angle: 360deg;
+  }
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
   }
 }
 
