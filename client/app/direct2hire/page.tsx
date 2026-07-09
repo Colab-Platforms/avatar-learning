@@ -24,12 +24,14 @@ import {
   MessageCircle,
   Users,
   Award,
+  Loader2,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollReveal, AnimateOnScroll, Button, HelpWidget } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
+import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -225,6 +227,13 @@ export default function Direct2HirePage() {
   const [whoForSlide, setWhoForSlide] = useState(0);
   const [diffSlide, setDiffSlide] = useState(0);
 
+  const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
+  const heroBtnLabel = processing
+    ? "Processing Payment…"
+    : enrolled
+      ? "Enrolled ✓"
+      : "Enroll Now for ₹499";
+
   useEffect(() => {
     const timer = setInterval(() => {
       setWhoForSlide((i) => (i + 1) % WHO_FOR.length);
@@ -306,17 +315,38 @@ export default function Direct2HirePage() {
 
                 <ScrollReveal animation="fade-up" delay={150}>
                   <div className="flex flex-wrap items-center gap-3">
-                    <Link href="/contact" className="w-full sm:w-auto">
-                      <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                        Enroll Now for ₹499 <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      onClick={enroll}
+                      disabled={processing}
+                    >
+                      {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {heroBtnLabel}
+                      {!processing && <ArrowRight className="h-4 w-4" />}
+                    </Button>
                     <Link href="#journey" className="w-full sm:w-auto">
                       <Button variant="outline" size="lg" className="w-full sm:w-auto">
                         See our 5-Step Journey
                       </Button>
                     </Link>
                   </div>
+                  {message && (
+                    <div
+                      className={cn(
+                        "mt-3 rounded-xl border px-4 py-2.5 text-[13px] flex items-center gap-2 max-w-md",
+                        message.type === "success"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-red-200 bg-red-50 text-red-800",
+                      )}
+                    >
+                      {message.type === "success" && (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      )}
+                      {message.text}
+                    </div>
+                  )}
                   <p className="mt-3 text-[12px] text-text-subtle">
                   Instant WhatsApp confirmation • No hidden costs
                   </p>
@@ -691,11 +721,16 @@ export default function Direct2HirePage() {
                     built to end with an offer letter — here&apos;s exactly
                     what changes for you.
                   </p>
-                  <Link href="/contact" className="block w-full sm:inline-block sm:w-fit">
-                    <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                      Start Your Transformation <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={enroll}
+                    disabled={processing}
+                  >
+                    {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Start Your Transformation"}{" "}
+                    {!processing && <ArrowRight className="h-4 w-4" />}
+                  </Button>
                 </ScrollReveal>
               </div>
 
@@ -745,12 +780,16 @@ export default function Direct2HirePage() {
                     now available at a fraction of the cost.
                   </p>
                 </div>
-                <Link href="/contact" className="w-full sm:w-fit shrink-0">
-                  <Button variant="primary" size="md" className="w-full sm:w-fit">
-                    Get Your Career Plan For ₹499/-{" "}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full sm:w-fit shrink-0"
+                  onClick={enroll}
+                  disabled={processing}
+                >
+                  {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Get Your Career Plan For ₹499/-"}{" "}
+                  {!processing && <ArrowRight className="h-4 w-4" />}
+                </Button>
               </div>
             </ScrollReveal>
 
@@ -793,11 +832,16 @@ export default function Direct2HirePage() {
                     <IndianRupee className="h-3 w-3 shrink-0" />
                     Save ₹12,495 (96% OFF)
                   </span>
-                  <Link href="/contact" className="relative mt-6 sm:mt-7 w-full sm:w-fit">
-                    <Button variant="primary" size="md" className="w-full">
-                      Book Your Session <ArrowRight className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="relative mt-6 sm:mt-7 w-full sm:w-fit"
+                    onClick={enroll}
+                    disabled={processing}
+                  >
+                    {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Book Your Session"}{" "}
+                    {!processing && <ArrowRight className="h-4 w-4 shrink-0" />}
+                  </Button>
                   <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
                     Instant confirmation on WhatsApp
                   </p>
@@ -913,11 +957,16 @@ export default function Direct2HirePage() {
                   and expert support — starting at just ₹499.
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
-                  <Link href="/contact" className="w-full sm:w-auto">
-                    <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                      Book Your Session Now <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={enroll}
+                    disabled={processing}
+                  >
+                    {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Book Your Session Now"}{" "}
+                    {!processing && <ArrowRight className="h-4 w-4" />}
+                  </Button>
                 </div>
                 <p className="relative mt-5 text-[12px] text-text-subtle">
                   30-minute call • Limited slots this month

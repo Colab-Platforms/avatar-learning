@@ -20,7 +20,7 @@ const DIRECT2HIRE_PRICE_RUPEES = 499;
 interface OrderContext {
   productType: "COURSE" | "DIRECT2HIRE";
   courseId?: string;
-  direct2HireEnrollmentId?: string;
+  direct2hireEnrollmentId?: string;
   description: string;
   returnPath: string;
 }
@@ -83,9 +83,9 @@ async function completePayment(params: {
         data: { status: "PAID" },
       });
 
-      if (order.productType === "DIRECT2HIRE" && order.direct2HireEnrollmentId) {
+      if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
         await tx.direct2HireEnrollment.update({
-          where: { id: order.direct2HireEnrollmentId },
+          where: { id: order.direct2hireEnrollmentId },
           data: { status: "PAID" },
         });
       } else if (order.courseId) {
@@ -155,7 +155,7 @@ export class PaymentService {
     }
 
     const pendingOrder = await prisma.paymentOrder.findFirst({
-      where: { userId, direct2HireEnrollmentId: enrollment.id, status: "PENDING" },
+      where: { userId, direct2hireEnrollmentId: enrollment.id, status: "PENDING" },
       orderBy: { createdAt: "desc" },
     });
 
@@ -163,7 +163,7 @@ export class PaymentService {
     const amountInPaise = DIRECT2HIRE_PRICE_RUPEES * 100;
     const ctx: OrderContext = {
       productType: "DIRECT2HIRE",
-      direct2HireEnrollmentId: enrollment.id,
+      direct2hireEnrollmentId: enrollment.id,
       description: "Direct2Hire Programme",
       returnPath: "/direct2hire",
     };
@@ -185,7 +185,7 @@ export class PaymentService {
 
     const notes: Record<string, string> = { userId, productType: ctx.productType };
     if (ctx.courseId) notes.courseId = ctx.courseId;
-    if (ctx.direct2HireEnrollmentId) notes.direct2HireEnrollmentId = ctx.direct2HireEnrollmentId;
+    if (ctx.direct2hireEnrollmentId) notes.direct2hireEnrollmentId = ctx.direct2hireEnrollmentId;
 
     const rzpOrder = await razorpay.orders.create({
       amount: amountInPaise,
@@ -207,7 +207,7 @@ export class PaymentService {
       status: "PENDING",
       productType: ctx.productType,
       courseId: ctx.courseId,
-      direct2HireEnrollmentId: ctx.direct2HireEnrollmentId,
+      direct2hireEnrollmentId: ctx.direct2hireEnrollmentId,
     };
     await prisma.paymentOrder.create({ data: orderData });
 
@@ -279,7 +279,7 @@ export class PaymentService {
       status: "PENDING",
       productType: ctx.productType,
       courseId: ctx.courseId,
-      direct2HireEnrollmentId: ctx.direct2HireEnrollmentId,
+      direct2hireEnrollmentId: ctx.direct2hireEnrollmentId,
     };
     await prisma.paymentOrder.create({ data: orderData });
 

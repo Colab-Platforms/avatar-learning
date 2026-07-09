@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Landmark, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui";
+import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 export function StickyBuyBar() {
+  const { enroll, processing, enrolled } = useDirect2HireCheckout();
+
   // Visible from the moment the page loads; only hides once the footer
   // comes into view so it doesn't sit on top of it.
   const [visible, setVisible] = useState(true);
@@ -58,13 +60,30 @@ export function StickyBuyBar() {
                 </div>
               </div>
 
-              <Link href="/contact" className="shrink-0">
-                <Button variant="primary" size="md" className="whitespace-nowrap">
-                  <span className="sm:hidden">Enroll Now</span>
-                  <span className="hidden sm:inline">Enroll Now - ₹499</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button
+                variant="primary"
+                size="md"
+                className="whitespace-nowrap shrink-0"
+                onClick={enroll}
+                disabled={processing}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing…
+                  </>
+                ) : enrolled ? (
+                  <>
+                    Enrolled <CheckCircle2 className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    <span className="sm:hidden">Enroll Now</span>
+                    <span className="hidden sm:inline">Enroll Now - ₹499</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </motion.div>

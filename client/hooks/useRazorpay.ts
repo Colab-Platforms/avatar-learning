@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 declare global {
   interface Window {
@@ -13,30 +13,55 @@ declare global {
 
 const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
 
-export function useRazorpay() {
-  const [loaded, setLoaded] = useState(false);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+let loadPromise: Promise<void> | null = null;
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.Razorpay) { setLoaded(true); return; }
-    if (document.querySelector(`script[src="${RAZORPAY_SCRIPT}"]`)) return;
+function loadRazorpayScript(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (window.Razorpay) return Promise.resolve();
+  if (loadPromise) return loadPromise;
+
+  loadPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${RAZORPAY_SCRIPT}"]`,
+    );
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () =>
+        reject(new Error("Failed to load Razorpay SDK")),
+      );
+      return;
+    }
 
     const script = document.createElement("script");
     script.src = RAZORPAY_SCRIPT;
     script.async = true;
-    script.onload = () => setLoaded(true);
-    script.onerror = () => console.error("Failed to load Razorpay SDK");
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
     document.body.appendChild(script);
-    scriptRef.current = script;
+  });
+
+  return loadPromise;
+}
+
+export function useRazorpay() {
+  const [loaded, setLoaded] = useState(
+    typeof window !== "undefined" && Boolean(window.Razorpay),
+  );
+
+  useEffect(() => {
+    if (loaded) return;
+    let cancelled = false;
+
+    loadRazorpayScript()
+      .then(() => {
+        if (!cancelled) setLoaded(true);
+      })
+      .catch((err) => console.error(err));
 
     return () => {
-      if (scriptRef.current) {
-        document.body.removeChild(scriptRef.current);
-        scriptRef.current = null;
-      }
+      cancelled = true;
     };
-  }, []);
+  }, [loaded]);
 
   return loaded;
 }
