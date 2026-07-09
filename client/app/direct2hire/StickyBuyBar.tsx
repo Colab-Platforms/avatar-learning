@@ -14,7 +14,9 @@ export function StickyBuyBar() {
   useEffect(() => {
     const onScroll = () => {
       const distanceFromBottom =
-        document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+        document.documentElement.scrollHeight -
+        window.innerHeight -
+        window.scrollY;
       setVisible(distanceFromBottom > 250);
     };
     onScroll();
@@ -48,10 +50,10 @@ export function StickyBuyBar() {
                         ₹499
                       </span>
                       <span className="text-[11px] sm:text-[12px] text-text-subtle line-through">
-                        ₹12,995
+                        ₹24,999
                       </span>
                       <span className="hidden sm:inline text-[11px] font-semibold text-emerald-600">
-                        96% OFF
+                        98% OFF
                       </span>
                     </p>
                   </div>
@@ -59,7 +61,11 @@ export function StickyBuyBar() {
               </div>
 
               <Link href="/contact" className="shrink-0">
-                <Button variant="primary" size="md" className="whitespace-nowrap">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="whitespace-nowrap"
+                >
                   <span className="sm:hidden">Enroll Now</span>
                   <span className="hidden sm:inline">Enroll Now - ₹499</span>
                   <ArrowRight className="h-4 w-4" />
