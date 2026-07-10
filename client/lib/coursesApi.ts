@@ -49,8 +49,8 @@ export interface DBResource {
   title: string;
   category: string;
   type: string;
-  url: string;
-  downloadUrl?: string;
+  url: string | null;
+  downloadUrl?: string | null;
   bunnyVideoId?: string;
   size?: string;
 }
@@ -65,6 +65,8 @@ export interface DBLesson {
   isPublished: boolean;
   isFreePreview: boolean;
   resources: DBResource[];
+  isCompleted?: boolean;
+  isLocked?: boolean;
 }
 
 export interface DBCourseDetail extends DBCourse {
@@ -127,6 +129,11 @@ export const fetchEnrolledCourseDetail = (
   courseId: string,
 ): Promise<EnrolledCourseDetail> =>
   apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
+
+export const markLessonWatched = (lessonId: string): Promise<Enrollment> =>
+  apiClient
+    .post(`/courses/lessons/${lessonId}/watch`)
+    .then((r) => r.data.data);
 
 export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
   apiClient

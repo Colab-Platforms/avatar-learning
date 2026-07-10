@@ -443,9 +443,23 @@ export class PublicCourseService {
     });
     if (!full) throw new ApiError("Course not found", STATUS_CODES.NOT_FOUND);
 
-    const lessonsWithDownload = full.lessons.map((lesson) => ({
-      ...lesson,
-      resources: lesson.resources.map((r) => {
+    const orderedLessons = [...full.lessons].sort(
+      (a, b) => a.weekNumber - b.weekNumber,
+    );
+    const lessonIds = orderedLessons.map((l) => l.id);
+    const progressRows = await prisma.lessonProgress.findMany({
+      where: { userId, lessonId: { in: lessonIds } },
+    });
+    const completedSet = new Set(progressRows.map((p) => p.lessonId));
+
+    const lessonsWithState = orderedLessons.map((lesson, idx) => {
+      const isCompleted = completedSet.has(lesson.id);
+      const isLocked = idx > 0 && !completedSet.has(orderedLessons[idx - 1].id);
+
+      const resources = lesson.resources.map((r) => {
+        if (isLocked) {
+          return { ...r, url: null, downloadUrl: null };
+        }
         let downloadUrl: string | null = null;
         if (r.category === "VIDEO" && r.bunnyVideoId) {
           const mp4 = getBunnyMp4Url(r.bunnyVideoId);
@@ -454,10 +468,102 @@ export class PublicCourseService {
           downloadUrl = r.url;
         }
         return { ...r, downloadUrl };
-      }),
-    }));
+      });
 
-    return { ...full, lessons: lessonsWithDownload, enrollment };
+      return { ...lesson, isCompleted, isLocked, resources };
+    });
+
+    return { ...full, lessons: lessonsWithState, enrollment };
+  }
+
+  // ─── Lesson progress / locking ────────────────────────────────────────────
+
+  private async getOrderedLessonIds(courseId: string): Promise<string[]> {
+    const lessons = await prisma.lessons.findMany({
+      where: { courseId },
+      orderBy: { weekNumber: "asc" },
+      select: { id: true },
+    });
+    return lessons.map((l) => l.id);
+  }
+
+  /** A lesson is locked until the previous lesson (by weekNumber) is completed. */
+  private async isLessonLocked(
+    courseId: string,
+    lessonId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const orderedIds = await this.getOrderedLessonIds(courseId);
+    const idx = orderedIds.indexOf(lessonId);
+    if (idx <= 0) return false;
+
+    const prevCompleted = await prisma.lessonProgress.findUnique({
+      where: {
+        userId_lessonId: { userId, lessonId: orderedIds[idx - 1] },
+      },
+    });
+    return !prevCompleted;
+  }
+
+  private async recalculateProgress(userId: string, courseId: string) {
+    const orderedIds = await this.getOrderedLessonIds(courseId);
+    const total = orderedIds.length;
+    if (total === 0) return;
+
+    const completedCount = await prisma.lessonProgress.count({
+      where: { userId, lessonId: { in: orderedIds } },
+    });
+
+    const progress = Math.round((completedCount / total) * 100);
+    const isCompleted = progress === 100;
+
+    const mapper = await prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+
+    await prisma.courseUserMapper.update({
+      where: { userId_courseId: { userId, courseId } },
+      data: {
+        progress,
+        isCompleted,
+        completedAt: isCompleted ? (mapper?.completedAt ?? new Date()) : null,
+      },
+    });
+  }
+
+  async markLessonWatched(lessonId: string, userId: string) {
+    const lesson = await prisma.lessons.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new ApiError("Lesson not found", STATUS_CODES.NOT_FOUND);
+
+    const enrollment = await prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId: lesson.courseId } },
+    });
+    if (!enrollment) {
+      throw new ApiError(
+        "You are not enrolled in this course",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+
+    const locked = await this.isLessonLocked(lesson.courseId, lessonId, userId);
+    if (locked) {
+      throw new ApiError(
+        "Complete the previous session first",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+
+    await prisma.lessonProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      create: { userId, lessonId },
+      update: {},
+    });
+
+    await this.recalculateProgress(userId, lesson.courseId);
+
+    return prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId: lesson.courseId } },
+    });
   }
 
   async checkEnrollment(slugOrId: string, userId: string) {
@@ -472,7 +578,7 @@ export class PublicCourseService {
   async prepareResourceDownload(resourceId: string, userId: string) {
     const resource = await prisma.resource.findUnique({
       where: { id: resourceId },
-      include: { lesson: { select: { courseId: true } } },
+      include: { lesson: { select: { id: true, courseId: true } } },
     });
     if (!resource)
       throw new ApiError("Resource not found", STATUS_CODES.NOT_FOUND);
@@ -485,6 +591,18 @@ export class PublicCourseService {
     if (!enrollment) {
       throw new ApiError(
         "You are not enrolled in this course",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+
+    const locked = await this.isLessonLocked(
+      resource.lesson.courseId,
+      resource.lesson.id,
+      userId,
+    );
+    if (locked) {
+      throw new ApiError(
+        "Complete the previous session first",
         STATUS_CODES.FORBIDDEN,
       );
     }

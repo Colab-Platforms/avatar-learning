@@ -535,6 +535,27 @@ export const getEnrolledCourseDetail = async (
   }
 };
 
+export const markLessonWatched = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const enrollment = await publicService.markLessonWatched(
+      param(req, "lessonId"),
+      req.user!.id,
+    );
+    sendResponse(res, true, enrollment, "Lesson marked as watched");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
 export const checkEnrollment = async (
   req: AuthRequest,
   res: Response,

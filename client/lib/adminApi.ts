@@ -33,6 +33,7 @@ export const createCourse = (payload: {
     level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
     price?: number;
     totalWeeks?: number;
+    isDirect2HireCourse?: boolean;
 }) => apiClient.post("/admin/courses", payload).then((r) => r.data.data);
 
 export const updateCourse = (id: string, payload: Record<string, unknown>) =>
@@ -267,6 +268,32 @@ export const deleteInvestorDocument = (id: string) =>
     apiClient.delete(`/admin/investors/documents/${id}`).then((r) => r.data);
 
 // Signed direct upload to Cloudinary (raw resource type, for PDFs)
+// ─── Direct2Hire ──────────────────────────────────────────────────────────────
+
+export interface AdminD2HEnrollment {
+    id: string;
+    userId: string;
+    status: "PENDING" | "PAID";
+    createdAt: string;
+    updatedAt: string;
+    user: {
+        id: string;
+        firstName?: string;
+        lastName?: string;
+        email: string;
+        phoneNo?: string;
+    };
+}
+
+export const fetchD2HEnrollmentsPaginated = (
+    page: number = 1,
+    pageSize: number = 20
+): Promise<PaginatedResponse<AdminD2HEnrollment>> =>
+    apiClient.get("/admin/direct2hire", { params: { page, pageSize } }).then((r) => r.data.data);
+
+export const markD2HPaid = (enrollmentId: string) =>
+    apiClient.patch(`/admin/direct2hire/${enrollmentId}/mark-paid`).then((r) => r.data.data);
+
 export const uploadInvestorDocumentFile = async (file: File): Promise<string> => {
     const { data: signRes } = await apiClient.get<{ status: boolean; data: {
         timestamp: number; signature: string; apiKey: string; cloudName: string; folder: string;

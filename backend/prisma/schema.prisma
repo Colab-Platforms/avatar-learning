@@ -123,6 +123,7 @@ model User {
   createdInvestorDocs InvestorDocument[] @relation("InvestorDocCreatedBy")
 
   direct2hireEnrollments Direct2HireEnrollment[]
+  lesson_progress lesson_progress[]
   paymentOrders          PaymentOrder[]
 
   @@index([email])
@@ -268,7 +269,7 @@ model Courses {
 
   whatYouLearn Json?       @map("what_you_learn")
   audience     Json?
-
+  is_direct2hire_course Boolean @default(false)
   isPublished  Boolean     @default(false) @map("is_published")
 
   createdBy    String?        @map("created_by")
@@ -347,6 +348,8 @@ model Lessons {
 
   resources      Resource[]
 
+  lesson_progress lesson_progress[]
+  
   @@unique([courseId, weekNumber])
 
   @@index([courseId])
@@ -531,7 +534,7 @@ model PaymentOrder {
   id                      String             @id @default(cuid())
   userId                  String             @map("user_id")
   courseId                String?            @map("course_id")
-  direct2hireEnrollmentId String?            @map("direct2hire_enrollment_id")
+  direct2hireEnrollmentId String?            @map("direct2Hire_enrollment_id")
   productType             PaymentProductType @default(COURSE) @map("product_type")
   provider                PaymentProvider    @default(RAZORPAY)
   gatewayOrderId          String             @unique @map("gateway_order_id")
@@ -572,4 +575,18 @@ model PaymentTransaction {
   @@index([gatewayPaymentId])
   @@index([paymentOrderId])
   @@map("payment_transactions")
+}
+
+model lesson_progress {
+  id           String   @id
+  user_id      String
+  lesson_id    String
+  completed_at DateTime @default(now())
+
+  lessons      Lessons  @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  users        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, lesson_id])
+  @@index([lesson_id])
+  @@index([user_id])
 }

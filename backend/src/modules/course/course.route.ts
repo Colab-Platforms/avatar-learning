@@ -31,6 +31,11 @@ router.get(
   auth("USER"),
   courseController.getEnrolledCourseDetail,
 );
+router.post(
+  "/lessons/:lessonId/watch",
+  auth("USER"),
+  courseController.markLessonWatched,
+);
 
 // ─── Public slug route (must be last — catchall param) ───────────────────────
 router.get("/:slug", courseController.getCourseBySlug);
