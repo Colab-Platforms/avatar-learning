@@ -74,6 +74,7 @@ interface Course {
   tools: string[];
   sessions?: string;
   certificate: boolean;
+  isDirect2HireCourse: boolean;
   rating?: number;
   reviews?: string;
   startDate?: string;

@@ -9,6 +9,7 @@ import {
   BookOpen,
   Briefcase,
   Landmark,
+  GraduationCap,
   ArrowLeft,
 } from "lucide-react";
 import Image from "next/image";
@@ -35,6 +36,12 @@ const NAV = [
     href: "/admin/internships",
     label: "Internships",
     icon: Briefcase,
+    exact: false,
+  },
+  {
+    href: "/admin/direct2hire",
+    label: "Direct2Hire",
+    icon: GraduationCap,
     exact: false,
   },
   {
