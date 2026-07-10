@@ -125,6 +125,7 @@ model User {
   direct2hireEnrollments Direct2HireEnrollment[]
   lessonProgress LessonProgress[]
   paymentOrders          PaymentOrder[]
+  counsellingProfile     CounsellingProfile?
 
   @@index([email])
   @@index([isActive])
@@ -528,6 +529,51 @@ model Direct2HireEnrollment {
 
   @@index([userId])
   @@map("direct2hire_enrollments")
+}
+
+model CounsellingProfile {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+
+  fullName        String @map("full_name")
+  age             Int
+  gradeYear       String @map("grade_year")
+  institutionName String @map("institution_name")
+  contactNumber   String @map("contact_number")
+  email           String
+
+  careerField            String  @map("career_field")
+  careerFieldOther       String? @map("career_field_other")
+  futureGoal             String  @map("future_goal")
+  futureGoalOther        String? @map("future_goal_other")
+  careerPriority         String  @map("career_priority")
+  careerPriorityOther    String? @map("career_priority_other")
+  studyStream            String  @map("study_stream")
+  studyStreamOther       String? @map("study_stream_other")
+  planningChallenge      String  @map("planning_challenge")
+  planningChallengeOther String? @map("planning_challenge_other")
+
+  freeTimeActivity     String  @map("free_time_activity")
+  freeTimeOther        String? @map("free_time_other")
+  socialSetting        String  @map("social_setting")
+  socialSettingOther   String? @map("social_setting_other")
+  workEnvironment      String  @map("work_environment")
+  workEnvironmentOther String? @map("work_environment_other")
+  stressHandling       String  @map("stress_handling")
+  stressHandlingOther  String? @map("stress_handling_other")
+  proudMoment          String  @map("proud_moment")
+  proudMomentOther     String? @map("proud_moment_other")
+
+  personalNote String? @db.Text @map("personal_note")
+
+  isSubmitted Boolean   @default(false) @map("is_submitted")
+  submittedAt DateTime? @map("submitted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("counselling_profiles")
 }
 
 model PaymentOrder {

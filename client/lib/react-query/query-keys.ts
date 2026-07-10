@@ -14,4 +14,5 @@ export const queryKeys = {
   myApplications: ["my-applications"] as const,
   internshipCategories: ["internship-categories"] as const,
   direct2hireStatus: ["direct2hire-status"] as const,
+  counsellingProfile: ["counselling-profile"] as const,
 };

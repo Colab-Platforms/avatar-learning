@@ -58,8 +58,12 @@ const STEPS = [
 
 const STATS = [
   { icon: GraduationCap, value: "10K+", label: "Students Got their Dream Job" },
-  { icon: Building2, value: "500+", label: "Hiring Partners" },
   { icon: Award, value: "96.3%", label: "Placement Rate" },
+  {
+    icon: Building2,
+    value: "20+",
+    label: "Corporates listed as placement partners",
+  },
 ];
 
 const FEATURES = [
@@ -255,7 +259,7 @@ export function Direct2HireBanner() {
                           </p>
 
                           {/* Active indicator dots */}
-                          <div className="mt-2.5 flex gap-1 justify-center">
+                          {/* <div className="mt-2.5 flex gap-1 justify-center">
                             {[0, 1, 2].map((d) => (
                               <span
                                 key={d}
@@ -268,7 +272,7 @@ export function Direct2HireBanner() {
                                 }`}
                               />
                             ))}
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     );
@@ -280,25 +284,25 @@ export function Direct2HireBanner() {
 
           {/* ════════ STATS BAR ════════ */}
           <div className="relative border-t border-blue-200/40 bg-white/30 backdrop-blur-sm">
-            <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-blue-200/40">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-blue-200/40">
               {STATS.map((s, i) => {
                 const Icon = s.icon;
                 return (
                   <div
                     key={s.label}
-                    className="flex items-center gap-3 px-6 sm:px-8 py-5 transition-all duration-200 hover:bg-white/30"
+                    className="flex items-center gap-4 px-6 py-4 sm:py-5 sm:px-8 transition-all duration-200 hover:bg-white/30"
                     style={{
                       animation: `number-up 0.5s ${0.5 + i * 0.08}s ease both`,
                     }}
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 border border-blue-100 shadow-sm">
-                      <Icon className="h-4.5 w-4.5 text-blue-500" />
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/80 border border-blue-100 shadow-sm">
+                      <Icon className="h-5 w-5 text-blue-500" />
                     </div>
-                    <div>
-                      <p className="text-[22px] font-extrabold text-slate-800 leading-none">
+                    <div className="min-w-0">
+                      <p className="text-[20px] sm:text-[22px] font-extrabold text-slate-800 leading-none">
                         {s.value}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-1 text-[11.5px] sm:text-[11px] text-slate-500 font-medium leading-tight">
                         {s.label}
                       </p>
                     </div>
