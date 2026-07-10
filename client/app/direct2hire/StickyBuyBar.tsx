@@ -43,7 +43,8 @@ export function StickyBuyBar() {
                   </span>
                   <div className="min-w-0">
                     <p className="text-[11px] sm:text-[12px] text-text-subtle leading-tight truncate">
-                      Career Session + AI Assessment
+                      Career Session + AI Assessment + AI Learning + Internship
+                      + Placements
                     </p>
                     <p className="flex items-baseline gap-2 leading-tight">
                       <span className="text-lg sm:text-xl font-black text-text">

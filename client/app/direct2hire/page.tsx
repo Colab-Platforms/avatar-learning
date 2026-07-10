@@ -40,8 +40,8 @@ import { StickyBuyBar } from "./StickyBuyBar";
 /* ─── data ─────────────────────────────────────────────────────────── */
 
 const STATS = [
-  { value: "10,000+", label: "Students Guided" },
-  { value: "95%", label: "Placement Rate" },
+  { value: "10,000+", label: "Students Got Their Dream Job" },
+  { value: "96.3%", label: "Placement Rate" },
   { value: "20+", label: "Corporates Listed as Placement Partners" },
 ];
 
@@ -289,7 +289,7 @@ export default function Direct2HirePage() {
                   </p>
                   <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-4 sm:mb-8">
                     Start your journey from Career Counselling to AI Learning,
-                    Internship and Placement for just <br></br>
+                    Internship and Placement for just{"  "}
                     <span className="text-text-subtle line-through">
                       ₹24,999
                     </span>{" "}
@@ -322,7 +322,7 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={150}>
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
                     <Link href="/contact" className="w-full sm:w-auto">
                       <Button
                         variant="primary"
@@ -401,13 +401,13 @@ export default function Direct2HirePage() {
                 <div>
                   <p className="eyebrow mb-3 sm:mb-4">The Cost of Confusion</p>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text max-w-xl">
-                    Most students make{" "}
-                    <span className="text-gradient-brand">
-                      one expensive mistake.
-                    </span>
+                    <span className="text-gradient-brand">90% students</span>
+                    {"  "}
+                    make this mistake.
                   </h2>
                   <p className="mt-3 text-text-muted">
-                    They choose a career without a clear plan.
+                    Choses an education or Career without Guidance and a full
+                    proof plan
                   </p>
                 </div>
               </div>
@@ -484,12 +484,12 @@ export default function Direct2HirePage() {
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 Direct2Hire Is Built For{" "}
                 <span className="text-gradient-brand">
-                  Anyone Facing Career Confusion.
+                  Anyone Facing Obstacles in Learning Real Corporates AI Skills
                 </span>
               </h2>
               <p className="mt-3 text-text-muted max-w-2xl mx-auto">
-                Wherever you are in your journey, if you don&apos;t have a clear
-                plan, this program gives you one.
+                Wherever you need a support to help you with right skills or
+                opportunities to get a job, this program takes you there.
               </p>
             </ScrollReveal>
 
