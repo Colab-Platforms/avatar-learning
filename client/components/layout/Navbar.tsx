@@ -157,8 +157,9 @@ export function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="hidden sm:inline-block text-[13px] font-medium text-text-muted hover:text-text
-                           transition-colors duration-200 px-3 py-2"
+                className=" hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
+                         border border-brand-300 text-brand-600 hover:bg-brand-50 hover:border-brand-500
+                         transition-all duration-200"
               >
                 Log in / Register
               </Link>
@@ -237,7 +238,10 @@ export function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150"
+                className={cn(
+                  buttonVariants({ variant: "primary", size: "sm" }),
+                  "w-full justify-center",
+                )}
               >
                 Log in / Register
               </Link>

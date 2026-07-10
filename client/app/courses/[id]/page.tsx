@@ -131,6 +131,7 @@ export default function CoursePage({ params }: PageProps) {
               alt={course.title}
               fill
               sizes="100vw"
+              quality={100}
               className="object-cover object-center"
               priority
             />
@@ -324,6 +325,7 @@ export default function CoursePage({ params }: PageProps) {
                           alt={course.title}
                           fill
                           sizes="380px"
+                          quality={100}
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
