@@ -164,7 +164,11 @@ const VALUE_STACK = [
     label: "AI Powered Assessment + Feedback",
     price: "₹2000/-",
   },
-  { icon: Sparkles, label: "AI Basic Learning Program", price: "₹10,000/-" },
+  {
+    icon: Sparkles,
+    label: "AI Basic/AI Social Media Learning Program",
+    price: "₹10,000/-",
+  },
   { icon: Briefcase, label: "Paid Internship", price: "₹5,500/-" },
   { icon: Target, label: "Job Placement Support", price: "₹5,499/-" },
   { icon: Calculator, label: "Total", price: "₹24,999/-" },
