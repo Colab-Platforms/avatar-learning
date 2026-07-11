@@ -42,6 +42,10 @@ export interface VerifyPhoneBody {
     accessToken: string;
 }
 
+export interface GoogleAuthBody {
+    idToken: string;
+}
+
 export interface JwtPayload {
     id: string;
     role: "USER" | "ADMIN" | "SUPERADMIN";

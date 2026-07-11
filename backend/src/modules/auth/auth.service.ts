@@ -3,18 +3,20 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { OtpType } from "@prisma/client";
+import { AuthProvider, OtpType } from "@prisma/client";
 import { hashPassword, comparePassword } from "@/utils/auth.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { sendOtpEmail, sendPasswordResetEmail } from "@/utils/mailer.js";
 import { verifyMsg91AccessToken, getMsg91WidgetConfig } from "@/utils/msg91.js";
+import { verifyGoogleIdToken } from "@/utils/googleAuth.js";
 import {
   RegisterBody,
   LoginBody,
   VerifyOtpBody,
   ResendOtpBody,
   VerifyPhoneBody,
+  GoogleAuthBody,
 } from "./auth.types.js";
 
 dayjs.extend(utc);
@@ -354,6 +356,92 @@ class AuthService {
 
     const tokens = await issueAuthTokens(user, device);
     return tokens;
+  }
+
+  async googleAuth(data: GoogleAuthBody, device?: string) {
+    let profile;
+    try {
+      profile = await verifyGoogleIdToken(data.idToken);
+    } catch (err: any) {
+      throw new ApiError(
+        err.message ?? "Google sign-in failed.",
+        STATUS_CODES.UNAUTHORIZED,
+      );
+    }
+
+    if (!profile.emailVerified) {
+      throw new ApiError(
+        "Google account email is not verified.",
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+
+    let user = await prisma.user.findFirst({
+      where: { googleId: profile.googleId, isDeleted: false },
+      include: { userRoleMappings: { include: { role: true } } },
+    });
+
+    if (!user) {
+      const existingByEmail = await prisma.user.findFirst({
+        where: { email: profile.email, isDeleted: false },
+        include: { userRoleMappings: { include: { role: true } } },
+      });
+
+      if (existingByEmail) {
+        // Link the Google account to the existing email/password account
+        user = await prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: {
+            googleId: profile.googleId,
+            isEmailVerified: true,
+            profileImage: existingByEmail.profileImage ?? profile.profileImage,
+          },
+          include: { userRoleMappings: { include: { role: true } } },
+        });
+      } else {
+        const roleRecord = await prisma.role.findUnique({
+          where: { name: "USER" },
+        });
+        if (!roleRecord) {
+          throw new ApiError(
+            "USER role not found — run db:seed first",
+            STATUS_CODES.SERVER_ERROR,
+          );
+        }
+
+        const created = await prisma.$transaction(async (tx) => {
+          const newUser = await tx.user.create({
+            data: {
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              email: profile.email,
+              googleId: profile.googleId,
+              authProvider: AuthProvider.GOOGLE,
+              profileImage: profile.profileImage,
+              isEmailVerified: true,
+            },
+          });
+          await tx.userRoleMapping.create({
+            data: { userId: newUser.id, roleId: roleRecord.id },
+          });
+          return newUser;
+        });
+
+        user = await prisma.user.findUniqueOrThrow({
+          where: { id: created.id },
+          include: { userRoleMappings: { include: { role: true } } },
+        });
+      }
+    }
+
+    if (!user.isActive) {
+      throw new ApiError(
+        "Your account has been deactivated. Contact support.",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+
+    return issueAuthTokens(user, device);
   }
 
   async refresh(rawRefreshToken: string, device?: string) {

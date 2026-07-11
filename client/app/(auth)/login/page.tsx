@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OtpInput } from "../OtpInput";
+import { GoogleAuthButton } from "../GoogleAuthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, verifyOtp, resendOtp, clearError } from "@/store/authSlice";
 
@@ -204,6 +205,14 @@ export default function LoginPage() {
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign In <ArrowRight className="h-4 w-4" /></>}
         </button>
       </form>
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-100" />
+        <span className="text-[12px] text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-100" />
+      </div>
+
+      <GoogleAuthButton />
 
       <div className="h-px bg-slate-100" />
 

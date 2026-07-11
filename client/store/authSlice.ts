@@ -142,6 +142,33 @@ export const login = createAsyncThunk(
   }
 );
 
+export const googleLogin = createAsyncThunk(
+  "auth/googleLogin",
+  async (data: { idToken: string }, { rejectWithValue }) => {
+    try {
+      const { data: res } = await apiClient.post<
+        ApiResponse<{
+          user: AuthUser;
+          accessToken: string;
+          refreshToken: string;
+        }>
+      >("/auth/google", data);
+
+      if (!res.data?.user || !res.data.accessToken || !res.data.refreshToken) {
+        throw new Error("Google sign-in response was incomplete.");
+      }
+
+      return {
+        user: res.data.user,
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken,
+      };
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async (
@@ -453,6 +480,33 @@ const authSlice = createSlice({
         }
       })
       .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // GOOGLE LOGIN
+      .addCase(googleLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+
+        state.user = action.payload.user;
+        state.accessToken = action.payload.accessToken;
+        state.refreshToken = action.payload.refreshToken;
+
+        state.pendingEmail = null;
+        state.pendingPhone = null;
+        state.pendingOtpType = null;
+
+        persist(
+          action.payload.user,
+          action.payload.accessToken,
+          action.payload.refreshToken
+        );
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

@@ -11,6 +11,8 @@ import investorRoutes from "./modules/investors-cms/investor.route.js";
 import adminInvestorRoutes from "./modules/investors-cms/admin.route.js";
 import direct2hireRoutes from "./modules/direct2hire/direct2hire.route.js";
 import adminDirect2hireRoutes from "./modules/direct2hire/admin.route.js";
+import contactRoutes from "./modules/contact/contact.route.js";
+import adminContactRoutes from "./modules/contact/admin.route.js";
 
 router.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", message: "Server is healthy" });
@@ -27,5 +29,7 @@ router.use("/investors", investorRoutes);
 router.use("/admin", adminInvestorRoutes);
 router.use("/direct2hire", direct2hireRoutes);
 router.use("/admin", adminDirect2hireRoutes);
+router.use("/contact", contactRoutes);
+router.use("/admin", adminContactRoutes);
 
 export default router;

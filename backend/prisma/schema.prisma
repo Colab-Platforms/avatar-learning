@@ -623,6 +623,23 @@ model PaymentTransaction {
   @@map("payment_transactions")
 }
 
+model Contact {
+  id      String @id @default(cuid())
+
+  name    String
+  email   String
+  subject String
+  message String @db.Text
+
+  isRead  Boolean @default(false) @map("is_read")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("contacts")
+}
+
 model LessonProgress {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")

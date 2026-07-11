@@ -13,6 +13,7 @@ router.post("/resend-otp", authController.resendOtp);
 
 // Login
 router.post("/login", authController.login);
+router.post("/google", authController.googleAuth);
 
 // Session management
 router.post("/refresh", authController.refresh);
