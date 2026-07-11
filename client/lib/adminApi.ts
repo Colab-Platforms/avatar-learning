@@ -311,3 +311,30 @@ export const uploadInvestorDocumentFile = async (file: File): Promise<string> =>
     );
     return res.data.secure_url;
 };
+
+// ─── Contact Messages ──────────────────────────────────────────────────────────
+
+export interface AdminContact {
+    id: string;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+}
+
+export const fetchAdminContacts = (
+    page: number = 1,
+    pageSize: number = 20
+): Promise<PaginatedResponse<AdminContact>> =>
+    apiClient.get("/admin/contacts", { params: { page, pageSize } }).then((r) => r.data.data);
+
+export const fetchContactUnreadCount = (): Promise<number> =>
+    apiClient.get("/admin/contacts/unread-count").then((r) => r.data.data.count);
+
+export const markContactRead = (id: string) =>
+    apiClient.patch(`/admin/contacts/${id}/read`).then((r) => r.data.data);
+
+export const deleteContact = (id: string) =>
+    apiClient.delete(`/admin/contacts/${id}`).then((r) => r.data);

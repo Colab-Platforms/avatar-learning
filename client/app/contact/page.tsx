@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollReveal, AnimateOnScroll } from "@/components/ui";
+import { submitContact } from "@/lib/contactApi";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -139,12 +140,15 @@ export default function ContactPage() {
     setSubmitting(true);
     setError("");
     try {
-      await new Promise((r) => setTimeout(r, 1000));
+      await submitContact(form);
       setForm({ name: "", email: "", subject: "", message: "" });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 5000);
-    } catch {
-      setError("Failed to send message. Please try again.");
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to send message. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }

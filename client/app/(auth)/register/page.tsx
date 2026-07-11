@@ -7,6 +7,7 @@ import { Eye, EyeOff, ArrowRight, Loader2, Check, X as XIcon } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { OtpInput } from "../OtpInput";
 import { Msg91PhoneWidget } from "../Msg91PhoneWidget";
+import { GoogleAuthButton } from "../GoogleAuthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { register, verifyOtp, verifyPhone, resendOtp, clearError } from "@/store/authSlice";
 
@@ -446,6 +447,14 @@ export default function RegisterPage() {
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create Account <ArrowRight className="h-4 w-4" /></>}
         </button>
       </form>
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-100" />
+        <span className="text-[12px] text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-100" />
+      </div>
+
+      <GoogleAuthButton />
 
       <div className="h-px bg-slate-100" />
 
