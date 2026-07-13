@@ -76,7 +76,28 @@ export const updateLesson = (
 export const deleteLesson = (lessonId: string) =>
   apiClient.delete(`/admin/lessons/${lessonId}`).then((r) => r.data);
 
-// ─── Video Upload (two-step direct upload) ───────────────────────────────────
+// ─── Topics ───────────────────────────────────────────────────────────────────
+
+export const createTopic = (
+    lessonId: string,
+    payload: {
+        title: string;
+        description?: string;
+        topicOrder: number;
+        duration?: number;
+    }
+) =>
+    apiClient
+        .post(`/admin/lessons/${lessonId}/topics`, payload)
+        .then((r) => r.data.data);
+
+export const updateTopic = (topicId: string, payload: Record<string, unknown>) =>
+    apiClient.put(`/admin/topics/${topicId}`, payload).then((r) => r.data.data);
+
+export const deleteTopic = (topicId: string) =>
+    apiClient.delete(`/admin/topics/${topicId}`).then((r) => r.data);
+
+// ─── Video Upload (two-step direct upload, scoped to a topic) ────────────────
 
 interface InitUploadResult {
   videoGuid: string;
@@ -85,13 +106,8 @@ interface InitUploadResult {
 }
 
 // Step 1: create the Bunny slot
-const initVideoUpload = (
-  lessonId: string,
-  title: string,
-): Promise<InitUploadResult> =>
-  apiClient
-    .post(`/admin/lessons/${lessonId}/video/init`, { title })
-    .then((r) => r.data.data);
+const initVideoUpload = (topicId: string, title: string): Promise<InitUploadResult> =>
+    apiClient.post(`/admin/topics/${topicId}/video/init`, { title }).then((r) => r.data.data);
 
 // Step 2: upload the file directly to Bunny via XHR (for progress events)
 const uploadDirectToBunny = (
@@ -118,33 +134,54 @@ const uploadDirectToBunny = (
   });
 
 // Step 3: tell the backend to save the resource record
-const completeVideoUpload = (
-  lessonId: string,
-  videoGuid: string,
-  title: string,
-  fileSize: number,
-) =>
-  apiClient
-    .post(`/admin/lessons/${lessonId}/video/complete`, {
-      videoGuid,
-      title,
-      fileSize,
-    })
-    .then((r) => r.data.data);
+const completeVideoUpload = (topicId: string, videoGuid: string, title: string, fileSize: number) =>
+    apiClient
+        .post(`/admin/topics/${topicId}/video/complete`, { videoGuid, title, fileSize })
+        .then((r) => r.data.data);
 
 // All-in-one helper used by the UI
 export const uploadVideo = async (
-  lessonId: string,
-  file: File,
-  title: string,
-  onProgress?: (pct: number) => void,
+    topicId: string,
+    file: File,
+    title: string,
+    onProgress?: (pct: number) => void
 ) => {
-  const { videoGuid, uploadUrl, accessKey } = await initVideoUpload(
-    lessonId,
-    title,
-  );
-  await uploadDirectToBunny(uploadUrl, accessKey, file, onProgress);
-  return completeVideoUpload(lessonId, videoGuid, title, file.size);
+    const { videoGuid, uploadUrl, accessKey } = await initVideoUpload(topicId, title);
+    await uploadDirectToBunny(uploadUrl, accessKey, file, onProgress);
+    return completeVideoUpload(topicId, videoGuid, title, file.size);
+};
+
+// ─── File Upload (signed direct-to-Cloudinary, scoped to a topic) ────────────
+
+// All-in-one helper used by the UI — resource_type "auto" so Cloudinary picks
+// image vs raw per file (pdf/jpg/png as image, docx/zip/pptx as raw)
+export const uploadCourseFile = async (
+    topicId: string,
+    file: File,
+    title: string
+) => {
+    const { data: signRes } = await apiClient.get<{ success: boolean; data: {
+        timestamp: number; signature: string; apiKey: string; cloudName: string; folder: string;
+    } }>("/admin/topics/files/sign");
+    const { timestamp, signature, apiKey, cloudName, folder } = signRes.data;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", apiKey);
+    form.append("timestamp", String(timestamp));
+    form.append("signature", signature);
+    form.append("folder", folder);
+    const res = await axios.post<{ secure_url: string; bytes: number }>(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        form
+    );
+    return apiClient
+        .post(`/admin/topics/${topicId}/files`, {
+            title,
+            url: res.data.secure_url,
+            size: res.data.bytes,
+            type: file.name.split(".").pop() ?? file.type,
+        })
+        .then((r) => r.data.data);
 };
 
 export const deleteResource = (resourceId: string) =>

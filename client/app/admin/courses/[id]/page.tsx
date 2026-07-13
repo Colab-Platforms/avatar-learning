@@ -20,7 +20,6 @@ import {
   fetchAdminCourse,
   createLesson,
   deleteLesson,
-  deleteResource,
   toggleCoursePublish,
   updateCourse,
 } from "@/lib/adminApi";
@@ -47,6 +46,15 @@ interface Resource {
   size?: string;
 }
 
+interface Topic {
+  id: string;
+  title: string;
+  description?: string;
+  topicOrder: number;
+  duration?: number;
+  resources: Resource[];
+}
+
 interface Lesson {
   id: string;
   weekNumber: number;
@@ -57,6 +65,7 @@ interface Lesson {
   isFreePreview: boolean;
   lessonOrder: number;
   resources: Resource[];
+  topics: Topic[];
 }
 
 interface Course {
@@ -104,8 +113,6 @@ export default function CourseDetailPage() {
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [savingLesson, setSavingLesson] = useState(false);
   const [deletingLesson, setDeletingLesson] = useState<string | null>(null);
-  const [deletingResource, setDeletingResource] = useState<string | null>(null);
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
   const [editingModules, setEditingModules] = useState<string | null>(null);
   const [editingHeader, setEditingHeader] = useState(false);
@@ -220,24 +227,6 @@ export default function CourseDetailPage() {
       setError("Failed to delete lesson.");
     } finally {
       setDeletingLesson(null);
-    }
-  };
-
-  const handleDeleteResource = async (resourceId: string) => {
-    if (
-      !confirm(
-        "Delete this resource? If it's a video, it will also be removed from Bunny.net.",
-      )
-    )
-      return;
-    setDeletingResource(resourceId);
-    try {
-      await deleteResource(resourceId);
-      await load();
-    } catch {
-      setError("Failed to delete resource.");
-    } finally {
-      setDeletingResource(null);
     }
   };
 
@@ -649,15 +638,7 @@ export default function CourseDetailPage() {
                   }}
                   onDelete={() => handleDeleteLesson(lesson.id)}
                   isDeleting={deletingLesson === lesson.id}
-                  onDeleteResource={handleDeleteResource}
-                  deletingResource={deletingResource}
-                  uploadingFor={uploadingFor}
-                  onStartUpload={() => setUploadingFor(lesson.id)}
-                  onUploadDone={async () => {
-                    setUploadingFor(null);
-                    await load();
-                  }}
-                  onCancelUpload={() => setUploadingFor(null)}
+                  onChanged={load}
                 />
               ))}
             </div>
