@@ -125,6 +125,7 @@ model User {
   direct2hireEnrollments Direct2HireEnrollment[]
   direct2HireLead        Direct2HireLead?
   lessonProgress         LessonProgress[]
+  topicProgress          TopicProgress[]
   paymentOrders          PaymentOrder[]
   counsellingProfile     CounsellingProfile?
   courseRecommendation   CourseRecommendation?
@@ -349,16 +350,47 @@ model Lessons {
 
   lessonProgress LessonProgress[]
 
+  topics Topics[]
+
   @@unique([courseId, weekNumber])
   @@index([courseId])
   @@index([courseId, releaseDate])
   @@map("lessons")
 }
 
+model Topics {
+  id String @id @default(cuid())
+
+  lessonId String @map("lesson_id")
+
+  title String
+
+  description String?
+
+  topicOrder Int @map("topic_order")
+
+  duration Int?
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  lesson Lessons @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  resources Resource[]
+
+  topicProgress TopicProgress[]
+
+  @@unique([lessonId, topicOrder])
+  @@index([lessonId])
+  @@map("topics")
+}
+
 model Resource {
   id String @id @default(cuid())
 
   lessonId String @map("lesson_id")
+
+  topicId String? @map("topic_id")
 
   title String
 
@@ -381,9 +413,12 @@ model Resource {
 
   lesson Lessons @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
+  topic Topics? @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
   downloadLogs ResourceDownload[]
 
   @@index([lessonId])
+  @@index([topicId])
   @@index([category])
   @@map("resources")
 }
@@ -699,4 +734,19 @@ model LessonProgress {
   @@index([lessonId])
   @@index([userId])
   @@map("lesson_progress")
+}
+
+model TopicProgress {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  topicId     String   @map("topic_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  topic Topics @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([topicId])
+  @@index([userId])
+  @@map("topic_progress")
 }

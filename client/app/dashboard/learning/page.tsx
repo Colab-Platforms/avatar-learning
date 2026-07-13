@@ -61,7 +61,7 @@ export default function AILearningPage() {
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                   <div
-                    className="h-full bg-blue-600 rounded-full transition-all"
+                    className="h-full bg-brand-600 rounded-full transition-all"
                     style={{ width: `${course.progress}%` }}
                   />
                 </div>
@@ -74,7 +74,7 @@ export default function AILearningPage() {
                 <Link
                   href={`/courses/${course.id}/learn`}
                   className="mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold
-                             bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                             bg-brand-600 text-white hover:bg-brand-700 transition-colors"
                 >
                   {course.progress > 0 ? "Continue learning" : "Start learning"}
                   <ArrowRight size={12} />
