@@ -9,6 +9,7 @@ import {
   getBunnyDirectUploadUrl,
   getBunnyMp4Url,
 } from "@/utils/bunny.js";
+import { getCourseFileUploadSignature } from "@/utils/cloudinary.js";
 import { Readable } from "stream";
 import { ReadableStream as NodeReadableStream } from "stream/web";
 import {
@@ -17,7 +18,32 @@ import {
   UpdateCourseBody,
   CreateLessonBody,
   UpdateLessonBody,
+  CreateTopicBody,
+  UpdateTopicBody,
+  CompleteFileUploadBody,
 } from "./course.types.js";
+
+const DOCUMENT_EXTENSIONS = new Set([
+  "pdf",
+  "doc",
+  "docx",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+  "txt",
+  "csv",
+]);
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg"]);
+
+const inferResourceCategory = (
+  filenameOrType: string,
+): "DOCUMENT" | "IMAGE" | "OTHER" => {
+  const ext = filenameOrType.split(/[.\s]/).pop()?.toLowerCase() ?? "";
+  if (DOCUMENT_EXTENSIONS.has(ext)) return "DOCUMENT";
+  if (IMAGE_EXTENSIONS.has(ext)) return "IMAGE";
+  return "OTHER";
+};
 
 const slugify = (text: string): string =>
   text
@@ -75,7 +101,13 @@ export class AdminCourseService {
       include: {
         category: { select: { id: true, name: true } },
         lessons: {
-          include: { resources: true },
+          include: {
+            resources: true,
+            topics: {
+              include: { resources: true },
+              orderBy: { topicOrder: "asc" },
+            },
+          },
           orderBy: { weekNumber: "asc" },
         },
         _count: { select: { enrollments: true } },
@@ -209,12 +241,53 @@ export class AdminCourseService {
     return prisma.lessons.delete({ where: { id: lessonId } });
   }
 
-  // Video Upload (two-step direct upload) ------------------------------------
+  // Topics ---------------------------------------------------------------------
 
-  // Step 1: create a Bunny slot, return credentials for the client to upload directly
-  async initVideoUpload(lessonId: string, title: string) {
+  async createTopic(lessonId: string, data: CreateTopicBody) {
     const lesson = await prisma.lessons.findUnique({ where: { id: lessonId } });
     if (!lesson) throw new ApiError("Lesson not found", STATUS_CODES.NOT_FOUND);
+
+    const existing = await prisma.topics.findUnique({
+      where: { lessonId_topicOrder: { lessonId, topicOrder: data.topicOrder } },
+    });
+    if (existing)
+      throw new ApiError(
+        "A topic with this order already exists in this week",
+        STATUS_CODES.CONFLICT,
+      );
+
+    return prisma.topics.create({ data: { ...data, lessonId } });
+  }
+
+  async updateTopic(topicId: string, data: UpdateTopicBody) {
+    const topic = await prisma.topics.findUnique({ where: { id: topicId } });
+    if (!topic) throw new ApiError("Topic not found", STATUS_CODES.NOT_FOUND);
+
+    return prisma.topics.update({ where: { id: topicId }, data });
+  }
+
+  async deleteTopic(topicId: string) {
+    const topic = await prisma.topics.findUnique({
+      where: { id: topicId },
+      include: { resources: true },
+    });
+    if (!topic) throw new ApiError("Topic not found", STATUS_CODES.NOT_FOUND);
+
+    for (const resource of topic.resources) {
+      if (resource.category === "VIDEO" && resource.bunnyVideoId) {
+        await deleteBunnyVideo(resource.bunnyVideoId).catch(() => {});
+      }
+    }
+
+    return prisma.topics.delete({ where: { id: topicId } });
+  }
+
+  // Video Upload (two-step direct upload, scoped to a topic) -------------------
+
+  // Step 1: create a Bunny slot, return credentials for the client to upload directly
+  async initVideoUpload(topicId: string, title: string) {
+    const topic = await prisma.topics.findUnique({ where: { id: topicId } });
+    if (!topic) throw new ApiError("Topic not found", STATUS_CODES.NOT_FOUND);
 
     const videoInfo = await createBunnyVideo(title);
     const directUpload = getBunnyDirectUploadUrl(videoInfo.guid);
@@ -224,20 +297,21 @@ export class AdminCourseService {
 
   // Step 2: client has finished uploading directly to Bunny; save the resource record
   async completeVideoUpload(
-    lessonId: string,
+    topicId: string,
     videoGuid: string,
     title: string,
     fileSizeBytes: number,
   ) {
-    const lesson = await prisma.lessons.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new ApiError("Lesson not found", STATUS_CODES.NOT_FOUND);
+    const topic = await prisma.topics.findUnique({ where: { id: topicId } });
+    if (!topic) throw new ApiError("Topic not found", STATUS_CODES.NOT_FOUND);
 
     const embedUrl = getBunnyEmbedUrl(videoGuid);
     const thumbnailUrl = getBunnyThumbnailUrl(videoGuid);
 
     return prisma.resource.create({
       data: {
-        lessonId,
+        lessonId: topic.lessonId,
+        topicId,
         title,
         category: "VIDEO",
         type: "bunny-stream",
@@ -245,6 +319,29 @@ export class AdminCourseService {
         bunnyVideoId: videoGuid,
         size: fileSizeBytes.toString(),
         description: thumbnailUrl || undefined,
+      },
+    });
+  }
+
+  // File Upload (direct-to-Cloudinary, scoped to a topic) ----------------------
+
+  getFileUploadSignature() {
+    return getCourseFileUploadSignature();
+  }
+
+  async completeFileUpload(topicId: string, data: CompleteFileUploadBody) {
+    const topic = await prisma.topics.findUnique({ where: { id: topicId } });
+    if (!topic) throw new ApiError("Topic not found", STATUS_CODES.NOT_FOUND);
+
+    return prisma.resource.create({
+      data: {
+        lessonId: topic.lessonId,
+        topicId,
+        title: data.title,
+        category: inferResourceCategory(data.type || data.title),
+        type: data.type,
+        url: data.url,
+        size: data.size?.toString(),
       },
     });
   }
@@ -435,7 +532,13 @@ export class PublicCourseService {
       include: {
         category: { select: { id: true, name: true } },
         lessons: {
-          include: { resources: true },
+          include: {
+            resources: true,
+            topics: {
+              include: { resources: true },
+              orderBy: { topicOrder: "asc" },
+            },
+          },
           orderBy: { weekNumber: "asc" },
         },
         _count: { select: { enrollments: true } },
@@ -446,72 +549,139 @@ export class PublicCourseService {
     const orderedLessons = [...full.lessons].sort(
       (a, b) => a.weekNumber - b.weekNumber,
     );
-    const lessonIds = orderedLessons.map((l) => l.id);
-    const progressRows = await prisma.lessonProgress.findMany({
-      where: { userId, lessonId: { in: lessonIds } },
-    });
-    const completedSet = new Set(progressRows.map((p) => p.lessonId));
 
-    const lessonsWithState = orderedLessons.map((lesson, idx) => {
-      const isCompleted = completedSet.has(lesson.id);
-      const isLocked = idx > 0 && !completedSet.has(orderedLessons[idx - 1].id);
+    const topicIds = orderedLessons.flatMap((l) => l.topics.map((t) => t.id));
+    const topicProgressRows =
+      topicIds.length > 0
+        ? await prisma.topicProgress.findMany({
+            where: { userId, topicId: { in: topicIds } },
+          })
+        : [];
+    const completedTopicIds = new Set(topicProgressRows.map((p) => p.topicId));
 
-      const resources = lesson.resources.map((r) => {
-        if (isLocked) {
-          return { ...r, url: null, downloadUrl: null };
-        }
-        let downloadUrl: string | null = null;
-        if (r.category === "VIDEO" && r.bunnyVideoId) {
-          const mp4 = getBunnyMp4Url(r.bunnyVideoId);
-          downloadUrl = mp4 || null;
-        } else {
-          downloadUrl = r.url;
-        }
-        return { ...r, downloadUrl };
+    const resolveResource = <
+      T extends { category: string; bunnyVideoId: string | null; url: string },
+    >(
+      r: T,
+      locked: boolean,
+    ) => {
+      if (locked) return { ...r, url: null, downloadUrl: null };
+      const downloadUrl =
+        r.category === "VIDEO" && r.bunnyVideoId
+          ? getBunnyMp4Url(r.bunnyVideoId) || null
+          : r.url;
+      return { ...r, downloadUrl };
+    };
+
+    let previousLessonCompleted = true; // week 1 is always unlocked
+    const lessonsWithState = orderedLessons.map((lesson) => {
+      const weekLocked = !previousLessonCompleted;
+
+      let previousTopicCompleted = true;
+      const topicsWithState = lesson.topics.map((topic) => {
+        const isCompleted = completedTopicIds.has(topic.id);
+        const isLocked = weekLocked || !previousTopicCompleted;
+        previousTopicCompleted = isCompleted;
+        return {
+          ...topic,
+          isCompleted,
+          isLocked,
+          resources: topic.resources.map((r) => resolveResource(r, isLocked)),
+        };
       });
 
-      return { ...lesson, isCompleted, isLocked, resources };
+      const lessonCompleted =
+        topicsWithState.length > 0 &&
+        topicsWithState.every((t) => t.isCompleted);
+      previousLessonCompleted = lessonCompleted;
+
+      const resources = lesson.resources.map((r) =>
+        resolveResource(r, weekLocked),
+      );
+
+      return {
+        ...lesson,
+        isCompleted: lessonCompleted,
+        isLocked: weekLocked,
+        resources,
+        topics: topicsWithState,
+      };
     });
 
     return { ...full, lessons: lessonsWithState, enrollment };
   }
 
-  // ─── Lesson progress / locking ────────────────────────────────────────────
+  // ─── Topic progress / locking ──────────────────────────────────────────────
 
-  private async getOrderedLessonIds(courseId: string): Promise<string[]> {
-    const lessons = await prisma.lessons.findMany({
+  private async getOrderedLessonsWithTopics(courseId: string) {
+    return prisma.lessons.findMany({
       where: { courseId },
       orderBy: { weekNumber: "asc" },
-      select: { id: true },
+      include: {
+        topics: { orderBy: { topicOrder: "asc" }, select: { id: true } },
+      },
     });
-    return lessons.map((l) => l.id);
   }
 
-  /** A lesson is locked until the previous lesson (by weekNumber) is completed. */
+  private async getCompletedTopicIds(
+    userId: string,
+    topicIds: string[],
+  ): Promise<Set<string>> {
+    if (topicIds.length === 0) return new Set();
+    const rows = await prisma.topicProgress.findMany({
+      where: { userId, topicId: { in: topicIds } },
+    });
+    return new Set(rows.map((r) => r.topicId));
+  }
+
+  /** A week is locked until every topic in the previous week (by weekNumber) is completed. */
   private async isLessonLocked(
     courseId: string,
     lessonId: string,
     userId: string,
   ): Promise<boolean> {
-    const orderedIds = await this.getOrderedLessonIds(courseId);
-    const idx = orderedIds.indexOf(lessonId);
+    const lessons = await this.getOrderedLessonsWithTopics(courseId);
+    const idx = lessons.findIndex((l) => l.id === lessonId);
     if (idx <= 0) return false;
 
-    const prevCompleted = await prisma.lessonProgress.findUnique({
-      where: {
-        userId_lessonId: { userId, lessonId: orderedIds[idx - 1] },
-      },
-    });
-    return !prevCompleted;
+    const prevTopicIds = lessons[idx - 1].topics.map((t) => t.id);
+    if (prevTopicIds.length === 0) return true; // an empty week can never be "completed"
+
+    const completed = await this.getCompletedTopicIds(userId, prevTopicIds);
+    return prevTopicIds.some((id) => !completed.has(id));
+  }
+
+  /** A topic is locked if its week is locked, or the previous topic in the same week isn't done yet. */
+  private async isTopicLocked(
+    courseId: string,
+    lessonId: string,
+    topicId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const weekLocked = await this.isLessonLocked(courseId, lessonId, userId);
+    if (weekLocked) return true;
+
+    const lessons = await this.getOrderedLessonsWithTopics(courseId);
+    const lesson = lessons.find((l) => l.id === lessonId);
+    if (!lesson) return true;
+
+    const idx = lesson.topics.findIndex((t) => t.id === topicId);
+    if (idx <= 0) return false;
+
+    const completed = await this.getCompletedTopicIds(userId, [
+      lesson.topics[idx - 1].id,
+    ]);
+    return !completed.has(lesson.topics[idx - 1].id);
   }
 
   private async recalculateProgress(userId: string, courseId: string) {
-    const orderedIds = await this.getOrderedLessonIds(courseId);
-    const total = orderedIds.length;
+    const lessons = await this.getOrderedLessonsWithTopics(courseId);
+    const allTopicIds = lessons.flatMap((l) => l.topics.map((t) => t.id));
+    const total = allTopicIds.length;
     if (total === 0) return;
 
-    const completedCount = await prisma.lessonProgress.count({
-      where: { userId, lessonId: { in: orderedIds } },
+    const completedCount = await prisma.topicProgress.count({
+      where: { userId, topicId: { in: allTopicIds } },
     });
 
     const progress = Math.round((completedCount / total) * 100);
@@ -531,8 +701,13 @@ export class PublicCourseService {
     });
   }
 
-  async markLessonWatched(lessonId: string, userId: string) {
-    const lesson = await prisma.lessons.findUnique({ where: { id: lessonId } });
+  async markTopicWatched(topicId: string, userId: string) {
+    const topic = await prisma.topics.findUnique({ where: { id: topicId } });
+    if (!topic) throw new ApiError("Topic not found", STATUS_CODES.NOT_FOUND);
+
+    const lesson = await prisma.lessons.findUnique({
+      where: { id: topic.lessonId },
+    });
     if (!lesson) throw new ApiError("Lesson not found", STATUS_CODES.NOT_FOUND);
 
     const enrollment = await prisma.courseUserMapper.findUnique({
@@ -545,17 +720,22 @@ export class PublicCourseService {
       );
     }
 
-    const locked = await this.isLessonLocked(lesson.courseId, lessonId, userId);
+    const locked = await this.isTopicLocked(
+      lesson.courseId,
+      lesson.id,
+      topicId,
+      userId,
+    );
     if (locked) {
       throw new ApiError(
-        "Complete the previous session first",
+        "Complete the previous topic first",
         STATUS_CODES.FORBIDDEN,
       );
     }
 
-    await prisma.lessonProgress.upsert({
-      where: { userId_lessonId: { userId, lessonId } },
-      create: { userId, lessonId },
+    await prisma.topicProgress.upsert({
+      where: { userId_topicId: { userId, topicId } },
+      create: { userId, topicId },
       update: {},
     });
 
@@ -595,11 +775,20 @@ export class PublicCourseService {
       );
     }
 
-    const locked = await this.isLessonLocked(
-      resource.lesson.courseId,
-      resource.lesson.id,
-      userId,
-    );
+    // Resources created before topics existed have no topicId — fall back to
+    // the week-level lock so those legacy rows keep working.
+    const locked = resource.topicId
+      ? await this.isTopicLocked(
+          resource.lesson.courseId,
+          resource.lesson.id,
+          resource.topicId,
+          userId,
+        )
+      : await this.isLessonLocked(
+          resource.lesson.courseId,
+          resource.lesson.id,
+          userId,
+        );
     if (locked) {
       throw new ApiError(
         "Complete the previous session first",

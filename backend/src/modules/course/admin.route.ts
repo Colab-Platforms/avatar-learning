@@ -26,9 +26,19 @@ router.post("/courses/:courseId/lessons", courseController.createLesson);
 router.put("/lessons/:lessonId", courseController.updateLesson);
 router.delete("/lessons/:lessonId", courseController.deleteLesson);
 
-// ─── Video Upload (two-step direct upload) ───────────────────────────────────
-router.post("/lessons/:lessonId/video/init", courseController.initVideoUpload);
-router.post("/lessons/:lessonId/video/complete", courseController.completeVideoUpload);
+// ─── Topics ───────────────────────────────────────────────────────────────────
+router.post("/lessons/:lessonId/topics", courseController.createTopic);
+router.put("/topics/:topicId", courseController.updateTopic);
+router.delete("/topics/:topicId", courseController.deleteTopic);
+
+// ─── Video Upload (two-step direct upload, scoped to a topic) ────────────────
+router.post("/topics/:topicId/video/init", courseController.initVideoUpload);
+router.post("/topics/:topicId/video/complete", courseController.completeVideoUpload);
+
+// ─── File Upload (signed direct-to-Cloudinary, scoped to a topic) ────────────
+router.get("/topics/files/sign", courseController.signCourseFileUpload);
+router.post("/topics/:topicId/files", courseController.completeFileUpload);
+
 router.delete("/resources/:resourceId", courseController.deleteResource);
 
 export default router;

@@ -32,9 +32,9 @@ router.get(
   courseController.getEnrolledCourseDetail,
 );
 router.post(
-  "/lessons/:lessonId/watch",
+  "/topics/:topicId/watch",
   auth("USER"),
-  courseController.markLessonWatched,
+  courseController.markTopicWatched,
 );
 
 // ─── Public slug route (must be last — catchall param) ───────────────────────

@@ -55,6 +55,17 @@ export interface DBResource {
   size?: string;
 }
 
+export interface DBTopic {
+  id: string;
+  title: string;
+  description?: string;
+  topicOrder: number;
+  duration?: number;
+  resources: DBResource[];
+  isCompleted?: boolean;
+  isLocked?: boolean;
+}
+
 export interface DBLesson {
   id: string;
   weekNumber: number;
@@ -65,6 +76,7 @@ export interface DBLesson {
   isPublished: boolean;
   isFreePreview: boolean;
   resources: DBResource[];
+  topics: DBTopic[];
   isCompleted?: boolean;
   isLocked?: boolean;
 }
@@ -130,9 +142,9 @@ export const fetchEnrolledCourseDetail = (
 ): Promise<EnrolledCourseDetail> =>
   apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
 
-export const markLessonWatched = (lessonId: string): Promise<Enrollment> =>
+export const markTopicWatched = (topicId: string): Promise<Enrollment> =>
   apiClient
-    .post(`/courses/lessons/${lessonId}/watch`)
+    .post(`/courses/topics/${topicId}/watch`)
     .then((r) => r.data.data);
 
 export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
