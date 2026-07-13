@@ -74,15 +74,15 @@ const OUTCOMES = [
 const JOURNEY_STEPS = [
   {
     num: "01",
-    icon: Users,
-    title: "Career Counselling",
-    desc: "A 1-on-1 session with an experienced counselor to discuss your goals, strengths, and next steps — scheduled after your AI assessment.",
-  },
-  {
-    num: "02",
     icon: BrainCircuit,
     title: "AI-Powered Assessment",
     desc: "Complete a short questionnaire in your dashboard and receive an AI-powered course recommendation tailored to your goals, interests, and personality.",
+  },
+  {
+    num: "02",
+    icon: Users,
+    title: "Career Counselling",
+    desc: "A 1-on-1 session with an experienced counselor to discuss your goals, strengths, and next steps — scheduled after your AI assessment.",
   },
   {
     num: "03",
@@ -238,6 +238,14 @@ export default function Direct2HirePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [whoForSlide, setWhoForSlide] = useState(0);
   const [diffSlide, setDiffSlide] = useState(0);
+  const [statsSlide, setStatsSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStatsSlide((i) => (i + 1) % STATS.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -304,7 +312,7 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={120}>
-                  <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 mb-4 sm:mb-5 w-fit">
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 mb-4 sm:mb-5 w-full md:w-fit">
                     <span className="relative flex sm:h-11 sm:w-11 w-9 h-9 shrink-0 items-center justify-center">
                       <Image
                         src="/nse-logo.png"
@@ -327,7 +335,10 @@ export default function Direct2HirePage() {
 
                 <ScrollReveal animation="fade-up" delay={150}>
                   <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
-                    <Link href="/direct2hire/enroll" className="w-full sm:w-auto">
+                    <Link
+                      href="/direct2hire/enroll"
+                      className="w-full sm:w-auto"
+                    >
                       <Button
                         variant="primary"
                         size="lg"
@@ -377,7 +388,8 @@ export default function Direct2HirePage() {
               delay={200}
               className="mt-8 sm:mt-10"
             >
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
+              {/* Desktop / Tablet view (>= sm) */}
+              <div className="hidden sm:grid sm:grid-cols-3 gap-2.5 sm:gap-4">
                 {STATS.map((s, i) => (
                   <AnimateOnScroll key={s.label} delay={i * 70}>
                     <div className="rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 text-center card-lift">
@@ -390,6 +402,48 @@ export default function Direct2HirePage() {
                     </div>
                   </AnimateOnScroll>
                 ))}
+              </div>
+
+              {/* Mobile Carousel View (< sm) */}
+              <div className="sm:hidden">
+                <div className="relative rounded-2xl border border-border bg-surface-alt p-5 text-center card-lift overflow-hidden min-h-[110px] flex flex-col justify-center items-center">
+                  {STATS.map((s, i) => (
+                    <div
+                      key={s.label}
+                      className={cn(
+                        "w-full transition-opacity duration-500 ease-out",
+                        i === statsSlide
+                          ? "opacity-100 relative"
+                          : "opacity-0 absolute inset-0 p-5 pointer-events-none flex flex-col justify-center items-center",
+                      )}
+                    >
+                      <p className="text-2xl font-bold text-text mb-1">
+                        {s.value}
+                      </p>
+                      <p className="text-[11.5px] text-text-subtle uppercase tracking-wider">
+                        {s.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Carousel dots indicator */}
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  {STATS.map((s, i) => (
+                    <button
+                      key={s.label}
+                      onClick={() => setStatsSlide(i)}
+                      aria-label={`Show stat ${i + 1}`}
+                      aria-current={i === statsSlide}
+                      className={cn(
+                        "h-1.5 rounded-full transition-all duration-300",
+                        i === statsSlide
+                          ? "w-5 bg-brand-600"
+                          : "w-1.5 bg-border-strong hover:bg-brand-300",
+                      )}
+                    />
+                  ))}
+                </div>
               </div>
             </ScrollReveal>
           </div>
@@ -625,7 +679,7 @@ export default function Direct2HirePage() {
                 {JOURNEY_STEPS.map((step, i) => (
                   <AnimateOnScroll key={step.num} delay={i * 80}>
                     <div className="group h-full flex flex-col items-start">
-                      <div className="relative z-10 mb-3 sm:mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white text-[13px] font-bold shadow-md shadow-brand-500/25">
+                      <div className="hidden sm:flex relative z-10 mb-3 sm:mb-4 h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white text-[13px] font-bold shadow-md shadow-brand-500/25">
                         {step.num}
                       </div>
                       <div className="h-full w-full rounded-2xl border border-border bg-white p-5 sm:p-6 card-lift cursor-default">
@@ -794,7 +848,10 @@ export default function Direct2HirePage() {
                     , now available at a fraction of the cost.
                   </p>
                 </div>
-                <Link href="/direct2hire/enroll" className="w-full sm:w-fit shrink-0">
+                <Link
+                  href="/direct2hire/enroll"
+                  className="w-full sm:w-fit shrink-0"
+                >
                   <Button
                     variant="primary"
                     size="md"
@@ -844,7 +901,7 @@ export default function Direct2HirePage() {
                   </p>
                   <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
                     <IndianRupee className="h-3 w-3 shrink-0" />
-                    Save ₹12,495 (96% OFF)
+                    Save ₹24,500 (98% OFF)
                   </span>
                   <Link
                     href="/direct2hire/enroll"

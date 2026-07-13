@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Users, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   fetchD2HEnrollmentsPaginated,
@@ -74,10 +75,10 @@ export default function AdminDirect2HirePage() {
 
       <div className="bg-ink-800 border border-white/6 rounded-2xl overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-6 py-2.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest border-b border-white/4">
-          <span className="col-span-5">Student</span>
-          <span className="col-span-3">Phone</span>
+          <span className="col-span-4">Student</span>
+          <span className="col-span-2">Phone</span>
           <span className="col-span-2">Status</span>
-          <span className="col-span-2 text-right">Actions</span>
+          <span className="col-span-4 text-right">Actions</span>
         </div>
 
         {loading ? (
@@ -101,7 +102,7 @@ export default function AdminDirect2HirePage() {
                 key={e.id}
                 className="grid grid-cols-12 items-center px-6 py-4 hover:bg-ink-700/25 transition-colors gap-y-1"
               >
-                <div className="col-span-12 sm:col-span-5 min-w-0">
+                <div className="col-span-12 sm:col-span-4 min-w-0">
                   <p className="text-sm font-semibold text-white/90 truncate">
                     {`${e.user.firstName ?? ""} ${e.user.lastName ?? ""}`.trim() ||
                       "Unnamed"}
@@ -110,7 +111,7 @@ export default function AdminDirect2HirePage() {
                     {e.user.email}
                   </p>
                 </div>
-                <span className="hidden sm:block col-span-3 text-xs text-white/45">
+                <span className="hidden sm:block col-span-2 text-xs text-white/45">
                   {e.user.phoneNo ?? "—"}
                 </span>
                 <span
@@ -122,7 +123,15 @@ export default function AdminDirect2HirePage() {
                 >
                   {e.status}
                 </span>
-                <div className="col-span-8 sm:col-span-2 flex items-center justify-end">
+                <div className="col-span-8 sm:col-span-4 flex items-center justify-end gap-2">
+                  <Link
+                    href={`/admin/direct2hire/${e.user.id}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                               border border-white/10 text-white/70 hover:border-brand-500/40 hover:text-brand-300
+                               transition-colors"
+                  >
+                    View Profile
+                  </Link>
                   <button
                     onClick={() => handleMarkPaid(e.id)}
                     disabled={e.status === "PAID" || markingId === e.id}
