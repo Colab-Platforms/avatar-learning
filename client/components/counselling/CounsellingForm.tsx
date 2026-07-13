@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import FormFieldRenderer from "@/components/counselling/FormFieldRenderer";
 import { useSubmitCounselling } from "@/hooks/mutations/useSubmitCounselling";
@@ -13,242 +13,230 @@ import {
   type CounsellingFormValues,
 } from "@/lib/counselling/formConfig";
 import {
+  counsellingSchema,
   toCounsellingPayload,
-  validateCounsellingForm,
-} from "@/lib/counselling/counsellingValidation";
-import type { RootState } from "@/store";
-import PretextAnimatedHeight from "./PretextAnimatedHeight";
+} from "@/lib/counselling/counsellingSchema";
+import PretextAnimatedHeight, {
+  AnimatedHeight,
+} from "./PretextAnimatedHeight";
 
-export default function CounsellingForm() {
-  const { user } = useSelector((state: RootState) => state.auth);
+interface CounsellingFormProps {
+  onCancel?: () => void;
+}
+
+export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
   const submitMutation = useSubmitCounselling();
   const [activeStep, setActiveStep] = useState(0);
+  const isLastStep = activeStep === counsellingFormSections.length - 1;
+  const formTopRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
 
-  const defaultValues = useMemo<CounsellingFormValues>(() => {
-    const fullName = [user?.firstName, user?.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-    return {
-      ...emptyCounsellingFormValues,
-      fullName,
-      email: user?.email ?? "",
-      contactNumber: user?.phoneNo ?? "",
-    };
-  }, [user]);
+  const defaultValues = useMemo<CounsellingFormValues>(
+    () => emptyCounsellingFormValues,
+    [],
+  );
 
   const {
     control,
     handleSubmit,
-    setError,
-    clearErrors,
-    getValues,
+    trigger,
     formState: { errors },
   } = useForm<CounsellingFormValues>({
+    resolver: zodResolver(counsellingSchema),
     defaultValues,
     mode: "onSubmit",
+    shouldFocusError: true,
   });
 
   const activeSection = counsellingFormSections[activeStep];
+  const stepLabels = ["Goals", "Personality", "Notes"];
 
-  const handleNext = () => {
-    const values = getValues();
-    const validationErrors = validateCounsellingForm(values);
-    
-    // Get fields belonging to the current active section
-    const fieldNames = activeSection.fields.map((f) => f.name);
-    const otherFieldNames = activeSection.fields
-      .map((f) => f.otherField)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    formTopRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [activeStep]);
+
+  const getSectionFieldNames = (stepIndex: number) => {
+    const section = counsellingFormSections[stepIndex];
+    const fieldNames = section.fields.map((field) => field.name);
+    const otherFieldNames = section.fields
+      .map((field) => field.otherField)
       .filter(Boolean) as string[];
-    const sectionFieldNames = [...fieldNames, ...otherFieldNames];
+    return [...fieldNames, ...otherFieldNames] as Array<
+      keyof CounsellingFormValues
+    >;
+  };
 
-    // Clear previous errors for these fields
-    sectionFieldNames.forEach((name) => {
-      clearErrors(name as keyof CounsellingFormValues);
-    });
-
-    // Check if there are any errors in the current section
-    let hasError = false;
-    sectionFieldNames.forEach((name) => {
-      const err = validationErrors[name as keyof CounsellingFormValues];
-      if (err) {
-        hasError = true;
-        setError(name as keyof CounsellingFormValues, {
-          type: err.type,
-          message: err.message,
-        });
-      }
-    });
-
-    if (!hasError) {
-      setActiveStep((prev) => Math.min(prev + 1, counsellingFormSections.length - 1));
+  const handleNext = async () => {
+    const fieldNames = getSectionFieldNames(activeStep);
+    const valid = await trigger(fieldNames, { shouldFocus: true });
+    if (valid) {
+      setActiveStep((prev) =>
+        Math.min(prev + 1, counsellingFormSections.length - 1),
+      );
     }
   };
 
   const handleBack = () => {
+    if (activeStep === 0 && onCancel) {
+      onCancel();
+      return;
+    }
     setActiveStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const onSubmit = handleSubmit(async (values) => {
-    // Validate final step/all form fields
-    const validationErrors = validateCounsellingForm(values);
-    const errorKeys = Object.keys(validationErrors) as Array<
-      keyof CounsellingFormValues
-    >;
-
-    if (errorKeys.length > 0) {
-      errorKeys.forEach((key) => {
-        const fieldError = validationErrors[key];
-        if (fieldError?.message) {
-          setError(key, { type: fieldError.type, message: fieldError.message });
-        }
-      });
-
-      // Find the first step that contains an error and go to it
+  const submitForm = handleSubmit(
+    async (values) => {
+      try {
+        await submitMutation.mutateAsync(toCounsellingPayload(values));
+      } catch {
+        // Error toast handled in mutation hook.
+      }
+    },
+    async () => {
       for (let i = 0; i < counsellingFormSections.length; i++) {
-        const sect = counsellingFormSections[i];
-        const fNames = sect.fields.map((f) => f.name);
-        const oNames = sect.fields.map((f) => f.otherField).filter(Boolean) as string[];
-        const allNames = [...fNames, ...oNames];
-        const hasSectError = allNames.some((name) => errorKeys.includes(name as any));
-        if (hasSectError) {
+        const fieldNames = getSectionFieldNames(i);
+        const valid = await trigger(fieldNames, { shouldFocus: true });
+        if (!valid) {
           setActiveStep(i);
           break;
         }
       }
-      return;
-    }
+    },
+  );
 
-    try {
-      await submitMutation.mutateAsync(toCounsellingPayload(values));
-    } catch {
-      // Error toast handled in mutation hook.
-    }
-  });
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    // The form has no type="submit" button anymore, so this only fires
+    // via native fallback (e.g. Enter key) — block it unconditionally.
+    event.preventDefault();
+  };
 
-  const stepLabels = ["Basics", "Goals", "Personality", "Notes"];
+  const handleSubmitClick = () => {
+    if (!isLastStep) return;
+    void submitForm();
+  };
+
+  const handleFormKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== "Enter") return;
+
+    const target = event.target as HTMLElement;
+    const tagName = target.tagName;
+
+    // Allow newline in textarea; block implicit form submit elsewhere.
+    if (tagName === "TEXTAREA") return;
+
+    event.preventDefault();
+  };
+
+  const progressPercent =
+    ((activeStep + 1) / counsellingFormSections.length) * 100;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-100/50">
-      {/* Top Gradient Decorative Bar */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600" />
-      
-      {/* Card Content Wrapper */}
+    <div
+      ref={formTopRef}
+      className="scroll-mt-6 relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-200/40"
+    >
+      <div className="h-1.5 w-full bg-slate-100">
+        <div
+          className="h-full rounded-r-full bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 transition-[width] duration-500 ease-out"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
       <div className="p-6 sm:p-10">
-        {/* Stepper Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
               Step {activeStep + 1} of {counsellingFormSections.length}
             </span>
-            <span className="text-xs font-bold text-slate-500">
-              {Math.round(((activeStep + 1) / counsellingFormSections.length) * 100)}% Complete
+            <span className="text-xs font-semibold text-slate-400">
+              {Math.round(progressPercent)}% complete
             </span>
           </div>
-          
-          {/* Progress track */}
-          <div className="relative mt-3 h-2 w-full rounded-full bg-slate-100">
+
+          <div className="relative mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out"
-              style={{
-                width: `${((activeStep + 1) / counsellingFormSections.length) * 100}%`,
-              }}
+              className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-[width] duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
 
-          {/* Step circles */}
-          <div className="mt-6 grid grid-cols-4 gap-2">
-            {stepLabels.map((label, idx) => {
-              const isActive = idx === activeStep;
-              const isCompleted = idx < activeStep;
-              return (
-                <div
-                  key={label}
-                  className="flex flex-col items-center gap-1.5 text-center cursor-pointer"
-                  onClick={() => {
-                    // Only allow clicking to past steps or next if valid
-                    if (idx < activeStep) {
-                      setActiveStep(idx);
-                    } else if (idx === activeStep) {
-                      // Do nothing
-                    } else {
-                      // Check validation for intermediate steps before jumping forward
-                      let tempStep = activeStep;
-                      while (tempStep < idx) {
-                        const sect = counsellingFormSections[tempStep];
-                        const fieldNames = sect.fields.map((f) => f.name);
-                        const otherFieldNames = sect.fields
-                          .map((f) => f.otherField)
-                          .filter(Boolean) as string[];
-                        const sectionFieldNames = [...fieldNames, ...otherFieldNames];
-                        const valErrors = validateCounsellingForm(getValues());
-                        const hasErr = sectionFieldNames.some((n) => valErrors[n as keyof CounsellingFormValues]);
-                        if (hasErr) {
-                          // Trigger errors display
-                          sectionFieldNames.forEach((name) => {
-                            const err = valErrors[name as keyof CounsellingFormValues];
-                            if (err) {
-                              setError(name as keyof CounsellingFormValues, {
-                                type: err.type,
-                                message: err.message,
-                              });
-                            }
-                          });
-                          break;
-                        } else {
-                          sectionFieldNames.forEach((name) => {
-                            clearErrors(name as keyof CounsellingFormValues);
-                          });
-                          tempStep++;
-                        }
-                      }
-                      setActiveStep(tempStep);
-                    }
-                  }}
-                >
+          <div className="relative mt-7">
+            <div
+              aria-hidden
+              className="absolute left-[calc(16.67%-8px)] right-[calc(16.67%-8px)] top-3.5 h-px bg-slate-200"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              {stepLabels.map((label, idx) => {
+                const isActive = idx === activeStep;
+                const isCompleted = idx < activeStep;
+                return (
                   <div
-                    className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 ${
-                      isActive
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-200 ring-4 ring-blue-50"
-                        : isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : "bg-slate-100 text-slate-400"
-                    }`}
+                    key={label}
+                    className="relative flex flex-col items-center gap-2 text-center"
                   >
-                    {isCompleted ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                    <div
+                      className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-200/80 ring-4 ring-blue-50"
+                          : isCompleted
+                            ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200/60"
+                            : "border border-slate-200 bg-white text-slate-400"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        idx + 1
+                      )}
+                    </div>
+                    <span
+                      className={`hidden text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 sm:inline ${
+                        isActive
+                          ? "text-blue-600"
+                          : isCompleted
+                            ? "text-emerald-600"
+                            : "text-slate-400"
+                      }`}
+                    >
+                      {label}
+                    </span>
                   </div>
-                  <span
-                    className={`hidden sm:inline text-[11px] font-bold uppercase tracking-wider ${
-                      isActive ? "text-blue-600" : isCompleted ? "text-emerald-600" : "text-slate-400"
-                    }`}
-                  >
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Step Title Header Area */}
-        <div className="mb-8 border-b border-slate-100 pb-6">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-600">
-              {activeSection.badge === "•" ? activeStep + 1 : activeSection.badge}
+        <div className="mb-8 rounded-2xl border border-slate-100 bg-gradient-to-br from-slate-50/80 to-white px-5 py-5 sm:px-6">
+          <div className="flex items-start gap-3.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-200/60">
+              {activeSection.badge}
             </span>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">
-                {activeSection.title}
-              </h2>
-              {/* PretextAnimatedHeight for dynamic subtitle transition */}
+            <div className="min-w-0 flex-1">
+              <PretextAnimatedHeight
+                text={activeSection.title}
+                font="bold 20px Inter"
+                lineHeight={28}
+              >
+                <h2 className="text-lg font-bold leading-tight text-slate-800 sm:text-xl">
+                  {activeSection.title}
+                </h2>
+              </PretextAnimatedHeight>
               <PretextAnimatedHeight
                 text={activeSection.subtitle}
                 font="13px Inter"
-                lineHeight={18}
-                className="mt-1"
+                lineHeight={20}
+                className="mt-1.5"
               >
-                <p className="text-xs sm:text-sm text-slate-500">
+                <p className="text-xs leading-relaxed text-slate-500 sm:text-sm">
                   {activeSection.subtitle}
                 </p>
               </PretextAnimatedHeight>
@@ -256,68 +244,65 @@ export default function CounsellingForm() {
           </div>
         </div>
 
-        {/* Step Fields Wrapper */}
-        <form onSubmit={onSubmit} className="space-y-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeStep}
-              initial={{ opacity: 0, x: 15 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -15 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div
-                className={
-                  activeSection.id === "candidate-details"
-                    ? "grid gap-5 sm:grid-cols-2"
-                    : "space-y-5"
-                }
+        <form
+          onSubmit={handleFormSubmit}
+          onKeyDown={handleFormKeyDown}
+          noValidate
+          className="space-y-6"
+        >
+          <AnimatedHeight durationMs={360}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeStep}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               >
-                {activeSection.fields.map((field) => (
-                  <FormFieldRenderer
-                    key={field.name}
-                    config={field}
-                    control={control}
-                    errors={errors}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                <div className="space-y-4 sm:space-y-5">
+                  {activeSection.fields.map((field) => (
+                    <FormFieldRenderer
+                      key={field.name}
+                      config={field}
+                      control={control}
+                      errors={errors}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </AnimatedHeight>
 
-          {/* Actions Bottom Bar */}
-          <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-6">
-            <div>
-              {activeStep > 0 && (
+          <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
+            <div className="min-w-[88px]">
+              {(activeStep > 0 || onCancel) && (
                 <button
-                  key="back-button"
                   type="button"
                   onClick={handleBack}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back
+                  {activeStep === 0 ? "Cancel" : "Back"}
                 </button>
               )}
             </div>
 
             <div>
-              {activeStep < counsellingFormSections.length - 1 ? (
+              {!isLastStep ? (
                 <button
-                  key="continue-button"
                   type="button"
-                  onClick={handleNext}
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 shadow-md shadow-blue-200 hover:-translate-y-0.5 active:translate-y-0"
+                  onClick={() => void handleNext()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-blue-200/70 transition hover:-translate-y-0.5 hover:bg-blue-700 active:translate-y-0"
                 >
                   Continue
                   <ArrowRight className="h-4 w-4" />
                 </button>
               ) : (
                 <button
-                  key="submit-button"
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmitClick}
                   disabled={submitMutation.isPending}
-                  className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-lg shadow-blue-200 hover:-translate-y-0.5 active:translate-y-0"
+                  className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200/70 transition hover:-translate-y-0.5 hover:bg-blue-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   {submitMutation.isPending ? (
                     <>
@@ -334,11 +319,10 @@ export default function CounsellingForm() {
         </form>
       </div>
 
-      {/* confidential note */}
-      <div className="bg-slate-50 px-6 py-4 border-t border-slate-100">
-        <p className="text-[11px] text-slate-500 leading-normal text-center">
-          Avatar India — Career & Education Counselling · Your responses are
-          confidential and reviewed only by your assigned counsellor.
+      <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+        <p className="text-center text-[11px] leading-normal text-slate-500">
+          Avatar India — AI Assessment · Your responses are confidential and
+          used to generate your personalized course recommendation.
         </p>
       </div>
     </div>

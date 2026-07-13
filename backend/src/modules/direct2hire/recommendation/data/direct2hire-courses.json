@@ -1,0 +1,94 @@
+[
+  {
+    "id": "cmqtgomgu00081vbc7th2ga75",
+    "slug": "ai-fundamentals-chatgpt-mastery",
+    "title": "AI Fundamentals & ChatGPT Mastery",
+    "description": "AI Fundamentals & ChatGPT Mastery is a beginner-friendly 4-week course designed to help students and professionals understand Artificial Intelligence, Large Language Models (LLMs), and Generative AI. Participants will learn to effectively use ChatGPT, Claude, Gemini, Midjourney, and other AI tools for productivity, content creation, research, coding, and automation. The course includes hands-on exercises, prompt engineering techniques, real-world applications, and a final project to build an AI-powered workflow. Upon completion, learners receive the Avatar AI Foundation Certificate.",
+    "level": "BEGINNER",
+    "totalWeeks": 4,
+    "sessions": "8 Sessions",
+    "tools": ["ChatGPT", "Claude", "Gemini", "Midjourney", "Notion AI"],
+    "audience": [
+      {
+        "title": "Students",
+        "body": "Ideal for students who want to gain future-ready AI skills, improve learning efficiency, and explore career opportunities in Artificial Intelligence."
+      },
+      {
+        "title": "Working Professionals",
+        "body": "Perfect for professionals seeking to increase productivity, automate workflows, and stay competitive in the AI-driven workplace."
+      },
+      {
+        "title": "Freelancers & Content Creators",
+        "body": "Use AI to accelerate content creation, research, design, client work, and personal branding efforts."
+      },
+      {
+        "title": "Beginners & AI Enthusiasts",
+        "body": "No technical background required. This course is designed to help anyone start their AI journey with confidence."
+      }
+    ],
+    "whatYouLearn": [
+      {
+        "title": "AI, Machine Learning & LLM Foundations",
+        "body": "Learn the fundamentals of Artificial Intelligence, Machine Learning, Deep Learning, and Large Language Models."
+      },
+      {
+        "title": "Mastering ChatGPT, Claude & Gemini",
+        "body": "Explore the capabilities of today's leading AI assistants and practical workflows for productivity, research, and business tasks."
+      },
+      {
+        "title": "Prompt Engineering Essentials",
+        "body": "Master zero-shot, few-shot, role-based prompting, chain-of-thought techniques, and reusable prompt frameworks."
+      },
+      {
+        "title": "Content Creation, Coding & Visual Generation",
+        "body": "Create professional content, generate code, design visuals, and leverage AI tools for creative and technical projects."
+      }
+    ]
+  },
+  {
+    "id": "cmrdi5bpq000k2fnu4cluacrh",
+    "slug": "ai-mastery-for-social-media-executives",
+    "title": "AI Mastery for Social Media Executives",
+    "description": "Master AI-powered social media marketing by learning content creation, AI tools, paid advertising, SEO, automation, analytics, and real-world campaign execution. This hands-on course covers ChatGPT, Canva AI, Midjourney, Meta Ads, Google Performance Max, Power BI, and more, preparing learners for modern AI-driven digital marketing roles.",
+    "level": "BEGINNER",
+    "totalWeeks": 6,
+    "sessions": "12 sessions",
+    "tools": ["ChatGPT", "Claude", "Midjourney", "Canva", "CapCut AI", "Meta", "Power BI", "Hotjar", "Notion AI"],
+    "audience": [
+      {
+        "title": "Students & Fresh Graduates",
+        "body": "Ideal for learners who want to start a career in Digital Marketing and AI-powered marketing."
+      },
+      {
+        "title": "Social Media Executives",
+        "body": "Designed for professionals looking to improve productivity with AI tools and automation."
+      },
+      {
+        "title": "Freelancers & Content Creators",
+        "body": "Learn how to create high-quality content faster and deliver better results for clients."
+      },
+      {
+        "title": "Entrepreneurs & Business Owners",
+        "body": "Use AI to grow your brand, automate marketing, and increase online visibility."
+      }
+    ],
+    "whatYouLearn": [
+      {
+        "title": "Master AI-Powered Content Creation",
+        "body": "Learn to create engaging social media posts, captions, blogs, and marketing content using ChatGPT, Claude, and Jasper AI."
+      },
+      {
+        "title": "Design Professional AI Creatives",
+        "body": "Create high-quality images, banners, and social media creatives using Canva AI, Midjourney, and Adobe Firefly."
+      },
+      {
+        "title": "Run AI-Powered Advertising Campaigns",
+        "body": "Launch and optimize Meta Ads and Google Performance Max campaigns using AI-driven targeting and automation."
+      },
+      {
+        "title": "Improve SEO with AI Tools",
+        "body": "Perform keyword research, content optimization, and SEO audits using SEMrush, Surfer SEO, and AI assistants."
+      }
+    ]
+  }
+]

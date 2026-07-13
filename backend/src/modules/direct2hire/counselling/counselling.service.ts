@@ -1,19 +1,103 @@
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import { logger } from "@/utils/logger.js";
 import type {
   CreateCounsellingProfileInput,
   UpdateCounsellingProfileInput,
 } from "./counselling.types.js";
+import { RecommendationService } from "../recommendation/recommendation.service.js";
+import type { CourseRecommendationResponse } from "../recommendation/recommendation.types.js";
+import type { CounsellingProfile } from "@prisma/client";
+
+function emptyToNull(value: string | null | undefined): string | null {
+  if (value == null || value.trim() === "") return null;
+  return value.trim();
+}
+
+function toProfileData(data: CreateCounsellingProfileInput) {
+  return {
+    careerField: data.careerField,
+    careerFieldOther: emptyToNull(data.careerFieldOther),
+    futureGoal: data.futureGoal,
+    futureGoalOther: emptyToNull(data.futureGoalOther),
+    careerPriority: data.careerPriority,
+    careerPriorityOther: emptyToNull(data.careerPriorityOther),
+    studyStream: data.studyStream,
+    studyStreamOther: emptyToNull(data.studyStreamOther),
+    planningChallenge: data.planningChallenge,
+    planningChallengeOther: emptyToNull(data.planningChallengeOther),
+    aiUnderstanding: data.aiUnderstanding,
+    aiUnderstandingOther: emptyToNull(data.aiUnderstandingOther),
+    aiFieldImpact: data.aiFieldImpact,
+    aiFieldImpactOther: emptyToNull(data.aiFieldImpactOther),
+    aiSkillBuilding: data.aiSkillBuilding,
+    aiSkillBuildingOther: emptyToNull(data.aiSkillBuildingOther),
+    freeTimeActivity: data.freeTimeActivity,
+    freeTimeOther: emptyToNull(data.freeTimeOther),
+    socialSetting: data.socialSetting,
+    socialSettingOther: emptyToNull(data.socialSettingOther),
+    workEnvironment: data.workEnvironment,
+    workEnvironmentOther: emptyToNull(data.workEnvironmentOther),
+    stressHandling: data.stressHandling,
+    stressHandlingOther: emptyToNull(data.stressHandlingOther),
+    proudMoment: data.proudMoment,
+    proudMomentOther: emptyToNull(data.proudMomentOther),
+    aiEverydayUse: data.aiEverydayUse,
+    aiEverydayUseOther: emptyToNull(data.aiEverydayUseOther),
+    aiCuriosity: data.aiCuriosity,
+    aiCuriosityOther: emptyToNull(data.aiCuriosityOther),
+    personalNote: emptyToNull(data.personalNote),
+  };
+}
+
+export interface CounsellingSubmissionResult {
+  profile: CounsellingProfile;
+  recommendation: CourseRecommendationResponse | null;
+  recommendationStatus: "ready" | "pending";
+}
 
 export class CounsellingService {
+  private readonly recommendationService = new RecommendationService();
+
   async getByUserId(userId: string) {
     return prisma.counsellingProfile.findUnique({
       where: { userId },
     });
   }
 
-  async create(userId: string, data: CreateCounsellingProfileInput) {
+  async getSubmissionBundle(userId: string): Promise<{
+    profile: CounsellingProfile | null;
+    recommendation: CourseRecommendationResponse | null;
+    recommendationStatus: "ready" | "pending" | "none";
+  }> {
+    const profile = await this.getByUserId(userId);
+    if (!profile) {
+      return {
+        profile: null,
+        recommendation: null,
+        recommendationStatus: "none",
+      };
+    }
+
+    const recommendation =
+      await this.recommendationService.getResponseByUserId(userId);
+
+    return {
+      profile,
+      recommendation,
+      recommendationStatus: profile.isSubmitted
+        ? recommendation
+          ? "ready"
+          : "pending"
+        : "none",
+    };
+  }
+
+  async create(
+    userId: string,
+    data: CreateCounsellingProfileInput,
+  ): Promise<CounsellingSubmissionResult> {
     const existing = await prisma.counsellingProfile.findUnique({
       where: { userId },
     });
@@ -24,14 +108,43 @@ export class CounsellingService {
       );
     }
 
-    return prisma.counsellingProfile.create({
-      data: {
-        userId,
-        ...data,
-        isSubmitted: true,
-        submittedAt: new Date(),
-      },
-    });
+    let profile: CounsellingProfile;
+    try {
+      profile = await prisma.counsellingProfile.create({
+        data: {
+          userId,
+          ...toProfileData(data),
+          isSubmitted: true,
+          submittedAt: new Date(),
+        },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("Null constraint violation")) {
+        throw new ApiError(
+          "Database schema is out of date. Run `npx prisma db push` in the backend folder, then retry.",
+          STATUS_CODES.SERVER_ERROR,
+        );
+      }
+      throw err;
+    }
+
+    const recommendation = await this.recommendationService.generateForProfile(
+      userId,
+      profile,
+    );
+
+    if (!recommendation) {
+      logger.warn(
+        `Counselling profile ${profile.id} saved but recommendation generation is pending`,
+      );
+    }
+
+    return {
+      profile,
+      recommendation,
+      recommendationStatus: recommendation ? "ready" : "pending",
+    };
   }
 
   async update(userId: string, data: UpdateCounsellingProfileInput) {
@@ -51,9 +164,98 @@ export class CounsellingService {
       );
     }
 
+    const updateData: Partial<ReturnType<typeof toProfileData>> = {};
+    if (data.careerField !== undefined) updateData.careerField = data.careerField;
+    if (data.careerFieldOther !== undefined) {
+      updateData.careerFieldOther = emptyToNull(data.careerFieldOther);
+    }
+    if (data.futureGoal !== undefined) updateData.futureGoal = data.futureGoal;
+    if (data.futureGoalOther !== undefined) {
+      updateData.futureGoalOther = emptyToNull(data.futureGoalOther);
+    }
+    if (data.careerPriority !== undefined) {
+      updateData.careerPriority = data.careerPriority;
+    }
+    if (data.careerPriorityOther !== undefined) {
+      updateData.careerPriorityOther = emptyToNull(data.careerPriorityOther);
+    }
+    if (data.studyStream !== undefined) updateData.studyStream = data.studyStream;
+    if (data.studyStreamOther !== undefined) {
+      updateData.studyStreamOther = emptyToNull(data.studyStreamOther);
+    }
+    if (data.planningChallenge !== undefined) {
+      updateData.planningChallenge = data.planningChallenge;
+    }
+    if (data.planningChallengeOther !== undefined) {
+      updateData.planningChallengeOther = emptyToNull(
+        data.planningChallengeOther,
+      );
+    }
+    if (data.aiUnderstanding !== undefined) {
+      updateData.aiUnderstanding = data.aiUnderstanding;
+    }
+    if (data.aiUnderstandingOther !== undefined) {
+      updateData.aiUnderstandingOther = emptyToNull(data.aiUnderstandingOther);
+    }
+    if (data.aiFieldImpact !== undefined) {
+      updateData.aiFieldImpact = data.aiFieldImpact;
+    }
+    if (data.aiFieldImpactOther !== undefined) {
+      updateData.aiFieldImpactOther = emptyToNull(data.aiFieldImpactOther);
+    }
+    if (data.aiSkillBuilding !== undefined) {
+      updateData.aiSkillBuilding = data.aiSkillBuilding;
+    }
+    if (data.aiSkillBuildingOther !== undefined) {
+      updateData.aiSkillBuildingOther = emptyToNull(data.aiSkillBuildingOther);
+    }
+    if (data.freeTimeActivity !== undefined) {
+      updateData.freeTimeActivity = data.freeTimeActivity;
+    }
+    if (data.freeTimeOther !== undefined) {
+      updateData.freeTimeOther = emptyToNull(data.freeTimeOther);
+    }
+    if (data.socialSetting !== undefined) {
+      updateData.socialSetting = data.socialSetting;
+    }
+    if (data.socialSettingOther !== undefined) {
+      updateData.socialSettingOther = emptyToNull(data.socialSettingOther);
+    }
+    if (data.workEnvironment !== undefined) {
+      updateData.workEnvironment = data.workEnvironment;
+    }
+    if (data.workEnvironmentOther !== undefined) {
+      updateData.workEnvironmentOther = emptyToNull(data.workEnvironmentOther);
+    }
+    if (data.stressHandling !== undefined) {
+      updateData.stressHandling = data.stressHandling;
+    }
+    if (data.stressHandlingOther !== undefined) {
+      updateData.stressHandlingOther = emptyToNull(data.stressHandlingOther);
+    }
+    if (data.proudMoment !== undefined) updateData.proudMoment = data.proudMoment;
+    if (data.proudMomentOther !== undefined) {
+      updateData.proudMomentOther = emptyToNull(data.proudMomentOther);
+    }
+    if (data.aiEverydayUse !== undefined) {
+      updateData.aiEverydayUse = data.aiEverydayUse;
+    }
+    if (data.aiEverydayUseOther !== undefined) {
+      updateData.aiEverydayUseOther = emptyToNull(data.aiEverydayUseOther);
+    }
+    if (data.aiCuriosity !== undefined) {
+      updateData.aiCuriosity = data.aiCuriosity;
+    }
+    if (data.aiCuriosityOther !== undefined) {
+      updateData.aiCuriosityOther = emptyToNull(data.aiCuriosityOther);
+    }
+    if (data.personalNote !== undefined) {
+      updateData.personalNote = emptyToNull(data.personalNote);
+    }
+
     return prisma.counsellingProfile.update({
       where: { userId },
-      data,
+      data: updateData,
     });
   }
 }

@@ -23,17 +23,23 @@ const NAV = [
     icon: UserCircle,
     exact: false,
   },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   {
-    href: "/dashboard/counselling",
-    label: "Counselling",
-    icon: MessageCircleHeart,
-    exact: false,
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    exact: true,
   },
+
   {
     href: "/dashboard/assessment",
     label: "AI Assessment",
     icon: ClipboardCheck,
+    exact: false,
+  },
+  {
+    href: "/dashboard/counselling",
+    label: "Counselling",
+    icon: MessageCircleHeart,
     exact: false,
   },
   {
@@ -108,15 +114,15 @@ export default function DashboardLayout({
             Direct2Hire dashboard locked
           </h1>
           <p className="text-sm text-black/45 mb-6">
-            This dashboard is only available to enrolled Direct2Hire
-            students. Complete your enrollment to unlock counselling,
-            assessment, learning, internship, and placement tracking.
+            This dashboard is only available to enrolled Direct2Hire students.
+            Complete your enrollment to unlock AI assessment, counselling,
+            learning, internship, and placement tracking.
           </p>
           <Link
-            href="/direct2hire"
+            href="/direct2hire/enroll"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-ink-950 text-sm font-semibold hover:bg-brand-400 transition-colors"
           >
-            View Direct2Hire program
+            Complete enrollment
           </Link>
         </div>
       </div>

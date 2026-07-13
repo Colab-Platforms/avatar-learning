@@ -21,13 +21,33 @@ export const getMyStatus = async (
     try {
         const status = await service.getMyStatus(req.user!.id);
         sendResponse(res, true, status, "Direct2Hire status fetched");
-    } catch (err: any) {
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
         sendResponse(
             res,
             false,
             null,
-            err.message,
-            err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+            error.message ?? "Failed to fetch status",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const devContinueAsPaid = async (
+    req: AuthRequest,
+    res: Response,
+): Promise<void> => {
+    try {
+        const status = await service.continueAsPaidForDev(req.user!.id);
+        sendResponse(res, true, status, "Development access granted");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to grant development access",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
         );
     }
 };

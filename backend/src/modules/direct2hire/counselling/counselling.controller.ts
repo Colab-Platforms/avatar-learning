@@ -15,15 +15,20 @@ export const getMyProfile = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const profile = await service.getByUserId(req.user!.id);
-    sendResponse(res, true, profile, "Counselling profile fetched");
-  } catch (err: any) {
+    const bundle = await service.getSubmissionBundle(req.user!.id);
+    const statusCode =
+      bundle.recommendationStatus === "pending"
+        ? STATUS_CODES.ACCEPTED
+        : STATUS_CODES.OK;
+    sendResponse(res, true, bundle, "Counselling profile fetched", statusCode);
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
     sendResponse(
       res,
       false,
       null,
-      err.message,
-      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+      error.message ?? "Failed to fetch counselling profile",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
   }
 };
@@ -38,21 +43,34 @@ export const createProfile = async (
       sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
       return;
     }
-    const profile = await service.create(req.user!.id, value);
+
+    const result = await service.create(req.user!.id, value);
+    const statusCode =
+      result.recommendationStatus === "pending"
+        ? STATUS_CODES.ACCEPTED
+        : STATUS_CODES.CREATED;
+
     sendResponse(
       res,
       true,
-      profile,
-      "Counselling profile submitted",
-      STATUS_CODES.CREATED,
+      {
+        profile: result.profile,
+        recommendation: result.recommendation,
+        recommendationStatus: result.recommendationStatus,
+      },
+      result.recommendationStatus === "pending"
+        ? "Counselling profile submitted. AI recommendation is being generated."
+        : "Counselling profile submitted",
+      statusCode,
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
     sendResponse(
       res,
       false,
       null,
-      err.message,
-      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+      error.message ?? "Failed to submit counselling profile",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
   }
 };
@@ -69,13 +87,14 @@ export const updateProfile = async (
     }
     const profile = await service.update(req.user!.id, value);
     sendResponse(res, true, profile, "Counselling profile updated");
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
     sendResponse(
       res,
       false,
       null,
-      err.message,
-      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+      error.message ?? "Failed to update counselling profile",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
   }
 };

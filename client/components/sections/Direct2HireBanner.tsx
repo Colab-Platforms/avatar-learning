@@ -23,14 +23,14 @@ const STEPS = [
     num: 1,
     icon: Users,
     title: "Counselling",
-    desc: "Personalized guidance to understand your goals and strengths.",
+    desc: "1-on-1 guidance with an expert counselor after your assessment results are ready.",
     active: false,
   },
   {
     num: 2,
     icon: ClipboardList,
-    title: "Assessment",
-    desc: "AI-driven assessments to evaluate skills and identify opportunities.",
+    title: "AI Assessment",
+    desc: "Answer a short questionnaire and get an AI-powered course recommendation in your dashboard.",
     active: false,
   },
   {

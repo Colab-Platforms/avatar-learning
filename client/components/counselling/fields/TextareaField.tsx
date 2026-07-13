@@ -20,18 +20,26 @@ export default function TextareaField({
   error,
 }: TextareaFieldProps) {
   return (
-    <div>
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5 shadow-sm shadow-slate-100/50 sm:p-6">
+      {config.questionNumber && (
+        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">
+          Question {config.questionNumber}
+        </p>
+      )}
       <label
         htmlFor={config.name}
-        className="mb-1.5 block text-sm font-semibold text-slate-700"
+        className="block text-sm font-bold leading-snug text-slate-800"
       >
         {config.label}
       </label>
+      {config.description && (
+        <p className="mt-1 text-xs text-slate-500">{config.description}</p>
+      )}
       <Controller
         name={config.name as keyof CounsellingFormValues}
         control={control}
         render={({ field }) => (
-          <>
+          <div className="mt-4">
             <textarea
               {...field}
               id={config.name}
@@ -44,7 +52,7 @@ export default function TextareaField({
                 {String(field.value ?? "").length}/{config.maxLength}
               </p>
             )}
-          </>
+          </div>
         )}
       />
       {error && (

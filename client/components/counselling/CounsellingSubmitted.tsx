@@ -28,9 +28,8 @@ export default function CounsellingSubmitted({
         Form Submitted Successfully
       </h2>
       <p className="mx-auto mt-3 max-w-xl text-sm text-slate-600">
-        Thank you, {profile.fullName}. Your pre-counselling information has
-        been saved and shared with your counsellor so they can prepare for your
-        first session.
+        Your pre-counselling information has been saved and shared with your
+        counsellor so they can prepare for your first session.
       </p>
       {submittedAt && (
         <p className="mt-4 text-xs font-medium text-emerald-700">

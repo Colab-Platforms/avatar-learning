@@ -3,12 +3,6 @@ import apiClient from "@/lib/apiClient";
 export interface CounsellingProfile {
   id: string;
   userId: string;
-  fullName: string;
-  age: number;
-  gradeYear: string;
-  institutionName: string;
-  contactNumber: string;
-  email: string;
   careerField: string;
   careerFieldOther: string | null;
   futureGoal: string;
@@ -19,6 +13,12 @@ export interface CounsellingProfile {
   studyStreamOther: string | null;
   planningChallenge: string;
   planningChallengeOther: string | null;
+  aiUnderstanding: string;
+  aiUnderstandingOther: string | null;
+  aiFieldImpact: string;
+  aiFieldImpactOther: string | null;
+  aiSkillBuilding: string;
+  aiSkillBuildingOther: string | null;
   freeTimeActivity: string;
   freeTimeOther: string | null;
   socialSetting: string;
@@ -29,11 +29,43 @@ export interface CounsellingProfile {
   stressHandlingOther: string | null;
   proudMoment: string;
   proudMomentOther: string | null;
+  aiEverydayUse: string;
+  aiEverydayUseOther: string | null;
+  aiCuriosity: string;
+  aiCuriosityOther: string | null;
   personalNote: string | null;
   isSubmitted: boolean;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CourseRecommendation {
+  id: string;
+  userId: string;
+  counsellingProfileId: string;
+  recommendedCourseId: string;
+  recommendedCourseSlug: string;
+  recommendedCourseTitle: string;
+  confidenceScore: number | null;
+  reasoning: string;
+  studentStrengths: string[] | null;
+  growthAreas: string[] | null;
+  summary: string | null;
+  provider: string;
+  model: string;
+  promptVersion: string;
+  generatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RecommendationStatus = "ready" | "pending" | "none";
+
+export interface CounsellingBundle {
+  profile: CounsellingProfile | null;
+  recommendation: CourseRecommendation | null;
+  recommendationStatus: RecommendationStatus;
 }
 
 export type SubmitCounsellingPayload = Omit<
@@ -46,14 +78,20 @@ export type SubmitCounsellingPayload = Omit<
   | "updatedAt"
 >;
 
-export const fetchCounsellingProfile = (): Promise<CounsellingProfile | null> =>
+export type CounsellingSubmissionResponse = {
+  profile: CounsellingProfile;
+  recommendation: CourseRecommendation | null;
+  recommendationStatus: "ready" | "pending";
+};
+
+export const fetchCounsellingProfile = (): Promise<CounsellingBundle> =>
   apiClient
     .get("/direct2hire/counselling")
     .then((response) => response.data.data);
 
 export const submitCounsellingProfile = (
   payload: SubmitCounsellingPayload,
-): Promise<CounsellingProfile> =>
+): Promise<CounsellingSubmissionResponse> =>
   apiClient
     .post("/direct2hire/counselling", payload)
     .then((response) => response.data.data);

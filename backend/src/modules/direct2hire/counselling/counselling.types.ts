@@ -1,12 +1,6 @@
 export interface CounsellingProfileResponse {
   id: string;
   userId: string;
-  fullName: string;
-  age: number;
-  gradeYear: string;
-  institutionName: string;
-  contactNumber: string;
-  email: string;
   careerField: string;
   careerFieldOther: string | null;
   futureGoal: string;
@@ -17,6 +11,12 @@ export interface CounsellingProfileResponse {
   studyStreamOther: string | null;
   planningChallenge: string;
   planningChallengeOther: string | null;
+  aiUnderstanding: string;
+  aiUnderstandingOther: string | null;
+  aiFieldImpact: string;
+  aiFieldImpactOther: string | null;
+  aiSkillBuilding: string;
+  aiSkillBuildingOther: string | null;
   freeTimeActivity: string;
   freeTimeOther: string | null;
   socialSetting: string;
@@ -27,6 +27,10 @@ export interface CounsellingProfileResponse {
   stressHandlingOther: string | null;
   proudMoment: string;
   proudMomentOther: string | null;
+  aiEverydayUse: string;
+  aiEverydayUseOther: string | null;
+  aiCuriosity: string;
+  aiCuriosityOther: string | null;
   personalNote: string | null;
   isSubmitted: boolean;
   submittedAt: string | null;
@@ -35,12 +39,6 @@ export interface CounsellingProfileResponse {
 }
 
 export interface CreateCounsellingProfileInput {
-  fullName: string;
-  age: number;
-  gradeYear: string;
-  institutionName: string;
-  contactNumber: string;
-  email: string;
   careerField: string;
   careerFieldOther?: string | null;
   futureGoal: string;
@@ -51,6 +49,12 @@ export interface CreateCounsellingProfileInput {
   studyStreamOther?: string | null;
   planningChallenge: string;
   planningChallengeOther?: string | null;
+  aiUnderstanding: string;
+  aiUnderstandingOther?: string | null;
+  aiFieldImpact: string;
+  aiFieldImpactOther?: string | null;
+  aiSkillBuilding: string;
+  aiSkillBuildingOther?: string | null;
   freeTimeActivity: string;
   freeTimeOther?: string | null;
   socialSetting: string;
@@ -61,6 +65,10 @@ export interface CreateCounsellingProfileInput {
   stressHandlingOther?: string | null;
   proudMoment: string;
   proudMomentOther?: string | null;
+  aiEverydayUse: string;
+  aiEverydayUseOther?: string | null;
+  aiCuriosity: string;
+  aiCuriosityOther?: string | null;
   personalNote?: string | null;
 }
 

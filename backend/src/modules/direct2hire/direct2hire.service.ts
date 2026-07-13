@@ -105,4 +105,32 @@ export class Direct2HireService {
         const totalRecords = await prisma.direct2HireEnrollment.count();
         return { enrollments, totalRecords };
     }
+
+    /**
+     * Development-only bypass until payment gateway KYC is complete.
+     */
+    async continueAsPaidForDev(userId: string) {
+        if (process.env.NODE_ENV === "production") {
+            throw new ApiError(
+                "Not available in production",
+                STATUS_CODES.FORBIDDEN,
+            );
+        }
+
+        const enrollment = await this.getOrCreateEnrollment(userId);
+        if (enrollment.status !== "PAID") {
+            await prisma.direct2HireEnrollment.update({
+                where: { id: enrollment.id },
+                data: { status: "PAID" },
+            });
+            await this.grantCourseAccess(userId);
+        }
+
+        await prisma.direct2HireLead.updateMany({
+            where: { userId },
+            data: { paymentCompleted: true },
+        });
+
+        return this.getMyStatus(userId);
+    }
 }

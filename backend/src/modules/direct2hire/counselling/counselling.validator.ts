@@ -47,6 +47,33 @@ const planningChallengeOptions = [
   OTHER,
 ] as const;
 
+const aiUnderstandingOptions = [
+  "I don't really know what AI is",
+  "I've heard of it but never used it",
+  "I use AI tools sometimes (like ChatGPT)",
+  "I use AI tools regularly for study/work",
+  "I actively learn about how AI works",
+  OTHER,
+] as const;
+
+const aiFieldImpactOptions = [
+  "Yes, a lot — it'll transform the field",
+  "Yes, but only some parts of the job",
+  "Not sure / never thought about it",
+  "Probably not much",
+  "No, my field is untouched by AI",
+  OTHER,
+] as const;
+
+const aiSkillBuildingOptions = [
+  "Prompting / using AI tools well",
+  "Basic coding or no-code AI tools",
+  "Data or analytics skills",
+  "None yet, but I want to learn",
+  "Not interested in this area",
+  OTHER,
+] as const;
+
 const freeTimeOptions = [
   "Reading",
   "Sports & fitness",
@@ -92,29 +119,26 @@ const proudMomentOptions = [
   OTHER,
 ] as const;
 
+const aiEverydayUseOptions = [
+  "Homework or study help",
+  "Just for fun / curiosity / chatting",
+  "Planning, organizing or productivity",
+  "I don't use AI tools personally",
+  "I actively explore new AI tools",
+  OTHER,
+] as const;
+
+const aiCuriosityOptions = [
+  "Very curious — want to master it",
+  "Somewhat interested, if it's useful",
+  "Neutral — will learn if required",
+  "Not particularly interested",
+  "A bit intimidated by it",
+  OTHER,
+] as const;
+
 
 const baseProfileFields = {
-  fullName: Joi.string().trim().required().messages({
-    "any.required": "Full name is required",
-  }),
-  age: Joi.number().integer().min(10).max(100).required().messages({
-    "any.required": "Age is required",
-    "number.min": "Age must be at least 10",
-    "number.max": "Age must be at most 100",
-  }),
-  gradeYear: Joi.string().trim().required().messages({
-    "any.required": "Grade / year of study is required",
-  }),
-  institutionName: Joi.string().trim().required().messages({
-    "any.required": "School / college is required",
-  }),
-  contactNumber: Joi.string().trim().required().messages({
-    "any.required": "Contact number is required",
-  }),
-  email: Joi.string().trim().email().required().messages({
-    "any.required": "Email is required",
-    "string.email": "Email must be valid",
-  }),
   careerField: Joi.string()
     .valid(...careerFieldOptions)
     .required()
@@ -245,6 +269,71 @@ const baseProfileFields = {
       }),
       otherwise: Joi.optional().allow(null, ""),
     }),
+  aiUnderstanding: Joi.string()
+    .valid(...aiUnderstandingOptions)
+    .required()
+    .messages({ "any.required": "AI understanding is required" }),
+  aiUnderstandingOther: Joi.string()
+    .trim()
+    .when("aiUnderstanding", {
+      is: OTHER,
+      then: Joi.required().messages({
+        "any.required": "Please specify your AI understanding",
+      }),
+      otherwise: Joi.optional().allow(null, ""),
+    }),
+  aiFieldImpact: Joi.string()
+    .valid(...aiFieldImpactOptions)
+    .required()
+    .messages({ "any.required": "AI field impact is required" }),
+  aiFieldImpactOther: Joi.string()
+    .trim()
+    .when("aiFieldImpact", {
+      is: OTHER,
+      then: Joi.required().messages({
+        "any.required": "Please specify how AI impacts your field",
+      }),
+      otherwise: Joi.optional().allow(null, ""),
+    }),
+  aiSkillBuilding: Joi.string()
+    .valid(...aiSkillBuildingOptions)
+    .required()
+    .messages({ "any.required": "AI skill building is required" }),
+  aiSkillBuildingOther: Joi.string()
+    .trim()
+    .when("aiSkillBuilding", {
+      is: OTHER,
+      then: Joi.required().messages({
+        "any.required": "Please specify the AI skill you've built",
+      }),
+      otherwise: Joi.optional().allow(null, ""),
+    }),
+  aiEverydayUse: Joi.string()
+    .valid(...aiEverydayUseOptions)
+    .required()
+    .messages({ "any.required": "AI everyday use is required" }),
+  aiEverydayUseOther: Joi.string()
+    .trim()
+    .when("aiEverydayUse", {
+      is: OTHER,
+      then: Joi.required().messages({
+        "any.required": "Please specify your everyday AI use",
+      }),
+      otherwise: Joi.optional().allow(null, ""),
+    }),
+  aiCuriosity: Joi.string()
+    .valid(...aiCuriosityOptions)
+    .required()
+    .messages({ "any.required": "AI curiosity is required" }),
+  aiCuriosityOther: Joi.string()
+    .trim()
+    .when("aiCuriosity", {
+      is: OTHER,
+      then: Joi.required().messages({
+        "any.required": "Please specify your AI curiosity",
+      }),
+      otherwise: Joi.optional().allow(null, ""),
+    }),
   personalNote: Joi.string().trim().max(600).optional().allow(null, ""),
 };
 
@@ -266,10 +355,15 @@ export {
   careerPriorityOptions,
   studyStreamOptions,
   planningChallengeOptions,
+  aiUnderstandingOptions,
+  aiFieldImpactOptions,
+  aiSkillBuildingOptions,
   freeTimeOptions,
   socialSettingOptions,
   workEnvironmentOptions,
   stressHandlingOptions,
   proudMomentOptions,
+  aiEverydayUseOptions,
+  aiCuriosityOptions,
   OTHER,
 };

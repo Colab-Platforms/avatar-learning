@@ -24,8 +24,14 @@ export function useSubmitCounselling() {
   return useMutation({
     mutationFn: (payload: SubmitCounsellingPayload) =>
       submitCounsellingProfile(payload),
-    onSuccess: async () => {
-      toast.success("Form submitted successfully");
+    onSuccess: async (result) => {
+      if (result.recommendationStatus === "pending") {
+        toast.success(
+          "Assessment submitted. AI recommendation is being generated.",
+        );
+      } else {
+        toast.success("Assessment submitted successfully");
+      }
       await queryClient.invalidateQueries({
         queryKey: queryKeys.counsellingProfile,
       });

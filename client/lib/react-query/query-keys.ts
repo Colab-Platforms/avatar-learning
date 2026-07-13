@@ -15,4 +15,5 @@ export const queryKeys = {
   internshipCategories: ["internship-categories"] as const,
   direct2hireStatus: ["direct2hire-status"] as const,
   counsellingProfile: ["counselling-profile"] as const,
+  direct2hireLead: ["direct2hire-lead"] as const,
 };

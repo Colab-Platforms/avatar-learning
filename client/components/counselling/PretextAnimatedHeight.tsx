@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+const HEIGHT_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
 function usePretextHeight(
   text: string | undefined,
   font: string = "13px Inter",
@@ -63,11 +65,52 @@ export default function PretextAnimatedHeight({
       ref={ref}
       style={{
         height: height > 0 ? `${height}px` : "auto",
-        transition: "height 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+        transition: `height 0.3s ${HEIGHT_EASE}`,
       }}
       className={`overflow-hidden ${className ?? ""}`}
     >
       {children}
+    </div>
+  );
+}
+
+interface AnimatedHeightProps {
+  children: React.ReactNode;
+  className?: string;
+  durationMs?: number;
+}
+
+export function AnimatedHeight({
+  children,
+  className,
+  durationMs = 320,
+}: AnimatedHeightProps) {
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const node = innerRef.current;
+    if (!node) return;
+
+    const updateHeight = () => {
+      setHeight(node.getBoundingClientRect().height);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [children]);
+
+  return (
+    <div
+      style={{
+        height: `${height}px`,
+        transition: `height ${durationMs}ms ${HEIGHT_EASE}`,
+      }}
+      className={`overflow-hidden ${className ?? ""}`}
+    >
+      <div ref={innerRef}>{children}</div>
     </div>
   );
 }

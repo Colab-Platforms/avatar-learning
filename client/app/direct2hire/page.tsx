@@ -76,13 +76,13 @@ const JOURNEY_STEPS = [
     num: "01",
     icon: Users,
     title: "Career Counselling",
-    desc: "A 1-on-1 session with an experienced counselor to understand your goals, strengths, and constraints — no generic advice.",
+    desc: "A 1-on-1 session with an experienced counselor to discuss your goals, strengths, and next steps — scheduled after your AI assessment.",
   },
   {
     num: "02",
     icon: BrainCircuit,
     title: "AI-Powered Assessment",
-    desc: "A data-backed assessment maps your personality, aptitude, and interests to the careers where you're most likely to succeed.",
+    desc: "Complete a short questionnaire in your dashboard and receive an AI-powered course recommendation tailored to your goals, interests, and personality.",
   },
   {
     num: "03",
@@ -200,7 +200,7 @@ const DIFFERENTIATORS = [
 const FAQS = [
   {
     q: "Is the ₹499 session the entire Direct2Hire program?",
-    a: "It's Step 1. The ₹499 session covers your counselling and AI assessment. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step Direct2Hire journey.",
+    a: "It covers your first steps in Direct2Hire — an AI assessment with a personalized course recommendation, plus a 1-on-1 counselling session. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step journey.",
   },
   {
     q: "Am I locked into the full program after the session?",
@@ -208,7 +208,7 @@ const FAQS = [
   },
   {
     q: "Is ₹499 really enough for proper guidance?",
-    a: "Yes. The session is compact but complete — you get an AI-powered assessment, a 30-minute 1-on-1 consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
+    a: "Yes. You get an AI-powered assessment with a course recommendation, a 30-minute 1-on-1 counselling consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
   },
   {
     q: "Who will conduct the session?",
@@ -327,7 +327,7 @@ export default function Direct2HirePage() {
 
                 <ScrollReveal animation="fade-up" delay={150}>
                   <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
-                    <Link href="/contact" className="w-full sm:w-auto">
+                    <Link href="/direct2hire/enroll" className="w-full sm:w-auto">
                       <Button
                         variant="primary"
                         size="lg"
@@ -700,7 +700,7 @@ export default function Direct2HirePage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/contact" className="w-full sm:w-fit shrink-0">
+                <Link href="/direct2hire/enroll" className="w-full sm:w-fit shrink-0">
                   <Button variant="primary" size="md" className="w-full sm:w-fit">
                     Book now for ₹499/- <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -729,7 +729,7 @@ export default function Direct2HirePage() {
                     changes for you.
                   </p>
                   <Link
-                    href="/contact"
+                    href="/direct2hire/enroll"
                     className="block w-full sm:inline-block sm:w-fit"
                   >
                     <Button
@@ -786,7 +786,7 @@ export default function Direct2HirePage() {
                     </span>
                   </h2>
                   <p className="mt-3 text-text-muted max-w-xl">
-                    Counselling, assessment, AI skilling, internship, and
+                    AI assessment, counselling, AI skilling, internship, and
                     placement — real value worth{" "}
                     <span className="line-through text-text-subtle">
                       ₹12,995
@@ -794,7 +794,7 @@ export default function Direct2HirePage() {
                     , now available at a fraction of the cost.
                   </p>
                 </div>
-                <Link href="/contact" className="w-full sm:w-fit shrink-0">
+                <Link href="/direct2hire/enroll" className="w-full sm:w-fit shrink-0">
                   <Button
                     variant="primary"
                     size="md"
@@ -847,7 +847,7 @@ export default function Direct2HirePage() {
                     Save ₹12,495 (96% OFF)
                   </span>
                   <Link
-                    href="/contact"
+                    href="/direct2hire/enroll"
                     className="relative mt-6 sm:mt-7 w-full sm:w-fit"
                   >
                     <Button variant="primary" size="md" className="w-full">
@@ -975,7 +975,7 @@ export default function Direct2HirePage() {
                   and expert support — starting at just ₹499.
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
-                  <Link href="/contact" className="w-full sm:w-auto">
+                  <Link href="/direct2hire/enroll" className="w-full sm:w-auto">
                     <Button
                       variant="primary"
                       size="lg"

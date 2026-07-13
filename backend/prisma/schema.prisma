@@ -80,52 +80,54 @@ enum PaymentTransactionStatus {
 }
 
 model User {
-  id                String              @id @default(cuid())
-  firstName         String?             @map("first_name")
-  lastName          String?             @map("last_name")
-  phoneNo           String?             @unique @map("phone_no")
-  address           String?
-  gender            String?
-  state             String?
-  country           String?
-  profileImage      String?             @map("profile_image")
-  resumeUrl         String?             @map("resume_url")
-  resumePublicId    String?             @map("resume_public_id")
+  id             String  @id @default(cuid())
+  firstName      String? @map("first_name")
+  lastName       String? @map("last_name")
+  phoneNo        String? @unique @map("phone_no")
+  address        String?
+  gender         String?
+  state          String?
+  country        String?
+  profileImage   String? @map("profile_image")
+  resumeUrl      String? @map("resume_url")
+  resumePublicId String? @map("resume_public_id")
 
-  currentStudyLevel CurrentStudyLevel?  @map("current_studylevel")
+  currentStudyLevel CurrentStudyLevel? @map("current_studylevel")
 
-  email             String              @unique
-  password          String?
+  email    String  @unique
+  password String?
 
-  googleId          String?             @unique @map("google_id")
-  authProvider      AuthProvider        @default(LOCAL) @map("auth_provider")
+  googleId     String?      @unique @map("google_id")
+  authProvider AuthProvider @default(LOCAL) @map("auth_provider")
 
-  isEmailVerified   Boolean             @default(false) @map("is_email_verified")
-  isPhoneVerified   Boolean             @default(false) @map("is_phone_verified")
-  isActive          Boolean             @default(true) @map("is_active")
-  isDeleted         Boolean             @default(false) @map("is_deleted")
+  isEmailVerified Boolean @default(false) @map("is_email_verified")
+  isPhoneVerified Boolean @default(false) @map("is_phone_verified")
+  isActive        Boolean @default(true) @map("is_active")
+  isDeleted       Boolean @default(false) @map("is_deleted")
 
-  deletedAt         DateTime?           @map("deleted_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  createdAt         DateTime            @default(now()) @map("created_at")
-  updatedAt         DateTime?           @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
-  userRoleMappings  UserRoleMapping[]
-  enrolledCourses   CourseUserMapper[]
-  sessions          Session[]
-  otpVerifications  OtpVerification[]
-  passwordResets    PasswordResetToken[]
+  userRoleMappings UserRoleMapping[]
+  enrolledCourses  CourseUserMapper[]
+  sessions         Session[]
+  otpVerifications OtpVerification[]
+  passwordResets   PasswordResetToken[]
 
-  createdCourses    Courses[]           @relation("CourseCreator")
-  resourceDownloads ResourceDownload[]
-  createdInternships Internship[]        @relation("InternshipCreator")
+  createdCourses         Courses[]               @relation("CourseCreator")
+  resourceDownloads      ResourceDownload[]
+  createdInternships     Internship[]            @relation("InternshipCreator")
   internshipApplications InternshipApplication[]
-  createdInvestorDocs InvestorDocument[] @relation("InvestorDocCreatedBy")
+  createdInvestorDocs    InvestorDocument[]      @relation("InvestorDocCreatedBy")
 
   direct2hireEnrollments Direct2HireEnrollment[]
-  lessonProgress LessonProgress[]
+  direct2HireLead        Direct2HireLead?
+  lessonProgress         LessonProgress[]
   paymentOrders          PaymentOrder[]
   counsellingProfile     CounsellingProfile?
+  courseRecommendation   CourseRecommendation?
 
   @@index([email])
   @@index([isActive])
@@ -133,15 +135,15 @@ model User {
 }
 
 model OtpVerification {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  email     String
-  otpCode   String   @map("otp_code")
-  type      OtpType
-  used      Boolean  @default(false)
+  email   String
+  otpCode String  @map("otp_code")
+  type    OtpType
+  used    Boolean @default(false)
 
-  userId    String?  @map("user_id")
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -152,13 +154,13 @@ model OtpVerification {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId    String   @map("user_id")
-  token     String   @unique
-  used      Boolean  @default(false)
+  userId String  @map("user_id")
+  token  String  @unique
+  used   Boolean @default(false)
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -169,12 +171,12 @@ model PasswordResetToken {
 }
 
 model Role {
-  id               String              @id @default(cuid())
-  name             String             @unique
-  description      String?
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
 
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime?          @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   userRoleMappings UserRoleMapping[]
 
@@ -182,57 +184,55 @@ model Role {
 }
 
 model UserRoleMapping {
-  id         String      @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId     String      @map("user_id")
-  roleId     String      @map("role_id")
+  userId String @map("user_id")
+  roleId String @map("role_id")
 
   assignedAt DateTime @default(now()) @map("assigned_at")
 
   assignedBy String? @map("assigned_by")
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
   @@index([userId])
   @@index([roleId])
-
   @@map("user_role_mapping")
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  refreshToken String   @map("refresh_token")
+  refreshToken String  @map("refresh_token")
   device       String?
 
-  userId       String      @map("user_id")
+  userId String @map("user_id")
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime @default(now()) @map("created_at")
-  expiresAt    DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
 
   @@index([userId])
   @@index([expiresAt])
-
   @@map("sessions")
 }
 
 model Category {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  name        String    @unique
-  slug        String    @unique
+  name String @unique
+  slug String @unique
 
   description String?
   thumbnail   String?
 
-  isActive    Boolean   @default(true) @map("is_active")
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime? @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   courses     Courses[]
   internships Internship[]
@@ -242,48 +242,48 @@ model Category {
 }
 
 model Courses {
-    id           String      @id @default(cuid())
+  id String @id @default(cuid())
 
-  categoryId   String         @map("category_id")
+  categoryId String @map("category_id")
 
-  title        String
-  slug         String      @unique
+  title String
+  slug  String @unique
 
-  description  String?
-  thumbnail    String?
-  heroImage    String?     @map("hero_image")
-  bannerImage  String?     @map("banner_image")
+  description String?
+  thumbnail   String?
+  heroImage   String? @map("hero_image")
+  bannerImage String? @map("banner_image")
 
-  level        CourseLevel
+  level CourseLevel
 
-  price        Int         @default(0)
+  price Int @default(0)
 
-  totalWeeks   Int         @default(1) @map("total_weeks")
+  totalWeeks Int @default(1) @map("total_weeks")
 
-  tools        String[]    @default([])
-  sessions     String?
-  certificate  Boolean     @default(false)
-  rating       Float?
-  reviews      String?
-  startDate    String?     @map("start_date")
-  seats        String?
+  tools       String[] @default([])
+  sessions    String?
+  certificate Boolean  @default(false)
+  rating      Float?
+  reviews     String?
+  startDate   String?  @map("start_date")
+  seats       String?
 
-  whatYouLearn Json?       @map("what_you_learn")
-  audience     Json?
+  whatYouLearn        Json?   @map("what_you_learn")
+  audience            Json?
   isDirect2HireCourse Boolean @default(false) @map("is_direct2hire_course")
-  isPublished  Boolean     @default(false) @map("is_published")
+  isPublished         Boolean @default(false) @map("is_published")
 
-  createdBy    String?        @map("created_by")
+  createdBy String? @map("created_by")
 
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime?   @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
-  category     Category    @relation(fields: [categoryId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
 
-  creator      User?       @relation("CourseCreator", fields: [createdBy], references: [id])
+  creator User? @relation("CourseCreator", fields: [createdBy], references: [id])
 
-  lessons      Lessons[]
-  enrollments  CourseUserMapper[]
+  lessons       Lessons[]
+  enrollments   CourseUserMapper[]
   paymentOrders PaymentOrder[]
 
   @@index([categoryId])
@@ -295,155 +295,149 @@ model Courses {
 }
 
 model CourseUserMapper {
-  id           String        @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId       String        @map("user_id")
-  courseId     String        @map("course_id")
+  userId   String @map("user_id")
+  courseId String @map("course_id")
 
-  enrolledAt   DateTime   @default(now()) @map("enrolled_at")
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
 
-  completedAt  DateTime?  @map("completed_at")
+  completedAt DateTime? @map("completed_at")
 
-  progress     Int        @default(0)
+  progress Int @default(0)
 
-  isCompleted  Boolean    @default(false) @map("is_completed")
+  isCompleted Boolean @default(false) @map("is_completed")
 
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course       Courses    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Courses @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
-
   @@index([userId])
   @@index([courseId])
-
   @@map("course_user_mapper")
 }
 
 model Lessons {
-  id             String         @id @default(cuid())
+  id String @id @default(cuid())
 
-  courseId       String         @map("course_id")
+  courseId String @map("course_id")
 
-  weekNumber     Int         @map("week_number")
+  weekNumber Int @map("week_number")
 
-  title          String
+  title String
 
-  description    String?
+  description String?
 
-  modules        String[]    @default([])
+  modules String[] @default([])
 
-  duration       Int?
+  duration Int?
 
-  lessonOrder    Int         @map("lesson_order")
+  lessonOrder Int @map("lesson_order")
 
-  releaseDate    DateTime?   @map("release_date")
+  releaseDate DateTime? @map("release_date")
 
-  isPublished    Boolean     @default(false) @map("is_published")
+  isPublished Boolean @default(false) @map("is_published")
 
-  isFreePreview  Boolean     @default(false) @map("is_free_preview")
+  isFreePreview Boolean @default(false) @map("is_free_preview")
 
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime?   @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
-  course         Courses     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course Courses @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  resources      Resource[]
+  resources Resource[]
 
   lessonProgress LessonProgress[]
 
   @@unique([courseId, weekNumber])
-
   @@index([courseId])
   @@index([courseId, releaseDate])
-
   @@map("lessons")
 }
 
 model Resource {
-    id            String             @id @default(cuid())
+  id String @id @default(cuid())
 
-  lessonId      String                @map("lesson_id")
+  lessonId String @map("lesson_id")
 
-  title         String
+  title String
 
-  description   String?
+  description String?
 
-  category      ResourceCategory
+  category ResourceCategory
 
-  type          String
+  type String
 
-  url           String
+  url String
 
-  bunnyVideoId  String?            @map("bunny_video_id")
+  bunnyVideoId String? @map("bunny_video_id")
 
-  size          String?
+  size String?
 
-  downloads     Int                @default(0)
+  downloads Int @default(0)
 
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  lesson        Lessons            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson Lessons @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   downloadLogs ResourceDownload[]
+
   @@index([lessonId])
   @@index([category])
-
   @@map("resources")
 }
 
 model ResourceDownload {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId       String   @map("user_id")
-  resourceId   String   @map("resource_id")
+  userId     String @map("user_id")
+  resourceId String @map("resource_id")
 
   downloadedAt DateTime @default(now()) @map("downloaded_at")
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, resourceId])
-
   @@index([userId])
   @@index([resourceId])
-
   @@map("resource_downloads")
 }
 
 model Internship {
-  id            String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  categoryId    String    @map("category_id")
+  categoryId String @map("category_id")
 
-  title         String
-  slug          String    @unique
-  company       String
+  title   String
+  slug    String @unique
+  company String
 
-  description   String?
+  description String?
 
-  domain        String?
-  stipend       String?
+  domain         String?
+  stipend        String?
   employmentType EmploymentType
-  location      String?
-  deadline      String?
+  location       String?
+  deadline       String?
 
-  keyLearningOutcomes Json?  @map("key_learning_outcomes")
-  majorProject        Json?  @map("major_project")
-  whatYouReceive      Json?  @map("what_you_receive")
+  keyLearningOutcomes Json? @map("key_learning_outcomes")
+  majorProject        Json? @map("major_project")
+  whatYouReceive      Json? @map("what_you_receive")
 
-  isPublished   Boolean   @default(false) @map("is_published")
+  isPublished Boolean @default(false) @map("is_published")
 
-  createdBy     String?   @map("created_by")
+  createdBy String? @map("created_by")
 
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime? @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
-  category      Category  @relation(fields: [categoryId], references: [id])
-  creator       User?     @relation("InternshipCreator", fields: [createdBy], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  creator  User?    @relation("InternshipCreator", fields: [createdBy], references: [id])
 
-  applications  InternshipApplication[]
+  applications InternshipApplication[]
 
   @@index([categoryId])
   @@index([createdBy])
@@ -453,38 +447,36 @@ model Internship {
 }
 
 model InternshipApplication {
-  id            String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  internshipId  String    @map("internship_id")
-  userId        String    @map("user_id")
+  internshipId String @map("internship_id")
+  userId       String @map("user_id")
 
-  status        ApplicationStatus @default(PENDING)
+  status ApplicationStatus @default(PENDING)
 
   // Snapshot of the resume at time of application — survives later profile
   // resume replacement/deletion so admins can always see what was submitted.
-  resumeUrl       String?   @map("resume_url")
-  resumePublicId  String?   @map("resume_public_id")
+  resumeUrl      String? @map("resume_url")
+  resumePublicId String? @map("resume_public_id")
 
-  appliedAt     DateTime  @default(now()) @map("applied_at")
+  appliedAt DateTime @default(now()) @map("applied_at")
 
-  internship    Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  internship Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, internshipId])
-
   @@index([userId])
   @@index([internshipId])
-
   @@map("internship_applications")
 }
 
 model InvestorCategory {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
   name      String
-  slug      String   @unique
-  sortOrder Int      @default(0) @map("sort_order")
-  isActive  Boolean  @default(true) @map("is_active")
+  slug      String  @unique
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @updatedAt @map("updated_at")
@@ -496,19 +488,19 @@ model InvestorCategory {
 }
 
 model InvestorDocument {
-  id          String   @id @default(cuid())
-  name        String   @db.VarChar(300)
-  url         String   @db.Text
+  id   String @id @default(cuid())
+  name String @db.VarChar(300)
+  url  String @db.Text
 
-  categoryId  String           @map("category_id")
-  category    InvestorCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String           @map("category_id")
+  category   InvestorCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  createdById String   @map("created_by")
-  createdBy   User     @relation("InvestorDocCreatedBy", fields: [createdById], references: [id])
+  createdById String @map("created_by")
+  createdBy   User   @relation("InvestorDocCreatedBy", fields: [createdById], references: [id])
 
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime? @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([categoryId])
   @@index([createdById])
@@ -531,16 +523,29 @@ model Direct2HireEnrollment {
   @@map("direct2hire_enrollments")
 }
 
+model Direct2HireLead {
+  id               String  @id @default(cuid())
+  userId           String  @unique @map("user_id")
+  fullName         String  @map("full_name")
+  email            String
+  phoneNumber      String  @map("phone_number")
+  institutionName  String  @map("institution_name")
+  currentEducation String  @map("current_education")
+  city             String
+  state            String
+  paymentCompleted Boolean @default(false) @map("payment_completed")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("direct2hire_leads")
+}
+
 model CounsellingProfile {
   id     String @id @default(cuid())
   userId String @unique @map("user_id")
-
-  fullName        String @map("full_name")
-  age             Int
-  gradeYear       String @map("grade_year")
-  institutionName String @map("institution_name")
-  contactNumber   String @map("contact_number")
-  email           String
 
   careerField            String  @map("career_field")
   careerFieldOther       String? @map("career_field_other")
@@ -552,6 +557,12 @@ model CounsellingProfile {
   studyStreamOther       String? @map("study_stream_other")
   planningChallenge      String  @map("planning_challenge")
   planningChallengeOther String? @map("planning_challenge_other")
+  aiUnderstanding        String  @map("ai_understanding")
+  aiUnderstandingOther   String? @map("ai_understanding_other")
+  aiFieldImpact          String  @map("ai_field_impact")
+  aiFieldImpactOther     String? @map("ai_field_impact_other")
+  aiSkillBuilding        String  @map("ai_skill_building")
+  aiSkillBuildingOther   String? @map("ai_skill_building_other")
 
   freeTimeActivity     String  @map("free_time_activity")
   freeTimeOther        String? @map("free_time_other")
@@ -563,17 +574,52 @@ model CounsellingProfile {
   stressHandlingOther  String? @map("stress_handling_other")
   proudMoment          String  @map("proud_moment")
   proudMomentOther     String? @map("proud_moment_other")
+  aiEverydayUse        String  @map("ai_everyday_use")
+  aiEverydayUseOther   String? @map("ai_everyday_use_other")
+  aiCuriosity          String  @map("ai_curiosity")
+  aiCuriosityOther     String? @map("ai_curiosity_other")
 
-  personalNote String? @db.Text @map("personal_note")
+  personalNote String? @map("personal_note") @db.Text
 
   isSubmitted Boolean   @default(false) @map("is_submitted")
   submittedAt DateTime? @map("submitted_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseRecommendation CourseRecommendation?
 
   @@map("counselling_profiles")
+}
+
+model CourseRecommendation {
+  id                   String @id @default(cuid())
+  userId               String @unique @map("user_id")
+  counsellingProfileId String @unique @map("counselling_profile_id")
+
+  recommendedCourseId    String @map("recommended_course_id")
+  recommendedCourseSlug  String @map("recommended_course_slug")
+  recommendedCourseTitle String @map("recommended_course_title")
+
+  confidenceScore  Float?  @map("confidence_score")
+  reasoning        String  @db.Text
+  studentStrengths Json?   @map("student_strengths")
+  growthAreas      Json?   @map("growth_areas")
+  summary          String? @db.Text
+
+  provider      String
+  model         String
+  promptVersion String @map("prompt_version")
+  rawResponse   Json?  @map("raw_response")
+
+  generatedAt DateTime @map("generated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  counsellingProfile CounsellingProfile @relation(fields: [counsellingProfileId], references: [id], onDelete: Cascade)
+
+  @@map("course_recommendations")
 }
 
 model PaymentOrder {
@@ -646,8 +692,8 @@ model LessonProgress {
   lessonId    String   @map("lesson_id")
   completedAt DateTime @default(now()) @map("completed_at")
 
-  lesson      Lessons  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lessons @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@index([lessonId])

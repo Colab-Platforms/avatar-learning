@@ -1,6 +1,7 @@
 import type { Control, FieldError } from "react-hook-form";
 import { Controller } from "react-hook-form";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { AnimatedHeight } from "@/components/counselling/PretextAnimatedHeight";
 import {
   OTHER_VALUE,
   type CounsellingFormValues,
@@ -24,7 +25,7 @@ export default function RadioGroupField({
   otherError,
 }: RadioGroupFieldProps) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 sm:p-6 transition-all duration-200">
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5 shadow-sm shadow-slate-100/50 transition-all duration-200 sm:p-6">
       {config.questionNumber && (
         <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">
           Question {config.questionNumber}
@@ -75,16 +76,10 @@ export default function RadioGroupField({
               );
             })}
 
-            <AnimatePresence initial={false}>
-              {config.otherField && field.value === OTHER_VALUE && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginTop: 12 }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-0.5">
+            {config.otherField && (
+              <AnimatedHeight durationMs={280}>
+                {field.value === OTHER_VALUE ? (
+                  <div className="pt-3">
                     <Controller
                       name={config.otherField as keyof CounsellingFormValues}
                       control={control}
@@ -94,13 +89,18 @@ export default function RadioGroupField({
                           type="text"
                           placeholder="Please specify here..."
                           className={otherInputCls}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                            }
+                          }}
                         />
                       )}
                     />
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                ) : null}
+              </AnimatedHeight>
+            )}
           </div>
         )}
       />

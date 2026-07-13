@@ -61,7 +61,7 @@ export function StickyBuyBar() {
                 </div>
               </div>
 
-              <Link href="/contact" className="shrink-0">
+              <Link href="/direct2hire/enroll" className="shrink-0">
                 <Button
                   variant="primary"
                   size="md"
