@@ -14,6 +14,10 @@ if (!FROM_EMAIL) {
 const resend = new Resend(RESEND_API_KEY);
 const APP_NAME = process.env.APP_NAME || 'Avatar-learning';
 
+// Exported so other modules (e.g. counselling notifications) can reuse the
+// same Resend client/sender identity instead of creating their own.
+export { resend, FROM_EMAIL, APP_NAME };
+
 //send OTP email via Resend
 export const sendOtpEmail = async (email: string, otp: string, type: "REGISTER" | "LOGIN") => {
     const subject = type === "REGISTER"

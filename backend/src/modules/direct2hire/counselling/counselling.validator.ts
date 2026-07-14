@@ -349,6 +349,36 @@ export const validateCreateCounsellingProfile = (data: unknown) =>
 export const validateUpdateCounsellingProfile = (data: unknown) =>
   updateSchema.validate(data, { abortEarly: false });
 
+const bookingSchema = Joi.object({
+  preferredMode: Joi.string().valid("VOICE", "VIDEO").required().messages({
+    "any.only": "Preferred mode must be either VOICE or VIDEO",
+    "any.required": "Preferred mode is required",
+  }),
+  notes: Joi.string().trim().max(1000).optional().allow(null, ""),
+});
+
+export const validateCounsellingBooking = (data: unknown) =>
+  bookingSchema.validate(data, { abortEarly: false });
+
+const confirmBookingSchema = Joi.object({
+  counsellorName: Joi.string().trim().min(1).max(200).required().messages({
+    "any.required": "Counsellor name is required",
+    "string.empty": "Counsellor name is required",
+  }),
+  meetingLink: Joi.string().trim().uri().required().messages({
+    "any.required": "Google Meet URL is required",
+    "string.empty": "Google Meet URL is required",
+    "string.uri": "Please provide a valid URL",
+  }),
+  scheduledAt: Joi.date().iso().required().messages({
+    "any.required": "Date and time are required",
+    "date.base": "Please provide a valid date and time",
+  }),
+});
+
+export const validateConfirmCounsellingBooking = (data: unknown) =>
+  confirmBookingSchema.validate(data, { abortEarly: false });
+
 export {
   careerFieldOptions,
   futureGoalOptions,
@@ -367,3 +397,4 @@ export {
   aiCuriosityOptions,
   OTHER,
 };
+

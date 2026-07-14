@@ -6,6 +6,7 @@ import { CounsellingService } from "./counselling.service.js";
 import {
   validateCreateCounsellingProfile,
   validateUpdateCounsellingProfile,
+  validateCounsellingBooking,
 } from "./counselling.validator.js";
 
 const service = new CounsellingService();
@@ -98,3 +99,54 @@ export const updateProfile = async (
     );
   }
 };
+
+export const getBooking = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const booking = await service.getBooking(req.user!.id);
+    sendResponse(res, true, booking, "Counselling booking fetched");
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
+    sendResponse(
+      res,
+      false,
+      null,
+      error.message ?? "Failed to fetch counselling booking",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const createBooking = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateCounsellingBooking(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+
+    const booking = await service.createBooking(req.user!.id, value);
+    sendResponse(
+      res,
+      true,
+      booking,
+      "Counselling session requested successfully",
+      STATUS_CODES.CREATED,
+    );
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
+    sendResponse(
+      res,
+      false,
+      null,
+      error.message ?? "Failed to request counselling session",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+

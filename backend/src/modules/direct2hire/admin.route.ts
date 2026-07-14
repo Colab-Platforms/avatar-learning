@@ -20,5 +20,9 @@ router.get(
     "/direct2hire/students/:userId",
     direct2hireAdminController.getStudentProfile,
 );
+router.patch(
+    "/direct2hire/students/:userId/booking/confirm",
+    direct2hireAdminController.confirmBooking,
+);
 
 export default router;

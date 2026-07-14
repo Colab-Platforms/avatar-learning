@@ -13,6 +13,8 @@ export interface AdminD2HStudentListItem {
   hasSubmittedCounselling: boolean;
   hasRecommendation: boolean;
   recommendedCourseTitle: string | null;
+  bookingStatus: string | null;
+  bookingMode: string | null;
 }
 
 export interface AdminD2HStudentProfile {
@@ -46,6 +48,15 @@ export interface AdminD2HStudentProfile {
     createdAt: Date;
   } | null;
   counselling: Record<string, unknown> | null;
+  booking: {
+    preferredMode: string;
+    notes: string | null;
+    status: string;
+    counsellorName: string | null;
+    meetingLink: string | null;
+    scheduledAt: Date | null;
+    createdAt: Date;
+  } | null;
   recommendation: {
     recommendedCourseTitle: string;
     recommendedCourseSlug: string;

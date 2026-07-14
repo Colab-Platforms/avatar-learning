@@ -1,3 +1,721 @@
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+// }
+
+// enum CurrentStudyLevel {
+//   PRIMARY_SCHOOL
+//   MIDDLE_SCHOOL
+//   HIGH_SCHOOL
+//   SENIOR_SECONDARY
+//   UNDERGRADUATE
+//   POSTGRADUATE
+//   DOCTORATE
+// }
+
+// enum AuthProvider {
+//   LOCAL
+//   GOOGLE
+// }
+
+// enum CourseLevel {
+//   BEGINNER
+//   INTERMEDIATE
+//   ADVANCED
+// }
+
+// enum ResourceCategory {
+//   DOCUMENT
+//   VIDEO
+//   IMAGE
+//   OTHER
+// }
+
+// enum OtpType {
+//   REGISTER
+//   LOGIN
+// }
+
+// enum EmploymentType {
+//   FULL_TIME
+//   PART_TIME
+//   REMOTE
+// }
+
+// enum ApplicationStatus {
+//   PENDING
+//   ACCEPTED
+//   REJECTED
+// }
+
+// enum Direct2HireStatus {
+//   PENDING
+//   PAID
+// }
+
+// enum PaymentOrderStatus {
+//   PENDING
+//   PAID
+//   FAILED
+//   REFUNDED
+// }
+
+// enum PaymentProductType {
+//   COURSE
+//   DIRECT2HIRE
+// }
+
+// enum PaymentProvider {
+//   RAZORPAY
+//   CASHFREE
+// }
+
+// enum PaymentTransactionStatus {
+//   SUCCESS
+//   FAILED
+//   REFUNDED
+// }
+
+// model User {
+//   id             String  @id @default(cuid())
+//   firstName      String? @map("first_name")
+//   lastName       String? @map("last_name")
+//   phoneNo        String? @unique @map("phone_no")
+//   address        String?
+//   gender         String?
+//   state          String?
+//   country        String?
+//   profileImage   String? @map("profile_image")
+//   resumeUrl      String? @map("resume_url")
+//   resumePublicId String? @map("resume_public_id")
+
+//   currentStudyLevel CurrentStudyLevel? @map("current_studylevel")
+
+//   email    String  @unique
+//   password String?
+
+//   googleId     String?      @unique @map("google_id")
+//   authProvider AuthProvider @default(LOCAL) @map("auth_provider")
+
+//   isEmailVerified Boolean @default(false) @map("is_email_verified")
+//   isPhoneVerified Boolean @default(false) @map("is_phone_verified")
+//   isActive        Boolean @default(true) @map("is_active")
+//   isDeleted       Boolean @default(false) @map("is_deleted")
+
+//   deletedAt DateTime? @map("deleted_at")
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   userRoleMappings UserRoleMapping[]
+//   enrolledCourses  CourseUserMapper[]
+//   sessions         Session[]
+//   otpVerifications OtpVerification[]
+//   passwordResets   PasswordResetToken[]
+
+//   createdCourses         Courses[]               @relation("CourseCreator")
+//   resourceDownloads      ResourceDownload[]
+//   createdInternships     Internship[]            @relation("InternshipCreator")
+//   internshipApplications InternshipApplication[]
+//   createdInvestorDocs    InvestorDocument[]      @relation("InvestorDocCreatedBy")
+
+//   direct2hireEnrollments Direct2HireEnrollment[]
+//   direct2HireLead        Direct2HireLead?
+//   lessonProgress         LessonProgress[]
+//   paymentOrders          PaymentOrder[]
+//   counsellingProfile     CounsellingProfile?
+//   courseRecommendation   CourseRecommendation?
+//   counsellingBooking     CounsellingBooking?
+
+//   @@index([email])
+//   @@index([isActive])
+//   @@map("users")
+// }
+
+// model OtpVerification {
+//   id String @id @default(cuid())
+
+//   email   String
+//   otpCode String  @map("otp_code")
+//   type    OtpType
+//   used    Boolean @default(false)
+
+//   userId String? @map("user_id")
+//   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   expiresAt DateTime @map("expires_at")
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   @@index([email])
+//   @@index([expiresAt])
+//   @@map("otp_verifications")
+// }
+
+// model PasswordResetToken {
+//   id String @id @default(cuid())
+
+//   userId String  @map("user_id")
+//   token  String  @unique
+//   used   Boolean @default(false)
+
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   expiresAt DateTime @map("expires_at")
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   @@index([userId])
+//   @@index([token])
+//   @@map("password_reset_tokens")
+// }
+
+// model Role {
+//   id          String  @id @default(cuid())
+//   name        String  @unique
+//   description String?
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   userRoleMappings UserRoleMapping[]
+
+//   @@map("roles")
+// }
+
+// model UserRoleMapping {
+//   id String @id @default(cuid())
+
+//   userId String @map("user_id")
+//   roleId String @map("role_id")
+
+//   assignedAt DateTime @default(now()) @map("assigned_at")
+
+//   assignedBy String? @map("assigned_by")
+
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+//   @@unique([userId, roleId])
+//   @@index([userId])
+//   @@index([roleId])
+//   @@map("user_role_mapping")
+// }
+
+// model Session {
+//   id String @id @default(cuid())
+
+//   refreshToken String  @map("refresh_token")
+//   device       String?
+
+//   userId String @map("user_id")
+
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   expiresAt DateTime @map("expires_at")
+
+//   @@index([userId])
+//   @@index([expiresAt])
+//   @@map("sessions")
+// }
+
+// model Category {
+//   id String @id @default(cuid())
+
+//   name String @unique
+//   slug String @unique
+
+//   description String?
+//   thumbnail   String?
+
+//   isActive Boolean @default(true) @map("is_active")
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   courses     Courses[]
+//   internships Internship[]
+
+//   @@index([isActive])
+//   @@map("categories")
+// }
+
+// model Courses {
+//   id String @id @default(cuid())
+
+//   categoryId String @map("category_id")
+
+//   title String
+//   slug  String @unique
+
+//   description String?
+//   thumbnail   String?
+//   heroImage   String? @map("hero_image")
+//   bannerImage String? @map("banner_image")
+
+//   level CourseLevel
+
+//   price Int @default(0)
+
+//   totalWeeks Int @default(1) @map("total_weeks")
+
+//   tools       String[] @default([])
+//   sessions    String?
+//   certificate Boolean  @default(false)
+//   rating      Float?
+//   reviews     String?
+//   startDate   String?  @map("start_date")
+//   seats       String?
+
+//   whatYouLearn        Json?   @map("what_you_learn")
+//   audience            Json?
+//   isDirect2HireCourse Boolean @default(false) @map("is_direct2hire_course")
+//   isPublished         Boolean @default(false) @map("is_published")
+
+//   createdBy String? @map("created_by")
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   category Category @relation(fields: [categoryId], references: [id])
+
+//   creator User? @relation("CourseCreator", fields: [createdBy], references: [id])
+
+//   lessons       Lessons[]
+//   enrollments   CourseUserMapper[]
+//   paymentOrders PaymentOrder[]
+
+//   @@index([categoryId])
+//   @@index([createdBy])
+//   @@index([isPublished])
+//   @@index([categoryId, isPublished])
+//   @@index([isPublished, createdAt])
+//   @@map("courses")
+// }
+
+// model CourseUserMapper {
+//   id String @id @default(cuid())
+
+//   userId   String @map("user_id")
+//   courseId String @map("course_id")
+
+//   enrolledAt DateTime @default(now()) @map("enrolled_at")
+
+//   completedAt DateTime? @map("completed_at")
+
+//   progress Int @default(0)
+
+//   isCompleted Boolean @default(false) @map("is_completed")
+
+//   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   course Courses @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+//   @@unique([userId, courseId])
+//   @@index([userId])
+//   @@index([courseId])
+//   @@map("course_user_mapper")
+// }
+
+// model Lessons {
+//   id String @id @default(cuid())
+
+//   courseId String @map("course_id")
+
+//   weekNumber Int @map("week_number")
+
+//   title String
+
+//   description String?
+
+//   modules String[] @default([])
+
+//   duration Int?
+
+//   lessonOrder Int @map("lesson_order")
+
+//   releaseDate DateTime? @map("release_date")
+
+//   isPublished Boolean @default(false) @map("is_published")
+
+//   isFreePreview Boolean @default(false) @map("is_free_preview")
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   course Courses @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+//   resources Resource[]
+
+//   lessonProgress LessonProgress[]
+
+//   @@unique([courseId, weekNumber])
+//   @@index([courseId])
+//   @@index([courseId, releaseDate])
+//   @@map("lessons")
+// }
+
+// model Resource {
+//   id String @id @default(cuid())
+
+//   lessonId String @map("lesson_id")
+
+//   title String
+
+//   description String?
+
+//   category ResourceCategory
+
+//   type String
+
+//   url String
+
+//   bunnyVideoId String? @map("bunny_video_id")
+
+//   size String?
+
+//   downloads Int @default(0)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   lesson Lessons @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+//   downloadLogs ResourceDownload[]
+
+//   @@index([lessonId])
+//   @@index([category])
+//   @@map("resources")
+// }
+
+// model ResourceDownload {
+//   id String @id @default(cuid())
+
+//   userId     String @map("user_id")
+//   resourceId String @map("resource_id")
+
+//   downloadedAt DateTime @default(now()) @map("downloaded_at")
+
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+//   @@unique([userId, resourceId])
+//   @@index([userId])
+//   @@index([resourceId])
+//   @@map("resource_downloads")
+// }
+
+// model Internship {
+//   id String @id @default(cuid())
+
+//   categoryId String @map("category_id")
+
+//   title   String
+//   slug    String @unique
+//   company String
+
+//   description String?
+
+//   domain         String?
+//   stipend        String?
+//   employmentType EmploymentType
+//   location       String?
+//   deadline       String?
+
+//   keyLearningOutcomes Json? @map("key_learning_outcomes")
+//   majorProject        Json? @map("major_project")
+//   whatYouReceive      Json? @map("what_you_receive")
+
+//   isPublished Boolean @default(false) @map("is_published")
+
+//   createdBy String? @map("created_by")
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   category Category @relation(fields: [categoryId], references: [id])
+//   creator  User?    @relation("InternshipCreator", fields: [createdBy], references: [id])
+
+//   applications InternshipApplication[]
+
+//   @@index([categoryId])
+//   @@index([createdBy])
+//   @@index([isPublished])
+//   @@index([categoryId, isPublished])
+//   @@map("internships")
+// }
+
+// model InternshipApplication {
+//   id String @id @default(cuid())
+
+//   internshipId String @map("internship_id")
+//   userId       String @map("user_id")
+
+//   status ApplicationStatus @default(PENDING)
+
+//   // Snapshot of the resume at time of application — survives later profile
+//   // resume replacement/deletion so admins can always see what was submitted.
+//   resumeUrl      String? @map("resume_url")
+//   resumePublicId String? @map("resume_public_id")
+
+//   appliedAt DateTime @default(now()) @map("applied_at")
+
+//   internship Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+//   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@unique([userId, internshipId])
+//   @@index([userId])
+//   @@index([internshipId])
+//   @@map("internship_applications")
+// }
+
+// model InvestorCategory {
+//   id String @id @default(cuid())
+
+//   name      String
+//   slug      String  @unique
+//   sortOrder Int     @default(0) @map("sort_order")
+//   isActive  Boolean @default(true) @map("is_active")
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+
+//   documents InvestorDocument[]
+
+//   @@index([isActive])
+//   @@map("investor_categories")
+// }
+
+// model InvestorDocument {
+//   id   String @id @default(cuid())
+//   name String @db.VarChar(300)
+//   url  String @db.Text
+
+//   categoryId String           @map("category_id")
+//   category   InvestorCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+//   createdById String @map("created_by")
+//   createdBy   User   @relation("InvestorDocCreatedBy", fields: [createdById], references: [id])
+
+//   createdAt DateTime  @default(now()) @map("created_at")
+//   updatedAt DateTime? @updatedAt @map("updated_at")
+//   deletedAt DateTime? @map("deleted_at")
+
+//   @@index([categoryId])
+//   @@index([createdById])
+//   @@index([deletedAt])
+//   @@map("investor_documents")
+// }
+
+// model Direct2HireEnrollment {
+//   id     String            @id @default(cuid())
+//   userId String            @map("user_id")
+//   status Direct2HireStatus @default(PENDING)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   paymentOrders PaymentOrder[]
+
+//   @@index([userId])
+//   @@map("direct2hire_enrollments")
+// }
+
+// model Direct2HireLead {
+//   id               String  @id @default(cuid())
+//   userId           String  @unique @map("user_id")
+//   fullName         String  @map("full_name")
+//   email            String
+//   phoneNumber      String  @map("phone_number")
+//   institutionName  String  @map("institution_name")
+//   currentEducation String  @map("current_education")
+//   city             String
+//   state            String
+//   paymentCompleted Boolean @default(false) @map("payment_completed")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("direct2hire_leads")
+// }
+
+// model CounsellingProfile {
+//   id     String @id @default(cuid())
+//   userId String @unique @map("user_id")
+
+//   careerField            String  @map("career_field")
+//   careerFieldOther       String? @map("career_field_other")
+//   futureGoal             String  @map("future_goal")
+//   futureGoalOther        String? @map("future_goal_other")
+//   careerPriority         String  @map("career_priority")
+//   careerPriorityOther    String? @map("career_priority_other")
+//   studyStream            String  @map("study_stream")
+//   studyStreamOther       String? @map("study_stream_other")
+//   planningChallenge      String  @map("planning_challenge")
+//   planningChallengeOther String? @map("planning_challenge_other")
+//   aiUnderstanding        String  @map("ai_understanding")
+//   aiUnderstandingOther   String? @map("ai_understanding_other")
+//   aiFieldImpact          String  @map("ai_field_impact")
+//   aiFieldImpactOther     String? @map("ai_field_impact_other")
+//   aiSkillBuilding        String  @map("ai_skill_building")
+//   aiSkillBuildingOther   String? @map("ai_skill_building_other")
+
+//   freeTimeActivity     String  @map("free_time_activity")
+//   freeTimeOther        String? @map("free_time_other")
+//   socialSetting        String  @map("social_setting")
+//   socialSettingOther   String? @map("social_setting_other")
+//   workEnvironment      String  @map("work_environment")
+//   workEnvironmentOther String? @map("work_environment_other")
+//   stressHandling       String  @map("stress_handling")
+//   stressHandlingOther  String? @map("stress_handling_other")
+//   proudMoment          String  @map("proud_moment")
+//   proudMomentOther     String? @map("proud_moment_other")
+//   aiEverydayUse        String  @map("ai_everyday_use")
+//   aiEverydayUseOther   String? @map("ai_everyday_use_other")
+//   aiCuriosity          String  @map("ai_curiosity")
+//   aiCuriosityOther     String? @map("ai_curiosity_other")
+
+//   personalNote String? @map("personal_note") @db.Text
+
+//   isSubmitted Boolean   @default(false) @map("is_submitted")
+//   submittedAt DateTime? @map("submitted_at")
+//   createdAt   DateTime  @default(now()) @map("created_at")
+//   updatedAt   DateTime  @updatedAt @map("updated_at")
+
+//   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   courseRecommendation CourseRecommendation?
+
+//   @@map("counselling_profiles")
+// }
+
+// model CounsellingBooking {
+//   id            String   @id @default(cuid())
+//   userId        String   @unique @map("user_id")
+//   preferredMode String   @map("preferred_mode") // "VOICE" or "VIDEO"
+//   notes         String?  @db.Text
+//   status        String   @default("PENDING") // "PENDING", "CONFIRMED"
+//   createdAt     DateTime @default(now()) @map("created_at")
+//   updatedAt     DateTime @updatedAt @map("updated_at")
+
+//   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("counselling_bookings")
+// }
+
+// model CourseRecommendation {
+//   id                   String @id @default(cuid())
+//   userId               String @unique @map("user_id")
+//   counsellingProfileId String @unique @map("counselling_profile_id")
+
+//   recommendedCourseId    String @map("recommended_course_id")
+//   recommendedCourseSlug  String @map("recommended_course_slug")
+//   recommendedCourseTitle String @map("recommended_course_title")
+
+//   confidenceScore  Float?  @map("confidence_score")
+//   reasoning        String  @db.Text
+//   studentStrengths Json?   @map("student_strengths")
+//   growthAreas      Json?   @map("growth_areas")
+//   summary          String? @db.Text
+
+//   provider      String
+//   model         String
+//   promptVersion String @map("prompt_version")
+//   rawResponse   Json?  @map("raw_response")
+
+//   generatedAt DateTime @map("generated_at")
+//   createdAt   DateTime @default(now()) @map("created_at")
+//   updatedAt   DateTime @updatedAt @map("updated_at")
+
+//   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   counsellingProfile CounsellingProfile @relation(fields: [counsellingProfileId], references: [id], onDelete: Cascade)
+
+//   @@map("course_recommendations")
+// }
+
+// model PaymentOrder {
+//   id                      String             @id @default(cuid())
+//   userId                  String             @map("user_id")
+//   courseId                String?            @map("course_id")
+//   direct2hireEnrollmentId String?            @map("direct2hire_enrollment_id")
+//   productType             PaymentProductType @default(COURSE) @map("product_type")
+//   provider                PaymentProvider    @default(RAZORPAY)
+//   gatewayOrderId          String             @unique @map("gateway_order_id")
+//   amount                  Int
+//   currency                String             @default("INR")
+//   status                  PaymentOrderStatus @default(PENDING)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   course                Courses?               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+//   direct2hireEnrollment Direct2HireEnrollment? @relation(fields: [direct2hireEnrollmentId], references: [id], onDelete: Cascade)
+//   transactions          PaymentTransaction[]
+
+//   @@index([courseId])
+//   @@index([direct2hireEnrollmentId])
+//   @@index([gatewayOrderId])
+//   @@index([status])
+//   @@index([userId])
+//   @@map("payment_orders")
+// }
+
+// model PaymentTransaction {
+//   id               String                   @id @default(cuid())
+//   paymentOrderId   String                   @map("payment_order_id")
+//   gatewayPaymentId String                   @unique @map("gateway_payment_id")
+//   gatewaySignature String                   @map("gateway_signature")
+//   paymentMethod    String?                  @map("payment_method")
+//   amount           Int
+//   status           PaymentTransactionStatus
+//   metadata         Json?
+
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   paymentOrder PaymentOrder @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
+
+//   @@index([gatewayPaymentId])
+//   @@index([paymentOrderId])
+//   @@map("payment_transactions")
+// }
+
+// model Contact {
+//   id      String @id @default(cuid())
+
+//   name    String
+//   email   String
+//   subject String
+//   message String @db.Text
+
+//   isRead  Boolean @default(false) @map("is_read")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   @@index([isRead])
+//   @@index([createdAt])
+//   @@map("contacts")
+// }
+
+// model LessonProgress {
+//   id          String   @id @default(cuid())
+//   userId      String   @map("user_id")
+//   lessonId    String   @map("lesson_id")
+//   completedAt DateTime @default(now()) @map("completed_at")
+
+//   lesson Lessons @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+//   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@unique([userId, lessonId])
+//   @@index([lessonId])
+//   @@index([userId])
+//   @@map("lesson_progress")
+// }
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -129,6 +847,7 @@ model User {
   paymentOrders          PaymentOrder[]
   counsellingProfile     CounsellingProfile?
   courseRecommendation   CourseRecommendation?
+  counsellingBooking     CounsellingBooking?
 
   @@index([email])
   @@index([isActive])
@@ -705,14 +1424,14 @@ model PaymentTransaction {
 }
 
 model Contact {
-  id      String @id @default(cuid())
+  id String @id @default(cuid())
 
   name    String
   email   String
   subject String
   message String @db.Text
 
-  isRead  Boolean @default(false) @map("is_read")
+  isRead Boolean @default(false) @map("is_read")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -734,6 +1453,25 @@ model LessonProgress {
   @@index([lessonId])
   @@index([userId])
   @@map("lesson_progress")
+}
+
+model CounsellingBooking {
+  id            String  @id @default(cuid())
+  userId        String  @unique @map("user_id")
+  preferredMode String  @map("preferred_mode") // "VOICE" or "VIDEO"
+  notes         String? @db.Text
+  status        String  @default("PENDING") // "PENDING", "CONFIRMED"
+
+  counsellorName String?   @map("counsellor_name")
+  meetingLink    String?   @map("meeting_link") @db.Text
+  scheduledAt    DateTime? @map("scheduled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("counselling_bookings")
 }
 
 model TopicProgress {

@@ -3,16 +3,40 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronLeft, Sparkles, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ChevronLeft,
+  Sparkles,
+  X,
+  CalendarClock,
+  Video,
+  User2,
+  Link as LinkIcon,
+  CheckCircle2,
+  Loader2,
+  Phone,
+} from "lucide-react";
 import { useAdminDirect2HireStudent } from "@/hooks/queries/useAdminDirect2HireStudent";
+import { useConfirmCounsellingBooking } from "@/hooks/mutations/useConfirmCounsellingBooking";
 import type { AdminD2HStudentProfile } from "@/lib/adminApi";
 
-function formatDate(value?: string) {
+function formatDate(value?: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+  });
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -43,7 +67,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
       <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1">
         {label}
       </p>
-      <p className="text-sm text-white/80 whitespace-pre-wrap">
+      <p className="text-sm text-white/80 whitespace-pre-wrap break-words">
         {value?.trim() ? value : "—"}
       </p>
     </div>
@@ -66,19 +90,22 @@ const COUNSELLING_TABS = [
   { key: "career", label: "Career Goals" },
   { key: "ai", label: "AI Awareness" },
   { key: "personality", label: "Personality" },
+  { key: "recommendation", label: "AI Recommendation" },
 ] as const;
 
 type CounsellingTabKey = (typeof COUNSELLING_TABS)[number]["key"];
 
 function CounsellingTabs({
   counselling,
+  recommendation,
 }: {
   counselling: NonNullable<AdminD2HStudentProfile["counselling"]>;
+  recommendation: AdminD2HStudentProfile["recommendation"];
 }) {
   const [active, setActive] = useState<CounsellingTabKey>("career");
 
   const fields: Record<
-    CounsellingTabKey,
+    Exclude<CounsellingTabKey, "recommendation">,
     { label: string; value?: string | null }[]
   > = {
     career: [
@@ -152,12 +179,12 @@ function CounsellingTabs({
 
   return (
     <Card>
-      <div className="flex items-center gap-1 border-b border-white/6 mb-5 -mt-1">
+      <div className="flex items-center gap-1 border-b border-white/6 mb-5 -mt-1 overflow-x-auto scrollbar-none">
         {COUNSELLING_TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActive(tab.key)}
-            className={`relative px-4 py-2.5 text-sm font-semibold transition-colors ${
+            className={`relative px-4 py-2.5 text-sm font-semibold transition-colors shrink-0 ${
               active === tab.key
                 ? "text-brand-400"
                 : "text-white/40 hover:text-white/70"
@@ -171,112 +198,343 @@ function CounsellingTabs({
         ))}
       </div>
 
-      <div
-        key={active}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-left-1 duration-200"
-      >
-        {fields[active].map((f) => (
-          <Field key={f.label} label={f.label} value={f.value} />
-        ))}
-      </div>
+      {active === "recommendation" ? (
+        !recommendation ? (
+          <div className="py-8 text-center text-sm text-white/35 animate-in fade-in duration-200">
+            AI recommendation has not been generated yet.
+          </div>
+        ) : (
+          <div className="space-y-6 animate-in fade-in slide-in-from-left-1 duration-200">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-brand-500/5 border border-brand-500/10 rounded-2xl p-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center shrink-0">
+                  <Sparkles size={18} className="text-brand-400" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-brand-400 uppercase tracking-widest block mb-0.5">
+                    Recommended Course
+                  </span>
+                  <p className="text-base font-bold text-white">
+                    {recommendation.recommendedCourseTitle}
+                  </p>
+                </div>
+              </div>
+              
+              {recommendation.confidenceScore != null && (
+                <div className="flex items-center gap-3 bg-white/[0.02] border border-white/5 px-4 py-2 rounded-xl">
+                  <div className="text-right">
+                    <span className="text-[9px] font-semibold text-white/30 uppercase tracking-wider block">Confidence</span>
+                    <span className="text-sm font-bold text-white/90">
+                      {Math.round(recommendation.confidenceScore * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-brand-500 rounded-full"
+                      style={{ width: `${recommendation.confidenceScore * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Summary</span>
+                <div className="text-sm text-white/80 bg-white/[0.01] border border-white/5 rounded-xl p-4 leading-relaxed whitespace-pre-wrap break-words">
+                  {recommendation.summary || "—"}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Reasoning</span>
+                <div className="text-sm text-white/80 bg-white/[0.01] border border-white/5 rounded-xl p-4 leading-relaxed whitespace-pre-wrap break-words">
+                  {recommendation.reasoning || "—"}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.isArray(recommendation.studentStrengths) && recommendation.studentStrengths.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Student Strengths</span>
+                  <ul className="space-y-2 bg-white/[0.01] border border-white/5 rounded-xl p-4">
+                    {recommendation.studentStrengths.map((strength: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-white/80">
+                        <span className="text-emerald-400 mt-1 shrink-0">•</span>
+                        <span>{strength}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {Array.isArray(recommendation.growthAreas) && recommendation.growthAreas.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Growth Areas</span>
+                  <ul className="space-y-2 bg-white/[0.01] border border-white/5 rounded-xl p-4">
+                    {recommendation.growthAreas.map((area: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-white/80">
+                        <span className="text-amber-400 mt-1 shrink-0">•</span>
+                        <span>{area}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      ) : (
+        <div
+          key={active}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-left-1 duration-200"
+        >
+          {fields[active].map((f) => (
+            <Field key={f.label} label={f.label} value={f.value} />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
 
-function RecommendationModal({
-  recommendation,
-  onClose,
+
+
+function toDatetimeLocalValue(value?: string | null) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
+function BookingSection({
+  userId,
+  booking,
 }: {
-  recommendation: NonNullable<AdminD2HStudentProfile["recommendation"]>;
-  onClose: () => void;
+  userId: string;
+  booking: NonNullable<AdminD2HStudentProfile["booking"]>;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [counsellorName, setCounsellorName] = useState(
+    booking.counsellorName ?? "",
+  );
+  const [meetingLink, setMeetingLink] = useState(booking.meetingLink ?? "");
+  const [scheduledAt, setScheduledAt] = useState(
+    toDatetimeLocalValue(booking.scheduledAt),
+  );
+
+  const confirmMutation = useConfirmCounsellingBooking(userId);
+  const isConfirmed = booking.status === "CONFIRMED";
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!counsellorName.trim() || !meetingLink.trim() || !scheduledAt) return;
+
+    confirmMutation.mutate(
+      {
+        counsellorName: counsellorName.trim(),
+        meetingLink: meetingLink.trim(),
+        scheduledAt: new Date(scheduledAt).toISOString(),
+      },
+      {
+        onSuccess: () => setIsEditing(false),
+      },
+    );
+  };
+
+  const PreferredModeIcon = booking.preferredMode === "VOICE" ? Phone : Video;
+  const preferredModeLabel = booking.preferredMode === "VOICE" ? "Voice Call" : "Video Call";
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150"
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-ink-800 border border-white/10 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto space-y-5 animate-in fade-in zoom-in-95 duration-200"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-brand-400" />
-            <h2 className="text-base font-bold text-white">
-              AI Recommendation
-            </h2>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-2">
+            Preferred Mode
+          </p>
+          <div className="flex items-center gap-2 text-sm text-white/80 bg-white/[0.03] border border-white/5 rounded-xl px-3.5 py-2 w-fit">
+            <PreferredModeIcon size={14} className="text-brand-400 shrink-0" />
+            <span className="font-semibold">{preferredModeLabel}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/40 hover:text-white/80 transition-colors"
+        </div>
+
+        <div>
+          <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-2">
+            Status
+          </p>
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 border rounded-xl w-fit transition-colors ${
+              isConfirmed
+                ? "bg-emerald-500/10 border-emerald-500/10 text-emerald-400"
+                : "bg-amber-500/10 border-amber-500/10 text-amber-400"
+            }`}
           >
-            <X size={18} />
-          </button>
+            {isConfirmed ? <CheckCircle2 size={13} /> : <CalendarClock size={13} />}
+            {isConfirmed ? "Confirmed" : "Pending Schedule"}
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field
-            label="Generated At"
-            value={formatDate(recommendation.generatedAt)}
-          />
+        <div className="sm:col-span-2">
+          <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-2">
+            Student Notes / Comments
+          </p>
+          <div className="text-sm text-white/70 bg-white/[0.015] border border-white/5 rounded-xl p-4 whitespace-pre-wrap break-words leading-relaxed">
+            {booking.notes?.trim() || "No additional comments or notes provided by the student."}
+          </div>
         </div>
+      </div>
 
-        {recommendation.confidenceScore != null && (
-          <div>
-            <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1">
-              Confidence Score
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(
-                      Math.max(recommendation.confidenceScore * 100, 0),
-                      100,
-                    )}%`,
-                  }}
+      <AnimatePresence initial={false} mode="wait">
+        {isConfirmed && !isEditing ? (
+          <motion.div
+            key="confirmed"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-emerald-500/10 pb-3">
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <CheckCircle2 size={12} />
+                  Confirmed Session Details
+                </span>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-xs font-semibold text-white/50 hover:text-brand-400 transition-colors"
+                >
+                  Edit Details
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block">Counsellor</span>
+                  <div className="flex items-center gap-2 text-sm font-medium text-white/95">
+                    <User2 size={14} className="text-brand-400 shrink-0" />
+                    <span>{booking.counsellorName}</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block">Scheduled For</span>
+                  <div className="flex items-center gap-2 text-sm font-medium text-white/95">
+                    <CalendarClock size={14} className="text-brand-400 shrink-0" />
+                    <span>{formatDateTime(booking.scheduledAt)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 min-w-0">
+                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block">Meeting Link</span>
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <Video size={14} className="text-brand-400 shrink-0" />
+                    <a
+                      href={booking.meetingLink ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-400 hover:text-brand-300 underline underline-offset-2 truncate"
+                    >
+                      {booking.meetingLink}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="form"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            onSubmit={handleSubmit}
+            className="overflow-hidden"
+          >
+            <div className="rounded-xl border border-white/8 bg-white/[0.02] p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-1">
+                <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest flex items-center gap-1.5">
+                  <CalendarClock size={12} className="text-brand-400" />
+                  {isConfirmed ? "Reschedule Session" : "Schedule Session Details"}
+                </span>
+                {isConfirmed && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="text-xs font-semibold text-white/40 hover:text-white/70 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+                    <User2 size={11} />
+                    Counsellor Name
+                  </label>
+                  <input
+                    type="text"
+                    value={counsellorName}
+                    onChange={(e) => setCounsellorName(e.target.value)}
+                    placeholder="e.g. Priya Sharma"
+                    required
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center gap-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+                    <CalendarClock size={11} />
+                    Date &amp; Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(e) => setScheduledAt(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40 [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+                  <LinkIcon size={11} />
+                  Google Meet URL
+                </label>
+                <input
+                  type="url"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                  required
+                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
                 />
               </div>
-              <span className="text-xs text-white/60 font-semibold">
-                {Math.round(recommendation.confidenceScore * 100)}%
-              </span>
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={confirmMutation.isPending}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold
+                             bg-brand-500 text-ink-950 hover:bg-brand-400 active:scale-98 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {confirmMutation.isPending ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={13} />
+                  )}
+                  {isConfirmed ? "Update Details" : "Confirm Appointment"}
+                </button>
+              </div>
             </div>
-          </div>
+          </motion.form>
         )}
-
-        <Field label="Reasoning" value={recommendation.reasoning} />
-
-        {Array.isArray(recommendation.studentStrengths) &&
-          recommendation.studentStrengths.length > 0 && (
-            <div>
-              <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1">
-                Student Strengths
-              </p>
-              <ul className="list-disc list-inside text-sm text-white/80 space-y-1">
-                {(recommendation.studentStrengths as string[]).map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-        {Array.isArray(recommendation.growthAreas) &&
-          recommendation.growthAreas.length > 0 && (
-            <div>
-              <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1">
-                Growth Areas
-              </p>
-              <ul className="list-disc list-inside text-sm text-white/80 space-y-1">
-                {(recommendation.growthAreas as string[]).map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-        <Field label="Summary" value={recommendation.summary} />
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -286,7 +544,6 @@ export default function AdminDirect2HireStudentPage() {
   const userId = params.userId;
   const { data, isLoading, isError, error } =
     useAdminDirect2HireStudent(userId);
-  const [showRecommendation, setShowRecommendation] = useState(false);
 
   if (isLoading) {
     return (
@@ -360,46 +617,36 @@ export default function AdminDirect2HireStudentPage() {
                 ` · ${lead?.phoneNumber ?? user.phoneNo}`}
             </p>
           </div>
-          {/* <div className="flex flex-wrap items-center gap-2"> */}
-          {/* <StatusPill
-              label={
-                (lead?.paymentCompleted ?? false) ? "Paid" : "Payment Pending"
-              }
-              active={lead?.paymentCompleted ?? false}
-            /> */}
-          {/* <StatusPill
-              label={
-                enrollment ? `Enrollment: ${enrollment.status}` : "Not Enrolled"
-              }
-              active={enrollment?.status === "PAID"}
-            /> */}
-          {/* </div> */}
           <p className="text-xs text-white/30 mt-3">
             Joined {formatDate(lead?.createdAt ?? user.createdAt)}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Basic Information">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Institution" value={lead?.institutionName} />
-            <Field label="Education" value={lead?.currentEducation} />
-            <Field label="City" value={lead?.city} />
-            <Field label="State" value={lead?.state} />
-            <Field
-              label="Current Study Level"
-              value={user.currentStudyLevel ?? undefined}
-            />
+      <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-sm font-semibold text-white/80 mb-4">Basic Information</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Institution" value={lead?.institutionName} />
+              <Field label="Education" value={lead?.currentEducation} />
+              <Field label="City" value={lead?.city} />
+              <Field label="State" value={lead?.state} />
+              <Field
+                label="Current Study Level"
+                value={user.currentStudyLevel ?? undefined}
+              />
+            </div>
           </div>
-        </Card>
-
-        <Card title="Personal Note">
-          <p className="text-sm text-white/80 whitespace-pre-wrap">
-            {counselling?.personalNote?.trim() || "—"}
-          </p>
-        </Card>
-      </div>
+          
+          <div className="border-t lg:border-t-0 lg:border-l border-white/6 pt-6 lg:pt-0 lg:pl-6">
+            <h2 className="text-sm font-semibold text-white/80 mb-4">Personal Note</h2>
+            <p className="text-sm text-white/70 whitespace-pre-wrap break-words leading-relaxed bg-white/[0.01] border border-white/5 rounded-xl p-4 min-h-[120px]">
+              {counselling?.personalNote?.trim() || "No personal notes provided by the student."}
+            </p>
+          </div>
+        </div>
+      </Card>
 
       {!counselling ? (
         <Card>
@@ -408,49 +655,24 @@ export default function AdminDirect2HireStudentPage() {
           </p>
         </Card>
       ) : (
-        <CounsellingTabs counselling={counselling} />
+        <CounsellingTabs counselling={counselling} recommendation={recommendation} />
       )}
 
-      <Card title="AI Recommendation">
-        {!recommendation ? (
-          <p className="text-sm text-white/35">
-            AI recommendation has not been generated yet.
-          </p>
+      <Card>
+        <div className="flex items-center gap-2 mb-2">
+          <CalendarClock className="text-brand-400" size={18} />
+          <h2 className="text-sm font-semibold text-white/80">1-on-1 Counselling Session</h2>
+        </div>
+        <p className="text-xs text-white/40 mb-5 leading-relaxed max-w-2xl">
+          Schedule and manage the 1-on-1 career counselling session for this student.
+          The student will be notified of the counsellor assignment and meeting details in their dashboard.
+        </p>
+        {!data.booking ? (
+          <p className="text-sm text-white/35">No session requested yet.</p>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-brand-500/10 flex items-center justify-center shrink-0">
-                <Sparkles size={16} className="text-brand-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white/90">
-                  {recommendation.recommendedCourseTitle}
-                </p>
-                {/* {recommendation.confidenceScore != null && (
-                  <p className="text-xs text-white/40">
-                    {Math.round(recommendation.confidenceScore * 100)}%
-                    confidence
-                  </p>
-                )} */}
-              </div>
-            </div>
-            <button
-              onClick={() => setShowRecommendation(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold
-                         bg-brand-500 text-ink-950 hover:bg-brand-400 transition-colors"
-            >
-              View Full Recommendation
-            </button>
-          </div>
+          <BookingSection userId={userId} booking={data.booking} />
         )}
       </Card>
-
-      {showRecommendation && recommendation && (
-        <RecommendationModal
-          recommendation={recommendation}
-          onClose={() => setShowRecommendation(false)}
-        />
-      )}
     </div>
   );
 }

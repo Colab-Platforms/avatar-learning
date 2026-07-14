@@ -8,4 +8,7 @@ router.get("/", auth("USER"), counsellingController.getMyProfile);
 router.post("/", auth("USER"), counsellingController.createProfile);
 router.put("/", auth("USER"), counsellingController.updateProfile);
 
+router.get("/booking", auth("USER"), counsellingController.getBooking);
+router.post("/booking", auth("USER"), counsellingController.createBooking);
+
 export default router;

@@ -8,7 +8,8 @@ import type {
 } from "./counselling.types.js";
 import { RecommendationService } from "../recommendation/recommendation.service.js";
 import type { CourseRecommendationResponse } from "../recommendation/recommendation.types.js";
-import type { CounsellingProfile } from "@prisma/client";
+import type { CounsellingProfile, CounsellingBooking } from "@prisma/client";
+import { sendCounsellingScheduleEmail } from "./counselling.mail.js";
 
 function emptyToNull(value: string | null | undefined): string | null {
   if (value == null || value.trim() === "") return null;
@@ -258,4 +259,125 @@ export class CounsellingService {
       data: updateData,
     });
   }
+
+  async getBooking(userId: string) {
+    return prisma.counsellingBooking.findUnique({
+      where: { userId },
+    });
+  }
+
+  async createBooking(
+    userId: string,
+    data: { preferredMode: string; notes?: string },
+  ) {
+    const existing = await this.getBooking(userId);
+    if (existing) {
+      throw new ApiError(
+        "Counselling booking already exists",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    return prisma.counsellingBooking.create({
+      data: {
+        userId,
+        preferredMode: data.preferredMode,
+        notes: data.notes || null,
+        status: "PENDING",
+      },
+    });
+  }
+
+  async confirmBooking(
+    userId: string,
+    data: { counsellorName: string; meetingLink: string; scheduledAt: string },
+  ) {
+    const existing = await this.getBooking(userId);
+    if (!existing) {
+      throw new ApiError(
+        "Counselling booking not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+    }
+
+    const wasAlreadyScheduled = existing.status === "CONFIRMED";
+
+    const booking = await prisma.counsellingBooking.update({
+      where: { userId },
+      data: {
+        counsellorName: data.counsellorName,
+        meetingLink: data.meetingLink,
+        scheduledAt: new Date(data.scheduledAt),
+        status: "CONFIRMED",
+      },
+    });
+
+    // Email is a secondary, non-blocking operation — scheduling has already
+    // succeeded in the database by this point, so a failure here must never
+    // roll back the booking or fail the API response.
+    this.notifyStudentOfSchedule(
+      userId,
+      booking,
+      wasAlreadyScheduled ? "updated" : "scheduled",
+    ).catch((err) =>
+      logger.error(
+        `[Counselling] Failed to send schedule email to user ${userId}:`,
+        err,
+      ),
+    );
+
+    return booking;
+  }
+
+  private async notifyStudentOfSchedule(
+    userId: string,
+    booking: CounsellingBooking,
+    kind: "scheduled" | "updated",
+  ) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        direct2HireLead: { select: { fullName: true, email: true } },
+      },
+    });
+
+    if (!user) return;
+
+    const email = user.direct2HireLead?.email || user.email;
+    if (!email) return;
+
+    const nameFromUser = [user.firstName, user.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const studentName =
+      nameFromUser || user.direct2HireLead?.fullName || "Student";
+
+    if (!booking.scheduledAt || !booking.counsellorName || !booking.meetingLink) {
+      return;
+    }
+
+    await sendCounsellingScheduleEmail(
+      email,
+      {
+        studentName,
+        counsellorName: booking.counsellorName,
+        date: booking.scheduledAt.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }),
+        time: booking.scheduledAt.toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        meetLink: booking.meetingLink,
+      },
+      kind,
+    );
+  }
 }
+

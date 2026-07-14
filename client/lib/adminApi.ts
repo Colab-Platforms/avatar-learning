@@ -484,6 +484,15 @@ export interface AdminD2HStudentProfile {
     proudMomentOther: string | null;
     personalNote: string | null;
   } | null;
+  booking: {
+    preferredMode: string;
+    notes: string | null;
+    status: string;
+    counsellorName: string | null;
+    meetingLink: string | null;
+    scheduledAt: string | null;
+    createdAt: string;
+  } | null;
   recommendation: {
     recommendedCourseTitle: string;
     recommendedCourseSlug: string;
@@ -504,6 +513,14 @@ export const fetchD2HStudentProfile = (
 ): Promise<AdminD2HStudentProfile> =>
   apiClient
     .get(`/admin/direct2hire/students/${userId}`)
+    .then((r) => r.data.data);
+
+export const confirmD2HBooking = (
+  userId: string,
+  payload: { counsellorName: string; meetingLink: string; scheduledAt: string },
+) =>
+  apiClient
+    .patch(`/admin/direct2hire/students/${userId}/booking/confirm`, payload)
     .then((r) => r.data.data);
 
 export const uploadInvestorDocumentFile = async (

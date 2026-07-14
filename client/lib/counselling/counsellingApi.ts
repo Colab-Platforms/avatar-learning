@@ -102,3 +102,30 @@ export const updateCounsellingProfile = (
   apiClient
     .put("/direct2hire/counselling", payload)
     .then((response) => response.data.data);
+
+export interface CounsellingBooking {
+  id: string;
+  userId: string;
+  preferredMode: "VOICE" | "VIDEO";
+  notes: string | null;
+  status: string;
+  counsellorName: string | null;
+  meetingLink: string | null;
+  scheduledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const fetchCounsellingBooking = (): Promise<CounsellingBooking | null> =>
+  apiClient
+    .get("/direct2hire/counselling/booking")
+    .then((response) => response.data.data);
+
+export const createCounsellingBooking = (payload: {
+  preferredMode: string;
+  notes?: string;
+}): Promise<CounsellingBooking> =>
+  apiClient
+    .post("/direct2hire/counselling/booking", payload)
+    .then((response) => response.data.data);
+
