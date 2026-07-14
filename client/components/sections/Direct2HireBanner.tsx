@@ -21,18 +21,19 @@ import {
 const STEPS = [
   {
     num: 1,
-    icon: Users,
-    title: "Counselling",
-    desc: "1-on-1 guidance with an expert counselor after your assessment results are ready.",
-    active: false,
-  },
-  {
-    num: 2,
     icon: ClipboardList,
     title: "AI Assessment",
     desc: "Answer a short questionnaire and get an AI-powered course recommendation in your dashboard.",
     active: false,
   },
+  {
+    num: 2,
+    icon: Users,
+    title: "Counselling",
+    desc: "1-on-1 guidance with an expert counselor after your assessment results are ready.",
+    active: false,
+  },
+
   {
     num: 3,
     icon: BookOpen,
