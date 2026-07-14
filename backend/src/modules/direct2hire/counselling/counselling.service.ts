@@ -329,6 +329,116 @@ export class CounsellingService {
     return booking;
   }
 
+  async markCounsellingCompleted(userId: string) {
+    const existing = await this.getBooking(userId);
+    if (!existing) {
+      throw new ApiError(
+        "Counselling booking not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+    }
+    if (existing.status !== "CONFIRMED") {
+      throw new ApiError(
+        "Counselling session must be confirmed before it can be marked completed",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+    if (existing.counsellingCompleted) {
+      return existing;
+    }
+
+    return prisma.counsellingBooking.update({
+      where: { userId },
+      data: {
+        counsellingCompleted: true,
+        counsellingCompletedAt: new Date(),
+      },
+    });
+  }
+
+  async getCourseSelectionState(userId: string) {
+    const booking = await this.getBooking(userId);
+
+    const availableCourses = await prisma.courses.findMany({
+      where: { isDirect2HireCourse: true, isPublished: true },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        thumbnail: true,
+        level: true,
+        totalWeeks: true,
+        whatYouLearn: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const selectedCourse = booking?.selectedCourseId
+      ? await prisma.courses.findUnique({
+          where: { id: booking.selectedCourseId },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            thumbnail: true,
+            level: true,
+            totalWeeks: true,
+            whatYouLearn: true,
+          },
+        })
+      : null;
+
+    return {
+      counsellingCompleted: booking?.counsellingCompleted ?? false,
+      selectedCourseId: booking?.selectedCourseId ?? null,
+      selectedCourseAt: booking?.selectedCourseAt ?? null,
+      selectedCourse,
+      availableCourses,
+    };
+  }
+
+  async selectCourse(userId: string, courseId: string) {
+    const booking = await this.getBooking(userId);
+    if (!booking || !booking.counsellingCompleted) {
+      throw new ApiError(
+        "Counselling must be completed before selecting a course",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+    if (booking.selectedCourseId) {
+      throw new ApiError(
+        "A Direct2Hire course has already been selected",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    const course = await prisma.courses.findUnique({ where: { id: courseId } });
+    if (!course || !course.isDirect2HireCourse || !course.isPublished) {
+      throw new ApiError(
+        "Selected course is not a valid Direct2Hire course",
+        STATUS_CODES.NOT_FOUND,
+      );
+    }
+
+    const updatedBooking = await prisma.counsellingBooking.update({
+      where: { userId },
+      data: {
+        selectedCourseId: course.id,
+        selectedCourseAt: new Date(),
+      },
+    });
+
+    await prisma.courseUserMapper.upsert({
+      where: { userId_courseId: { userId, courseId: course.id } },
+      update: {},
+      create: { userId, courseId: course.id },
+    });
+
+    return { booking: updatedBooking, course };
+  }
+
   private async notifyStudentOfSchedule(
     userId: string,
     booking: CounsellingBooking,

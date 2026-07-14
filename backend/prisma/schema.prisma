@@ -292,10 +292,11 @@ model Courses {
 
   creator User? @relation("CourseCreator", fields: [createdBy], references: [id])
 
-  lessons       Lessons[]
-  enrollments   CourseUserMapper[]
-  paymentOrders PaymentOrder[]
-  assessment    Assessment?
+  lessons                Lessons[]
+  enrollments            CourseUserMapper[]
+  paymentOrders          PaymentOrder[]
+  assessment             Assessment?
+  counsellingSelections  CounsellingBooking[]
 
   @@index([categoryId])
   @@index([createdBy])
@@ -757,11 +758,19 @@ model CounsellingBooking {
   meetingLink    String?   @map("meeting_link") @db.Text
   scheduledAt    DateTime? @map("scheduled_at")
 
+  counsellingCompleted   Boolean   @default(false) @map("counselling_completed")
+  counsellingCompletedAt DateTime? @map("counselling_completed_at")
+
+  selectedCourseId String?   @map("selected_course_id")
+  selectedCourse   Courses?  @relation(fields: [selectedCourseId], references: [id])
+  selectedCourseAt DateTime? @map("selected_course_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([selectedCourseId])
   @@map("counselling_bookings")
 }
 

@@ -24,5 +24,9 @@ router.patch(
     "/direct2hire/students/:userId/booking/confirm",
     direct2hireAdminController.confirmBooking,
 );
+router.patch(
+    "/direct2hire/students/:userId/counselling/complete",
+    direct2hireAdminController.markCounsellingCompleted,
+);
 
 export default router;

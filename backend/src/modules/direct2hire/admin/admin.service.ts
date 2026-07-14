@@ -138,6 +138,13 @@ export class Direct2HireAdminService {
             meetingLink: true,
             scheduledAt: true,
             createdAt: true,
+            counsellingCompleted: true,
+            counsellingCompletedAt: true,
+            selectedCourseId: true,
+            selectedCourseAt: true,
+            selectedCourse: {
+              select: { id: true, title: true, slug: true },
+            },
           },
         },
         courseRecommendation: {

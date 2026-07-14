@@ -56,6 +56,11 @@ export interface AdminD2HStudentProfile {
     meetingLink: string | null;
     scheduledAt: Date | null;
     createdAt: Date;
+    counsellingCompleted: boolean;
+    counsellingCompletedAt: Date | null;
+    selectedCourseId: string | null;
+    selectedCourseAt: Date | null;
+    selectedCourse: { id: string; title: string; slug: string } | null;
   } | null;
   recommendation: {
     recommendedCourseTitle: string;

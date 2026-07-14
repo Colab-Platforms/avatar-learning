@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAdminDirect2HireStudent } from "@/hooks/queries/useAdminDirect2HireStudent";
 import { useConfirmCounsellingBooking } from "@/hooks/mutations/useConfirmCounsellingBooking";
+import { useMarkCounsellingCompleted } from "@/hooks/mutations/useMarkCounsellingCompleted";
 import type { AdminD2HStudentProfile } from "@/lib/adminApi";
 
 function formatDate(value?: string | null) {
@@ -539,6 +540,44 @@ function BookingSection({
   );
 }
 
+function CompletionSection({
+  userId,
+  booking,
+}: {
+  userId: string;
+  booking: NonNullable<AdminD2HStudentProfile["booking"]>;
+}) {
+  const markCompletedMutation = useMarkCounsellingCompleted(userId);
+
+  if (booking.status !== "CONFIRMED") return null;
+
+  return (
+    <div className="mt-6 pt-6 border-t border-white/6">
+      {!booking.counsellingCompleted ? (
+        <button
+          onClick={() => markCompletedMutation.mutate()}
+          disabled={markCompletedMutation.isPending}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold
+                     bg-brand-500 text-ink-950 hover:bg-brand-400 active:scale-98 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {markCompletedMutation.isPending ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <CheckCircle2 size={13} />
+          )}
+          Mark Counselling Completed
+        </button>
+      ) : (
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 w-fit">
+          <CheckCircle2 size={13} />
+          Counselling Completed
+          {booking.selectedCourse && ` · Selected: ${booking.selectedCourse.title}`}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDirect2HireStudentPage() {
   const params = useParams<{ userId: string }>();
   const userId = params.userId;
@@ -670,7 +709,10 @@ export default function AdminDirect2HireStudentPage() {
         {!data.booking ? (
           <p className="text-sm text-white/35">No session requested yet.</p>
         ) : (
-          <BookingSection userId={userId} booking={data.booking} />
+          <>
+            <BookingSection userId={userId} booking={data.booking} />
+            <CompletionSection userId={userId} booking={data.booking} />
+          </>
         )}
       </Card>
     </div>

@@ -112,6 +112,10 @@ export interface CounsellingBooking {
   counsellorName: string | null;
   meetingLink: string | null;
   scheduledAt: string | null;
+  counsellingCompleted: boolean;
+  counsellingCompletedAt: string | null;
+  selectedCourseId: string | null;
+  selectedCourseAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

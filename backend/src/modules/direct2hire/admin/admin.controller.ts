@@ -53,6 +53,33 @@ export const getStudentProfile = async (
     }
 };
 
+export const markCounsellingCompleted = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const booking = await counsellingService.markCounsellingCompleted(
+            value.userId,
+        );
+        sendResponse(res, true, booking, "Counselling marked as completed");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to mark counselling as completed",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
 export const confirmBooking = async (
     req: Request,
     res: Response,

@@ -492,6 +492,11 @@ export interface AdminD2HStudentProfile {
     meetingLink: string | null;
     scheduledAt: string | null;
     createdAt: string;
+    counsellingCompleted: boolean;
+    counsellingCompletedAt: string | null;
+    selectedCourseId: string | null;
+    selectedCourseAt: string | null;
+    selectedCourse: { id: string; title: string; slug: string } | null;
   } | null;
   recommendation: {
     recommendedCourseTitle: string;
@@ -521,6 +526,11 @@ export const confirmD2HBooking = (
 ) =>
   apiClient
     .patch(`/admin/direct2hire/students/${userId}/booking/confirm`, payload)
+    .then((r) => r.data.data);
+
+export const markCounsellingCompleted = (userId: string) =>
+  apiClient
+    .patch(`/admin/direct2hire/students/${userId}/counselling/complete`)
     .then((r) => r.data.data);
 
 export const uploadInvestorDocumentFile = async (

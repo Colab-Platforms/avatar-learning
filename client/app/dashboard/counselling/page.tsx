@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
 import { useCreateCounsellingBooking } from "@/hooks/mutations/useCreateCounsellingBooking";
+import { CourseSelectionPanel } from "@/components/counselling/CourseSelectionPanel";
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -55,6 +56,28 @@ export default function CounsellingPage() {
 
   const isBooked = !!booking;
   const bookingStatus = booking?.status || "NOT_BOOKED";
+  const counsellingCompleted = booking?.counsellingCompleted ?? false;
+
+  if (counsellingCompleted) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-2">
+          <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold tracking-wider text-blue-600 uppercase">
+            Direct2Hire Programme
+          </span>
+        </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Choose Your Course
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Pick the Direct2Hire learning track that&apos;s right for you.
+          </p>
+        </div>
+        <CourseSelectionPanel />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

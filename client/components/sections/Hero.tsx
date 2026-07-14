@@ -83,9 +83,10 @@ export function Hero() {
 
             {/* Subtitle */}
             <p className="mt-6 max-w-xl text-lg text-slate-600 leading-relaxed anim-fade-up stagger-2">
-              Counselling, AI-powered assessment, skill-building, internships,
-              and placement support — one program that takes you from learning
-              to earning.
+              From AI Skilling to Enterprise Automation -{" "}
+              <span className="font-semibold text-2xl">Avatar</span> is India's
+              integrated AI Platform for Learners, Professionals, and
+              Businesses.
             </p>
 
             {/* CTAs */}

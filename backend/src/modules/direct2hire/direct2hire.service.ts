@@ -16,8 +16,18 @@ export class Direct2HireService {
     async getMyStatus(userId: string) {
         const enrollment = await this.getOrCreateEnrollment(userId);
 
+        const booking = await prisma.counsellingBooking.findUnique({
+            where: { userId },
+            select: { selectedCourseId: true },
+        });
+
         const d2hCourses = await prisma.courses.findMany({
-            where: { isDirect2HireCourse: true },
+            where: {
+                isDirect2HireCourse: true,
+                ...(booking?.selectedCourseId
+                    ? { id: booking.selectedCourseId }
+                    : {}),
+            },
             include: { _count: { select: { lessons: true } } },
             orderBy: { createdAt: "asc" },
         });
