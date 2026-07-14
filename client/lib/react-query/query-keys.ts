@@ -21,6 +21,11 @@ export const queryKeys = {
   adminDirect2hireStudent: (userId: string) =>
     ["admin-direct2hire-student", userId] as const,
   adminDirect2hireStudents: ["admin-direct2hire-students"] as const,
+  internshipTasks: ["direct2hire-internship-tasks"] as const,
+  internshipTask: (taskId: string) =>
+    ["direct2hire-internship-task", taskId] as const,
+  adminInternshipTasks: (courseId: string) =>
+    ["admin-internship-tasks", courseId] as const,
   assessment: (courseId: string) => ["assessment", courseId] as const,
   assessmentAttempt: (attemptId: string) => ["assessment-attempt", attemptId] as const,
   assessmentResult: (attemptId: string) => ["assessment-result", attemptId] as const,

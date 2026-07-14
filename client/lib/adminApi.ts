@@ -1,6 +1,7 @@
 import apiClient from "./apiClient";
 import axios from "axios";
 import type { PaginatedResponse } from "./coursesApi";
+import type { AdminStudentInternshipProgress } from "./internshipApi";
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
@@ -508,6 +509,7 @@ export interface AdminD2HStudentProfile {
     summary: string | null;
     generatedAt: string;
   } | null;
+  internship?: AdminStudentInternshipProgress;
 }
 
 export const fetchD2HStudents = (): Promise<AdminD2HStudentListItem[]> =>

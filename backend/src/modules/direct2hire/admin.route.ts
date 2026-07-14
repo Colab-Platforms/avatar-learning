@@ -2,6 +2,7 @@ import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
 import * as direct2hireController from "./direct2hire.controller.js";
 import * as direct2hireAdminController from "./admin/admin.controller.js";
+import internshipAdminRoutes from "./internship/internship.admin.route.js";
 
 const router = Router();
 
@@ -28,5 +29,7 @@ router.patch(
     "/direct2hire/students/:userId/counselling/complete",
     direct2hireAdminController.markCounsellingCompleted,
 );
+
+router.use("/direct2hire", internshipAdminRoutes);
 
 export default router;

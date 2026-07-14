@@ -1,3 +1,5 @@
+import type { AdminStudentInternshipProgressDto } from "../internship/internship.types.js";
+
 export interface AdminD2HStudentListItem {
   userId: string;
   fullName: string;
@@ -72,4 +74,5 @@ export interface AdminD2HStudentProfile {
     summary: string | null;
     generatedAt: Date;
   } | null;
+  internship: AdminStudentInternshipProgressDto;
 }

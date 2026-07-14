@@ -86,6 +86,17 @@ enum AssessmentAttemptStatus {
   AUTO_SUBMITTED_VIOLATION
 }
 
+enum InternshipSubmissionStatus {
+  UNDER_REVIEW
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum SubmissionAttachmentKind {
+  FILE
+  LINK
+}
+
 model User {
   id             String  @id @default(cuid())
   firstName      String? @map("first_name")
@@ -136,8 +147,10 @@ model User {
   paymentOrders          PaymentOrder[]
   counsellingProfile     CounsellingProfile?
   courseRecommendation   CourseRecommendation?
-  counsellingBooking     CounsellingBooking?
-  assessmentAttempts     AssessmentAttempt[]
+  counsellingBooking      CounsellingBooking?
+  assessmentAttempts      AssessmentAttempt[]
+  internshipSubmissions   InternshipSubmission[]
+  reviewedInternshipSubs  InternshipSubmission[] @relation("InternshipSubmissionReviewer")
 
   @@index([email])
   @@index([isActive])
@@ -297,6 +310,7 @@ model Courses {
   paymentOrders          PaymentOrder[]
   assessment             Assessment?
   counsellingSelections  CounsellingBooking[]
+  internshipTasks        InternshipTask[]
 
   @@index([categoryId])
   @@index([createdBy])
@@ -905,4 +919,107 @@ model AssessmentAnswer {
   @@index([attemptId])
   @@index([questionId])
   @@map("assessment_answers")
+}
+
+// ─── Direct2Hire Internship Tasks (course-scoped, 8 weeks) ───────────────────
+
+model InternshipTask {
+  id String @id @default(cuid())
+
+  courseId String @map("course_id")
+
+  weekNumber Int @map("week_number")
+
+  title                String
+  shortDescription     String  @map("short_description")
+  detailedInstructions String  @map("detailed_instructions") @db.Text
+  expectedDeliverables String  @map("expected_deliverables") @db.Text
+  estimatedHours       Int?    @map("estimated_hours")
+
+  isPublished Boolean @default(false) @map("is_published")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  course        Courses                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attachments   InternshipTaskAttachment[]
+  submissions   InternshipSubmission[]
+
+  @@unique([courseId, weekNumber])
+  @@index([courseId])
+  @@index([courseId, isPublished])
+  @@map("internship_tasks")
+}
+
+model InternshipTaskAttachment {
+  id String @id @default(cuid())
+
+  taskId String @map("task_id")
+
+  url              String
+  publicId         String  @map("public_id")
+  originalFilename String  @map("original_filename")
+  mimeType         String  @map("mime_type")
+  size             Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task InternshipTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("internship_task_attachments")
+}
+
+model InternshipSubmission {
+  id String @id @default(cuid())
+
+  taskId String @map("task_id")
+  userId String @map("user_id")
+
+  status InternshipSubmissionStatus @default(UNDER_REVIEW)
+
+  studentNotes  String? @map("student_notes") @db.Text
+  adminFeedback String? @map("admin_feedback") @db.Text
+
+  submittedAt DateTime  @default(now()) @map("submitted_at")
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?   @map("reviewed_by")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  task     InternshipTask               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user     User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User?                        @relation("InternshipSubmissionReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  attachments InternshipSubmissionAttachment[]
+
+  @@unique([userId, taskId])
+  @@index([taskId])
+  @@index([userId])
+  @@index([status])
+  @@map("internship_submissions")
+}
+
+model InternshipSubmissionAttachment {
+  id String @id @default(cuid())
+
+  submissionId String @map("submission_id")
+
+  kind SubmissionAttachmentKind
+
+  /// Display label for links (e.g. GitHub, Figma, Loom) or file description
+  label String?
+
+  url              String
+  publicId         String? @map("public_id")
+  originalFilename String? @map("original_filename")
+  mimeType         String? @map("mime_type")
+  size             Int?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  submission InternshipSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@map("internship_submission_attachments")
 }

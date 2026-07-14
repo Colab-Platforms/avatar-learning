@@ -15,11 +15,17 @@ import {
   CheckCircle2,
   Loader2,
   Phone,
+  Briefcase,
+  ExternalLink,
+  FileText,
+  MessageSquareWarning,
 } from "lucide-react";
 import { useAdminDirect2HireStudent } from "@/hooks/queries/useAdminDirect2HireStudent";
 import { useConfirmCounsellingBooking } from "@/hooks/mutations/useConfirmCounsellingBooking";
 import { useMarkCounsellingCompleted } from "@/hooks/mutations/useMarkCounsellingCompleted";
+import { useReviewInternshipSubmission } from "@/hooks/mutations/useReviewInternshipSubmission";
 import type { AdminD2HStudentProfile } from "@/lib/adminApi";
+import type { AdminStudentInternshipTask } from "@/lib/internshipApi";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -578,6 +584,275 @@ function CompletionSection({
   );
 }
 
+const INTERNSHIP_STATUS_STYLE: Record<
+  string,
+  string
+> = {
+  APPROVED: "bg-emerald-500/10 text-emerald-400",
+  UNDER_REVIEW: "bg-amber-500/10 text-amber-400",
+  AVAILABLE: "bg-blue-500/10 text-blue-400",
+  CHANGES_REQUESTED: "bg-orange-500/10 text-orange-400",
+  LOCKED: "bg-white/5 text-white/30",
+  NOT_STARTED: "bg-white/5 text-white/40",
+};
+
+function InternshipReviewRow({
+  userId,
+  task,
+}: {
+  userId: string;
+  task: AdminStudentInternshipTask;
+}) {
+  const reviewMutation = useReviewInternshipSubmission(userId);
+  const [feedback, setFeedback] = useState(task.adminFeedback ?? "");
+  const [error, setError] = useState("");
+
+  const canReview =
+    task.backendStatus === "UNDER_REVIEW" && !!task.submissionId;
+
+  const review = async (status: "APPROVED" | "CHANGES_REQUESTED") => {
+    if (!task.submissionId) return;
+    setError("");
+    if (status === "CHANGES_REQUESTED" && !feedback.trim()) {
+      setError("Feedback is required when requesting changes");
+      return;
+    }
+    try {
+      await reviewMutation.mutateAsync({
+        submissionId: task.submissionId,
+        payload: {
+          status,
+          adminFeedback: feedback.trim() || null,
+        },
+      });
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e?.response?.data?.message ?? "Review failed");
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4 space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+            Week {task.weekNumber}
+            {!task.isPublished && " · Draft"}
+          </p>
+          <h3 className="text-sm font-semibold text-white mt-0.5">
+            {task.title}
+          </h3>
+          <p className="text-xs text-white/40 mt-1 line-clamp-2">
+            {task.shortDescription}
+          </p>
+        </div>
+        <span
+          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            INTERNSHIP_STATUS_STYLE[task.derivedStatus] ??
+            "bg-white/5 text-white/30"
+          }`}
+        >
+          {task.derivedStatus.replaceAll("_", " ")}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <Field
+          label="Submitted On"
+          value={
+            task.submittedAt
+              ? formatDateTime(task.submittedAt)
+              : "—"
+          }
+        />
+        <Field
+          label="Reviewed On"
+          value={
+            task.reviewedAt ? formatDateTime(task.reviewedAt) : "—"
+          }
+        />
+      </div>
+
+      {task.studentNotes && (
+        <div>
+          <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1">
+            Student Notes
+          </p>
+          <p className="text-sm text-white/70 whitespace-pre-wrap">
+            {task.studentNotes}
+          </p>
+        </div>
+      )}
+
+      {task.adminFeedback && !canReview && (
+        <div>
+          <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1">
+            Admin Feedback
+          </p>
+          <p className="text-sm text-white/70 whitespace-pre-wrap">
+            {task.adminFeedback}
+          </p>
+        </div>
+      )}
+
+      {task.attachments.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+            Attachments &amp; Links
+          </p>
+          <ul className="space-y-1.5">
+            {task.attachments.map((a) => (
+              <li key={a.id}>
+                <a
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300"
+                >
+                  {a.kind === "LINK" ? (
+                    <LinkIcon size={12} />
+                  ) : (
+                    <FileText size={12} />
+                  )}
+                  {a.label || a.originalFilename || a.url}
+                  <ExternalLink size={10} className="opacity-50" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {canReview && (
+        <div className="pt-2 border-t border-white/6 space-y-3">
+          <div>
+            <label className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5 block">
+              Feedback
+            </label>
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              rows={3}
+              placeholder="Notes for the student…"
+              className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none focus:border-brand-500/60 resize-none"
+            />
+          </div>
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => review("APPROVED")}
+              disabled={reviewMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-500 text-ink-950 hover:bg-emerald-400 disabled:opacity-60"
+            >
+              {reviewMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={12} />
+              )}
+              Approve
+            </button>
+            <button
+              onClick={() => review("CHANGES_REQUESTED")}
+              disabled={reviewMutation.isPending}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 disabled:opacity-60"
+            >
+              <MessageSquareWarning size={12} />
+              Request Changes
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InternshipProgressSection({
+  userId,
+  internship,
+}: {
+  userId: string;
+  internship: AdminD2HStudentProfile["internship"];
+}) {
+  if (!internship?.course) {
+    return (
+      <Card>
+        <div className="flex items-center gap-2 mb-2">
+          <Briefcase className="text-brand-400" size={18} />
+          <h2 className="text-sm font-semibold text-white/80">
+            Internship Progress
+          </h2>
+        </div>
+        <p className="text-sm text-white/35">
+          Student has not selected a Direct2Hire course yet.
+        </p>
+      </Card>
+    );
+  }
+
+  const { progress, tasks, course } = internship;
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Briefcase className="text-brand-400" size={18} />
+            <h2 className="text-sm font-semibold text-white/80">
+              Internship Progress
+            </h2>
+          </div>
+          <p className="text-xs text-white/40">{course.title}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-bold text-white">
+            {progress.approvedCount}{" "}
+            <span className="text-white/30 font-normal text-sm">/</span>{" "}
+            {progress.total}
+          </p>
+          <p className="text-[10px] text-white/30 uppercase tracking-widest">
+            Approved
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+        {[
+          { label: "Approved", value: progress.approved },
+          { label: "Under Review", value: progress.underReview },
+          { label: "Available", value: progress.available },
+          { label: "Locked", value: progress.locked },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="rounded-xl border border-white/6 bg-ink-900/40 px-3 py-2.5"
+          >
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">
+              {s.label}
+            </p>
+            <p className="text-lg font-bold text-white mt-0.5">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {tasks.length === 0 ? (
+        <p className="text-sm text-white/35">
+          No internship tasks configured for this course yet.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {tasks.map((task) => (
+            <InternshipReviewRow
+              key={task.taskId}
+              userId={userId}
+              task={task}
+            />
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function AdminDirect2HireStudentPage() {
   const params = useParams<{ userId: string }>();
   const userId = params.userId;
@@ -715,6 +990,24 @@ export default function AdminDirect2HireStudentPage() {
           </>
         )}
       </Card>
+
+      <InternshipProgressSection
+        userId={userId}
+        internship={
+          data.internship ?? {
+            course: null,
+            progress: {
+              approved: 0,
+              underReview: 0,
+              available: 0,
+              locked: 0,
+              total: 0,
+              approvedCount: 0,
+            },
+            tasks: [],
+          }
+        }
+      />
     </div>
   );
 }

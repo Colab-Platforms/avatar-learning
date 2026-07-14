@@ -1,12 +1,14 @@
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import { InternshipService } from "../internship/internship.service.js";
 import type {
   AdminD2HStudentListItem,
   AdminD2HStudentProfile,
 } from "./admin.types.js";
 
 export class Direct2HireAdminService {
+  private readonly internshipService = new InternshipService();
   async getAllStudents(): Promise<AdminD2HStudentListItem[]> {
     const leads = await prisma.direct2HireLead.findMany({
       include: {
@@ -167,6 +169,8 @@ export class Direct2HireAdminService {
     }
 
     const enrollment = user.direct2hireEnrollments[0];
+    const internship =
+      await this.internshipService.getAdminStudentProgress(userId);
 
     return {
       user: {
@@ -190,6 +194,7 @@ export class Direct2HireAdminService {
       counselling: user.counsellingProfile ?? null,
       booking: user.counsellingBooking ?? null,
       recommendation: user.courseRecommendation ?? null,
+      internship,
     };
   }
 }
