@@ -20,6 +20,7 @@ import {
   BookOpen,
   ListChecks,
   Target,
+  ClipboardList,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -753,6 +754,14 @@ export default function LearnPage({ params }: PageProps) {
                     Next Topic
                     <ChevronRight size={14} />
                   </button>
+                ) : course.enrollment.progress === 100 ? (
+                  <Link
+                    href={`/courses/${id}/assessment`}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors cursor-pointer shadow-sm"
+                  >
+                    <ClipboardList size={14} />
+                    Take Course Assessment
+                  </Link>
                 ) : (
                   <p className="text-[11px] text-slate-400 text-center py-1">
                     {currentFlatIndex === flatTopics.length - 1

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
 import * as courseController from "./course.controller.js";
+import * as assessmentController from "./assessment/assessment.controller.js";
 
 const router = Router();
 
@@ -35,6 +36,43 @@ router.post(
   "/topics/:topicId/watch",
   auth("USER"),
   courseController.markTopicWatched,
+);
+
+// ─── Assessment (must be before /:slug to avoid conflicts) ───────────────────
+router.get(
+  "/:courseId/assessment",
+  auth("USER"),
+  assessmentController.getAssessmentForUser,
+);
+router.post(
+  "/:courseId/assessment/attempts",
+  auth("USER"),
+  assessmentController.startAttempt,
+);
+router.get(
+  "/assessments/attempts/:attemptId",
+  auth("USER"),
+  assessmentController.getAttemptState,
+);
+router.put(
+  "/assessments/attempts/:attemptId/answers/:questionId",
+  auth("USER"),
+  assessmentController.saveAnswer,
+);
+router.post(
+  "/assessments/attempts/:attemptId/violations",
+  auth("USER"),
+  assessmentController.reportViolation,
+);
+router.post(
+  "/assessments/attempts/:attemptId/submit",
+  auth("USER"),
+  assessmentController.submitAttempt,
+);
+router.get(
+  "/assessments/attempts/:attemptId/result",
+  auth("USER"),
+  assessmentController.getAttemptResult,
 );
 
 // ─── Public slug route (must be last — catchall param) ───────────────────────

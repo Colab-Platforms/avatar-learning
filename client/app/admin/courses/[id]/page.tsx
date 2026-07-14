@@ -33,6 +33,7 @@ import {
 import { ModuleListEditor } from "@/components/admin/ModuleEditors";
 import { WeekRow } from "@/components/admin/WeekRow";
 import { CourseMetaForm } from "@/components/admin/CourseMetaForm";
+import { AssessmentEditor } from "@/components/admin/AssessmentEditor";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -108,7 +109,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"weeks" | "meta">("weeks");
+  const [activeTab, setActiveTab] = useState<"weeks" | "meta" | "assessment">("weeks");
   const [togglingPublish, setTogglingPublish] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [savingLesson, setSavingLesson] = useState(false);
@@ -471,7 +472,7 @@ export default function CourseDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-ink-900/60 border border-white/5 rounded-xl p-1 w-fit">
-        {(["weeks", "meta"] as const).map((tab) => (
+        {(["weeks", "meta", "assessment"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -481,7 +482,7 @@ export default function CourseDetailPage() {
                 : "text-white/35 hover:text-white/60"
             }`}
           >
-            {tab === "weeks" ? "Weeks & Modules" : "Course Metadata"}
+            {tab === "weeks" ? "Weeks & Modules" : tab === "meta" ? "Course Metadata" : "Assessment"}
           </button>
         ))}
       </div>
@@ -656,6 +657,9 @@ export default function CourseDetailPage() {
           }}
         />
       )}
+
+      {/* ── ASSESSMENT TAB ── */}
+      {activeTab === "assessment" && <AssessmentEditor courseId={id} />}
     </div>
   );
 }
