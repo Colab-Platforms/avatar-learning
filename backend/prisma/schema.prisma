@@ -648,6 +648,11 @@ model Partner {
   phone            String
   email            String
 
+  location   String? // city (individual) or city/state (institute)
+  profession String? // individual only — current role/profession
+  linkedin   String? // individual only — optional LinkedIn profile URL
+  website    String? // corporate only — optional company website
+
   referralCode  String? @unique @map("referral_code")
   walletBalance Int     @default(0) @map("wallet_balance")
 

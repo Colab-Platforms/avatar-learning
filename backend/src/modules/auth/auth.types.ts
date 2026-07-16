@@ -6,6 +6,7 @@ export interface RegisterBody {
     phoneNo: string;
     state: string;
     country: string;
+    referralCode?: string;
 }
 
 export interface LoginBody {
@@ -44,6 +45,7 @@ export interface VerifyPhoneBody {
 
 export interface GoogleAuthBody {
     idToken: string;
+    referralCode?: string;
 }
 
 export interface JwtPayload {

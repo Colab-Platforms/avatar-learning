@@ -158,6 +158,17 @@ class AuthService {
         await tx.userRoleMapping.create({
           data: { userId: created.id, roleId: roleRecord.id },
         });
+        if (data.referralCode) {
+          const partner = await tx.partner.findFirst({
+            where: { referralCode: data.referralCode, status: "APPROVED" },
+          });
+          if (partner) {
+            await tx.partnerReferral.create({
+              data: { partnerId: partner.id, referredUserId: created.id },
+            });
+          }
+        }
+
         return created;
       });
     }
@@ -424,6 +435,17 @@ class AuthService {
           await tx.userRoleMapping.create({
             data: { userId: newUser.id, roleId: roleRecord.id },
           });
+          // Track referral for new Google-auth users the same way as email register
+          if (data.referralCode) {
+            const partner = await tx.partner.findFirst({
+              where: { referralCode: data.referralCode, status: "APPROVED" },
+            });
+            if (partner) {
+              await tx.partnerReferral.create({
+                data: { partnerId: partner.id, referredUserId: newUser.id },
+              });
+            }
+          }
           return newUser;
         });
 

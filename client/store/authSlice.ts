@@ -92,6 +92,7 @@ export const register = createAsyncThunk(
       phoneNo: string;
       state: string;
       country: string;
+      referralCode?: string;
     },
     { rejectWithValue }
   ) => {
@@ -144,7 +145,7 @@ export const login = createAsyncThunk(
 
 export const googleLogin = createAsyncThunk(
   "auth/googleLogin",
-  async (data: { idToken: string }, { rejectWithValue }) => {
+  async (data: { idToken: string; referralCode?: string }, { rejectWithValue }) => {
     try {
       const { data: res } = await apiClient.post<
         ApiResponse<{
