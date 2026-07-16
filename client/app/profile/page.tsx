@@ -16,6 +16,7 @@ import { PersonalTab } from "@/components/profile/PersonalTab";
 import { LocationTab } from "@/components/profile/LocationTab";
 import { CoursesTab } from "@/components/profile/CoursesTab";
 import { ResumeTab } from "@/components/profile/ResumeTab";
+import { PartnersTab } from "@/components/profile/PartnersTab";
 import { AccountDetails } from "@/components/profile/AccountDetails";
 
 export default function ProfilePage() {
@@ -184,6 +185,8 @@ export default function ProfilePage() {
                   onDelete={handleResumeDelete}
                 />
               )}
+
+              {activeTab === "partners" && <PartnersTab />}
 
               <AccountDetails user={user} />
 

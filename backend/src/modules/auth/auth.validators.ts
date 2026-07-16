@@ -37,6 +37,7 @@ const registerSchema = Joi.object({
         "string.empty": "Country is required",
         "any.required": "Country is required",
     }),
+    referralCode: Joi.string().trim().uppercase().optional().allow(""),
 });
 
 const loginSchema = Joi.object({
@@ -111,6 +112,7 @@ const googleAuthSchema = Joi.object({
         "string.empty": "Google ID token is required",
         "any.required": "Google ID token is required",
     }),
+    referralCode: Joi.string().trim().uppercase().optional().allow(""),
 });
 
 const verifyPhoneSchema = Joi.object({

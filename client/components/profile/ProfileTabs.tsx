@@ -1,4 +1,4 @@
-import { User, MapPin, BookOpen, FileText } from "lucide-react";
+import { User, MapPin, BookOpen, FileText, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tab } from "./shared";
 
@@ -7,6 +7,7 @@ const TAB_DEFS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "location", label: "Location", icon: <MapPin className="h-3.5 w-3.5" /> },
   { id: "courses", label: "My Courses", icon: <BookOpen className="h-3.5 w-3.5" /> },
   { id: "resume", label: "Resume", icon: <FileText className="h-3.5 w-3.5" /> },
+  { id: "partners", label: "Partners", icon: <Handshake className="h-3.5 w-3.5" /> },
 ];
 
 export function ProfileTabs({

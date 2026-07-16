@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Loader2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui";
 
-export type Tab = "personal" | "location" | "courses" | "resume";
+export type Tab = "personal" | "location" | "courses" | "resume" | "partners";
 
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {

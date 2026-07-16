@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowRight, Loader2, Check, X as XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,9 +54,10 @@ function PasswordStrength({ password }: { password: string }) {
 
 type RegisterStep = "form" | "choose-method" | "email-otp" | "phone-verify";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const dispatch = useAppDispatch();
   const router   = useRouter();
+  const searchParams = useSearchParams();
   const { loading, error, user } = useAppSelector((s) => s.auth);
 
   const [step,           setStep]           = useState<RegisterStep>("form");
@@ -64,7 +65,7 @@ export default function RegisterPage() {
   const [localPhone,     setLocalPhone]     = useState("");
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "",
-    phoneNo: "", state: "", country: "", password: "",
+    phoneNo: "", state: "", country: "", password: "", referralCode: "",
   });
   const [showPassword,   setShowPassword]   = useState(false);
   const [agreed,         setAgreed]         = useState(false);
@@ -74,6 +75,11 @@ export default function RegisterPage() {
   const [phoneError,     setPhoneError]     = useState<string | null>(null);
 
   useEffect(() => { if (user) router.push("/onboarded"); }, [user, router]);
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) setForm((prev) => ({ ...prev, referralCode: ref.toUpperCase() }));
+  }, [searchParams]);
 
   useEffect(() => {
     if (!resendCooldown) return;
@@ -454,7 +460,7 @@ export default function RegisterPage() {
         <div className="h-px flex-1 bg-slate-100" />
       </div>
 
-      <GoogleAuthButton />
+      <GoogleAuthButton referralCode={form.referralCode || undefined} />
 
       <div className="h-px bg-slate-100" />
 
@@ -465,5 +471,19 @@ export default function RegisterPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

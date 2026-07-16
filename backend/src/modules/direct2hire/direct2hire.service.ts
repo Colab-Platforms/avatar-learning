@@ -1,7 +1,12 @@
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import { partnerService } from "@/modules/partners/partner.service.js";
 import { D2HCourseSummary } from "./direct2hire.types.js";
+
+// Fixed commission base amount for partner referrals — flat ₹499 per Direct2Hire
+// payment, regardless of which D2H course the student actually enrolls in.
+const DIRECT2HIRE_COMMISSION_BASE_AMOUNT = 499;
 
 export class Direct2HireService {
     async getOrCreateEnrollment(userId: string) {
@@ -90,8 +95,17 @@ export class Direct2HireService {
         });
 
         await this.grantCourseAccess(enrollment.userId);
+        await this.creditPartnerCommission(enrollment.userId);
 
         return updated;
+    }
+
+    private async creditPartnerCommission(userId: string) {
+        try {
+            await partnerService.creditReferralIfEligible(userId, DIRECT2HIRE_COMMISSION_BASE_AMOUNT);
+        } catch (err) {
+            console.error("[Partners] Failed to credit referral commission:", err);
+        }
     }
 
     async getAllEnrollments(take?: number, skip?: number) {
@@ -134,6 +148,7 @@ export class Direct2HireService {
                 data: { status: "PAID" },
             });
             await this.grantCourseAccess(userId);
+            await this.creditPartnerCommission(userId);
         }
 
         await prisma.direct2HireLead.updateMany({

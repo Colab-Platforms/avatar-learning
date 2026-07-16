@@ -373,6 +373,103 @@ export const deleteInvestorDocument = (id: string) =>
   apiClient.delete(`/admin/investors/documents/${id}`).then((r) => r.data);
 
 // Signed direct upload to Cloudinary (raw resource type, for PDFs)
+// ─── Partners ─────────────────────────────────────────────────────────────────
+
+export interface AdminPartner {
+  id: string;
+  type: "INDIVIDUAL" | "INSTITUTE" | "CORPORATE";
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  organizationName: string | null;
+  contactPerson: string | null;
+  designation: string | null;
+  instituteType: string | null;
+  phone: string;
+  email: string;
+  location: string | null;
+  profession: string | null;
+  linkedin: string | null;
+  website: string | null;
+  referralCode: string | null;
+  walletBalance: number;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+  };
+}
+
+export interface AdminPartnerDetail extends AdminPartner {
+  referrals: {
+    id: string;
+    commissionEarned: number;
+    commissionRate: number | null;
+    creditedAt: string | null;
+    createdAt: string;
+  }[];
+  claims: {
+    id: string;
+    amount: number;
+    status: "PENDING" | "PAID";
+    requestedAt: string;
+    paidAt: string | null;
+  }[];
+}
+
+export interface AdminPartnerClaim {
+  id: string;
+  amount: number;
+  status: "PENDING" | "PAID";
+  requestedAt: string;
+  paidAt: string | null;
+  partner: {
+    id: string;
+    type: "INDIVIDUAL" | "INSTITUTE" | "CORPORATE";
+    organizationName: string | null;
+    contactPerson: string | null;
+    email: string;
+    phone: string;
+  };
+}
+
+export const fetchPartnerApplications = (
+  page: number = 1,
+  pageSize: number = 20,
+  status?: string,
+  type?: string,
+): Promise<PaginatedResponse<AdminPartner>> =>
+  apiClient
+    .get("/admin/partners", {
+      params: { page, pageSize, ...(status && { status }), ...(type && { type }) },
+    })
+    .then((r) => r.data.data);
+
+export const fetchPartnerDetail = (id: string): Promise<AdminPartnerDetail> =>
+  apiClient.get(`/admin/partners/${id}`).then((r) => r.data.data);
+
+export const approvePartner = (id: string): Promise<AdminPartner> =>
+  apiClient.patch(`/admin/partners/${id}/approve`).then((r) => r.data.data);
+
+export const rejectPartner = (id: string): Promise<AdminPartner> =>
+  apiClient.patch(`/admin/partners/${id}/reject`).then((r) => r.data.data);
+
+export const fetchPartnerClaims = (
+  page: number = 1,
+  pageSize: number = 20,
+  status?: string,
+): Promise<PaginatedResponse<AdminPartnerClaim>> =>
+  apiClient
+    .get("/admin/partners/claims", {
+      params: { page, pageSize, ...(status && { status }) },
+    })
+    .then((r) => r.data.data);
+
+export const markClaimPaid = (claimId: string): Promise<AdminPartnerClaim> =>
+  apiClient
+    .patch(`/admin/partners/claims/${claimId}/mark-paid`)
+    .then((r) => r.data.data);
+
 // ─── Direct2Hire ──────────────────────────────────────────────────────────────
 
 export interface AdminD2HEnrollment {
