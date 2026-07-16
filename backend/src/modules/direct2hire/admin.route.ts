@@ -2,6 +2,7 @@ import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
 import * as direct2hireController from "./direct2hire.controller.js";
 import * as direct2hireAdminController from "./admin/admin.controller.js";
+import * as placementController from "../course/placement/placement.controller.js";
 import internshipAdminRoutes from "./internship/internship.admin.route.js";
 
 const router = Router();
@@ -28,6 +29,22 @@ router.patch(
 router.patch(
     "/direct2hire/students/:userId/counselling/complete",
     direct2hireAdminController.markCounsellingCompleted,
+);
+router.get(
+    "/direct2hire/students/:userId/placement/summary",
+    placementController.getStudentPlacementSummary,
+);
+router.get(
+    "/direct2hire/students/:userId/placement/attempts",
+    placementController.getStudentPlacementAttempts,
+);
+router.get(
+    "/direct2hire/students/:userId/placement/overrides",
+    placementController.getStudentPlacementOverrides,
+);
+router.post(
+    "/direct2hire/students/:userId/placement/grant-attempts",
+    placementController.grantStudentPlacementAttempts,
 );
 
 router.use("/direct2hire", internshipAdminRoutes);

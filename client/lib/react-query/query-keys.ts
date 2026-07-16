@@ -29,4 +29,11 @@ export const queryKeys = {
   assessment: (courseId: string) => ["assessment", courseId] as const,
   assessmentAttempt: (attemptId: string) => ["assessment-attempt", attemptId] as const,
   assessmentResult: (attemptId: string) => ["assessment-result", attemptId] as const,
+  placementAssessment: (courseId: string) => ["placement-assessment", courseId] as const,
+  placementAttemptHistory: (courseId: string) => ["placement-attempt-history", courseId] as const,
+  placementAttempt: (attemptId: string) => ["placement-attempt", attemptId] as const,
+  placementResult: (attemptId: string) => ["placement-result", attemptId] as const,
+  adminStudentPlacementSummary: (userId: string) => ["admin-student-placement-summary", userId] as const,
+  adminStudentPlacementAttempts: (userId: string) => ["admin-student-placement-attempts", userId] as const,
+  adminStudentPlacementOverrides: (userId: string) => ["admin-student-placement-overrides", userId] as const,
 };

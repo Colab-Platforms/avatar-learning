@@ -2,6 +2,7 @@ import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
 import * as courseController from "./course.controller.js";
 import * as assessmentController from "./assessment/assessment.controller.js";
+import * as placementController from "./placement/placement.controller.js";
 
 const router = Router();
 
@@ -44,6 +45,19 @@ router.delete("/questions/:questionId", assessmentController.deleteQuestion);
 router.get("/assessments/:assessmentId/attempts", assessmentController.listAttempts);
 router.get("/attempts/:attemptId", assessmentController.getAttemptDetail);
 router.delete("/attempts/:attemptId", assessmentController.resetAttempt);
+
+// ─── Placement Assessment ───────────────────────────────────────────────────
+router.get("/courses/:courseId/placement-assessment", placementController.adminGetAssessment);
+router.post("/courses/:courseId/placement-assessment", placementController.createAssessment);
+router.put("/placement-assessments/:assessmentId", placementController.updateAssessment);
+router.delete("/placement-assessments/:assessmentId", placementController.deleteAssessment);
+router.patch("/placement-assessments/:assessmentId/publish", placementController.toggleAssessmentPublish);
+router.post("/placement-assessments/:assessmentId/questions", placementController.createQuestion);
+router.put("/placement-questions/:questionId", placementController.updateQuestion);
+router.delete("/placement-questions/:questionId", placementController.deleteQuestion);
+router.get("/placement-assessments/:assessmentId/attempts", placementController.listAttempts);
+router.get("/placement-attempts/:attemptId", placementController.getAttemptDetail);
+router.delete("/placement-attempts/:attemptId", placementController.resetAttempt);
 
 // ─── Video Upload (two-step direct upload, scoped to a topic) ────────────────
 router.post("/topics/:topicId/video/init", courseController.initVideoUpload);

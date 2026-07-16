@@ -11,6 +11,7 @@ export function AssessmentShell({
   maxTabSwitchWarnings,
   onExpire,
   children,
+  enableFullscreen = true,
 }: {
   courseTitle: string;
   deadline: string;
@@ -18,6 +19,8 @@ export function AssessmentShell({
   maxTabSwitchWarnings: number;
   onExpire: () => void;
   children: React.ReactNode;
+  /** When false, skips auto-fullscreen and hides the fullscreen toggle (used by Placement). */
+  enableFullscreen?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -46,17 +49,19 @@ export function AssessmentShell({
     }
   }, []);
 
-  // Enter fullscreen on mount
+  // Enter fullscreen on mount (course assessments only)
   useEffect(() => {
+    if (!enableFullscreen) return;
     enterFullscreen();
     return () => {
       exitFullscreen();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enableFullscreen]);
 
   // Track fullscreen state changes
   useEffect(() => {
+    if (!enableFullscreen) return;
     const handleChange = () => {
       const inFs =
         !!document.fullscreenElement ||
@@ -69,13 +74,12 @@ export function AssessmentShell({
       document.removeEventListener("fullscreenchange", handleChange);
       document.removeEventListener("webkitfullscreenchange", handleChange);
     };
-  }, []);
+  }, [enableFullscreen]);
 
   return (
     <div
       ref={containerRef}
       className="min-h-screen bg-slate-50 flex flex-col"
-      // Ensure it fills the fullscreen area properly
       style={{ minHeight: "100dvh" }}
     >
       {/* Top bar */}
@@ -116,8 +120,8 @@ export function AssessmentShell({
               <CountdownTimer deadline={deadline} onExpire={onExpire} />
             </div>
 
-            {/* Fullscreen toggle */}
-            {!fsBlocked && (
+            {/* Fullscreen toggle — course assessments only */}
+            {enableFullscreen && !fsBlocked && (
               <button
                 type="button"
                 onClick={isFullscreen ? exitFullscreen : enterFullscreen}
@@ -144,7 +148,7 @@ export function AssessmentShell({
         )}
 
         {/* Fullscreen blocked notice */}
-        {fsBlocked && (
+        {enableFullscreen && fsBlocked && (
           <div className="px-4 py-1.5 flex items-center gap-1.5 text-xs font-medium bg-slate-50 text-slate-500 border-t border-slate-100">
             <Maximize2 size={12} />
             Fullscreen unavailable in this browser — please avoid switching tabs.

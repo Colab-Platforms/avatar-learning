@@ -1,7 +1,37 @@
 import { CheckCircle2, XCircle } from "lucide-react";
-import type { AttemptResult } from "@/lib/assessmentApi";
 
-export function AssessmentResultView({ result }: { result: AttemptResult }) {
+interface ResultViewOption {
+  id: string;
+  optionText: string;
+  isCorrect: boolean;
+}
+
+interface ResultViewQuestion {
+  id: string;
+  questionText: string;
+  questionOrder: number;
+  options: ResultViewOption[];
+}
+
+interface ResultViewAnswer {
+  selectedOptionId: string | null;
+}
+
+export interface AssessmentResultViewData {
+  attempt: {
+    score: number | null;
+    maxScore: number | null;
+    scorePercent: number | null;
+    isPassed: boolean | null;
+  };
+  assessment: {
+    title: string;
+    questions: ResultViewQuestion[];
+  };
+  answers: Record<string, ResultViewAnswer | undefined>;
+}
+
+export function AssessmentResultView({ result }: { result: AssessmentResultViewData }) {
   const { attempt, assessment, answers } = result;
   const passed = attempt.isPassed;
 

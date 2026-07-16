@@ -35,6 +35,7 @@ import { WeekRow } from "@/components/admin/WeekRow";
 import { CourseMetaForm } from "@/components/admin/CourseMetaForm";
 import { AssessmentEditor } from "@/components/admin/AssessmentEditor";
 import { InternshipTasksEditor } from "@/components/admin/InternshipTasksEditor";
+import { PlacementEditor } from "@/components/admin/PlacementEditor";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -111,7 +112,7 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "weeks" | "meta" | "assessment" | "internship"
+    "weeks" | "meta" | "assessment" | "internship" | "placement"
   >("weeks");
   const [togglingPublish, setTogglingPublish] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
@@ -480,7 +481,7 @@ export default function CourseDetailPage() {
             "weeks",
             "meta",
             "assessment",
-            ...(course.isDirect2HireCourse ? (["internship"] as const) : []),
+            ...(course.isDirect2HireCourse ? (["internship", "placement"] as const) : []),
           ] as const
         ).map((tab) => (
           <button
@@ -498,7 +499,9 @@ export default function CourseDetailPage() {
                 ? "Course Metadata"
                 : tab === "assessment"
                   ? "Assessment"
-                  : "Internship Tasks"}
+                  : tab === "internship"
+                    ? "Internship Tasks"
+                    : "Placement Assessment"}
           </button>
         ))}
       </div>
@@ -679,6 +682,10 @@ export default function CourseDetailPage() {
 
       {activeTab === "internship" && course.isDirect2HireCourse && (
         <InternshipTasksEditor courseId={id} />
+      )}
+
+      {activeTab === "placement" && course.isDirect2HireCourse && (
+        <PlacementEditor courseId={id} />
       )}
     </div>
   );
