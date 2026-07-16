@@ -13,6 +13,8 @@ import direct2hireRoutes from "./modules/direct2hire/direct2hire.route.js";
 import adminDirect2hireRoutes from "./modules/direct2hire/admin.route.js";
 import contactRoutes from "./modules/contact/contact.route.js";
 import adminContactRoutes from "./modules/contact/admin.route.js";
+import partnerRoutes from "./modules/partners/partner.route.js";
+import adminPartnerRoutes from "./modules/partners/admin.route.js";
 
 router.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", message: "Server is healthy" });
@@ -31,5 +33,7 @@ router.use("/direct2hire", direct2hireRoutes);
 router.use("/admin", adminDirect2hireRoutes);
 router.use("/contact", contactRoutes);
 router.use("/admin", adminContactRoutes);
+router.use("/partners", partnerRoutes);
+router.use("/admin", adminPartnerRoutes);
 
 export default router;

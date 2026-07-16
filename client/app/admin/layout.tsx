@@ -12,6 +12,7 @@ import {
   GraduationCap,
   ArrowLeft,
   MessageSquare,
+  Handshake,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -56,6 +57,12 @@ const NAV = [
     href: "/admin/contacts",
     label: "Contacts",
     icon: MessageSquare,
+    exact: false,
+  },
+  {
+    href: "/admin/partners",
+    label: "Partners",
+    icon: Handshake,
     exact: false,
   },
 ];
