@@ -14,4 +14,35 @@ export const queryKeys = {
   myApplications: ["my-applications"] as const,
   internshipCategories: ["internship-categories"] as const,
   direct2hireStatus: ["direct2hire-status"] as const,
+  counsellingProfile: ["counselling-profile"] as const,
+  counsellingBooking: ["counselling-booking"] as const,
+  courseSelection: ["course-selection"] as const,
+  direct2hireLead: ["direct2hire-lead"] as const,
+  adminDirect2hireStudent: (userId: string) =>
+    ["admin-direct2hire-student", userId] as const,
+  adminDirect2hireStudents: ["admin-direct2hire-students"] as const,
+  internshipTasks: ["direct2hire-internship-tasks"] as const,
+  internshipTask: (taskId: string) =>
+    ["direct2hire-internship-task", taskId] as const,
+  adminInternshipTasks: (courseId: string) =>
+    ["admin-internship-tasks", courseId] as const,
+  assessment: (courseId: string) => ["assessment", courseId] as const,
+  assessmentAttempt: (attemptId: string) =>
+    ["assessment-attempt", attemptId] as const,
+  assessmentResult: (attemptId: string) =>
+    ["assessment-result", attemptId] as const,
+  placementAssessment: (courseId: string) =>
+    ["placement-assessment", courseId] as const,
+  placementAttemptHistory: (courseId: string) =>
+    ["placement-attempt-history", courseId] as const,
+  placementAttempt: (attemptId: string) =>
+    ["placement-attempt", attemptId] as const,
+  placementResult: (attemptId: string) =>
+    ["placement-result", attemptId] as const,
+  adminStudentPlacementSummary: (userId: string) =>
+    ["admin-student-placement-summary", userId] as const,
+  adminStudentPlacementAttempts: (userId: string) =>
+    ["admin-student-placement-attempts", userId] as const,
+  adminStudentPlacementOverrides: (userId: string) =>
+    ["admin-student-placement-overrides", userId] as const,
 };

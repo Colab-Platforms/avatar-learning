@@ -7,7 +7,8 @@ import {
   SystemMessage,
 } from "@langchain/core/messages";
 import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
-import { ChatGroq } from "@langchain/groq";
+import { getGroqModel } from "@/lib/langchain/groqModel.js";
+import { normalizeMessageContent } from "@/lib/langchain/normalizeContent.js";
 import "dotenv/config";
 
 interface ChatUserContext {
@@ -32,30 +33,6 @@ export interface ChatbotReply {
 class ChatbotService {
   private readonly sessions = new Map<string, InMemoryChatMessageHistory>();
   private readonly maxHistoryTurns = 8;
-  private model?: ChatGroq;
-
-  private getModel(): ChatGroq {
-    if (this.model) {
-      return this.model;
-    }
-
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      throw new ApiError(
-        "Chatbot is currently unavailable. Missing GROQ_API_KEY.",
-        STATUS_CODES.SERVER_ERROR,
-      );
-    }
-
-    this.model = new ChatGroq({
-      apiKey,
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-      temperature: 0.2,
-      maxTokens: 600,
-    });
-
-    return this.model;
-  }
 
   private getSessionHistory(sessionId: string): InMemoryChatMessageHistory {
     const existing = this.sessions.get(sessionId);
@@ -66,34 +43,6 @@ class ChatbotService {
     const created = new InMemoryChatMessageHistory();
     this.sessions.set(sessionId, created);
     return created;
-  }
-
-  private normalizeContent(content: BaseMessage["content"]): string {
-    if (typeof content === "string") {
-      return content;
-    }
-
-    if (Array.isArray(content)) {
-      return content
-        .map((item) => {
-          if (typeof item === "string") {
-            return item;
-          }
-
-          if (
-            typeof item === "object" &&
-            "text" in item &&
-            typeof item.text === "string"
-          ) {
-            return item.text;
-          }
-
-          return "";
-        })
-        .join(" ");
-    }
-
-    return "";
   }
 
   private trimHistory(messages: BaseMessage[]): BaseMessage[] {
@@ -313,8 +262,10 @@ IMPORTANT RULES:
       new HumanMessage(message),
     ];
 
-    const response = await this.getModel().invoke(llmMessages);
-    const reply = this.normalizeContent(response.content).trim();
+    const response = await getGroqModel({ temperature: 0.2, maxTokens: 600 }).invoke(
+      llmMessages,
+    );
+    const reply = normalizeMessageContent(response.content).trim();
     const finalReply =
       reply || "I’m sorry, I could not generate a reply right now.";
 

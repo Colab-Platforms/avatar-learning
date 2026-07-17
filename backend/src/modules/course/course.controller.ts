@@ -14,6 +14,9 @@ import {
   validateUpdateCourse,
   validateCreateLesson,
   validateUpdateLesson,
+  validateCreateTopic,
+  validateUpdateTopic,
+  validateCompleteFileUpload,
 } from "./course.validators.js";
 
 const adminService = new AdminCourseService();
@@ -271,7 +274,73 @@ export const deleteLesson = async (
   }
 };
 
-// ─── Admin – Video Upload (two-step direct upload) ───────────────────────────
+//  Topics
+
+export const createTopic = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateCreateTopic(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const topic = await adminService.createTopic(param(req, "lessonId"), value);
+    sendResponse(res, true, topic, "Topic created", STATUS_CODES.CREATED);
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const updateTopic = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateUpdateTopic(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const topic = await adminService.updateTopic(param(req, "topicId"), value);
+    sendResponse(res, true, topic, "Topic updated");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const deleteTopic = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    await adminService.deleteTopic(param(req, "topicId"));
+    sendResponse(res, true, null, "Topic deleted");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+// ─── Admin – Video Upload (two-step direct upload, scoped to a topic) ────────
 
 // Step 1: create Bunny slot → return { videoGuid, uploadUrl, accessKey } to client
 export const initVideoUpload = async (
@@ -291,7 +360,7 @@ export const initVideoUpload = async (
       return;
     }
     const result = await adminService.initVideoUpload(
-      param(req, "lessonId"),
+      param(req, "topicId"),
       title.trim(),
     );
     sendResponse(res, true, result, "Video slot created", STATUS_CODES.CREATED);
@@ -328,12 +397,58 @@ export const completeVideoUpload = async (
       return;
     }
     const resource = await adminService.completeVideoUpload(
-      param(req, "lessonId"),
+      param(req, "topicId"),
       videoGuid,
       title,
       fileSize ?? 0,
     );
     sendResponse(res, true, resource, "Video saved", STATUS_CODES.CREATED);
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+// ─── Admin – File Upload (signed direct-to-Cloudinary, scoped to a topic) ────
+
+export const signCourseFileUpload = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const signData = adminService.getFileUploadSignature();
+    sendResponse(res, true, signData, "Upload signature generated");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const completeFileUpload = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateCompleteFileUpload(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const resource = await adminService.completeFileUpload(
+      param(req, "topicId"),
+      value,
+    );
+    sendResponse(res, true, resource, "File saved", STATUS_CODES.CREATED);
   } catch (err: any) {
     sendResponse(
       res,
@@ -524,6 +639,27 @@ export const getEnrolledCourseDetail = async (
       req.user!.id,
     );
     sendResponse(res, true, course, "Course fetched");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const markTopicWatched = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const enrollment = await publicService.markTopicWatched(
+      param(req, "topicId"),
+      req.user!.id,
+    );
+    sendResponse(res, true, enrollment, "Topic marked as watched");
   } catch (err: any) {
     sendResponse(
       res,

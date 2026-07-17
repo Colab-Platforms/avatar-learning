@@ -20,7 +20,6 @@ import {
   fetchAdminCourse,
   createLesson,
   deleteLesson,
-  deleteResource,
   toggleCoursePublish,
   updateCourse,
 } from "@/lib/adminApi";
@@ -34,6 +33,9 @@ import {
 import { ModuleListEditor } from "@/components/admin/ModuleEditors";
 import { WeekRow } from "@/components/admin/WeekRow";
 import { CourseMetaForm } from "@/components/admin/CourseMetaForm";
+import { AssessmentEditor } from "@/components/admin/AssessmentEditor";
+import { InternshipTasksEditor } from "@/components/admin/InternshipTasksEditor";
+import { PlacementEditor } from "@/components/admin/PlacementEditor";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -47,6 +49,15 @@ interface Resource {
   size?: string;
 }
 
+interface Topic {
+  id: string;
+  title: string;
+  description?: string;
+  topicOrder: number;
+  duration?: number;
+  resources: Resource[];
+}
+
 interface Lesson {
   id: string;
   weekNumber: number;
@@ -57,6 +68,7 @@ interface Lesson {
   isFreePreview: boolean;
   lessonOrder: number;
   resources: Resource[];
+  topics: Topic[];
 }
 
 interface Course {
@@ -74,6 +86,7 @@ interface Course {
   tools: string[];
   sessions?: string;
   certificate: boolean;
+  isDirect2HireCourse: boolean;
   rating?: number;
   reviews?: string;
   startDate?: string;
@@ -98,13 +111,13 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"weeks" | "meta">("weeks");
+  const [activeTab, setActiveTab] = useState<
+    "weeks" | "meta" | "assessment" | "internship" | "placement"
+  >("weeks");
   const [togglingPublish, setTogglingPublish] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [savingLesson, setSavingLesson] = useState(false);
   const [deletingLesson, setDeletingLesson] = useState<string | null>(null);
-  const [deletingResource, setDeletingResource] = useState<string | null>(null);
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
   const [editingModules, setEditingModules] = useState<string | null>(null);
   const [editingHeader, setEditingHeader] = useState(false);
@@ -219,24 +232,6 @@ export default function CourseDetailPage() {
       setError("Failed to delete lesson.");
     } finally {
       setDeletingLesson(null);
-    }
-  };
-
-  const handleDeleteResource = async (resourceId: string) => {
-    if (
-      !confirm(
-        "Delete this resource? If it's a video, it will also be removed from Bunny.net.",
-      )
-    )
-      return;
-    setDeletingResource(resourceId);
-    try {
-      await deleteResource(resourceId);
-      await load();
-    } catch {
-      setError("Failed to delete resource.");
-    } finally {
-      setDeletingResource(null);
     }
   };
 
@@ -480,8 +475,15 @@ export default function CourseDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-ink-900/60 border border-white/5 rounded-xl p-1 w-fit">
-        {(["weeks", "meta"] as const).map((tab) => (
+      <div className="flex flex-wrap gap-1 bg-ink-900/60 border border-white/5 rounded-xl p-1 w-fit">
+        {(
+          [
+            "weeks",
+            "meta",
+            "assessment",
+            ...(course.isDirect2HireCourse ? (["internship", "placement"] as const) : []),
+          ] as const
+        ).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -491,7 +493,15 @@ export default function CourseDetailPage() {
                 : "text-white/35 hover:text-white/60"
             }`}
           >
-            {tab === "weeks" ? "Weeks & Modules" : "Course Metadata"}
+            {tab === "weeks"
+              ? "Weeks & Modules"
+              : tab === "meta"
+                ? "Course Metadata"
+                : tab === "assessment"
+                  ? "Assessment"
+                  : tab === "internship"
+                    ? "Internship Tasks"
+                    : "Placement Assessment"}
           </button>
         ))}
       </div>
@@ -648,15 +658,7 @@ export default function CourseDetailPage() {
                   }}
                   onDelete={() => handleDeleteLesson(lesson.id)}
                   isDeleting={deletingLesson === lesson.id}
-                  onDeleteResource={handleDeleteResource}
-                  deletingResource={deletingResource}
-                  uploadingFor={uploadingFor}
-                  onStartUpload={() => setUploadingFor(lesson.id)}
-                  onUploadDone={async () => {
-                    setUploadingFor(null);
-                    await load();
-                  }}
-                  onCancelUpload={() => setUploadingFor(null)}
+                  onChanged={load}
                 />
               ))}
             </div>
@@ -673,6 +675,17 @@ export default function CourseDetailPage() {
             setError("");
           }}
         />
+      )}
+
+      {/* ── ASSESSMENT TAB ── */}
+      {activeTab === "assessment" && <AssessmentEditor courseId={id} />}
+
+      {activeTab === "internship" && course.isDirect2HireCourse && (
+        <InternshipTasksEditor courseId={id} />
+      )}
+
+      {activeTab === "placement" && course.isDirect2HireCourse && (
+        <PlacementEditor courseId={id} />
       )}
     </div>
   );

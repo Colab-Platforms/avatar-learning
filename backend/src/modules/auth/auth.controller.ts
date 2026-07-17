@@ -12,6 +12,7 @@ import {
     validateForgotPasswordSchema,
     validateResetPasswordSchema,
     validateVerifyPhoneSchema,
+    validateGoogleAuthSchema,
 } from "./auth.validators.js";
 
 const authService = new AuthService();
@@ -81,6 +82,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
         sendResponse(res, true, { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }, "Logged in successfully.", STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { error, value } = validateGoogleAuthSchema(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+        const device = req.headers["user-agent"];
+        const result = await authService.googleAuth(value, device);
+        sendResponse(
+            res,
+            true,
+            { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken },
+            "Logged in successfully.",
+            STATUS_CODES.OK
+        );
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }

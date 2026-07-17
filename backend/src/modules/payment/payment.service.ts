@@ -13,6 +13,7 @@ import type {
   VerifyPaymentBody,
   VerifyCashfreePaymentBody,
   VerifyRazorpayPaymentBody,
+  Direct2HireLeadInput,
 } from "./payment.types.js";
 
 const DIRECT2HIRE_PRICE_RUPEES = 499;
@@ -29,7 +30,10 @@ function getRazorpay(): Razorpay {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
   if (!keyId || !keySecret) {
-    throw new ApiError("Razorpay credentials not configured", STATUS_CODES.SERVER_ERROR);
+    throw new ApiError(
+      "Razorpay credentials not configured",
+      STATUS_CODES.SERVER_ERROR,
+    );
   }
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
 }
@@ -45,24 +49,58 @@ async function markPendingOrderFailed(pendingOrderId: string): Promise<void> {
   });
 }
 
+async function saveDirect2HireLead(
+  userId: string,
+  lead: Direct2HireLeadInput,
+): Promise<void> {
+  await prisma.direct2HireLead.upsert({
+    where: { userId },
+    create: { userId, ...lead, paymentCompleted: true },
+    update: { ...lead, paymentCompleted: true },
+  });
+}
+
 async function completePayment(params: {
   orderId: string;
   gatewayPaymentId: string;
   gatewaySignature: string;
   paymentMethod?: string;
   metadata?: object;
+  lead?: Direct2HireLeadInput;
 }): Promise<void> {
-  const { orderId, gatewayPaymentId, gatewaySignature, paymentMethod, metadata } = params;
+  const {
+    orderId,
+    gatewayPaymentId,
+    gatewaySignature,
+    paymentMethod,
+    metadata,
+    lead,
+  } = params;
 
   const order = await prisma.paymentOrder.findUnique({
     where: { gatewayOrderId: orderId },
   });
-  if (!order || order.status === "PAID") return;
+  if (!order) return;
+
+  // The webhook and the client-side verify call race to record the same payment.
+  // Whichever arrives second must still persist the lead (if it carries one) even
+  // though the transaction/enrollment were already written by the winner.
+  if (order.status === "PAID") {
+    if (lead && order.productType === "DIRECT2HIRE") {
+      await saveDirect2HireLead(order.userId, lead);
+    }
+    return;
+  }
 
   const existingTx = await prisma.paymentTransaction.findUnique({
     where: { gatewayPaymentId },
   });
-  if (existingTx) return;
+  if (existingTx) {
+    if (lead && order.productType === "DIRECT2HIRE") {
+      await saveDirect2HireLead(order.userId, lead);
+    }
+    return;
+  }
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -83,14 +121,27 @@ async function completePayment(params: {
         data: { status: "PAID" },
       });
 
-      if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
+      if (
+        order.productType === "DIRECT2HIRE" &&
+        order.direct2hireEnrollmentId
+      ) {
         await tx.direct2HireEnrollment.update({
           where: { id: order.direct2hireEnrollmentId },
           data: { status: "PAID" },
         });
+
+        if (lead) {
+          await tx.direct2HireLead.upsert({
+            where: { userId: order.userId },
+            create: { userId: order.userId, ...lead, paymentCompleted: true },
+            update: { ...lead, paymentCompleted: true },
+          });
+        }
       } else if (order.courseId) {
         await tx.courseUserMapper.upsert({
-          where: { userId_courseId: { userId: order.userId, courseId: order.courseId } },
+          where: {
+            userId_courseId: { userId: order.userId, courseId: order.courseId },
+          },
           create: { userId: order.userId, courseId: order.courseId },
           update: {},
         });
@@ -98,7 +149,11 @@ async function completePayment(params: {
     });
   } catch (err: any) {
     if (err.code === "P2002") {
-      // Concurrent webhook/verify call already recorded this payment — safe to ignore.
+      // Concurrent webhook/verify call already recorded this payment — safe to ignore,
+      // but still try to save the lead since this call may be the one carrying it.
+      if (lead && order.productType === "DIRECT2HIRE") {
+        await saveDirect2HireLead(order.userId, lead);
+      }
       return;
     }
     throw err;
@@ -106,16 +161,28 @@ async function completePayment(params: {
 }
 
 export class PaymentService {
-  async createOrder(userId: string, courseId: string): Promise<CreateOrderResponse> {
+  async createOrder(
+    userId: string,
+    courseId: string,
+  ): Promise<CreateOrderResponse> {
     const course = await prisma.courses.findUnique({ where: { id: courseId } });
     if (!course) throw new ApiError("Course not found", STATUS_CODES.NOT_FOUND);
-    if (!course.isPublished) throw new ApiError("Course is not available", STATUS_CODES.BAD_REQUEST);
-    if (course.price <= 0) throw new ApiError("This course is free — use the enroll endpoint", STATUS_CODES.BAD_REQUEST);
+    if (!course.isPublished)
+      throw new ApiError("Course is not available", STATUS_CODES.BAD_REQUEST);
+    if (course.price <= 0)
+      throw new ApiError(
+        "This course is free — use the enroll endpoint",
+        STATUS_CODES.BAD_REQUEST,
+      );
 
     const existing = await prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId } },
     });
-    if (existing) throw new ApiError("You are already enrolled in this course", STATUS_CODES.CONFLICT);
+    if (existing)
+      throw new ApiError(
+        "You are already enrolled in this course",
+        STATUS_CODES.CONFLICT,
+      );
 
     const pendingOrder = await prisma.paymentOrder.findFirst({
       where: { userId, courseId, status: "PENDING" },
@@ -132,10 +199,21 @@ export class PaymentService {
     };
 
     if (provider === "cashfree") {
-      return this.createCashfreeOrder(userId, ctx, course.price, amountInPaise, pendingOrder?.id);
+      return this.createCashfreeOrder(
+        userId,
+        ctx,
+        course.price,
+        amountInPaise,
+        pendingOrder?.id,
+      );
     }
 
-    return this.createRazorpayOrder(userId, ctx, amountInPaise, pendingOrder?.id);
+    return this.createRazorpayOrder(
+      userId,
+      ctx,
+      amountInPaise,
+      pendingOrder?.id,
+    );
   }
 
   async createDirect2HireOrder(userId: string): Promise<CreateOrderResponse> {
@@ -143,7 +221,10 @@ export class PaymentService {
       where: { userId, status: "PAID" },
     });
     if (paidEnrollment) {
-      throw new ApiError("You have already enrolled in the Direct2Hire programme", STATUS_CODES.CONFLICT);
+      throw new ApiError(
+        "You have already enrolled in the Direct2Hire programme",
+        STATUS_CODES.CONFLICT,
+      );
     }
 
     let enrollment = await prisma.direct2HireEnrollment.findFirst({
@@ -151,11 +232,17 @@ export class PaymentService {
       orderBy: { createdAt: "desc" },
     });
     if (!enrollment) {
-      enrollment = await prisma.direct2HireEnrollment.create({ data: { userId } });
+      enrollment = await prisma.direct2HireEnrollment.create({
+        data: { userId },
+      });
     }
 
     const pendingOrder = await prisma.paymentOrder.findFirst({
-      where: { userId, direct2hireEnrollmentId: enrollment.id, status: "PENDING" },
+      where: {
+        userId,
+        direct2hireEnrollmentId: enrollment.id,
+        status: "PENDING",
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -169,10 +256,21 @@ export class PaymentService {
     };
 
     if (provider === "cashfree") {
-      return this.createCashfreeOrder(userId, ctx, DIRECT2HIRE_PRICE_RUPEES, amountInPaise, pendingOrder?.id);
+      return this.createCashfreeOrder(
+        userId,
+        ctx,
+        DIRECT2HIRE_PRICE_RUPEES,
+        amountInPaise,
+        pendingOrder?.id,
+      );
     }
 
-    return this.createRazorpayOrder(userId, ctx, amountInPaise, pendingOrder?.id);
+    return this.createRazorpayOrder(
+      userId,
+      ctx,
+      amountInPaise,
+      pendingOrder?.id,
+    );
   }
 
   private async createRazorpayOrder(
@@ -183,9 +281,13 @@ export class PaymentService {
   ): Promise<CreateOrderResponse> {
     const razorpay = getRazorpay();
 
-    const notes: Record<string, string> = { userId, productType: ctx.productType };
+    const notes: Record<string, string> = {
+      userId,
+      productType: ctx.productType,
+    };
     if (ctx.courseId) notes.courseId = ctx.courseId;
-    if (ctx.direct2hireEnrollmentId) notes.direct2hireEnrollmentId = ctx.direct2hireEnrollmentId;
+    if (ctx.direct2hireEnrollmentId)
+      notes.direct2hireEnrollmentId = ctx.direct2hireEnrollmentId;
 
     const rzpOrder = await razorpay.orders.create({
       amount: amountInPaise,
@@ -233,9 +335,12 @@ export class PaymentService {
     const cashfree = getCashfree();
     const gatewayOrderId = generateCashfreeOrderId();
     const backendUrl = getBackendBaseUrl();
-    const frontendUrl = (process.env.FRONTEND_URL ?? "http://localhost:3000").replace(/\/$/, "");
+    const frontendUrl = (
+      process.env.FRONTEND_URL ?? "http://localhost:3000"
+    ).replace(/\/$/, "");
     const customerPhone = user.phoneNo?.replace(/\D/g, "") || "9999999999";
-    const customerName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Customer";
+    const customerName =
+      `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Customer";
 
     let response;
     try {
@@ -257,13 +362,22 @@ export class PaymentService {
       });
     } catch (err: any) {
       const detail = err?.response?.data ?? err?.message ?? err;
-      console.error("[createCashfreeOrder] PGCreateOrder failed:", JSON.stringify(detail));
-      throw new ApiError(`Cashfree order creation failed: ${JSON.stringify(detail)}`, STATUS_CODES.BAD_REQUEST);
+      console.error(
+        "[createCashfreeOrder] PGCreateOrder failed:",
+        JSON.stringify(detail),
+      );
+      throw new ApiError(
+        `Cashfree order creation failed: ${JSON.stringify(detail)}`,
+        STATUS_CODES.BAD_REQUEST,
+      );
     }
 
     const paymentSessionId = response.data.payment_session_id;
     if (!paymentSessionId) {
-      throw new ApiError("Failed to create Cashfree payment session", STATUS_CODES.SERVER_ERROR);
+      throw new ApiError(
+        "Failed to create Cashfree payment session",
+        STATUS_CODES.SERVER_ERROR,
+      );
     }
 
     if (pendingOrderId) {
@@ -299,9 +413,14 @@ export class PaymentService {
     razorpayPaymentId: string,
     razorpaySignature: string,
     courseId?: string,
+    lead?: Direct2HireLeadInput,
   ): Promise<void> {
     const secret = process.env.RAZORPAY_KEY_SECRET;
-    if (!secret) throw new ApiError("Razorpay secret not configured", STATUS_CODES.SERVER_ERROR);
+    if (!secret)
+      throw new ApiError(
+        "Razorpay secret not configured",
+        STATUS_CODES.SERVER_ERROR,
+      );
 
     const isValid = verifyRazorpaySignature(
       razorpayOrderId,
@@ -309,31 +428,59 @@ export class PaymentService {
       razorpaySignature,
       secret,
     );
-    if (!isValid) throw new ApiError("Payment signature verification failed", STATUS_CODES.BAD_REQUEST);
+    if (!isValid)
+      throw new ApiError(
+        "Payment signature verification failed",
+        STATUS_CODES.BAD_REQUEST,
+      );
 
     const order = await prisma.paymentOrder.findUnique({
       where: { gatewayOrderId: razorpayOrderId },
     });
-    if (!order) throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
-    if (order.userId !== userId) throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
-    if (courseId && order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
+    if (!order)
+      throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
+    if (order.userId !== userId)
+      throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
+    if (courseId && order.courseId !== courseId)
+      throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
+    if (order.status === "FAILED" || order.status === "REFUNDED") {
+      throw new ApiError(
+        "This payment order is no longer valid",
+        STATUS_CODES.CONFLICT,
+      );
+    }
 
+    // If the order is already PAID (the webhook can win the race against this
+    // client-side call) completePayment() is still invoked below — it detects the
+    // already-processed transaction and simply persists the lead, without
+    // re-crediting anything.
     await completePayment({
       orderId: razorpayOrderId,
       gatewayPaymentId: razorpayPaymentId,
       gatewaySignature: razorpaySignature,
+      lead,
     });
   }
 
-  async verifyCashfreePayment(userId: string, orderId: string, courseId?: string): Promise<void> {
-    console.log(`[verifyCashfreePayment] orderId=${orderId} userId=${userId} courseId=${courseId ?? "-"}`);
+  async verifyCashfreePayment(
+    userId: string,
+    orderId: string,
+    courseId?: string,
+    lead?: Direct2HireLeadInput,
+  ): Promise<void> {
+    console.log(
+      `[verifyCashfreePayment] orderId=${orderId} userId=${userId} courseId=${courseId ?? "-"}`,
+    );
 
     const order = await prisma.paymentOrder.findUnique({
       where: { gatewayOrderId: orderId },
     });
-    if (!order) throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
-    if (order.userId !== userId) throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
-    if (courseId && order.courseId !== courseId) throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
+    if (!order)
+      throw new ApiError("Payment order not found", STATUS_CODES.NOT_FOUND);
+    if (order.userId !== userId)
+      throw new ApiError("Unauthorized", STATUS_CODES.FORBIDDEN);
+    if (courseId && order.courseId !== courseId)
+      throw new ApiError("Course mismatch", STATUS_CODES.BAD_REQUEST);
     if (order.status === "PAID") return;
 
     const cashfree = getCashfree();
@@ -341,16 +488,30 @@ export class PaymentService {
     try {
       const response = await cashfree.PGFetchOrder(orderId);
       cfOrder = response.data;
-      console.log(`[verifyCashfreePayment] Cashfree order_status=${cfOrder.order_status}`, JSON.stringify(cfOrder));
+      console.log(
+        `[verifyCashfreePayment] Cashfree order_status=${cfOrder.order_status}`,
+        JSON.stringify(cfOrder),
+      );
     } catch (err: any) {
       const detail = err?.response?.data ?? err?.message ?? err;
-      console.error("[verifyCashfreePayment] PGFetchOrder failed:", JSON.stringify(detail));
-      throw new ApiError(`Cashfree order fetch failed: ${JSON.stringify(detail)}`, STATUS_CODES.BAD_REQUEST);
+      console.error(
+        "[verifyCashfreePayment] PGFetchOrder failed:",
+        JSON.stringify(detail),
+      );
+      throw new ApiError(
+        `Cashfree order fetch failed: ${JSON.stringify(detail)}`,
+        STATUS_CODES.BAD_REQUEST,
+      );
     }
 
     if (cfOrder.order_status !== "PAID") {
-      console.warn(`[verifyCashfreePayment] order_status is "${cfOrder.order_status}", not PAID`);
-      throw new ApiError(`Payment not completed yet (status: ${cfOrder.order_status})`, STATUS_CODES.BAD_REQUEST);
+      console.warn(
+        `[verifyCashfreePayment] order_status is "${cfOrder.order_status}", not PAID`,
+      );
+      throw new ApiError(
+        `Payment not completed yet (status: ${cfOrder.order_status})`,
+        STATUS_CODES.BAD_REQUEST,
+      );
     }
 
     const paymentId = String(
@@ -365,6 +526,7 @@ export class PaymentService {
       gatewayPaymentId: paymentId,
       gatewaySignature: "client-verify",
       metadata: { order_status: cfOrder.order_status },
+      lead,
     });
   }
 
@@ -373,7 +535,12 @@ export class PaymentService {
 
     if (provider === "cashfree") {
       const cashfreeBody = body as VerifyCashfreePaymentBody;
-      await this.verifyCashfreePayment(userId, cashfreeBody.order_id, cashfreeBody.courseId);
+      await this.verifyCashfreePayment(
+        userId,
+        cashfreeBody.order_id,
+        cashfreeBody.courseId,
+        cashfreeBody.lead,
+      );
       return;
     }
 
@@ -384,6 +551,7 @@ export class PaymentService {
       razorpayBody.razorpay_payment_id,
       razorpayBody.razorpay_signature,
       razorpayBody.courseId,
+      razorpayBody.lead,
     );
   }
 
@@ -459,7 +627,10 @@ export class PaymentService {
       return;
     }
 
-    if (eventType === "PAYMENT_FAILED_WEBHOOK" || eventType === "PAYMENT_USER_DROPPED_WEBHOOK") {
+    if (
+      eventType === "PAYMENT_FAILED_WEBHOOK" ||
+      eventType === "PAYMENT_USER_DROPPED_WEBHOOK"
+    ) {
       const order = await prisma.paymentOrder.findUnique({
         where: { gatewayOrderId: orderId },
       });

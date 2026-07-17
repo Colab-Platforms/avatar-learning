@@ -23,6 +23,7 @@ interface Course {
     price: number;
     totalWeeks: number;
     isPublished: boolean;
+    isDirect2HireCourse: boolean;
     category: { id: string; name: string };
     _count: { lessons: number; enrollments: number };
 }
@@ -51,6 +52,7 @@ export default function AdminCoursesPage() {
     const [form, setForm] = useState({
         categoryId: "", title: "", description: "", thumbnail: "",
         level: "BEGINNER" as Course["level"], price: 0, totalWeeks: 1,
+        isDirect2HireCourse: false,
     });
 
     const load = useCallback(async () => {
@@ -92,7 +94,7 @@ export default function AdminCoursesPage() {
         setError("");
         try {
             await createCourse(form);
-            setForm({ categoryId: "", title: "", description: "", thumbnail: "", level: "BEGINNER", price: 0, totalWeeks: 1 });
+            setForm({ categoryId: "", title: "", description: "", thumbnail: "", level: "BEGINNER", price: 0, totalWeeks: 1, isDirect2HireCourse: false });
             setShowForm(false);
             await load();
         } catch (err: any) {
@@ -183,6 +185,17 @@ export default function AdminCoursesPage() {
                             <input type="number" min={1} value={form.totalWeeks}
                                 onChange={(e) => setForm((f) => ({ ...f, totalWeeks: Number(e.target.value) }))} className={inputCls} />
                         </Field>
+                        <label className="sm:col-span-2 flex items-center gap-2.5 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={form.isDirect2HireCourse}
+                                onChange={(e) => setForm((f) => ({ ...f, isDirect2HireCourse: e.target.checked }))}
+                                className="w-4 h-4 rounded border-white/20 bg-ink-900 accent-brand-500"
+                            />
+                            <span className="text-xs text-white/60">
+                                Part of the Direct2Hire course bundle (auto-enrolled on payment)
+                            </span>
+                        </label>
                         {error && <p className="sm:col-span-2 text-red-400 text-xs">{error}</p>}
                         <div className="sm:col-span-2 flex gap-3">
                             <button type="submit" disabled={saving} className={`${primaryBtn} disabled:opacity-50`}>
@@ -260,6 +273,11 @@ export default function AdminCoursesPage() {
                                             }`}>
                                                 {course.isPublished ? "LIVE" : "DRAFT"}
                                             </span>
+                                            {course.isDirect2HireCourse && (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-elec-500/10 text-elec-400">
+                                                    D2H
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

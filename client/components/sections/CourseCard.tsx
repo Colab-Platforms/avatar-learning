@@ -18,7 +18,8 @@ export function CourseCard({ course }: CourseCardProps) {
   };
 
   // Use heroImage if available, else fallback to first module image
-  const coverImage = course.heroImage || course.modules?.[0]?.image || "/placeholder.jpg";
+  const coverImage =
+    course.heroImage || course.modules?.[0]?.image || "/placeholder.jpg";
 
   return (
     <article
@@ -35,7 +36,7 @@ export function CourseCard({ course }: CourseCardProps) {
           quality={100}
           className="object-cover transition-transform duration-500 group-hover/card:scale-105"
         />
-        
+
         {/* Avatar / Watermark marker (top left) */}
         <div className="absolute top-0 left-4 bg-white px-2.5 py-4 rounded-b-xl shadow-sm flex items-center justify-center z-10">
           <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-sm border border-brand-100">
@@ -53,9 +54,11 @@ export function CourseCard({ course }: CourseCardProps) {
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-5 w-5 rounded bg-brand-50 border border-brand-100 flex items-center justify-center overflow-hidden">
-             <span className="text-[10px] font-bold text-brand-600">AL</span>
+            <span className="text-[10px] font-bold text-brand-600">AL</span>
           </div>
-          <span className="text-sm text-text-muted font-medium">Avatar Learning</span>
+          <span className="text-sm text-text-muted font-medium">
+            Avatar Learning
+          </span>
         </div>
 
         <h3 className="text-lg font-bold text-text leading-tight mb-2 line-clamp-2 group-hover/card:text-brand-600 transition-colors">
@@ -70,9 +73,11 @@ export function CourseCard({ course }: CourseCardProps) {
           <div className="flex items-center gap-1.5 text-sm font-semibold text-text">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span>{course.rating || "4.8"}</span>
-            <span className="text-text-muted font-normal text-xs ml-1">({course.reviews || "1.2k"})</span>
+            <span className="text-text-muted font-normal text-xs ml-1">
+              ({course.reviews || "1.2k"})
+            </span>
           </div>
-          
+
           {course.free && (
             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
               FREE

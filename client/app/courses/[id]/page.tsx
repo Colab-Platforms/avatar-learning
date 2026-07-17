@@ -273,6 +273,7 @@ export default function CoursePage({ params }: PageProps) {
               alt={course.title}
               fill
               sizes="100vw"
+              quality={100}
               className="object-cover object-center"
               priority
             />
@@ -412,12 +413,12 @@ export default function CoursePage({ params }: PageProps) {
                   {enrollMsg && (
                     <div
                       className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
-                        enrollMsg.includes("enrolled")
+                        msgType === "success"
                           ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                           : "border-red-200 bg-red-50 text-red-800"
                       }`}
                     >
-                      {enrollMsg.includes("enrolled") ? (
+                      {msgType === "success" ? (
                         <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
                       ) : null}
                       {enrollMsg}
@@ -465,6 +466,7 @@ export default function CoursePage({ params }: PageProps) {
                           alt={course.title}
                           fill
                           sizes="380px"
+                          quality={100}
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
@@ -557,12 +559,12 @@ export default function CoursePage({ params }: PageProps) {
                     {enrollMsg && (
                       <div
                         className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
-                          enrollMsg.includes("enrolled")
+                          msgType === "success"
                             ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                             : "border-red-200 bg-red-50 text-red-800"
                         }`}
                       >
-                        {enrollMsg.includes("enrolled") ? (
+                        {msgType === "success" ? (
                           <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
                         ) : null}
                         {enrollMsg}
@@ -866,7 +868,7 @@ export default function CoursePage({ params }: PageProps) {
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 flex gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <button
           onClick={handleEnroll}
-          disabled={enrolling || (course.price > 0 && !enrolled)}
+          disabled={enrolling}
           className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
                      transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
           style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}

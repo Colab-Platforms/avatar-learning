@@ -24,11 +24,16 @@ import {
   MessageCircle,
   Users,
   Award,
-  Loader2,
+  Calculator,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollReveal, AnimateOnScroll, Button, HelpWidget } from "@/components/ui";
+import {
+  ScrollReveal,
+  AnimateOnScroll,
+  Button,
+  HelpWidget,
+} from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
@@ -36,10 +41,9 @@ import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 /* ─── data ─────────────────────────────────────────────────────────── */
 
 const STATS = [
-  { value: "10,000+", label: "Students Guided" },
-  { value: "500+", label: "Hiring Partners" },
-  { value: "95%", label: "Placement Rate" },
-  { value: "₹12L+", label: "Avg Package Secured" },
+  { value: "10,000+", label: "Students Got Their Dream Job" },
+  { value: "96.3%", label: "Placement Rate" },
+  { value: "20+", label: "Corporates Listed as Placement Partners" },
 ];
 
 const WHO_FOR = [
@@ -71,15 +75,15 @@ const OUTCOMES = [
 const JOURNEY_STEPS = [
   {
     num: "01",
-    icon: Users,
-    title: "Career Counselling",
-    desc: "A 1-on-1 session with an experienced counselor to understand your goals, strengths, and constraints — no generic advice.",
+    icon: BrainCircuit,
+    title: "AI-Powered Assessment",
+    desc: "Complete a short questionnaire in your dashboard and receive an AI-powered course recommendation tailored to your goals, interests, and personality.",
   },
   {
     num: "02",
-    icon: BrainCircuit,
-    title: "AI-Powered Assessment",
-    desc: "A data-backed assessment maps your personality, aptitude, and interests to the careers where you're most likely to succeed.",
+    icon: Users,
+    title: "Career Counselling",
+    desc: "A 1-on-1 session with an experienced counselor to discuss your goals, strengths, and next steps — scheduled after your AI assessment.",
   },
   {
     num: "03",
@@ -155,11 +159,20 @@ const BONUS_BENEFITS = [
 ];
 
 const VALUE_STACK = [
-  { icon: Users, label: "Career Counseling Session", price: "₹999/-" },
-  { icon: BrainCircuit, label: "AI Powered Assessment + Feedback", price: "₹999/-" },
-  { icon: Sparkles, label: "AI Basic Learning Program", price: "₹4,999/-" },
-  { icon: Briefcase, label: "Paid Internship", price: "₹2,999/-" },
-  { icon: Target, label: "Job Placement Support", price: "₹2,999/-" },
+  { icon: Users, label: "Career Counseling Session", price: "₹2000/-" },
+  {
+    icon: BrainCircuit,
+    label: "AI Powered Assessment + Feedback",
+    price: "₹2000/-",
+  },
+  {
+    icon: Sparkles,
+    label: "AI Basic/AI Social Media Learning Program",
+    price: "₹10,000/-",
+  },
+  { icon: Briefcase, label: "Guaranteed Internship", price: "₹5,500/-" },
+  { icon: Target, label: "Job Placement Support", price: "₹5,499/-" },
+  { icon: Calculator, label: "Total", price: "₹24,999/-" },
 ];
 
 const DIFFERENTIATORS = [
@@ -188,7 +201,7 @@ const DIFFERENTIATORS = [
 const FAQS = [
   {
     q: "Is the ₹499 session the entire Direct2Hire program?",
-    a: "It's Step 1. The ₹499 session covers your counselling and AI assessment. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step Direct2Hire journey.",
+    a: "It covers your first steps in Direct2Hire — an AI assessment with a personalized course recommendation, plus a 1-on-1 counselling session. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step journey.",
   },
   {
     q: "Am I locked into the full program after the session?",
@@ -196,7 +209,7 @@ const FAQS = [
   },
   {
     q: "Is ₹499 really enough for proper guidance?",
-    a: "Yes. The session is compact but complete — you get an AI-powered assessment, a 30-minute 1-on-1 consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
+    a: "Yes. You get an AI-powered assessment with a course recommendation, a 30-minute 1-on-1 counselling consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
   },
   {
     q: "Who will conduct the session?",
@@ -226,6 +239,14 @@ export default function Direct2HirePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [whoForSlide, setWhoForSlide] = useState(0);
   const [diffSlide, setDiffSlide] = useState(0);
+  const [statsSlide, setStatsSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStatsSlide((i) => (i + 1) % STATS.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
   const heroBtnLabel = processing
@@ -257,7 +278,10 @@ export default function Direct2HirePage() {
             HERO
         ══════════════════════════════ */}
         <section className="relative pt-20 pb-6 sm:pt-32 sm:pb-14 overflow-hidden">
-          <div className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] bg-brand-200/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" aria-hidden />
+          <div
+            className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] bg-brand-200/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3"
+            aria-hidden
+          />
 
           <div className="relative container-x">
             <div className="grid lg:grid-cols-12 gap-8 lg:gap-14 items-center">
@@ -273,26 +297,30 @@ export default function Direct2HirePage() {
                   </span>
                   <h1 className="h-display text-text mb-3 sm:mb-6">
                     Become AI Job Ready in{" "}
-                    <span className="text-gradient-brand">
-                      Just 90 Days.
-                    </span>
+                    <span className="text-gradient-brand">Just 120 Days.</span>
                   </h1>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={80}>
-           <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-2 sm:mb-3">
-            <strong>Direct2Hire</strong> helps you build the right skills, gain real experience, and land your first job with expert guidance every step of the way.
-                </p>
+                  <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-2 sm:mb-3">
+                    <strong>Direct2Hire</strong> helps you build the right
+                    skills, gain real experience, and land your first job with
+                    expert guidance every step of the way.
+                  </p>
                   <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-4 sm:mb-8">
-                   Start with a 30-minute career session for just {" "}
-                   <br></br>
-                    <span className="text-text-subtle line-through">₹12,995</span>{" "}
-                    <span className="text-brand-600 font-bold text-xl">₹499/-</span>
+                    Start your journey from Career Counselling to AI Learning,
+                    Internship and Placement for just{"  "}
+                    <span className="text-text-subtle line-through">
+                      ₹24,999
+                    </span>{" "}
+                    <span className="text-brand-600 font-bold text-xl">
+                      ₹499/-
+                    </span>
                   </p>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={120}>
-                  <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 mb-4 sm:mb-5 w-fit">
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 sm:px-3.5 py-2.5 mb-4 sm:mb-5 w-full md:w-fit">
                     <span className="relative flex sm:h-11 sm:w-11 w-9 h-9 shrink-0 items-center justify-center">
                       <Image
                         src="/nse-logo.png"
@@ -314,20 +342,25 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={150}>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      variant="primary"
-                      size="lg"
+                  <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
+                    <Link
+                      href={enrolled ? "/dashboard" : "/direct2hire/enroll"}
                       className="w-full sm:w-auto"
-                      onClick={enroll}
-                      disabled={processing}
                     >
-                      {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {heroBtnLabel}
-                      {!processing && <ArrowRight className="h-4 w-4" />}
-                    </Button>
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-full sm:w-auto"
+                      >
+                        {heroBtnLabel}
+                      </Button>
+                    </Link>
                     <Link href="#journey" className="w-full sm:w-auto">
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full sm:w-auto"
+                      >
                         See our 5-Step Journey
                       </Button>
                     </Link>
@@ -348,7 +381,7 @@ export default function Direct2HirePage() {
                     </div>
                   )}
                   <p className="mt-3 text-[12px] text-text-subtle">
-                  Instant WhatsApp confirmation • No hidden costs
+                    Instant WhatsApp confirmation • No hidden costs
                   </p>
                 </ScrollReveal>
               </div>
@@ -357,9 +390,7 @@ export default function Direct2HirePage() {
               <div className="lg:col-span-7 xl:col-span-7 relative">
                 <ScrollReveal animation="fade-left" delay={200} duration={900}>
                   <div className="relative w-full sm:w-[110%] lg:w-[120%] xl:w-[130%]">
-                    <div
-                      className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden sm:mask-[linear-gradient(to_right,transparent_0%,black_15%,black_100%)]"
-                    >
+                    <div className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden sm:mask-[linear-gradient(to_right,transparent_0%,black_15%,black_100%)]">
                       <Image
                         src="/counselling-images/banner.jpeg"
                         alt="AI-powered career guidance"
@@ -375,8 +406,13 @@ export default function Direct2HirePage() {
             </div>
 
             {/* stat strip */}
-            <ScrollReveal animation="fade-up" delay={200} className="mt-8 sm:mt-10">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+            <ScrollReveal
+              animation="fade-up"
+              delay={200}
+              className="mt-8 sm:mt-10"
+            >
+              {/* Desktop / Tablet view (>= sm) */}
+              <div className="hidden sm:grid sm:grid-cols-3 gap-2.5 sm:gap-4">
                 {STATS.map((s, i) => (
                   <AnimateOnScroll key={s.label} delay={i * 70}>
                     <div className="rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 text-center card-lift">
@@ -389,6 +425,48 @@ export default function Direct2HirePage() {
                     </div>
                   </AnimateOnScroll>
                 ))}
+              </div>
+
+              {/* Mobile Carousel View (< sm) */}
+              <div className="sm:hidden">
+                <div className="relative rounded-2xl border border-border bg-surface-alt p-5 text-center card-lift overflow-hidden min-h-[110px] flex flex-col justify-center items-center">
+                  {STATS.map((s, i) => (
+                    <div
+                      key={s.label}
+                      className={cn(
+                        "w-full transition-opacity duration-500 ease-out",
+                        i === statsSlide
+                          ? "opacity-100 relative"
+                          : "opacity-0 absolute inset-0 p-5 pointer-events-none flex flex-col justify-center items-center",
+                      )}
+                    >
+                      <p className="text-2xl font-bold text-text mb-1">
+                        {s.value}
+                      </p>
+                      <p className="text-[11.5px] text-text-subtle uppercase tracking-wider">
+                        {s.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Carousel dots indicator */}
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  {STATS.map((s, i) => (
+                    <button
+                      key={s.label}
+                      onClick={() => setStatsSlide(i)}
+                      aria-label={`Show stat ${i + 1}`}
+                      aria-current={i === statsSlide}
+                      className={cn(
+                        "h-1.5 rounded-full transition-all duration-300",
+                        i === statsSlide
+                          ? "w-5 bg-brand-600"
+                          : "w-1.5 bg-border-strong hover:bg-brand-300",
+                      )}
+                    />
+                  ))}
+                </div>
               </div>
             </ScrollReveal>
           </div>
@@ -404,13 +482,13 @@ export default function Direct2HirePage() {
                 <div>
                   <p className="eyebrow mb-3 sm:mb-4">The Cost of Confusion</p>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text max-w-xl">
-                    Most students make{" "}
-                    <span className="text-gradient-brand">
-                      one expensive mistake.
-                    </span>
+                    <span className="text-gradient-brand">90% students</span>
+                    {"  "}
+                    make this mistake.
                   </h2>
                   <p className="mt-3 text-text-muted">
-                    They choose a career without a clear plan.
+                    Choses an education or Career without Guidance and a full
+                    proof plan
                   </p>
                 </div>
               </div>
@@ -479,15 +557,20 @@ export default function Direct2HirePage() {
         ══════════════════════════════ */}
         <section className="py-6 sm:py-12 bg-white border-t border-border relative overflow-hidden">
           <div className="relative container-x">
-            <ScrollReveal animation="fade-up" className="mb-5 sm:mb-12 text-center">
+            <ScrollReveal
+              animation="fade-up"
+              className="mb-5 sm:mb-12 text-center"
+            >
               <p className="eyebrow mb-3 sm:mb-4">Who Is This For ?</p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 Direct2Hire Is Built For{" "}
-                <span className="text-gradient-brand">Anyone Facing Career Confusion.</span>
+                <span className="text-gradient-brand">
+                  Anyone Facing Obstacles in Learning Real Corporates AI Skills
+                </span>
               </h2>
               <p className="mt-3 text-text-muted max-w-2xl mx-auto">
-                Wherever you are in your journey, if you don&apos;t have a clear
-                plan, this program gives you one.
+                Wherever you need a support to help you with right skills or
+                opportunities to get a job, this program takes you there.
               </p>
             </ScrollReveal>
 
@@ -500,7 +583,9 @@ export default function Direct2HirePage() {
                       key={p.title}
                       className={cn(
                         "absolute inset-0 transition-opacity duration-500 ease-out",
-                        i === whoForSlide ? "opacity-100" : "opacity-0 pointer-events-none",
+                        i === whoForSlide
+                          ? "opacity-100"
+                          : "opacity-0 pointer-events-none",
                       )}
                     >
                       <Image
@@ -599,8 +684,9 @@ export default function Direct2HirePage() {
                 <span className="text-gradient-brand">Five Guided Steps.</span>
               </h2>
               <p className="mt-3 text-text-muted max-w-2xl">
-                Direct2Hire isn&apos;t just a single session — it&apos;s a structured
-                journey from figuring out your path to actually getting hired.
+                Direct2Hire isn&apos;t just a single session — it&apos;s a
+                structured journey from figuring out your path to actually
+                getting hired.
               </p>
             </ScrollReveal>
 
@@ -616,9 +702,7 @@ export default function Direct2HirePage() {
                 {JOURNEY_STEPS.map((step, i) => (
                   <AnimateOnScroll key={step.num} delay={i * 80}>
                     <div className="group h-full flex flex-col items-start">
-                      <div
-                        className="relative z-10 mb-3 sm:mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white text-[13px] font-bold shadow-md shadow-brand-500/25"
-                      >
+                      <div className="hidden sm:flex relative z-10 mb-3 sm:mb-4 h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white text-[13px] font-bold shadow-md shadow-brand-500/25">
                         {step.num}
                       </div>
                       <div className="h-full w-full rounded-2xl border border-border bg-white p-5 sm:p-6 card-lift cursor-default">
@@ -693,7 +777,7 @@ export default function Direct2HirePage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/contact" className="w-full sm:w-fit shrink-0">
+                <Link href="/direct2hire/enroll" className="w-full sm:w-fit shrink-0">
                   <Button variant="primary" size="md" className="w-full sm:w-fit">
                     Book now for ₹499/- <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -718,19 +802,22 @@ export default function Direct2HirePage() {
                   </h2>
                   <p className="text-text-muted leading-relaxed mb-4 sm:mb-6">
                     Most sessions end with a PDF and a goodbye. Direct2Hire is
-                    built to end with an offer letter — here&apos;s exactly
-                    what changes for you.
+                    built to end with an offer letter — here&apos;s exactly what
+                    changes for you.
                   </p>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full sm:w-auto"
-                    onClick={enroll}
-                    disabled={processing}
+                  <Link
+                    href="/direct2hire/enroll"
+                    className="block w-full sm:inline-block sm:w-fit"
                   >
-                    {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Start Your Transformation"}{" "}
-                    {!processing && <ArrowRight className="h-4 w-4" />}
-                  </Button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                    >
+                      Start Your Transformation{" "}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </ScrollReveal>
               </div>
 
@@ -771,25 +858,32 @@ export default function Direct2HirePage() {
                   <p className="eyebrow mb-3 sm:mb-4">Complete Breakdown</p>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                     The Full Direct2Hire Journey{" "}
-                    <span className="text-gradient-brand">Starts at ₹499/-</span>
+                    <span className="text-gradient-brand">
+                      Starts at ₹499/-
+                    </span>
                   </h2>
                   <p className="mt-3 text-text-muted max-w-xl">
-                    Counselling, assessment, AI skilling, internship, and
+                    AI assessment, counselling, AI skilling, internship, and
                     placement — real value worth{" "}
-                    <span className="line-through text-text-subtle">₹12,995</span>,
-                    now available at a fraction of the cost.
+                    <span className="line-through text-text-subtle">
+                      ₹12,995
+                    </span>
+                    , now available at a fraction of the cost.
                   </p>
                 </div>
-                <Button
-                  variant="primary"
-                  size="md"
+                <Link
+                  href="/direct2hire/enroll"
                   className="w-full sm:w-fit shrink-0"
-                  onClick={enroll}
-                  disabled={processing}
                 >
-                  {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Get Your Career Plan For ₹499/-"}{" "}
-                  {!processing && <ArrowRight className="h-4 w-4" />}
-                </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="w-full sm:w-fit"
+                  >
+                    Get Your Career Plan For ₹499/-{" "}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </ScrollReveal>
 
@@ -830,18 +924,17 @@ export default function Direct2HirePage() {
                   </p>
                   <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
                     <IndianRupee className="h-3 w-3 shrink-0" />
-                    Save ₹12,495 (96% OFF)
+                    Save ₹24,500 (98% OFF)
                   </span>
-                  <Button
-                    variant="primary"
-                    size="md"
+                  <Link
+                    href="/direct2hire/enroll"
                     className="relative mt-6 sm:mt-7 w-full sm:w-fit"
-                    onClick={enroll}
-                    disabled={processing}
                   >
-                    {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Book Your Session"}{" "}
-                    {!processing && <ArrowRight className="h-4 w-4 shrink-0" />}
-                  </Button>
+                    <Button variant="primary" size="md" className="w-full">
+                      Book Your Session{" "}
+                      <ArrowRight className="h-4 w-4 shrink-0" />
+                    </Button>
+                  </Link>
                   <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
                     Instant confirmation on WhatsApp
                   </p>
@@ -856,7 +949,10 @@ export default function Direct2HirePage() {
         ══════════════════════════════ */}
         <section className="py-7 sm:py-14 bg-surface-alt border-t border-border relative overflow-hidden">
           <div className="relative container-x">
-            <ScrollReveal animation="fade-up" className="text-center mb-6 sm:mb-14">
+            <ScrollReveal
+              animation="fade-up"
+              className="text-center mb-6 sm:mb-14"
+            >
               <p className="eyebrow mb-3 sm:mb-4">What Makes Us Different</p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 Why Students{" "}
@@ -946,7 +1042,9 @@ export default function Direct2HirePage() {
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-6 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-                <p className="relative eyebrow mb-2 sm:mb-3">Your Future Starts Here</p>
+                <p className="relative eyebrow mb-2 sm:mb-3">
+                  Your Future Starts Here
+                </p>
                 <h2 className="relative text-3xl sm:text-4xl font-bold text-text mb-3 sm:mb-4">
                   Ready to take control{" "}
                   <span className="text-gradient-brand">of your future?</span>
@@ -957,16 +1055,15 @@ export default function Direct2HirePage() {
                   and expert support — starting at just ₹499.
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full sm:w-auto"
-                    onClick={enroll}
-                    disabled={processing}
-                  >
-                    {processing ? "Processing…" : enrolled ? "Enrolled ✓" : "Book Your Session Now"}{" "}
-                    {!processing && <ArrowRight className="h-4 w-4" />}
-                  </Button>
+                  <Link href="/direct2hire/enroll" className="w-full sm:w-auto">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                    >
+                      Book Your Session Now <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
                 <p className="relative mt-5 text-[12px] text-text-subtle">
                   30-minute call • Limited slots this month
@@ -985,7 +1082,9 @@ export default function Direct2HirePage() {
               {/* left */}
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
-                  <p className="eyebrow mb-3 sm:mb-4">Frequently Asked Questions</p>
+                  <p className="eyebrow mb-3 sm:mb-4">
+                    Frequently Asked Questions
+                  </p>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text mb-3 sm:mb-4">
                     Got Questions?{" "}
                     <span className="text-gradient-brand">

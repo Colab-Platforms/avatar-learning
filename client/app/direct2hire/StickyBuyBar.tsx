@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, CheckCircle2, Loader2, Zap } from "lucide-react";
+import { ArrowRight, Landmark, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 export function StickyBuyBar() {
-  const { enroll, processing, enrolled } = useDirect2HireCheckout();
-
   // Visible from the moment the page loads; only hides once the footer
   // comes into view so it doesn't sit on top of it.
   const [visible, setVisible] = useState(true);
@@ -16,13 +15,22 @@ export function StickyBuyBar() {
   useEffect(() => {
     const onScroll = () => {
       const distanceFromBottom =
-        document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+        document.documentElement.scrollHeight -
+        window.innerHeight -
+        window.scrollY;
       setVisible(distanceFromBottom > 250);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const { processing, enrolled } = useDirect2HireCheckout();
+  const heroBtnLabel = processing
+    ? "Processing Payment…"
+    : enrolled
+      ? "Enrolled ✓"
+      : "Enroll Now for ₹499";
 
   return (
     <AnimatePresence>
@@ -43,47 +51,34 @@ export function StickyBuyBar() {
                   </span>
                   <div className="min-w-0">
                     <p className="text-[11px] sm:text-[12px] text-text-subtle leading-tight truncate">
-                      Career Session + AI Assessment
+                      Career Session + AI Assessment + AI Learning + Internship
+                      + Placements
                     </p>
                     <p className="flex items-baseline gap-2 leading-tight">
                       <span className="text-lg sm:text-xl font-black text-text">
                         ₹499
                       </span>
                       <span className="text-[11px] sm:text-[12px] text-text-subtle line-through">
-                        ₹12,995
+                        ₹24,999
                       </span>
                       <span className="hidden sm:inline text-[11px] font-semibold text-emerald-600">
-                        96% OFF
+                        98% OFF
                       </span>
                     </p>
                   </div>
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                size="md"
-                className="whitespace-nowrap shrink-0"
-                onClick={enroll}
-                disabled={processing}
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processing…
-                  </>
-                ) : enrolled ? (
-                  <>
-                    Enrolled <CheckCircle2 className="h-4 w-4" />
-                  </>
-                ) : (
-                  <>
-                    <span className="sm:hidden">Enroll Now</span>
-                    <span className="hidden sm:inline">Enroll Now - ₹499</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              <Link href="/direct2hire/enroll" className="shrink-0">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="whitespace-nowrap"
+                >
+                  <span className="sm:hidden">{heroBtnLabel}</span>
+                  <span className="hidden sm:inline">{heroBtnLabel}</span>
+                </Button>
+              </Link>
             </div>
           </div>
         </motion.div>

@@ -16,7 +16,7 @@ export const COURSES: Course[] = [
     slug: "ai-fundamentals-chatgpt-mastery",
     title: "AI Fundamentals & ChatGPT Mastery",
     level: "Beginner",
-    free: true,
+    free: false,
     tools: ["ChatGPT", "Claude", "Gemini", "Midjourney", "Notion AI"],
     weeks: 4,
     sessions: "8 Sessions (Sat & Sun)",

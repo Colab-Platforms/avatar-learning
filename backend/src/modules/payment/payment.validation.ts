@@ -2,10 +2,21 @@ import Joi from "joi";
 import { getPaymentProvider } from "./payment.config.js";
 import type {
   CreateOrderBody,
+  Direct2HireLeadInput,
   VerifyCashfreePaymentBody,
   VerifyPaymentBody,
   VerifyRazorpayPaymentBody,
 } from "./payment.types.js";
+
+const leadSchema = Joi.object<Direct2HireLeadInput>({
+  fullName: Joi.string().trim().required(),
+  email: Joi.string().trim().email().required(),
+  phoneNumber: Joi.string().trim().required(),
+  institutionName: Joi.string().trim().required(),
+  currentEducation: Joi.string().trim().required(),
+  city: Joi.string().trim().required(),
+  state: Joi.string().trim().required(),
+});
 
 export function validateCreateOrder(data: unknown): {
   error?: { message: string };
@@ -32,6 +43,7 @@ export function validateVerifyPayment(data: unknown): {
     const schema = Joi.object<VerifyCashfreePaymentBody>({
       courseId: Joi.string().trim().optional(),
       order_id: Joi.string().trim().required(),
+      lead: leadSchema.optional(),
     });
     const { error, value } = schema.validate(data, { abortEarly: true });
     if (error) return { error: { message: error.message }, value: value as VerifyCashfreePaymentBody };
@@ -43,6 +55,7 @@ export function validateVerifyPayment(data: unknown): {
     razorpay_order_id: Joi.string().trim().required(),
     razorpay_payment_id: Joi.string().trim().required(),
     razorpay_signature: Joi.string().trim().required(),
+    lead: leadSchema.optional(),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });
   if (error) return { error: { message: error.message }, value: value as VerifyRazorpayPaymentBody };

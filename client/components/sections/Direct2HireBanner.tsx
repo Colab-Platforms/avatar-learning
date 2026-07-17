@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sparkles, GraduationCap, Building2, Award, Globe, Users, ClipboardList, BookOpen, Briefcase, Star } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  GraduationCap,
+  Building2,
+  Award,
+  Globe,
+  Users,
+  ClipboardList,
+  BookOpen,
+  Briefcase,
+  Star,
+} from "lucide-react";
 
 /* ─────────────────────────────────────────
    DATA
@@ -9,18 +21,19 @@ import { ArrowRight, Sparkles, GraduationCap, Building2, Award, Globe, Users, Cl
 const STEPS = [
   {
     num: 1,
-    icon: Users,
-    title: "Counselling",
-    desc: "Personalized guidance to understand your goals and strengths.",
+    icon: ClipboardList,
+    title: "AI Assessment",
+    desc: "Answer a short questionnaire and get an AI-powered course recommendation in your dashboard.",
     active: false,
   },
   {
     num: 2,
-    icon: ClipboardList,
-    title: "Assessment",
-    desc: "AI-driven assessments to evaluate skills and identify opportunities.",
+    icon: Users,
+    title: "Counselling",
+    desc: "1-on-1 guidance with an expert counselor after your assessment results are ready.",
     active: false,
   },
+
   {
     num: 3,
     icon: BookOpen,
@@ -45,13 +58,21 @@ const STEPS = [
 ];
 
 const STATS = [
-  { icon: GraduationCap, value: "10K+", label: "Students Guided" },
-  { icon: Building2, value: "500+", label: "Hiring Partners" },
-  { icon: Award, value: "95%", label: "Placement Rate" },
-  { icon: Globe, value: "25+", label: "Domains Covered" },
+  { icon: GraduationCap, value: "10K+", label: "Students Got their Dream Job" },
+  { icon: Award, value: "96.3%", label: "Placement Rate" },
+  {
+    icon: Building2,
+    value: "20+",
+    label: "Corporates listed as placement partners",
+  },
 ];
 
-const FEATURES = ["AI-Powered", "Industry Mentors", "Internship Support", "Placement Assistance"];
+const FEATURES = [
+  "AI-Powered",
+  "Industry Mentors",
+  "Internship Support",
+  "Placement Assistance",
+];
 
 /* ─────────────────────────────────────────
    COMPONENT
@@ -64,29 +85,32 @@ export function Direct2HireBanner() {
         <div
           className="relative rounded-3xl overflow-hidden"
           style={{
-            background: "linear-gradient(145deg, #e8f1ff 0%, #dde9ff 35%, #d0e2ff 65%, #c6daff 100%)",
-            boxShadow: "0 8px 48px -8px rgba(59,130,246,0.18), 0 2px 8px rgba(59,130,246,0.08)",
+            background:
+              "linear-gradient(145deg, #e8f1ff 0%, #dde9ff 35%, #d0e2ff 65%, #c6daff 100%)",
+            boxShadow:
+              "0 8px 48px -8px rgba(59,130,246,0.18), 0 2px 8px rgba(59,130,246,0.08)",
           }}
         >
           {/* Ambient blobs */}
           <div
             className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-40"
             style={{
-              background: "radial-gradient(circle, rgba(147,197,253,0.6) 0%, transparent 70%)",
+              background:
+                "radial-gradient(circle, rgba(147,197,253,0.6) 0%, transparent 70%)",
               animation: "orb-float 8s ease-in-out infinite",
             }}
           />
           <div
             className="pointer-events-none absolute -bottom-24 right-40 h-72 w-72 rounded-full opacity-30"
             style={{
-              background: "radial-gradient(circle, rgba(96,165,250,0.5) 0%, transparent 70%)",
+              background:
+                "radial-gradient(circle, rgba(96,165,250,0.5) 0%, transparent 70%)",
               animation: "orb-float 11s ease-in-out infinite reverse",
             }}
           />
 
           {/* ════════ TOP SECTION ════════ */}
           <div className="relative grid lg:grid-cols-[420px_1fr] min-h-0 lg:min-h-90">
-
             {/* ── LEFT: Text ── */}
             <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12 lg:border-r border-blue-200/50">
               {/* Eyebrow */}
@@ -114,7 +138,8 @@ export function Direct2HireBanner() {
                 style={{ animation: "fade-up-in 0.7s 0.2s ease both" }}
               >
                 AI-powered career guidance, skill development, internships, and
-                placement support—everything you need to go from learning to earning.
+                placement support—everything you need to go from learning to
+                earning.
               </p>
 
               {/* Feature pills */}
@@ -166,7 +191,7 @@ export function Direct2HireBanner() {
                 </div>
 
                 {/* Cards */}
-                <div className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5  gap-3">
                   {STEPS.map((step, idx) => {
                     const Icon = step.icon;
                     return (
@@ -177,7 +202,9 @@ export function Direct2HireBanner() {
                             ? "col-span-2 sm:col-span-1 w-1/2 sm:w-full mx-auto sm:mx-0"
                             : ""
                         }`}
-                        style={{ animation: `card-enter 0.5s ${0.1 + idx * 0.1}s ease both` }}
+                        style={{
+                          animation: `card-enter 0.5s ${0.1 + idx * 0.1}s ease both`,
+                        }}
                       >
                         {/* Number bubble */}
                         <div
@@ -190,7 +217,9 @@ export function Direct2HireBanner() {
                           {step.active && (
                             <span
                               className="absolute inset-0 rounded-full bg-blue-400 opacity-30"
-                              style={{ animation: "pulse-ring 2s ease-out infinite" }}
+                              style={{
+                                animation: "pulse-ring 2s ease-out infinite",
+                              }}
                             />
                           )}
                           {step.num}
@@ -198,7 +227,7 @@ export function Direct2HireBanner() {
 
                         {/* Card body */}
                         <div
-                          className={`flex flex-col items-center rounded-2xl border p-3.5 w-full transition-all duration-300 ${
+                          className={`flex flex-col items-center rounded-2xl border p-3.5 w-full h-full transition-all duration-300 ${
                             step.active
                               ? "border-blue-300 bg-white shadow-lg shadow-blue-100/80"
                               : "border-blue-100/60 bg-white/60 backdrop-blur-sm shadow-sm group-hover:border-blue-200 group-hover:bg-white/90 group-hover:shadow-md"
@@ -206,12 +235,16 @@ export function Direct2HireBanner() {
                         >
                           <div
                             className={`mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl ${
-                              step.active ? "bg-blue-50 border border-blue-100" : "bg-blue-50/60 border border-blue-100/50"
+                              step.active
+                                ? "bg-blue-50 border border-blue-100"
+                                : "bg-blue-50/60 border border-blue-100/50"
                             }`}
                           >
                             <Icon
                               className={`h-5 w-5 transition-colors duration-200 ${
-                                step.active ? "text-blue-600" : "text-blue-400 group-hover:text-blue-500"
+                                step.active
+                                  ? "text-blue-600"
+                                  : "text-blue-400 group-hover:text-blue-500"
                               }`}
                             />
                           </div>
@@ -222,10 +255,12 @@ export function Direct2HireBanner() {
                           >
                             {idx + 1}. {step.title}
                           </p>
-                          <p className="text-[10px] text-slate-400 leading-snug">{step.desc}</p>
+                          <p className="text-[10px] text-slate-400 leading-snug">
+                            {step.desc}
+                          </p>
 
                           {/* Active indicator dots */}
-                          <div className="mt-2.5 flex gap-1 justify-center">
+                          {/* <div className="mt-2.5 flex gap-1 justify-center">
                             {[0, 1, 2].map((d) => (
                               <span
                                 key={d}
@@ -238,7 +273,7 @@ export function Direct2HireBanner() {
                                 }`}
                               />
                             ))}
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     );
@@ -250,21 +285,27 @@ export function Direct2HireBanner() {
 
           {/* ════════ STATS BAR ════════ */}
           <div className="relative border-t border-blue-200/40 bg-white/30 backdrop-blur-sm">
-            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-blue-200/40">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-blue-200/40">
               {STATS.map((s, i) => {
                 const Icon = s.icon;
                 return (
                   <div
                     key={s.label}
-                    className="flex items-center gap-3 px-6 sm:px-8 py-5 transition-all duration-200 hover:bg-white/30"
-                    style={{ animation: `number-up 0.5s ${0.5 + i * 0.08}s ease both` }}
+                    className="flex items-center gap-4 px-6 py-4 sm:py-5 sm:px-8 transition-all duration-200 hover:bg-white/30"
+                    style={{
+                      animation: `number-up 0.5s ${0.5 + i * 0.08}s ease both`,
+                    }}
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 border border-blue-100 shadow-sm">
-                      <Icon className="h-4.5 w-4.5 text-blue-500" />
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/80 border border-blue-100 shadow-sm">
+                      <Icon className="h-5 w-5 text-blue-500" />
                     </div>
-                    <div>
-                      <p className="text-[22px] font-extrabold text-slate-800 leading-none">{s.value}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">{s.label}</p>
+                    <div className="min-w-0">
+                      <p className="text-[20px] sm:text-[22px] font-extrabold text-slate-800 leading-none">
+                        {s.value}
+                      </p>
+                      <p className="mt-1 text-[11.5px] sm:text-[11px] text-slate-500 font-medium leading-tight">
+                        {s.label}
+                      </p>
                     </div>
                   </div>
                 );

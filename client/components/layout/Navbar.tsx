@@ -1,22 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { LogOut, User, ChevronDown, Menu, X } from "lucide-react";
+import { LogOut, User, ChevronDown, Menu, X, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
 import { buttonVariants } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutThunk } from "@/store/authSlice";
+import { getMyPartner } from "@/lib/partnersApi";
 
 export function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileOpen,     setMobileOpen]     = useState(false);
+  const [userMenuOpen,   setUserMenuOpen]   = useState(false);
+  const [isApprovedPartner, setIsApprovedPartner] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user } = useAppSelector((s) => s.auth);
+
+  /* Silently check partner status once user is known — used to show/hide
+     the Partner Dashboard link in the dropdown. Fails silently if not a partner. */
+  useEffect(() => {
+    if (!user) { setIsApprovedPartner(false); return; }
+    getMyPartner()
+      .then((p) => setIsApprovedPartner(p?.status === "APPROVED"))
+      .catch(() => setIsApprovedPartner(false));
+  }, [user?.id]);
 
   const handleLogout = async () => {
     setUserMenuOpen(false);
@@ -134,6 +145,17 @@ export function Navbar() {
                       <User className="h-3.5 w-3.5 text-brand-500" />
                       View Profile
                     </Link>
+                    {isApprovedPartner && (
+                      <Link
+                        href="/partner-dashboard"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-text-muted
+                                   hover:text-text hover:bg-surface-alt transition-all duration-150"
+                      >
+                        <Handshake className="h-3.5 w-3.5 text-brand-500" />
+                        Partner Dashboard
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px]
@@ -157,8 +179,9 @@ export function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="hidden sm:inline-block text-[13px] font-medium text-text-muted hover:text-text
-                           transition-colors duration-200 px-3 py-2"
+                className=" hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
+                         border border-brand-300 text-brand-600 hover:bg-brand-50 hover:border-brand-500
+                         transition-all duration-200"
               >
                 Log in / Register
               </Link>
@@ -222,6 +245,16 @@ export function Navbar() {
                   <User className="h-4 w-4 text-brand-500" />
                   View Profile ({user.firstName ?? user.email})
                 </Link>
+                {isApprovedPartner && (
+                  <Link
+                    href="/partner-dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150 flex items-center gap-2"
+                  >
+                    <Handshake className="h-4 w-4 text-brand-500" />
+                    Partner Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setMobileOpen(false);
@@ -237,7 +270,10 @@ export function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150"
+                className={cn(
+                  buttonVariants({ variant: "primary", size: "sm" }),
+                  "w-full justify-center",
+                )}
               >
                 Log in / Register
               </Link>

@@ -2,16 +2,28 @@ export interface CreateOrderBody {
   courseId: string;
 }
 
+export interface Direct2HireLeadInput {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  institutionName: string;
+  currentEducation: string;
+  city: string;
+  state: string;
+}
+
 export interface VerifyRazorpayPaymentBody {
   courseId?: string;
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+  lead?: Direct2HireLeadInput;
 }
 
 export interface VerifyCashfreePaymentBody {
   courseId?: string;
   order_id: string;
+  lead?: Direct2HireLeadInput;
 }
 
 export type VerifyPaymentBody = VerifyRazorpayPaymentBody | VerifyCashfreePaymentBody;

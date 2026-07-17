@@ -38,6 +38,7 @@ const createCourseSchema = Joi.object({
     seats: Joi.string().trim().optional().allow(""),
     whatYouLearn: Joi.array().items(whatYouLearnItem).optional().default([]),
     audience: Joi.array().items(audienceItem).optional().default([]),
+    isDirect2HireCourse: Joi.boolean().default(false),
 });
 
 const updateCourseSchema = Joi.object({
@@ -60,6 +61,7 @@ const updateCourseSchema = Joi.object({
     seats: Joi.string().trim().optional().allow(""),
     whatYouLearn: Joi.array().items(whatYouLearnItem).optional(),
     audience: Joi.array().items(audienceItem).optional(),
+    isDirect2HireCourse: Joi.boolean().optional(),
 });
 
 const createLessonSchema = Joi.object({
@@ -86,8 +88,32 @@ const updateLessonSchema = Joi.object({
     isFreePreview: Joi.boolean().optional(),
 });
 
+const createTopicSchema = Joi.object({
+    title: Joi.string().trim().required().messages({ "any.required": "Title is required" }),
+    description: Joi.string().trim().optional().allow(""),
+    topicOrder: Joi.number().integer().min(1).required().messages({ "any.required": "Topic order is required" }),
+    duration: Joi.number().integer().min(0).optional(),
+});
+
+const updateTopicSchema = Joi.object({
+    title: Joi.string().trim().optional(),
+    description: Joi.string().trim().optional().allow(""),
+    topicOrder: Joi.number().integer().min(1).optional(),
+    duration: Joi.number().integer().min(0).optional(),
+});
+
+const completeFileUploadSchema = Joi.object({
+    title: Joi.string().trim().required().messages({ "any.required": "Title is required" }),
+    url: Joi.string().uri().required().messages({ "any.required": "File url is required" }),
+    size: Joi.number().min(0).optional(),
+    type: Joi.string().trim().required().messages({ "any.required": "File type is required" }),
+});
+
 export const validateCreateCategory = (data: unknown) => createCategorySchema.validate(data, { abortEarly: false });
 export const validateCreateCourse   = (data: unknown) => createCourseSchema.validate(data, { abortEarly: false });
 export const validateUpdateCourse   = (data: unknown) => updateCourseSchema.validate(data, { abortEarly: false });
 export const validateCreateLesson   = (data: unknown) => createLessonSchema.validate(data, { abortEarly: false });
 export const validateUpdateLesson   = (data: unknown) => updateLessonSchema.validate(data, { abortEarly: false });
+export const validateCreateTopic    = (data: unknown) => createTopicSchema.validate(data, { abortEarly: false });
+export const validateUpdateTopic    = (data: unknown) => updateTopicSchema.validate(data, { abortEarly: false });
+export const validateCompleteFileUpload = (data: unknown) => completeFileUploadSchema.validate(data, { abortEarly: false });

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OtpInput } from "../OtpInput";
+import { GoogleAuthButton } from "../GoogleAuthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, verifyOtp, resendOtp, clearError } from "@/store/authSlice";
 
@@ -25,9 +26,10 @@ const inputCls = cn(
   "transition-all duration-200"
 );
 
-export default function LoginPage() {
+function LoginForm() {
   const dispatch = useAppDispatch();
   const router   = useRouter();
+  const searchParams = useSearchParams();
   const { loading, error, user, pendingEmail } = useAppSelector((s) => s.auth);
 
   const [step,           setStep]           = useState<"form" | "otp">("form");
@@ -38,8 +40,14 @@ export default function LoginPage() {
   const [otp,            setOtp]            = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess,  setResendSuccess]  = useState(false);
+  const [referralCode,   setReferralCode]   = useState<string | undefined>(undefined);
 
   useEffect(() => { if (user) router.push("/"); }, [user, router]);
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) setReferralCode(ref.toUpperCase());
+  }, [searchParams]);
 
   useEffect(() => {
     if (!resendCooldown) return;
@@ -205,6 +213,14 @@ export default function LoginPage() {
         </button>
       </form>
 
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-100" />
+        <span className="text-[12px] text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-100" />
+      </div>
+
+      <GoogleAuthButton referralCode={referralCode} />
+
       <div className="h-px bg-slate-100" />
 
       <p className="text-center text-[13px] text-slate-400">
@@ -214,5 +230,19 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

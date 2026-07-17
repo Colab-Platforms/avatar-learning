@@ -9,8 +9,12 @@ import {
   BookOpen,
   Briefcase,
   Landmark,
+  GraduationCap,
   ArrowLeft,
+  MessageSquare,
+  Handshake,
 } from "lucide-react";
+import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -38,9 +42,27 @@ const NAV = [
     exact: false,
   },
   {
+    href: "/admin/direct2hire",
+    label: "Direct2Hire",
+    icon: GraduationCap,
+    exact: false,
+  },
+  {
     href: "/admin/investors",
     label: "Investors",
     icon: Landmark,
+    exact: false,
+  },
+  {
+    href: "/admin/contacts",
+    label: "Contacts",
+    icon: MessageSquare,
+    exact: false,
+  },
+  {
+    href: "/admin/partners",
+    label: "Partners",
+    icon: Handshake,
     exact: false,
   },
 ];
@@ -56,6 +78,7 @@ export default function AdminLayout({
   const [user, setUser] = useState<{ name: string; email: string } | null>(
     null,
   );
+  const [contactUnread, setContactUnread] = useState(0);
 
   useEffect(() => {
     try {
@@ -80,6 +103,16 @@ export default function AdminLayout({
       router.replace("/login");
     }
   }, [router]);
+
+  // Poll unread contact count every 30s once authorized
+  useEffect(() => {
+    if (!authorized) return;
+    const fetchUnread = () =>
+      fetchContactUnreadCount().then(setContactUnread).catch(() => {});
+    fetchUnread();
+    const id = setInterval(fetchUnread, 30_000);
+    return () => clearInterval(id);
+  }, [authorized]);
 
   if (!authorized) {
     return (
@@ -125,6 +158,8 @@ export default function AdminLayout({
           </p>
           {NAV.map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
+            const isContacts = href === "/admin/contacts";
+            const badge = isContacts && contactUnread > 0 ? contactUnread : 0;
             return (
               <Link
                 key={href}
@@ -140,9 +175,13 @@ export default function AdminLayout({
                   className={active ? "text-brand-400" : "text-white/35"}
                 />
                 {label}
-                {active && (
+                {badge > 0 ? (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-brand-500 text-ink-950">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : active ? (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
-                )}
+                ) : null}
               </Link>
             );
           })}

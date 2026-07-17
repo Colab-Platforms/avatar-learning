@@ -6,9 +6,9 @@ import { useRazorpay } from "@/hooks/useRazorpay";
 import { useCashfree } from "@/hooks/useCashfree";
 import { useCreateDirect2HireOrder } from "@/hooks/mutations/useCreateDirect2HireOrder";
 import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
-import { useDirect2HireStatus } from "@/hooks/queries/useDirect2HireStatus";
+import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { useAppSelector } from "@/store/hooks";
-import type { CreateOrderResponse } from "@/lib/paymentApi";
+import type { CreateOrderResponse, Direct2HireLeadInput } from "@/lib/paymentApi";
 
 type MessageType = "success" | "error";
 
@@ -20,17 +20,17 @@ export function useDirect2HireCheckout() {
   const cashfreeLoaded = useCashfree();
   const { mutateAsync: createOrder } = useCreateDirect2HireOrder();
   const { mutateAsync: verifyPayment } = useVerifyPayment();
-  const { data: statusData, refetch: refetchStatus } = useDirect2HireStatus(!!user);
+  const { data: statusData, refetch: refetchStatus } = useD2HStatus();
 
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: MessageType } | null>(null);
 
-  const enrolled = statusData?.enrolled ?? false;
+  const enrolled = statusData?.enrollment?.status === "PAID";
 
   const showMessage = (text: string, type: MessageType) => setMessage({ text, type });
 
   const handleRazorpayCheckout = useCallback(
-    async (order: CreateOrderResponse) => {
+    async (order: CreateOrderResponse, lead?: Direct2HireLeadInput) => {
       if (!user) return;
 
       await new Promise<void>((resolve, reject) => {
@@ -42,8 +42,9 @@ export function useDirect2HireCheckout() {
           description: "Direct2Hire Career Session",
           order_id: order.orderId,
           prefill: {
-            name: `${(user as any).firstName ?? ""} ${(user as any).lastName ?? ""}`.trim(),
-            email: (user as any).email ?? "",
+            name: lead?.fullName ?? `${(user as any).firstName ?? ""} ${(user as any).lastName ?? ""}`.trim(),
+            email: lead?.email ?? (user as any).email ?? "",
+            contact: lead?.phoneNumber ?? (user as any).phoneNo ?? "",
           },
           theme: { color: "#00C8FF" },
           retry: { enabled: true, max_count: 3 },
@@ -57,12 +58,10 @@ export function useDirect2HireCheckout() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                lead,
               });
               await refetchStatus();
-              showMessage(
-                "Payment successful! Our team will reach out on WhatsApp shortly.",
-                "success",
-              );
+              showMessage("Payment successful! Redirecting to your dashboard…", "success");
               resolve();
             } catch (verifyErr: unknown) {
               const e = verifyErr as { response?: { data?: { message?: string } } };
@@ -81,7 +80,7 @@ export function useDirect2HireCheckout() {
   );
 
   const handleCashfreeCheckout = useCallback(
-    async (order: CreateOrderResponse) => {
+    async (order: CreateOrderResponse, lead?: Direct2HireLeadInput) => {
       if (!order.paymentSessionId) {
         throw new Error("Missing Cashfree payment session");
       }
@@ -99,65 +98,69 @@ export function useDirect2HireCheckout() {
         throw new Error(result.error.message ?? "Payment failed");
       }
 
-      await verifyPayment({ order_id: order.orderId });
+      await verifyPayment({ order_id: order.orderId, lead });
       await refetchStatus();
-      showMessage("Payment successful! Our team will reach out on WhatsApp shortly.", "success");
+      showMessage("Payment successful! Redirecting to your dashboard…", "success");
     },
     [verifyPayment, refetchStatus],
   );
 
-  const enroll = useCallback(async () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    if (enrolled) {
-      showMessage("You're already enrolled in the Direct2Hire programme.", "success");
-      return;
-    }
+  const enroll = useCallback(
+    async (lead?: Direct2HireLeadInput) => {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      if (enrolled) {
+        showMessage("You're already enrolled in the Direct2Hire programme.", "success");
+        return;
+      }
 
-    setProcessing(true);
-    setMessage(null);
+      setProcessing(true);
+      setMessage(null);
 
-    try {
-      const order = await createOrder();
+      try {
+        const order = await createOrder();
 
-      if (order.provider === "cashfree") {
-        if (!cashfreeLoaded) {
-          showMessage("Payment SDK is still loading. Please try again.", "error");
-          return;
+        if (order.provider === "cashfree") {
+          if (!cashfreeLoaded) {
+            showMessage("Payment SDK is still loading. Please try again.", "error");
+            return;
+          }
+          await handleCashfreeCheckout(order, lead);
+        } else {
+          if (!razorpayLoaded) {
+            showMessage("Payment SDK is still loading. Please try again.", "error");
+            return;
+          }
+          await handleRazorpayCheckout(order, lead);
         }
-        await handleCashfreeCheckout(order);
-        return;
-      }
 
-      if (!razorpayLoaded) {
-        showMessage("Payment SDK is still loading. Please try again.", "error");
-        return;
+        router.push("/dashboard");
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { message?: string } } };
+        const msg =
+          e?.response?.data?.message ?? (err instanceof Error ? err.message : "Payment failed");
+        if (msg === "cancelled") {
+          showMessage("Payment was cancelled. You can retry anytime — your order is still pending.", "error");
+        } else {
+          showMessage(msg, "error");
+        }
+      } finally {
+        setProcessing(false);
       }
-      await handleRazorpayCheckout(order);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      const msg =
-        e?.response?.data?.message ?? (err instanceof Error ? err.message : "Payment failed");
-      if (msg === "cancelled") {
-        showMessage("Payment was cancelled.", "error");
-      } else {
-        showMessage(msg, "error");
-      }
-    } finally {
-      setProcessing(false);
-    }
-  }, [
-    user,
-    enrolled,
-    router,
-    createOrder,
-    cashfreeLoaded,
-    razorpayLoaded,
-    handleCashfreeCheckout,
-    handleRazorpayCheckout,
-  ]);
+    },
+    [
+      user,
+      enrolled,
+      router,
+      createOrder,
+      cashfreeLoaded,
+      razorpayLoaded,
+      handleCashfreeCheckout,
+      handleRazorpayCheckout,
+    ],
+  );
 
   return { enroll, processing, message, enrolled };
 }
