@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { LogOut, User, ChevronDown, Menu, X, Handshake } from "lucide-react";
+import { LogOut, User, ChevronDown, Menu, X, Handshake, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
 import { buttonVariants } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutThunk } from "@/store/authSlice";
 import { getMyPartner } from "@/lib/partnersApi";
+import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 
 export function Navbar() {
   const [mobileOpen,     setMobileOpen]     = useState(false);
@@ -18,7 +19,11 @@ export function Navbar() {
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { user } = useAppSelector((s) => s.auth);
+  const { user, hasHydrated } = useAppSelector((s) => s.auth);
+  const { data: d2hStatus } = useD2HStatus({
+    enabled: hasHydrated && Boolean(user),
+  });
+  const isD2HEnrolled = d2hStatus?.enrollment?.status === "PAID";
 
   /* Silently check partner status once user is known — used to show/hide
      the Partner Dashboard link in the dropdown. Fails silently if not a partner. */
@@ -145,6 +150,17 @@ export function Navbar() {
                       <User className="h-3.5 w-3.5 text-brand-500" />
                       View Profile
                     </Link>
+                    {isD2HEnrolled && (
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-text-muted
+                                   hover:text-text hover:bg-surface-alt transition-all duration-150"
+                      >
+                        <GraduationCap className="h-3.5 w-3.5 text-brand-500" />
+                        Direct2Hire Dashboard
+                      </Link>
+                    )}
                     {isApprovedPartner && (
                       <Link
                         href="/partner-dashboard"
@@ -245,6 +261,16 @@ export function Navbar() {
                   <User className="h-4 w-4 text-brand-500" />
                   View Profile ({user.firstName ?? user.email})
                 </Link>
+                {isD2HEnrolled && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150 flex items-center gap-2"
+                  >
+                    <GraduationCap className="h-4 w-4 text-brand-500" />
+                    Direct2Hire Dashboard
+                  </Link>
+                )}
                 {isApprovedPartner && (
                   <Link
                     href="/partner-dashboard"
