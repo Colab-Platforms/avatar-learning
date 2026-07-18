@@ -28,8 +28,10 @@ import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
 import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { useInternshipTasks } from "@/hooks/queries/useInternshipTasks";
 import { usePlacementAssessment } from "@/hooks/queries/usePlacementAssessment";
+import { useMockInterview } from "@/hooks/queries/useMockInterview";
 import { useLearnCourse } from "@/hooks/queries/useLearnCourse";
 import { useAppSelector } from "@/store/hooks";
+import { isGoodMockInterviewFeedback } from "@/lib/direct2hire/mockInterviewApi";
 import PretextAnimatedHeight, {
   AnimatedHeight,
 } from "@/components/counselling/PretextAnimatedHeight";
@@ -50,6 +52,7 @@ export default function DashboardOverviewPage() {
   const courseId = selection?.selectedCourse?.id ?? "";
   const { data: placement, isLoading: placementLoading } =
     usePlacementAssessment(courseId);
+  const { data: mockInterviewBundle } = useMockInterview();
 
   const activeCourseSummary = useMemo(() => {
     return (
@@ -107,12 +110,27 @@ export default function DashboardOverviewPage() {
     totalInternshipTasks > 0 &&
     approvedInternshipTasks === totalInternshipTasks;
 
-  const hasPlacement = !!placement?.hasPassed;
+  const hasPlacementAssessment = !!placement?.hasPassed;
+  const mockInterview = mockInterviewBundle?.interview ?? null;
+  const hasGoodMockFeedback =
+    mockInterview?.status === "FEEDBACK_PUBLISHED" &&
+    isGoodMockInterviewFeedback(mockInterview.recommendation);
+  const hasPlacement = hasPlacementAssessment && hasGoodMockFeedback;
+
   const placementProgress = hasPlacement
     ? 100
-    : placement?.latestAttempt
-      ? 50
-      : 0;
+    : hasPlacementAssessment
+      ? mockInterview?.status === "FEEDBACK_PUBLISHED"
+        ? 85
+        : mockInterview?.status === "COMPLETED" ||
+            mockInterview?.status === "SCHEDULED"
+          ? 75
+          : mockInterview?.status === "REQUESTED"
+            ? 60
+            : 50
+      : placement?.latestAttempt
+        ? 25
+        : 0;
 
   // Overall calculations
   const overallProgress = Math.round(
@@ -168,8 +186,23 @@ export default function DashboardOverviewPage() {
     if (!hasInternship) {
       return `Awesome job completing your courses! Now work on your weekly internship tasks. Get all tasks approved to earn your internship certificate.`;
     }
-    if (!hasPlacement) {
+    if (!hasPlacementAssessment) {
       return "Fantastic! You've finished your learning and internship. Take the Placement Assessment and unlock mock interviews with industry experts.";
+    }
+    if (!hasGoodMockFeedback) {
+      if (mockInterview?.status === "FEEDBACK_PUBLISHED") {
+        return "Your mock interview feedback is in. Review the mentor notes, keep improving, and you'll be fully placement-ready soon.";
+      }
+      if (mockInterview?.status === "COMPLETED") {
+        return "Great job completing your mock interview! Feedback is being prepared — check back soon.";
+      }
+      if (mockInterview?.status === "SCHEDULED") {
+        return "Your mock interview is scheduled. Attend the session and aim for strong feedback to complete placement.";
+      }
+      if (mockInterview?.status === "REQUESTED") {
+        return "Mock interview requested — wait for your schedule, then nail the session to finish the programme.";
+      }
+      return "Assessment passed! Request your mock interview next. Positive mentor feedback completes your placement journey.";
     }
     return "Congratulations! You have completed all the milestones of the Direct2Hire program. You are fully ready for placement opportunities!";
   }, [
@@ -179,7 +212,9 @@ export default function DashboardOverviewPage() {
     hasLearning,
     activeCourseSummary,
     hasInternship,
-    hasPlacement,
+    hasPlacementAssessment,
+    hasGoodMockFeedback,
+    mockInterview,
   ]);
 
   const heroPrimaryAction = useMemo(() => {
@@ -203,12 +238,29 @@ export default function DashboardOverviewPage() {
         href: "/dashboard/internships",
       };
     }
-    return { label: "Start Mock Interview", href: "/dashboard/placement" };
+    if (!hasPlacementAssessment) {
+      return { label: "Start Placement Assessment", href: "/dashboard/placement" };
+    }
+    if (!hasGoodMockFeedback) {
+      return {
+        label:
+          mockInterview?.status === "FEEDBACK_PUBLISHED"
+            ? "View Interview Feedback"
+            : mockInterview
+              ? "Continue Mock Interview"
+              : "Request Mock Interview",
+        href: "/dashboard/placement/mock-interview",
+      };
+    }
+    return { label: "View Placement Panel", href: "/dashboard/placement" };
   }, [
     hasAssessment,
     hasCounselling,
     hasLearning,
     hasInternship,
+    hasPlacementAssessment,
+    hasGoodMockFeedback,
+    mockInterview,
     activeCourseSummary,
   ]);
 
@@ -277,12 +329,22 @@ export default function DashboardOverviewPage() {
         number: 5,
         title: "Placement",
         statusText: hasPlacement
-          ? "Assessment passed - Ready for placement!"
-          : placement?.mockInterviewUnlocked
-            ? "Mock Interview unlocked"
-            : hasInternship
-              ? "Placement assessment unlocked"
-              : "Complete internship first",
+          ? "Mock interview cleared — ready for placement!"
+          : hasGoodMockFeedback
+            ? "Ready for placement!"
+            : hasPlacementAssessment
+              ? mockInterview?.status === "FEEDBACK_PUBLISHED"
+                ? "Feedback received — keep improving"
+                : mockInterview?.status === "SCHEDULED"
+                  ? "Mock interview scheduled"
+                  : mockInterview?.status === "REQUESTED"
+                    ? "Mock interview requested"
+                    : "Assessment passed — request mock interview"
+              : placement?.mockInterviewUnlocked
+                ? "Mock Interview unlocked"
+                : hasInternship
+                  ? "Placement assessment unlocked"
+                  : "Complete internship first",
         completed: hasPlacement,
         active: hasInternship && !hasPlacement,
         locked: !hasInternship,
@@ -301,6 +363,9 @@ export default function DashboardOverviewPage() {
     approvedInternshipTasks,
     totalInternshipTasks,
     hasPlacement,
+    hasPlacementAssessment,
+    hasGoodMockFeedback,
+    mockInterview,
     placement,
   ]);
 
@@ -974,7 +1039,7 @@ export default function DashboardOverviewPage() {
                     Placement Assessment
                   </p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    {hasPlacement
+                    {hasPlacementAssessment
                       ? "Assessment passed successfully!"
                       : "Prepare and take the final placement quiz"}
                   </p>
@@ -982,22 +1047,74 @@ export default function DashboardOverviewPage() {
                 <span
                   className={cn(
                     "text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0 border",
-                    hasPlacement
+                    hasPlacementAssessment
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : "bg-blue-50 text-blue-700 border-blue-200",
                   )}
                 >
-                  {hasPlacement ? "Passed" : "Ready"}
+                  {hasPlacementAssessment ? "Passed" : "Ready"}
                 </span>
               </div>
 
+              {hasPlacementAssessment && (
+                <div className="flex items-center gap-4 border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+                  <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                    <Trophy size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-800">
+                      Mock Interview
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      {hasGoodMockFeedback
+                        ? "Strong feedback received — you're placement ready!"
+                        : mockInterview?.status === "FEEDBACK_PUBLISHED"
+                          ? "Feedback published — review mentor notes"
+                          : mockInterview?.status === "COMPLETED"
+                            ? "Interview complete — feedback coming soon"
+                            : mockInterview?.status === "SCHEDULED"
+                              ? "Interview scheduled"
+                              : mockInterview?.status === "REQUESTED"
+                                ? "Waiting for schedule"
+                                : "Request your mock interview next"}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0 border",
+                      hasGoodMockFeedback
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : mockInterview
+                          ? "bg-violet-50 text-violet-700 border-violet-200"
+                          : "bg-blue-50 text-blue-700 border-blue-200",
+                    )}
+                  >
+                    {hasGoodMockFeedback
+                      ? "Cleared"
+                      : mockInterview?.status === "FEEDBACK_PUBLISHED"
+                        ? "Review"
+                        : mockInterview
+                          ? "In Progress"
+                          : "Next"}
+                  </span>
+                </div>
+              )}
+
               <Link
-                href="/dashboard/placement"
+                href={
+                  hasPlacementAssessment
+                    ? "/dashboard/placement/mock-interview"
+                    : "/dashboard/placement"
+                }
                 className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 transition active:scale-[0.99] shadow-sm shadow-blue-500/10"
               >
-                {hasPlacement
-                  ? "Go to Placement Panel"
-                  : "Start Mock Interview"}
+                {hasGoodMockFeedback
+                  ? "View Placement Panel"
+                  : hasPlacementAssessment
+                    ? mockInterview
+                      ? "Continue Mock Interview"
+                      : "Request Mock Interview"
+                    : "Start Placement Assessment"}
                 <ArrowRight size={12} />
               </Link>
             </>

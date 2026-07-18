@@ -45,4 +45,6 @@ export const queryKeys = {
     ["admin-student-placement-attempts", userId] as const,
   adminStudentPlacementOverrides: (userId: string) =>
     ["admin-student-placement-overrides", userId] as const,
+  mockInterview: ["mock-interview"] as const,
+  adminMockInterview: (userId: string) => ["admin-mock-interview", userId] as const,
 };

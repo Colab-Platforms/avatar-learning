@@ -99,6 +99,21 @@ enum InternshipSubmissionStatus {
   CHANGES_REQUESTED
 }
 
+enum MockInterviewStatus {
+  REQUESTED
+  SCHEDULED
+  COMPLETED
+  FEEDBACK_PUBLISHED
+  CANCELLED
+}
+
+enum MockInterviewRecommendation {
+  READY_FOR_PLACEMENT
+  NEEDS_IMPROVEMENT
+  EXCELLENT_CANDIDATE
+  NEEDS_ANOTHER_MOCK
+}
+
 enum SubmissionAttachmentKind {
   FILE
   LINK
@@ -161,6 +176,7 @@ model User {
   grantedPlacementOverrides PlacementAttemptOverride[] @relation("PlacementOverrideAdmin")
   internshipSubmissions     InternshipSubmission[]
   reviewedInternshipSubs    InternshipSubmission[]     @relation("InternshipSubmissionReviewer")
+  mockInterview             MockInterview?
 
   partner         Partner?
   partnerReferral PartnerReferral?
@@ -1270,4 +1286,38 @@ model PlacementAttemptOverride {
   @@index([userId, placementAssessmentId])
   @@index([placementAssessmentId])
   @@map("placement_attempt_overrides")
+}
+
+model MockInterview {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+
+  status MockInterviewStatus @default(REQUESTED)
+
+  interviewerName String?   @map("interviewer_name")
+  meetingLink     String?   @map("meeting_link") @db.Text
+  scheduledAt     DateTime? @map("scheduled_at")
+  durationMinutes Int?      @map("duration_minutes")
+  adminNotes      String?   @map("admin_notes") @db.Text
+
+  communicationRating Int? @map("communication_rating")
+  technicalRating     Int? @map("technical_rating")
+  confidenceRating    Int? @map("confidence_rating")
+  resumeRating        Int? @map("resume_rating")
+  overallRating       Int? @map("overall_rating")
+
+  recommendation      MockInterviewRecommendation? @map("recommendation")
+  feedback            String?                      @db.Text
+  feedbackPublishedAt DateTime?                    @map("feedback_published_at")
+
+  completedAt DateTime? @map("completed_at")
+  cancelledAt DateTime? @map("cancelled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("mock_interviews")
 }
