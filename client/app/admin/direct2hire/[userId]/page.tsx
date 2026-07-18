@@ -27,6 +27,7 @@ import { useReviewInternshipSubmission } from "@/hooks/mutations/useReviewIntern
 import type { AdminD2HStudentProfile } from "@/lib/adminApi";
 import type { AdminStudentInternshipTask } from "@/lib/internshipApi";
 import { AdminPlacementAssessmentSection } from "@/components/admin/AdminPlacementAssessmentSection";
+import { AdminMockInterviewSection } from "@/components/admin/AdminMockInterviewSection";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -1011,6 +1012,8 @@ export default function AdminDirect2HireStudentPage() {
       />
 
       <AdminPlacementAssessmentSection userId={userId} />
+
+      <AdminMockInterviewSection userId={userId} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { auth } from "@/middlewares/authMiddleware.js";
 import * as direct2hireController from "./direct2hire.controller.js";
 import * as direct2hireAdminController from "./admin/admin.controller.js";
 import * as placementController from "../course/placement/placement.controller.js";
+import * as mockInterviewController from "./mock-interview/mock-interview.controller.js";
 import internshipAdminRoutes from "./internship/internship.admin.route.js";
 
 const router = Router();
@@ -45,6 +46,27 @@ router.get(
 router.post(
     "/direct2hire/students/:userId/placement/grant-attempts",
     placementController.grantStudentPlacementAttempts,
+);
+
+router.get(
+    "/direct2hire/students/:userId/mock-interview",
+    mockInterviewController.getStudentInterview,
+);
+router.patch(
+    "/direct2hire/students/:userId/mock-interview/schedule",
+    mockInterviewController.scheduleInterview,
+);
+router.patch(
+    "/direct2hire/students/:userId/mock-interview/complete",
+    mockInterviewController.markInterviewCompleted,
+);
+router.patch(
+    "/direct2hire/students/:userId/mock-interview/feedback",
+    mockInterviewController.publishInterviewFeedback,
+);
+router.patch(
+    "/direct2hire/students/:userId/mock-interview/cancel",
+    mockInterviewController.cancelInterview,
 );
 
 router.use("/direct2hire", internshipAdminRoutes);
