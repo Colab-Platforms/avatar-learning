@@ -20,11 +20,13 @@ export const createOrder = async (
     const result = await paymentService.createDirect2HireOrder(req.user!.id);
     sendResponse(res, true, result, "Order created", STATUS_CODES.CREATED);
   } catch (err: any) {
+    console.log("Order:", err);
+
     sendResponse(
       res,
       false,
       null,
-      err.message,
+      err.error.description,
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
   }
