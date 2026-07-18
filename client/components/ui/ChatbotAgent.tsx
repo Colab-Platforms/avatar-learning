@@ -24,6 +24,7 @@ type ChatMessage = {
   text: string;
   timestamp: string;
   isError?: boolean;
+  isRateLimited?: boolean;
   canRetry?: boolean;
   isNew?: boolean;
 };
@@ -92,17 +93,27 @@ function BotBubble({
       <div
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-sm"
         style={{
-          background: message.isError
-            ? "rgba(220,38,38,0.08)"
-            : "rgba(42,120,204,0.08)",
-          border: message.isError
-            ? "1px solid rgba(220,38,38,0.25)"
-            : "1px solid rgba(42,120,204,0.25)",
+          background: message.isRateLimited
+            ? "rgba(217,119,6,0.08)"
+            : message.isError
+              ? "rgba(220,38,38,0.08)"
+              : "rgba(42,120,204,0.08)",
+          border: message.isRateLimited
+            ? "1px solid rgba(217,119,6,0.25)"
+            : message.isError
+              ? "1px solid rgba(220,38,38,0.25)"
+              : "1px solid rgba(42,120,204,0.25)",
         }}
       >
         <Bot
           className="h-4 w-4"
-          style={{ color: message.isError ? "#dc2626" : "#2A78CC" }}
+          style={{
+            color: message.isRateLimited
+              ? "#d97706"
+              : message.isError
+                ? "#dc2626"
+                : "#2A78CC",
+          }}
         />
       </div>
 
@@ -113,21 +124,26 @@ function BotBubble({
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-[82%] rounded-2xl rounded-tl-none px-4 py-3 text-sm overflow-hidden"
         style={
-          message.isError
+          message.isRateLimited
             ? {
-                background: "rgba(220,38,38,0.06)",
-                border: "1px solid rgba(220,38,38,0.20)",
+                background: "rgba(217,119,6,0.06)",
+                border: "1px solid rgba(217,119,6,0.20)",
               }
-            : {
-                background: "#F8FAFC",
-                border: "1px solid #D3DCE6",
-                borderLeft: "2px solid #2A78CC",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              }
+            : message.isError
+              ? {
+                  background: "rgba(220,38,38,0.06)",
+                  border: "1px solid rgba(220,38,38,0.20)",
+                }
+              : {
+                  background: "#F8FAFC",
+                  border: "1px solid #D3DCE6",
+                  borderLeft: "2px solid #2A78CC",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }
         }
       >
         <div
-          className={`leading-relaxed ${message.isError ? "text-red-600" : "text-text"} chatbot-markdown`}
+          className={`leading-relaxed ${message.isRateLimited ? "text-amber-700" : message.isError ? "text-red-600" : "text-text"} chatbot-markdown`}
         >
           <ReactMarkdown>{displayed}</ReactMarkdown>
         </div>
@@ -160,7 +176,6 @@ export default function ChatbotAgent() {
   const [messages, setMessages] = useState<ChatMessage[]>(DEFAULT_MESSAGES);
   const [inputValue, setInputValue] = useState("");
   const [sessionId, setSessionId] = useState("");
-  const [errorHint, setErrorHint] = useState<string | null>(null);
   const [ripples, setRipples] = useState<
     { id: number; x: number; y: number }[]
   >([]);
@@ -210,12 +225,16 @@ export default function ChatbotAgent() {
 
   useEffect(() => {
     if (mutation.isError && mutation.error) {
+      const isRateLimited = mutation.error.status === 429;
       const failed: ChatMessage = {
         id: `error-${Date.now()}`,
         type: "bot",
-        text: `**Error:** ${mutation.error.message}`,
+        text: isRateLimited
+          ? mutation.error.message
+          : `**Error:** ${mutation.error.message}`,
         timestamp: new Date().toISOString(),
         isError: true,
+        isRateLimited,
         canRetry: true,
       };
       setMessages((prev) => [...prev, failed]);
@@ -250,7 +269,6 @@ export default function ChatbotAgent() {
       };
       setMessages((prev) => [...prev, userMessage]);
       setInputValue("");
-      setErrorHint(null);
 
       await mutation
         .mutateAsync({
@@ -274,9 +292,7 @@ export default function ChatbotAgent() {
             window.sessionStorage.setItem(STORAGE_KEY, reply.sessionId);
           }
         })
-        .catch((error) => {
-          setErrorHint(error.message);
-        });
+        .catch(() => {});
     },
     [mutation, sessionId],
   );
@@ -289,7 +305,6 @@ export default function ChatbotAgent() {
   const retryLastMessage = async () => {
     const lastUser = [...messages].reverse().find((m) => m.type === "user");
     if (!lastUser) return;
-    setErrorHint(null);
     await mutation
       .mutateAsync({
         message: lastUser.text,
@@ -308,13 +323,12 @@ export default function ChatbotAgent() {
         setNewBotId(id);
         setMessages((prev) => [...prev, botMessage]);
       })
-      .catch((error) => setErrorHint(error.message));
+      .catch(() => {});
   };
 
   const clearChat = () => {
     setMessages(DEFAULT_MESSAGES);
     setNewBotId(null);
-    setErrorHint(null);
   };
 
   const closePanel = () => {
@@ -639,11 +653,6 @@ export default function ChatbotAgent() {
                   )}
                 </button>
               </div>
-              {errorHint && (
-                <p className="mt-2 pl-3 text-xs text-red-600 font-medium">
-                  {errorHint}
-                </p>
-              )}
             </form>
           </motion.div>
         )}

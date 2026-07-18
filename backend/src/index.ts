@@ -10,6 +10,11 @@ import compression from "compression";
 const app = express();
 dotenv.config();
 
+// Render sits in front of the app as its own proxy; without this every
+// client IP collapses to Render's proxy IP and IP-based rate limiting
+// would block all users together instead of individually.
+app.set("trust proxy", 1);
+
 const allowedOrigins = [
   "https://www.avatarindia.com",
   "https://avatar-learning.vercel.app/",
