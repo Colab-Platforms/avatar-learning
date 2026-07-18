@@ -14,13 +14,15 @@ type MessageType = "success" | "error";
 
 export function useDirect2HireCheckout() {
   const router = useRouter();
-  const { user } = useAppSelector((s) => s.auth);
+  const { user, hasHydrated } = useAppSelector((s) => s.auth);
 
   const razorpayLoaded = useRazorpay();
   const cashfreeLoaded = useCashfree();
   const { mutateAsync: createOrder } = useCreateDirect2HireOrder();
   const { mutateAsync: verifyPayment } = useVerifyPayment();
-  const { data: statusData, refetch: refetchStatus } = useD2HStatus();
+  const { data: statusData, refetch: refetchStatus } = useD2HStatus({
+    enabled: hasHydrated && Boolean(user),
+  });
 
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: MessageType } | null>(null);

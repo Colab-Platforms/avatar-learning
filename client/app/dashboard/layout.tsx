@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 import Link from "next/link";
 import { GraduationCap, Menu } from "lucide-react";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import type { RootState } from "@/store";
 
 export default function DashboardLayout({
   children,
@@ -13,34 +15,30 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(
-    null,
+  const { user: authUser, hasHydrated } = useSelector(
+    (state: RootState) => state.auth,
   );
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { data: d2hStatus, isLoading: d2hLoading } = useD2HStatus();
+  const { data: d2hStatus, isLoading: d2hLoading } = useD2HStatus({
+    enabled: hasHydrated && Boolean(authUser),
+  });
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("auth");
-      if (!raw) {
-        router.replace("/login");
-        return;
-      }
-      const { user: u } = JSON.parse(raw);
-      if (!u) {
-        router.replace("/login");
-        return;
-      }
-      setAuthorized(true);
-      setUser({
-        name: `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim() || "Student",
-        email: u?.email ?? "",
-      });
-    } catch {
+    if (!hasHydrated) return;
+    if (!authUser) {
       router.replace("/login");
     }
-  }, [router]);
+  }, [hasHydrated, authUser, router]);
+
+  const authorized = hasHydrated && Boolean(authUser);
+  const user = authUser
+    ? {
+        name:
+          `${authUser.firstName ?? ""} ${authUser.lastName ?? ""}`.trim() ||
+          "Student",
+        email: authUser.email ?? "",
+      }
+    : null;
 
   if (!authorized || d2hLoading) {
     return (

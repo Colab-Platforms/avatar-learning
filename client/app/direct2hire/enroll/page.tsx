@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -23,22 +23,17 @@ const labelCls = "mb-1.5 block text-sm font-medium text-slate-700";
 
 export default function Direct2HireEnrollPage() {
   const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.auth);
-  const [authorized, setAuthorized] = useState(false);
+  const { user, hasHydrated } = useSelector((state: RootState) => state.auth);
   const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("auth");
-      if (!raw) {
-        router.replace("/login?redirect=/direct2hire/enroll");
-        return;
-      }
-      setAuthorized(true);
-    } catch {
+    if (!hasHydrated) return;
+    if (!user) {
       router.replace("/login?redirect=/direct2hire/enroll");
     }
-  }, [router]);
+  }, [hasHydrated, user, router]);
+
+  const authorized = hasHydrated && Boolean(user);
 
   useEffect(() => {
     if (enrolled) {
