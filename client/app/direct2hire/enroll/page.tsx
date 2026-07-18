@@ -1,23 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CreditCard, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, ShieldCheck } from "lucide-react";
 import { useSelector } from "react-redux";
 import {
   emptyLeadFormValues,
   leadSchema,
   type LeadFormValues,
 } from "@/lib/counselling/counsellingSchema";
-import { useDirect2HireLead } from "@/hooks/queries/useDirect2HireLead";
-import {
-  useDevContinueAsPaid,
-  useUpsertDirect2HireLead,
-} from "@/hooks/mutations/useDirect2HireLead";
+import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 import type { RootState } from "@/store";
+import { cn } from "@/lib/utils";
 
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
@@ -26,26 +23,23 @@ const labelCls = "mb-1.5 block text-sm font-medium text-slate-700";
 
 export default function Direct2HireEnrollPage() {
   const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.auth);
-  const [authorized, setAuthorized] = useState(false);
-  const [detailsSaved, setDetailsSaved] = useState(false);
-  const { data: lead, isLoading: leadLoading } = useDirect2HireLead();
-  const upsertLead = useUpsertDirect2HireLead();
-  const devContinue = useDevContinueAsPaid();
-  const isDev = process.env.NODE_ENV === "development";
+  const { user, hasHydrated } = useSelector((state: RootState) => state.auth);
+  const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("auth");
-      if (!raw) {
-        router.replace("/login?redirect=/direct2hire/enroll");
-        return;
-      }
-      setAuthorized(true);
-    } catch {
+    if (!hasHydrated) return;
+    if (!user) {
       router.replace("/login?redirect=/direct2hire/enroll");
     }
-  }, [router]);
+  }, [hasHydrated, user, router]);
+
+  const authorized = hasHydrated && Boolean(user);
+
+  useEffect(() => {
+    if (enrolled) {
+      router.replace("/dashboard");
+    }
+  }, [enrolled, router]);
 
   const defaultValues = useMemo<LeadFormValues>(() => {
     const fullName = [user?.firstName, user?.lastName]
@@ -54,15 +48,15 @@ export default function Direct2HireEnrollPage() {
       .trim();
 
     return {
-      fullName: lead?.fullName ?? fullName,
-      email: lead?.email ?? user?.email ?? "",
-      phoneNumber: lead?.phoneNumber ?? user?.phoneNo ?? "",
-      institutionName: lead?.institutionName ?? "",
-      currentEducation: lead?.currentEducation ?? "",
-      city: lead?.city ?? user?.state ?? "",
-      state: lead?.state ?? user?.state ?? "",
+      fullName,
+      email: user?.email ?? "",
+      phoneNumber: user?.phoneNo ?? "",
+      institutionName: "",
+      currentEducation: "",
+      city: user?.state ?? "",
+      state: user?.state ?? "",
     };
-  }, [lead, user]);
+  }, [user]);
 
   const {
     register,
@@ -74,23 +68,11 @@ export default function Direct2HireEnrollPage() {
     values: defaultValues,
   });
 
-  useEffect(() => {
-    if (lead) {
-      setDetailsSaved(true);
-    }
-  }, [lead]);
-
   const onSubmit = handleSubmit(async (values) => {
-    await upsertLead.mutateAsync(values);
-    setDetailsSaved(true);
+    await enroll(values);
   });
 
-  const handleDevContinue = async () => {
-    await devContinue.mutateAsync();
-    router.push("/dashboard/assessment");
-  };
-
-  if (!authorized || leadLoading) {
+  if (!authorized) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -114,8 +96,8 @@ export default function Direct2HireEnrollPage() {
             Enroll in Direct2Hire
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Complete your basic details to begin your career journey. Payment
-            will be enabled once our gateway integration is live.
+            Fill in your details, then complete a one-time payment of ₹499 to
+            unlock your Direct2Hire dashboard.
           </p>
         </div>
 
@@ -251,77 +233,54 @@ export default function Direct2HireEnrollPage() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={upsertLead.isPending}
-            className="mt-6 inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {upsertLead.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Details"
-            )}
-          </button>
-        </form>
-
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100">
-              <CreditCard className="h-5 w-5 text-slate-400" />
+          <div className="mt-8 border-t border-slate-100 pt-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-800">Payment</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Complete your enrollment with a one-time payment of ₹499.
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-bold text-slate-800">Payment</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Complete your enrollment with a one-time payment of ₹499.
-              </p>
-            </div>
-          </div>
 
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-sm font-medium text-amber-800">
-              Payment integration coming soon.
+            <button
+              type="submit"
+              disabled={processing}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing Payment…
+                </>
+              ) : (
+                <>Pay ₹499 &amp; Continue</>
+              )}
+            </button>
+
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Payments are secured and verified server-side. Your details are
+              only saved after a successful payment.
             </p>
-            <p className="mt-1 text-xs text-amber-700">
-              Our payment gateway is being set up. You&apos;ll be able to pay
-              securely once verification is complete.
-            </p>
-          </div>
 
-          <button
-            type="button"
-            disabled
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-200 px-6 py-3 text-sm font-semibold text-slate-500 cursor-not-allowed sm:w-auto"
-          >
-            <Lock className="h-4 w-4" />
-            Pay ₹499 — Coming Soon
-          </button>
-
-          {isDev && detailsSaved && (
-            <div className="mt-6 border-t border-slate-100 pt-6">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400">
-                Development only
-              </p>
-              <button
-                type="button"
-                onClick={handleDevContinue}
-                disabled={devContinue.isPending}
-                className="inline-flex items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {devContinue.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Continuing...
-                  </>
-                ) : (
-                  "Continue as Paid User"
+            {message && (
+              <div
+                className={cn(
+                  "mt-4 rounded-xl border px-4 py-3 text-sm",
+                  message.type === "success"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-red-200 bg-red-50 text-red-800",
                 )}
-              </button>
-            </div>
-          )}
-        </div>
+              >
+                {message.text}
+              </div>
+            )}
+          </div>
+        </form>
       </div>
     </div>
   );

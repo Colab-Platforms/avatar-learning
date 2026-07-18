@@ -24,6 +24,11 @@ import { enrollCourse, type DBCourseDetail } from "@/lib/coursesApi";
 import { useCourse } from "@/hooks/queries/useCourse";
 import { useEnrollment } from "@/hooks/queries/useEnrollment";
 import { useAppSelector } from "@/store/hooks";
+import { useRazorpay } from "@/hooks/useRazorpay";
+import { useCashfree } from "@/hooks/useCashfree";
+import { useCreateOrder } from "@/hooks/mutations/useCreateOrder";
+import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
+import type { CreateOrderResponse } from "@/lib/paymentApi";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -35,18 +40,171 @@ export default function CoursePage({ params }: PageProps) {
   const [openWeek, setOpenWeek] = useState<number | null>(0);
   const [enrolling, setEnrolling] = useState(false);
   const [enrollMsg, setEnrollMsg] = useState("");
+  const [msgType, setMsgType] = useState<"success" | "error">("success");
   const { user } = useAppSelector((s) => s.auth);
 
-  // Fetch course using TanStack Query
-  const { data: course, isLoading, isError } = useCourse(id);
+  const razorpayLoaded = useRazorpay();
+  const cashfreeLoaded = useCashfree();
+  const { mutateAsync: createOrder } = useCreateOrder();
+  const { mutateAsync: verifyPayment } = useVerifyPayment();
 
-  // Check enrollment status using TanStack Query
+  const { data: course, isLoading, isError } = useCourse(id);
   const { data: enrollmentData, refetch: refetchEnrollment } = useEnrollment(
     course?.id ?? "",
   );
   const enrolled = enrollmentData?.enrolled ?? false;
-
   const isFree = course?.price === 0;
+
+  const showMsg = (msg: string, type: "success" | "error" = "success") => {
+    setEnrollMsg(msg);
+    setMsgType(type);
+  };
+
+  const handleFreeEnroll = useCallback(async () => {
+    if (!course) return;
+    setEnrolling(true);
+    showMsg("");
+    try {
+      await enrollCourse(course.id);
+      showMsg("You're enrolled! Access your course below.", "success");
+      await refetchEnrollment();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      const msg = e?.response?.data?.message ?? "Enrollment failed. Please try again.";
+      if (msg.toLowerCase().includes("already enrolled")) {
+        await refetchEnrollment();
+      } else {
+        showMsg(msg, "error");
+      }
+    } finally {
+      setEnrolling(false);
+    }
+  }, [course, refetchEnrollment]);
+
+  const handleRazorpayCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!course || !user) return;
+
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.key,
+          amount: order.amount,
+          currency: order.currency,
+          name: "Avatar India",
+          description: course.title,
+          image: course.thumbnail ?? undefined,
+          order_id: order.orderId,
+          prefill: {
+            name: `${(user as any).firstName ?? ""} ${(user as any).lastName ?? ""}`.trim(),
+            email: (user as any).email ?? "",
+          },
+          theme: { color: "#00C8FF" },
+          retry: { enabled: true, max_count: 3 },
+          handler: async (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) => {
+            try {
+              await verifyPayment({
+                courseId: course.id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              await refetchEnrollment();
+              showMsg("Payment successful! Redirecting to your course…", "success");
+              setTimeout(() => router.push(`/courses/${id}/learn`), 1500);
+              resolve();
+            } catch (verifyErr: unknown) {
+              const e = verifyErr as { response?: { data?: { message?: string } } };
+              reject(new Error(e?.response?.data?.message ?? "Payment verification failed"));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error("cancelled")),
+          },
+        });
+
+        rzp.open();
+      });
+    },
+    [course, user, verifyPayment, refetchEnrollment, id, router],
+  );
+
+  const handleCashfreeCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!course) return;
+      if (!order.paymentSessionId) {
+        throw new Error("Missing Cashfree payment session");
+      }
+
+      if (!window.Cashfree) {
+        throw new Error("Cashfree SDK not loaded");
+      }
+      const cashfree = window.Cashfree({ mode: order.mode ?? "sandbox" });
+      const result = await cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: "_modal",
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message ?? "Payment failed");
+      }
+
+      await verifyPayment({
+        courseId: course.id,
+        order_id: order.orderId,
+      });
+      await refetchEnrollment();
+      showMsg("Payment successful! Redirecting to your course…", "success");
+      setTimeout(() => router.push(`/courses/${id}/learn`), 1500);
+    },
+    [course, verifyPayment, refetchEnrollment, id, router],
+  );
+
+  const handlePaidEnroll = useCallback(async () => {
+    if (!course || !user) return;
+
+    setEnrolling(true);
+    showMsg("");
+
+    try {
+      const order = await createOrder(course.id);
+
+      if (order.provider === "cashfree") {
+        if (!cashfreeLoaded) {
+          showMsg("Payment SDK is still loading. Please try again.", "error");
+          return;
+        }
+        await handleCashfreeCheckout(order);
+        return;
+      }
+
+      if (!razorpayLoaded) {
+        showMsg("Payment SDK is still loading. Please try again.", "error");
+        return;
+      }
+      await handleRazorpayCheckout(order);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Payment failed";
+      if (msg === "cancelled") {
+        showMsg("Payment was cancelled.", "error");
+      } else {
+        showMsg(msg, "error");
+      }
+    } finally {
+      setEnrolling(false);
+    }
+  }, [
+    course,
+    user,
+    razorpayLoaded,
+    cashfreeLoaded,
+    createOrder,
+    handleRazorpayCheckout,
+    handleCashfreeCheckout,
+  ]);
 
   const handleEnroll = useCallback(async () => {
     if (!user) {
@@ -57,29 +215,13 @@ export default function CoursePage({ params }: PageProps) {
       router.push(`/courses/${id}/learn`);
       return;
     }
-    if (!course || course.price > 0) return;
-
-    setEnrolling(true);
-    setEnrollMsg("");
-    try {
-      await enrollCourse(course.id);
-      setEnrollMsg("You're enrolled! Access your course below.");
-      // Refetch enrollment status
-      await refetchEnrollment();
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      const msg =
-        e?.response?.data?.message ?? "Enrollment failed. Please try again.";
-      if (msg.toLowerCase().includes("already enrolled")) {
-        // Already enrolled, refetch
-        await refetchEnrollment();
-      } else {
-        setEnrollMsg(msg);
-      }
-    } finally {
-      setEnrolling(false);
+    if (!course) return;
+    if (isFree) {
+      await handleFreeEnroll();
+    } else {
+      await handlePaidEnroll();
     }
-  }, [user, enrolled, course, id, router, refetchEnrollment]);
+  }, [user, enrolled, course, id, router, isFree, handleFreeEnroll, handlePaidEnroll]);
 
   if (isLoading)
     return (
@@ -109,12 +251,12 @@ export default function CoursePage({ params }: PageProps) {
   const audience = course.audience ?? [];
 
   const enrollBtnLabel = enrolling
-    ? "Enrolling…"
+    ? "Processing Payment…"
     : enrolled
       ? "Go to Course →"
       : isFree
         ? "Enroll Free"
-        : "Enroll Now";
+        : `Enroll Now — ₹${(course.price).toLocaleString("en-IN")}`;
 
   return (
     <>
@@ -271,12 +413,12 @@ export default function CoursePage({ params }: PageProps) {
                   {enrollMsg && (
                     <div
                       className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
-                        enrollMsg.includes("enrolled")
+                        msgType === "success"
                           ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                           : "border-red-200 bg-red-50 text-red-800"
                       }`}
                     >
-                      {enrollMsg.includes("enrolled") ? (
+                      {msgType === "success" ? (
                         <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
                       ) : null}
                       {enrollMsg}
@@ -284,7 +426,7 @@ export default function CoursePage({ params }: PageProps) {
                   )}
                   <button
                     onClick={handleEnroll}
-                    disabled={enrolling || (course.price > 0 && !enrolled)}
+                    disabled={enrolling}
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold
                                transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
                     style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
@@ -298,7 +440,6 @@ export default function CoursePage({ params }: PageProps) {
                     <Download className="h-4 w-4" /> Download Syllabus
                   </button>
                 </div>
-
               </div>
 
               {/* RIGHT — sticky card */}
@@ -418,12 +559,12 @@ export default function CoursePage({ params }: PageProps) {
                     {enrollMsg && (
                       <div
                         className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
-                          enrollMsg.includes("enrolled")
+                          msgType === "success"
                             ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                             : "border-red-200 bg-red-50 text-red-800"
                         }`}
                       >
-                        {enrollMsg.includes("enrolled") ? (
+                        {msgType === "success" ? (
                           <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
                         ) : null}
                         {enrollMsg}
@@ -434,7 +575,7 @@ export default function CoursePage({ params }: PageProps) {
                     <div className="flex flex-col gap-2.5 pt-1">
                       <button
                         onClick={handleEnroll}
-                        disabled={enrolling || (course.price > 0 && !enrolled)}
+                        disabled={enrolling}
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
                                    transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
                         style={{
@@ -451,7 +592,6 @@ export default function CoursePage({ params }: PageProps) {
                         <Download className="h-4 w-4" /> Download Syllabus
                       </button>
                     </div>
-
                   </div>
                 </div>
               </ScrollReveal>
@@ -696,7 +836,7 @@ export default function CoursePage({ params }: PageProps) {
                 <div className="relative flex flex-wrap justify-center gap-3">
                   <button
                     onClick={handleEnroll}
-                    disabled={enrolling || (course.price > 0 && !enrolled)}
+                    disabled={enrolling}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold
                                transition-colors disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
                     style={{
@@ -709,7 +849,7 @@ export default function CoursePage({ params }: PageProps) {
                       ? "Go to Course"
                       : isFree
                         ? "Enroll for Free"
-                        : "Enroll Now"}
+                        : `Enroll Now — ₹${course.price.toLocaleString("en-IN")}`}
                     {!enrolling && <ArrowRight className="h-4 w-4" />}
                   </button>
                   <Link href="/courses">
@@ -728,7 +868,7 @@ export default function CoursePage({ params }: PageProps) {
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 flex gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <button
           onClick={handleEnroll}
-          disabled={enrolling || (course.price > 0 && !enrolled)}
+          disabled={enrolling}
           className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
                      transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
           style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}

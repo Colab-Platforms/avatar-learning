@@ -41,7 +41,13 @@ app.use(
 );
 app.use(helmet());
 app.use(compression());
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req: any, _res: any, buf) => {
+      (req as any).rawBody = buf.toString("utf8");
+    },
+  })
+);
 app.use(sanitizeMiddleware);
 
 app.use("/api", routes);

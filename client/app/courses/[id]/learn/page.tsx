@@ -119,7 +119,7 @@ function ResourceRow({ res }: { res: DBResource }) {
 export default function LearnPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { user: authUser } = useAppSelector((s) => s.auth);
+  const { user: authUser, hasHydrated } = useAppSelector((s) => s.auth);
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
@@ -129,8 +129,12 @@ export default function LearnPage({ params }: PageProps) {
   const [playing, setPlaying] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const { data: course, isLoading, error, isError } = useLearnCourse(id);
-  const { data: d2hStatus } = useD2HStatus();
+  const { data: course, isLoading, error, isError } = useLearnCourse(id, {
+    enabled: hasHydrated && Boolean(authUser),
+  });
+  const { data: d2hStatus } = useD2HStatus({
+    enabled: hasHydrated && Boolean(authUser),
+  });
   const markWatched = useMarkTopicWatched(id);
 
   const inD2H = !!d2hStatus?.courses.some((c) => c.id === id);
@@ -164,6 +168,14 @@ export default function LearnPage({ params }: PageProps) {
   useEffect(() => {
     setPlaying(false);
   }, [activeTopicId]);
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   if (!authUser) {
     router.replace("/login");

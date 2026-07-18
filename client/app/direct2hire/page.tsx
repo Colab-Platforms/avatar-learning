@@ -36,6 +36,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
+import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -247,6 +248,13 @@ export default function Direct2HirePage() {
     return () => clearInterval(timer);
   }, []);
 
+  const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
+  const heroBtnLabel = processing
+    ? "Processing Payment…"
+    : enrolled
+      ? "Enrolled ✓"
+      : "Enroll Now for ₹499";
+
   useEffect(() => {
     const timer = setInterval(() => {
       setWhoForSlide((i) => (i + 1) % WHO_FOR.length);
@@ -336,7 +344,7 @@ export default function Direct2HirePage() {
                 <ScrollReveal animation="fade-up" delay={150}>
                   <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
                     <Link
-                      href="/direct2hire/enroll"
+                      href={enrolled ? "/dashboard" : "/direct2hire/enroll"}
                       className="w-full sm:w-auto"
                     >
                       <Button
@@ -344,7 +352,7 @@ export default function Direct2HirePage() {
                         size="lg"
                         className="w-full sm:w-auto"
                       >
-                        Enroll Now for ₹499 <ArrowRight className="h-4 w-4" />
+                        {heroBtnLabel}
                       </Button>
                     </Link>
                     <Link href="#journey" className="w-full sm:w-auto">
@@ -357,6 +365,21 @@ export default function Direct2HirePage() {
                       </Button>
                     </Link>
                   </div>
+                  {message && (
+                    <div
+                      className={cn(
+                        "mt-3 rounded-xl border px-4 py-2.5 text-[13px] flex items-center gap-2 max-w-md",
+                        message.type === "success"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-red-200 bg-red-50 text-red-800",
+                      )}
+                    >
+                      {message.type === "success" && (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      )}
+                      {message.text}
+                    </div>
+                  )}
                   <p className="mt-3 text-[12px] text-text-subtle">
                     Instant WhatsApp confirmation • No hidden costs
                   </p>

@@ -1,5 +1,14 @@
 import type { AdminStudentInternshipProgressDto } from "../internship/internship.types.js";
 
+export interface AdminD2HPaymentInfo {
+  provider: string;
+  gatewayOrderId: string;
+  gatewayPaymentId: string | null;
+  amount: number;
+  status: string;
+  paidAt: Date | null;
+}
+
 export interface AdminD2HStudentListItem {
   userId: string;
   fullName: string;
@@ -17,6 +26,7 @@ export interface AdminD2HStudentListItem {
   recommendedCourseTitle: string | null;
   bookingStatus: string | null;
   bookingMode: string | null;
+  payment: AdminD2HPaymentInfo | null;
 }
 
 export interface AdminD2HStudentProfile {
@@ -74,5 +84,6 @@ export interface AdminD2HStudentProfile {
     summary: string | null;
     generatedAt: Date;
   } | null;
+  payment: AdminD2HPaymentInfo | null;
   internship: AdminStudentInternshipProgressDto;
 }

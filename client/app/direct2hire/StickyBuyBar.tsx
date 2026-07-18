@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Landmark, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui";
+import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 export function StickyBuyBar() {
   // Visible from the moment the page loads; only hides once the footer
@@ -23,6 +24,13 @@ export function StickyBuyBar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const { processing, enrolled } = useDirect2HireCheckout();
+  const heroBtnLabel = processing
+    ? "Processing Payment…"
+    : enrolled
+      ? "Enrolled ✓"
+      : "Enroll Now for ₹499";
 
   return (
     <AnimatePresence>
@@ -67,9 +75,8 @@ export function StickyBuyBar() {
                   size="md"
                   className="whitespace-nowrap"
                 >
-                  <span className="sm:hidden">Enroll Now</span>
-                  <span className="hidden sm:inline">Enroll Now - ₹499</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="sm:hidden">{heroBtnLabel}</span>
+                  <span className="hidden sm:inline">{heroBtnLabel}</span>
                 </Button>
               </Link>
             </div>

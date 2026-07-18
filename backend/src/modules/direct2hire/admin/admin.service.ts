@@ -3,12 +3,49 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { InternshipService } from "../internship/internship.service.js";
 import type {
+  AdminD2HPaymentInfo,
   AdminD2HStudentListItem,
   AdminD2HStudentProfile,
 } from "./admin.types.js";
 
 export class Direct2HireAdminService {
   private readonly internshipService = new InternshipService();
+
+  private async getPaymentInfoForUsers(
+    userIds: string[],
+  ): Promise<Map<string, AdminD2HPaymentInfo>> {
+    const orders = await prisma.paymentOrder.findMany({
+      where: {
+        userId: { in: userIds },
+        productType: "DIRECT2HIRE",
+        status: "PAID",
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        transactions: {
+          where: { status: "SUCCESS" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+
+    const map = new Map<string, AdminD2HPaymentInfo>();
+    for (const order of orders) {
+      if (map.has(order.userId)) continue;
+      const transaction = order.transactions[0];
+      map.set(order.userId, {
+        provider: order.provider,
+        gatewayOrderId: order.gatewayOrderId,
+        gatewayPaymentId: transaction?.gatewayPaymentId ?? null,
+        amount: order.amount,
+        status: order.status,
+        paidAt: transaction?.createdAt ?? order.updatedAt,
+      });
+    }
+    return map;
+  }
+
   async getAllStudents(): Promise<AdminD2HStudentListItem[]> {
     const leads = await prisma.direct2HireLead.findMany({
       include: {
@@ -35,6 +72,10 @@ export class Direct2HireAdminService {
       orderBy: { createdAt: "desc" },
     });
 
+    const paymentByUserId = await this.getPaymentInfoForUsers(
+      leads.map((lead) => lead.userId),
+    );
+
     return leads.map((lead) => {
       const enrollment = lead.user.direct2hireEnrollments[0];
       const counselling = lead.user.counsellingProfile;
@@ -58,6 +99,7 @@ export class Direct2HireAdminService {
         recommendedCourseTitle: recommendation?.recommendedCourseTitle ?? null,
         bookingStatus: booking?.status ?? null,
         bookingMode: booking?.preferredMode ?? null,
+        payment: paymentByUserId.get(lead.userId) ?? null,
       };
     });
   }
@@ -171,6 +213,7 @@ export class Direct2HireAdminService {
     const enrollment = user.direct2hireEnrollments[0];
     const internship =
       await this.internshipService.getAdminStudentProgress(userId);
+    const paymentByUserId = await this.getPaymentInfoForUsers([userId]);
 
     return {
       user: {
@@ -194,6 +237,7 @@ export class Direct2HireAdminService {
       counselling: user.counsellingProfile ?? null,
       booking: user.counsellingBooking ?? null,
       recommendation: user.courseRecommendation ?? null,
+      payment: paymentByUserId.get(userId) ?? null,
       internship,
     };
   }

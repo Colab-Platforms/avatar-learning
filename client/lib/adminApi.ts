@@ -502,6 +502,15 @@ export const markD2HPaid = (enrollmentId: string) =>
 
 // ─── Direct2Hire Student Profiles (read-only) ─────────────────────────────────
 
+export interface AdminD2HPaymentInfo {
+  provider: string;
+  gatewayOrderId: string;
+  gatewayPaymentId: string | null;
+  amount: number;
+  status: string;
+  paidAt: string | null;
+}
+
 export interface AdminD2HStudentListItem {
   userId: string;
   fullName: string;
@@ -517,6 +526,7 @@ export interface AdminD2HStudentListItem {
   hasSubmittedCounselling: boolean;
   hasRecommendation: boolean;
   recommendedCourseTitle: string | null;
+  payment: AdminD2HPaymentInfo | null;
 }
 
 export interface AdminD2HStudentProfile {
@@ -606,6 +616,7 @@ export interface AdminD2HStudentProfile {
     summary: string | null;
     generatedAt: string;
   } | null;
+  payment: AdminD2HPaymentInfo | null;
   internship?: AdminStudentInternshipProgress;
 }
 

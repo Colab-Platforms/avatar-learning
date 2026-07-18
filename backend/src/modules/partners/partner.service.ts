@@ -5,40 +5,85 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { sendPartnerApplicationEmail, sendPartnerClaimEmail } from "./partner.mail.js";
 import { ApplyPartnerBody } from "./partner.types.js";
 
-// Commission tiers — differ by partner type.
+// Commission model — differs by partner type.
 //
-// INDIVIDUAL: flat 10% on every referral regardless of volume.
+// INDIVIDUAL: flat 10% credited on every referral, immediately.
 //
-// INSTITUTE: no commission on the first 10 referrals (threshold to unlock).
-//   From the 11th credited referral onward, tiers apply:
-//   11–25  → 20%
-//   26–50  → 25%
-//   51–100 → 30%
-//   101–200→ 40%
-//   201–500→ 50%
-//   501+   → 60%
+// INSTITUTE: bracket/band commission. No commission on referrals 1–10 (below
+// threshold — the implicit "band 0"). Each bounded band pays out as ONE LUMP
+// SUM the moment its FIRST referral arrives (i.e. the referral that crosses
+// INTO the new tier) — sized by the width of the band just completed,
+// charged at the new tier's rate:
+//   entering 11–25   → 10  (width of 1–10)   × 20% = ₹1,000-ish
+//   entering 26–50   → 15  (width of 11–25)  × 25%
+//   entering 51–100  → 25  (width of 26–50)  × 30%
+//   entering 101–200 → 50  (width of 51–100) × 40%
+//   entering 201–500 → 100 (width of 101–200)× 50%
+//   entering 501+    → 300 (width of 201–500)× 60%
+// Every other referral inside a band (not the one entering it) earns ₹0
+// individually. The final band (501+) has no next threshold to wait for, so
+// referrals after the entry one there fall back to flat per-referral 60%.
 //
 // CORPORATE: no referral dashboard, never reaches this function.
 
 const INSTITUTE_TIERS: { min: number; max: number; rate: number }[] = [
-  { min: 11,  max: 25,       rate: 20 },
-  { min: 26,  max: 50,       rate: 25 },
-  { min: 51,  max: 100,      rate: 30 },
-  { min: 101, max: 200,      rate: 40 },
-  { min: 201, max: 500,      rate: 50 },
-  { min: 501, max: Infinity, rate: 60 },
+  { min: 1,   max: 10,  rate: 0 },  // pre-threshold, never pays — exists only to supply width=10
+  { min: 11,  max: 25,  rate: 20 },
+  { min: 26,  max: 50,  rate: 25 },
+  { min: 51,  max: 100, rate: 30 },
+  { min: 101, max: 200, rate: 40 },
+  { min: 201, max: 500, rate: 50 },
 ];
+const INSTITUTE_UNCAPPED_MIN = 501;
+const INSTITUTE_UNCAPPED_RATE = 60;
+const INSTITUTE_UNCAPPED_PRECEDING_WIDTH = 500 - 201 + 1; // width of the 201–500 band
 
-const getCommissionRate = (
-  cumulativeCreditedCount: number,
+interface CommissionResult {
+  rate: number | null;
+  commissionEarned: number;
+}
+
+// `n` is this referral's position in the partner's overall credited-referral
+// sequence (previous credited count + 1).
+const computeCommission = (
+  n: number,
   partnerType: "INDIVIDUAL" | "INSTITUTE" | "CORPORATE",
-): number => {
-  if (partnerType === "INDIVIDUAL") return 10;
-  // cumulativeCreditedCount is already the new total (previous + 1)
-  const tier = INSTITUTE_TIERS.find(
-    (t) => cumulativeCreditedCount >= t.min && cumulativeCreditedCount <= t.max,
-  );
-  return tier?.rate ?? 0; // 0 for referrals 1–10 (below threshold)
+  amount: number,
+): CommissionResult => {
+  if (partnerType === "INDIVIDUAL") {
+    return { rate: 10, commissionEarned: Math.round((amount * 10) / 100) };
+  }
+
+  if (n > INSTITUTE_UNCAPPED_MIN) {
+    // Inside the uncapped band, past its entry referral — flat per-referral.
+    return {
+      rate: INSTITUTE_UNCAPPED_RATE,
+      commissionEarned: Math.round((amount * INSTITUTE_UNCAPPED_RATE) / 100),
+    };
+  }
+  if (n === INSTITUTE_UNCAPPED_MIN) {
+    // Entering the uncapped band — lump using the preceding (201–500) band's width.
+    return {
+      rate: INSTITUTE_UNCAPPED_RATE,
+      commissionEarned: Math.round(
+        INSTITUTE_UNCAPPED_PRECEDING_WIDTH * amount * (INSTITUTE_UNCAPPED_RATE / 100),
+      ),
+    };
+  }
+
+  const idx = INSTITUTE_TIERS.findIndex((t) => n >= t.min && n <= t.max);
+  if (idx === -1) return { rate: null, commissionEarned: 0 }; // unreachable given the ranges above
+  const tier = INSTITUTE_TIERS[idx];
+
+  if (tier.rate === 0) return { rate: 0, commissionEarned: 0 }; // band 0 (1–10), never pays
+  if (n !== tier.min) return { rate: tier.rate, commissionEarned: 0 }; // mid-band, not the entry referral
+
+  const precedingTier = INSTITUTE_TIERS[idx - 1];
+  const precedingWidth = precedingTier.max - precedingTier.min + 1;
+  return {
+    rate: tier.rate,
+    commissionEarned: Math.round(precedingWidth * amount * (tier.rate / 100)),
+  };
 };
 
 const generateUniqueReferralCode = async (): Promise<string> => {
@@ -132,21 +177,28 @@ export class PartnerService {
     });
     if (!referral || amount <= 0) return;
 
-    const creditedCount = await prisma.partnerReferral.count({
+    const priorCreditedCount = await prisma.partnerReferral.count({
       where: { partnerId: referral.partnerId, creditedAt: { not: null } },
     });
-    const rate = getCommissionRate(creditedCount + 1, referral.partner.type);
-    const commissionEarned = Math.round((amount * rate) / 100);
+    const { rate, commissionEarned } = computeCommission(
+      priorCreditedCount + 1,
+      referral.partner.type,
+      amount,
+    );
 
     await prisma.$transaction([
       prisma.partnerReferral.update({
         where: { id: referral.id },
         data: { creditedAt: new Date(), commissionRate: rate, commissionEarned },
       }),
-      prisma.partner.update({
-        where: { id: referral.partnerId },
-        data: { walletBalance: { increment: commissionEarned } },
-      }),
+      ...(commissionEarned > 0
+        ? [
+            prisma.partner.update({
+              where: { id: referral.partnerId },
+              data: { walletBalance: { increment: commissionEarned } },
+            }),
+          ]
+        : []),
     ]);
   }
 }

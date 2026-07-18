@@ -907,7 +907,7 @@ export default function AdminDirect2HireStudentPage() {
 
   if (!data) return null;
 
-  const { user, lead, enrollment, counselling, recommendation } = data;
+  const { user, lead, enrollment, counselling, recommendation, payment } = data;
   const fullName =
     lead?.fullName ||
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
@@ -938,6 +938,20 @@ export default function AdminDirect2HireStudentPage() {
           </p>
         </div>
       </div>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-white/80 mb-4">Payment</h2>
+        {payment ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Field label="Provider" value={payment.provider} />
+            <Field label="Status" value={payment.status} />
+            <Field label="Transaction ID" value={payment.gatewayPaymentId ?? undefined} />
+            <Field label="Paid On" value={payment.paidAt ? formatDate(payment.paidAt) : undefined} />
+          </div>
+        ) : (
+          <p className="text-sm text-white/40">No successful payment recorded yet.</p>
+        )}
+      </Card>
 
       <Card>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

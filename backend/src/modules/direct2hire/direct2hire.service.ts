@@ -6,7 +6,7 @@ import { D2HCourseSummary } from "./direct2hire.types.js";
 
 // Fixed commission base amount for partner referrals — flat ₹499 per Direct2Hire
 // payment, regardless of which D2H course the student actually enrolls in.
-const DIRECT2HIRE_COMMISSION_BASE_AMOUNT = 499;
+export const DIRECT2HIRE_COMMISSION_BASE_AMOUNT = 499;
 
 export class Direct2HireService {
     async getOrCreateEnrollment(userId: string) {
@@ -159,3 +159,5 @@ export class Direct2HireService {
         return this.getMyStatus(userId);
     }
 }
+
+export const direct2hireService = new Direct2HireService();
