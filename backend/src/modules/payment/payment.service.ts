@@ -6,6 +6,11 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "./payment.utils.js";
 import { getPaymentProvider, getBackendBaseUrl } from "./payment.config.js";
 import { getCashfree, getCashfreeEnvironment } from "./cashfree.client.js";
+import {
+  direct2hireService,
+  DIRECT2HIRE_COMMISSION_BASE_AMOUNT,
+} from "@/modules/direct2hire/direct2hire.service.js";
+import { partnerService } from "@/modules/partners/partner.service.js";
 import type {
   CreateOrderResponse,
   RazorpayWebhookPayload,
@@ -147,6 +152,23 @@ async function completePayment(params: {
         });
       }
     });
+
+    if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
+      // Grant course access + credit any referring partner. Best-effort — a
+      // hiccup here must never fail a payment that has already been captured.
+      try {
+        await direct2hireService.grantCourseAccess(order.userId);
+        await partnerService.creditReferralIfEligible(
+          order.userId,
+          DIRECT2HIRE_COMMISSION_BASE_AMOUNT,
+        );
+      } catch (err) {
+        console.error(
+          "[Payment] Failed to grant D2H access / credit partner commission:",
+          err,
+        );
+      }
+    }
   } catch (err: any) {
     if (err.code === "P2002") {
       // Concurrent webhook/verify call already recorded this payment — safe to ignore,

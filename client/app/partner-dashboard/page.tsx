@@ -28,35 +28,61 @@ import {
   type PartnerReferral,
 } from "@/lib/partnersApi";
 
-/* ─── Commission tier tables (mirrors backend) ──────────────────────── */
+/* ─── Commission model (mirrors backend partner.service.ts) ─────────────
+   INDIVIDUAL: flat 10% credited instantly on every referral.
+   INSTITUTE: bracket/milestone commission. Referrals 1–10 pay nothing
+   individually. The referral that CROSSES INTO a new tier (#11, #26, #51,
+   #101, #201, #501) pays a lump sum sized by the width of the tier just
+   completed, at the new tier's rate — every other referral in between pays
+   ₹0 on its own. Past #501 (no next threshold to wait for) it's flat ₹299
+   per referral. */
+const D2H_AMOUNT = 499;
 const INSTITUTE_TIERS = [
-  { min: 11,  max: 25,       rate: 20 },
-  { min: 26,  max: 50,       rate: 25 },
-  { min: 51,  max: 100,      rate: 30 },
-  { min: 101, max: 200,      rate: 40 },
-  { min: 201, max: 500,      rate: 50 },
-  { min: 501, max: Infinity, rate: 60 },
+  { min: 1,   max: 10,  rate: 0 },
+  { min: 11,  max: 25,  rate: 20 },
+  { min: 26,  max: 50,  rate: 25 },
+  { min: 51,  max: 100, rate: 30 },
+  { min: 101, max: 200, rate: 40 },
+  { min: 201, max: 500, rate: 50 },
 ];
+const UNCAPPED_MIN = 501;
+const UNCAPPED_RATE = 60;
+
+const milestoneAmount = (precedingWidth: number, rate: number) =>
+  Math.round(precedingWidth * D2H_AMOUNT * (rate / 100));
 
 const getRate = (credited: number, type: string) => {
   if (type === "INDIVIDUAL") return 10;
+  if (credited >= UNCAPPED_MIN) return UNCAPPED_RATE;
   return INSTITUTE_TIERS.find((t) => credited >= t.min && credited <= t.max)?.rate ?? 0;
 };
 
-// Returns the next tier the institute partner is working toward
-const getNextTier = (credited: number, type: string) => {
-  if (type === "INDIVIDUAL") return null;
-  if (credited < 11) return INSTITUTE_TIERS[0]; // still in 0% zone, next is the 11–25 tier
+// Returns the partner's next lump-sum milestone: how many more referrals
+// until it fires, and how big the bonus will be. null once past #500
+// (flat per-referral crediting applies from there, no next milestone).
+const getNextMilestone = (credited: number) => {
+  if (credited >= UNCAPPED_MIN) return null;
   const idx = INSTITUTE_TIERS.findIndex((t) => credited >= t.min && credited <= t.max);
-  if (idx === -1 || idx === INSTITUTE_TIERS.length - 1) return null;
-  return INSTITUTE_TIERS[idx + 1];
+  if (idx === -1) return null;
+  const currentTier = INSTITUTE_TIERS[idx];
+  const nextTier =
+    idx < INSTITUTE_TIERS.length - 1
+      ? INSTITUTE_TIERS[idx + 1]
+      : { min: UNCAPPED_MIN, max: Infinity, rate: UNCAPPED_RATE };
+  const precedingWidth = currentTier.max - currentTier.min + 1;
+  return {
+    atCount: nextTier.min,
+    remaining: nextTier.min - credited,
+    rate: nextTier.rate,
+    amount: milestoneAmount(precedingWidth, nextTier.rate),
+  };
 };
 
 /* ─── FAQ data ───────────────────────────────────────────────────────── */
 const FAQS = [
   {
     q: "How are referral bonuses calculated?",
-    a: "Your commission rate is tiered based on your total number of credited (paid) referrals. You start at 20% and can earn up to 70% as you scale. The rate applies to the Direct2Hire package amount paid by the referred student.",
+    a: "Individual partners earn a flat 10% on every referral, credited instantly. Institute partners earn milestone bonuses instead — referrals 1–10 don't pay individually, then hitting referral #11, #26, #51, #101, #201, or #501 each unlocks one lump-sum bonus covering that whole range. Referrals in between pay ₹0 on their own. Past referral #500, it switches to a flat ₹299 per referral.",
   },
   {
     q: "When can I request a withdrawal?",
@@ -288,7 +314,7 @@ export default function PartnerDashboardPage() {
   ).length;
 
   const currentRate = getRate(creditedCount, partner.type);
-  const nextTier    = getNextTier(creditedCount, partner.type);
+  const nextMilestone = partner.type === "INSTITUTE" ? getNextMilestone(creditedCount) : null;
   const conversionPct =
     total > 0 ? Math.round((creditedCount / total) * 100) : 0;
 
@@ -405,7 +431,7 @@ export default function PartnerDashboardPage() {
                   </div>
                 )}
                 <div className="flex justify-between py-2.5">
-                  <span className="text-text-subtle">Current rate</span>
+                  <span className="text-text-subtle">Current tier</span>
                   <span className="text-brand-600 font-semibold">{currentRate}%</span>
                 </div>
               </div>
@@ -413,23 +439,22 @@ export default function PartnerDashboardPage() {
               {partner.type === "INDIVIDUAL" ? (
                 <div className="rounded-xl bg-surface-alt border border-border px-4 py-3 text-[12px] text-text-muted">
                   <span className="font-medium text-text">Flat rate: 10%</span>
-                  {" "}on every referral
+                  {" "}on every referral, credited instantly
                 </div>
-              ) : currentRate === 0 ? (
-                <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-[12px] text-amber-700">
-                  <span className="font-medium">Earn {10 - creditedCount} more credited referrals</span>
-                  {" "}to unlock your first commission (20% from referral 11)
-                </div>
-              ) : nextTier ? (
-                <div className="rounded-xl bg-surface-alt border border-border px-4 py-3 text-[12px] text-text-muted">
-                  <span className="font-medium text-text">Next tier: {nextTier.rate}%</span>
-                  {" "}— reach {nextTier.min} credited referrals
-                </div>
-              ) : (
+              ) : creditedCount >= UNCAPPED_MIN ? (
                 <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-[12px] text-emerald-700 font-medium">
-                  🎉 Maximum tier reached — earning 60%
+                  🎉 Past referral #500 — earning ₹{milestoneAmount(1, UNCAPPED_RATE)} per referral from here
                 </div>
-              )}
+              ) : nextMilestone ? (
+                <div className="rounded-xl bg-surface-alt border border-border px-4 py-3 text-[12px] text-text-muted">
+                  <span className="font-medium text-text">
+                    {nextMilestone.remaining} more referral{nextMilestone.remaining === 1 ? "" : "s"}
+                  </span>
+                  {" "}unlocks a{" "}
+                  <span className="font-medium text-brand-600">{formatCurrency(nextMilestone.amount)}</span>
+                  {" "}bonus at referral #{nextMilestone.atCount}
+                </div>
+              ) : null}
 
               <Link
                 href="/profile"
@@ -637,7 +662,7 @@ export default function PartnerDashboardPage() {
           {/* ── FAQ ── */}
           <div className="space-y-4">
             <h2 className="text-[18px] font-semibold text-text">Frequently Asked Questions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
               {FAQS.map((f) => (
                 <FaqItem key={f.q} q={f.q} a={f.a} />
               ))}
