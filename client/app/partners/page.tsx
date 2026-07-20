@@ -261,7 +261,7 @@ export default function PartnersPage() {
 
             {/* ── APPLY CARD ── */}
             <ScrollReveal animation="fade-left" delay={120}>
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
+              <div id="apply" className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm scroll-mt-24">
                 <h2 className="text-lg font-bold text-slate-800 mb-1">
                   Apply for Partnership
                 </h2>
@@ -693,8 +693,17 @@ export default function PartnersPage() {
                 Join 100+ partner organizations already transforming careers
                 through the Avatar India Direct2Hire Partner Program.
               </p>
-              <a
-                href="#apply"
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) {
+                    router.push(`/login?returnTo=${encodeURIComponent("/partners")}`);
+                    return;
+                  }
+                  document
+                    .getElementById("apply")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-[14px] font-bold text-white
                            hover:brightness-110 active:scale-[0.98] transition-all duration-250 cursor-pointer shadow-sm"
                 style={{
@@ -703,7 +712,7 @@ export default function PartnersPage() {
                 }}
               >
                 Apply For Partnership <ArrowRight className="h-4 w-4" />
-              </a>
+              </button>
             </div>
           </ScrollReveal>
         </section>
