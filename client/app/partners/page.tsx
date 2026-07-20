@@ -224,9 +224,6 @@ export default function PartnersPage() {
         <section className="relative container-x max-w-7xl pt-28 pb-8">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-start">
             <ScrollReveal animation="fade-up">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600 mb-3">
-                For Educational Institutes
-              </p>
               <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-slate-900 mb-4">
                 Partner With Us.
                 <br />
