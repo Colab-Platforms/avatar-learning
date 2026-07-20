@@ -1,68 +1,47 @@
 import Link from "next/link";
 import { Button, ScrollReveal } from "@/components/ui";
-import { QuizIllustration } from "@/components/illustrations/QuizIllustration";
 import { QUIZ_BANNER } from "@/data/quiz";
-import { Brain, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export function QuizBanner() {
   return (
-    <section className="relative bg-white py-5">
+    <section className="relative bg-white py-6">
       <div className="container-x">
         <ScrollReveal animation="fade-up">
-          <div className="rounded-3xl bg-surface-alt border border-border overflow-hidden shadow-sm">
-            <div className="grid md:grid-cols-2 items-center">
-              {/* ── Text side ── */}
-              <div className="p-10 sm:p-14">
-                <p className="eyebrow mb-5">
-                  <Brain className="h-3.5 w-3.5" />
-                  {QUIZ_BANNER.eyebrow}
-                </p>
-                <h3 className="text-[32px] sm:text-[40px] font-semibold tracking-tight leading-[1.1] text-text">
-                  {QUIZ_BANNER.heading.split("\n").map((line, i, arr) => (
-                    <span key={i}>
-                      {i === 0 ? (
-                        <span className="text-gradient-brand">{line}</span>
-                      ) : (
-                        <span>{line}</span>
-                      )}
-                      {i < arr.length - 1 && <br />}
-                    </span>
-                  ))}
+          <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-50/80 via-slate-50 to-indigo-50/80 border border-blue-100/90 shadow-md shadow-blue-900/5 p-6 sm:p-8 md:px-10 md:py-8 overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="pointer-events-none absolute -top-20 -right-20 h-44 w-44 rounded-full bg-blue-200/50 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-20 h-44 w-44 rounded-full bg-indigo-200/40 blur-2xl" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
+              {/* Left Column: Eyebrow, Heading & Subheading */}
+              <div className="flex-1 max-w-2xl">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    {QUIZ_BANNER.eyebrow}
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                  Not Sure Which Program Is Right For You?
                 </h3>
-                <p className="mt-5 text-[14px] text-text-muted max-w-sm leading-[1.85]">
+                <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
                   {QUIZ_BANNER.description}
                 </p>
-
-                {/* Feature chips */}
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {["10 Questions", "2 min", "Instant results"].map(
-                    (chip) => (
-                      <span
-                        key={chip}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-medium text-brand-700"
-                      >
-                        <Sparkles className="h-2.5 w-2.5 text-brand-500" />
-                        {chip}
-                      </span>
-                    ),
-                  )}
-                </div>
-
-                <Link href="/quiz">
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="mt-8 self-start group/btn w-fit"
-                  >
-                    {QUIZ_BANNER.ctaLabel}
-                    <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform duration-250" />
-                  </Button>
-                </Link>
               </div>
 
-              {/* ── Illustration side ── */}
-              <div className="relative h-72 md:h-auto flex items-center justify-center p-8">
-                <QuizIllustration className="w-full h-auto max-w-[280px]" />
+              {/* Right Column: CTA Button */}
+              <div className="shrink-0 flex items-center">
+                <Link href="/quiz" className="w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-300 hover:shadow-blue-600/40 hover:-translate-y-0.5 active:translate-y-0 group"
+                  >
+                    {QUIZ_BANNER.ctaLabel}
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

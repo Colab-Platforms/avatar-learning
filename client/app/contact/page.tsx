@@ -25,9 +25,9 @@ const CONTACT_INFO = [
   {
     icon: Phone,
     label: "Call Us",
-    value: "+91 9136774304",
+    value: "+91 8976830780",
     sub: "Mon–Sat, 10am-6pm",
-    href: "tel:+919136774304",
+    href: "tel:+918976830780",
     color: "text-blue-600",
     bg: "bg-blue-50 border-blue-100",
     hoverBg: "group-hover:bg-blue-100/70 group-hover:border-blue-200",
@@ -36,7 +36,7 @@ const CONTACT_INFO = [
     icon: Mail,
     label: "Email Us",
     value: "support@avatarindia.com",
-    sub: "We reply within 24h",
+    sub: "We reply within 24-48 business hours",
     href: "mailto:support@avatarindia.com",
     color: "text-indigo-600",
     bg: "bg-indigo-50 border-indigo-100",
@@ -61,7 +61,7 @@ const SOCIAL_LINKS = [
     bg: "bg-[#1877f2] hover:bg-[#1465d0]",
     svg: (
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
-         <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
       </svg>
     ),
   },
@@ -147,7 +147,7 @@ export default function ContactPage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          "Failed to send message. Please try again."
+          "Failed to send message. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -198,8 +198,8 @@ export default function ContactPage() {
                 Contact Us
               </h1>
               <p className="text-white/50 text-[14px] leading-relaxed max-w-lg">
-                Have questions, feedback, or need assistance? Our team is ready to
-                help — typically within 24 hours.
+                Have questions, feedback, or need assistance? Our team is ready
+                to help — typically within 24 hours.
               </p>
             </ScrollReveal>
           </div>
@@ -240,7 +240,9 @@ export default function ContactPage() {
                         {info.value}
                       </p>
                     )}
-                    <p className="text-[12px] text-slate-500 mt-1">{info.sub}</p>
+                    <p className="text-[12px] text-slate-500 mt-1">
+                      {info.sub}
+                    </p>
                   </div>
                 </AnimateOnScroll>
               ))}
