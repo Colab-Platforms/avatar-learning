@@ -3,7 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimateOnScroll } from "@/components/ui";
-import { FileText, CheckCircle, BookOpen, Award, TrendingUp, Shield, ArrowRight } from "lucide-react";
+import {
+  FileText,
+  CheckCircle,
+  BookOpen,
+  Award,
+  TrendingUp,
+  Shield,
+  ArrowRight,
+} from "lucide-react";
 
 interface TimelineStep {
   id: number;
@@ -58,7 +66,13 @@ const STEP_COUNT = TIMELINE_STEPS.length;
  * It walks (subtle bob + tilt) while in transit, then settles flat
  * with a small scale-pop once the line reaches 100%.
  */
-function StudentRider({ completed, slow }: { completed: boolean; slow: boolean }) {
+function StudentRider({
+  completed,
+  slow,
+}: {
+  completed: boolean;
+  slow: boolean;
+}) {
   return (
     <div
       className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20"
@@ -149,7 +163,9 @@ export function TimelineSection() {
   }, [reduceMotion]);
 
   const fillPercent =
-    STEP_COUNT > 0 ? (Math.max(0, activeCount - 0.5) / (STEP_COUNT - 1)) * 100 : 0;
+    STEP_COUNT > 0
+      ? (Math.max(0, activeCount - 0.5) / (STEP_COUNT - 1)) * 100
+      : 0;
   const clampedFill = Math.min(100, Math.max(0, fillPercent));
 
   return (
@@ -157,13 +173,24 @@ export function TimelineSection() {
       {/* Local keyframes for the student rider — bobbing while walking, a settle-pop on landing */}
       <style jsx>{`
         @keyframes student-bob {
-          0%, 100% { transform: translateY(0) rotate(-2deg); }
-          50% { transform: translateY(-4px) rotate(2deg); }
+          0%,
+          100% {
+            transform: translateY(0) rotate(-2deg);
+          }
+          50% {
+            transform: translateY(-4px) rotate(2deg);
+          }
         }
         @keyframes student-land {
-          0% { transform: scale(0.85) translateY(-6px); }
-          60% { transform: scale(1.12) translateY(2px); }
-          100% { transform: scale(1) translateY(0); }
+          0% {
+            transform: scale(0.85) translateY(-6px);
+          }
+          60% {
+            transform: scale(1.12) translateY(2px);
+          }
+          100% {
+            transform: scale(1) translateY(0);
+          }
         }
       `}</style>
 
@@ -181,12 +208,12 @@ export function TimelineSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Header */}
         <AnimateOnScroll className="text-center mb-10 sm:mb-12 md:mb-16 lg:mb-20">
-          <p className="eyebrow mb-3 sm:mb-4 inline-block text-xs sm:text-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4">
             ✓ GUARANTEED INTERNSHIPS
-          </p>
+          </span>
           <h2 className="h-display text-text mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
-            Top Performers Get{" "}
-            <span className="text-gradient-brand">Real Internships.</span>
+            Everyone Gets{" "}
+            <span className="text-gradient-brand">Real Internship.</span>
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-text-muted max-w-2xl mx-auto leading-[1.6] sm:leading-[1.8]">
             Complete any of our paid programs with strong performance and get a
@@ -323,7 +350,10 @@ export function TimelineSection() {
                           }}
                         >
                           {isActive && !reduceMotion ? (
-                            <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={3} />
+                            <CheckCircle
+                              className="h-3 w-3 sm:h-3.5 sm:w-3.5"
+                              strokeWidth={3}
+                            />
                           ) : (
                             step.id
                           )}
@@ -354,7 +384,10 @@ export function TimelineSection() {
         </div>
 
         {/* CTA Button */}
-        <AnimateOnScroll delay={600} className="flex justify-center mt-10 sm:mt-12 md:mt-16 lg:mt-20">
+        <AnimateOnScroll
+          delay={600}
+          className="flex justify-center mt-10 sm:mt-12 md:mt-16 lg:mt-20"
+        >
           <a
             href="/courses"
             className="relative px-6 py-2.5 sm:px-8 sm:py-3 md:px-10 md:py-3.5 rounded-lg bg-brand-500 text-white font-semibold text-xs sm:text-sm md:text-base hover:bg-brand-600 transition-colors duration-200 group shadow-sm hover:shadow-md"

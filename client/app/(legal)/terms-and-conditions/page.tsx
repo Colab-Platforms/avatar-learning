@@ -7,33 +7,33 @@ export const metadata: Metadata = {
 };
 
 /* ── Shared typography helpers ── */
-const H2 = "text-xl font-semibold text-white mb-4 pb-3 border-b border-white/8";
-const BODY = "text-[14px] text-white/60 leading-relaxed space-y-3";
-const STRONG = "font-semibold text-white/85";
+const H2 = "text-xl font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200/80";
+const BODY = "text-[14px] text-slate-600 leading-relaxed space-y-3 font-normal";
+const STRONG = "font-semibold text-slate-900";
 
 export default function TermsConditionPage() {
   return (
     <>
       {/* ── Page Hero ── */}
       <div className="mb-10">
-        <div className="flex items-center gap-2 text-[12px] text-white/30 mb-4">
-          <Link href="/" className="hover:text-brand-400 transition-colors duration-200">Home</Link>
+        <div className="flex items-center gap-2 text-[12px] text-slate-400 mb-4">
+          <Link href="/" className="hover:text-brand-600 transition-colors duration-200">Home</Link>
           <span>/</span>
-          <span className="text-white/50">Terms &amp; Conditions</span>
+          <span className="text-slate-600 font-medium">Terms &amp; Conditions</span>
         </div>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-2">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-2">
           Legal Framework
         </p>
-        <h1 className="text-4xl font-bold text-white tracking-tight mb-3">
+        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
           Terms &amp; Conditions
         </h1>
-        <p className="text-white/40 text-[14px]">
+        <p className="text-slate-500 text-[14px]">
           Please read these terms carefully before using the Avatar India platform.
         </p>
       </div>
 
       {/* ── Meta card ── */}
-      <div className="rounded-2xl border border-white/8 bg-ink-800 p-6 mb-6">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 mb-6 shadow-xs">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
           {[
             { label: "Website", value: "www.avatarindia.com", href: "https://www.avatarindia.com" },
@@ -44,13 +44,13 @@ export default function TermsConditionPage() {
             { label: "Last Updated", value: "—" },
           ].map(({ label, value, href }) => (
             <div key={label}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1">{label}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">{label}</p>
               {href ? (
-                <Link href={href} className="text-[13px] font-medium text-brand-400 hover:text-brand-300 transition-colors">
+                <Link href={href} className="text-[13px] font-semibold text-brand-600 hover:text-brand-700 transition-colors">
                   {value}
                 </Link>
               ) : (
-                <p className="text-[13px] font-medium text-white/70">{value}</p>
+                <p className="text-[13px] font-semibold text-slate-800">{value}</p>
               )}
             </div>
           ))}
@@ -58,7 +58,7 @@ export default function TermsConditionPage() {
       </div>
 
       {/* ── Content card ── */}
-      <div className="rounded-2xl border border-white/8 bg-ink-800">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs">
         <div className="p-6 sm:p-10 space-y-10">
 
           {/* 1 */}
@@ -249,131 +249,146 @@ export default function TermsConditionPage() {
           <section>
             <h2 className={H2}>15. Subscriptions and Auto-Renewal</h2>
             <div className={BODY}>
-              <p>Certain offerings may be sold on a recurring subscription basis, including monthly, annual, metered, bundled, professional, enterprise, or team plans. The business overview identifies recurring tool subscriptions, annual plans, bundled plans, pay-per-use access, and team or enterprise plans as part of the Platform&apos;s commercial model.</p>
               <p>By purchasing a subscription, you authorize recurring charges at the frequency disclosed during checkout or contracting until valid cancellation or termination takes effect. Avatar may modify pricing, features, usage caps, billing cycles, bundling logic, access rules, and renewal terms upon notice as required by applicable law.</p>
-              <p>Unless otherwise stated, cancellation stops future billing cycles and does not retroactively reverse charges for the current paid period, except where refund rights expressly apply or mandatory law requires otherwise.</p>
+              <p>Subscriptions may be subject to non-refundable trial terms, minimum commitment periods, or role-based cancellation schedules published on the Platform.</p>
             </div>
           </section>
 
           {/* 16 */}
           <section>
-            <h2 className={H2}>16. Refunds, Cancellations, and Disputes</h2>
+            <h2 className={H2}>16. Refunds, Cancellations, and Dispute System</h2>
             <div className={BODY}>
               <p>All sales and access rights are subject to the refund, cancellation, and dispute rules communicated on the Platform and incorporated into these Terms.</p>
-              <p>The business overview provides a structured digital refund model under which tools that do not work as described and are reported within 48 hours may be eligible for refund, duplicate purchases raised within 48 hours may be auto-approved, digital products accessed and functioning as described are generally non-refundable, and certain disputes may be resolved on a case-by-case basis.</p>
-              <p>The business overview further provides that course access failures reported within 48 hours may be eligible for refund, courses accessed less than 20 percent within 7 days may be refundable, courses accessed beyond that threshold may become non-refundable, Avatar-cancelled webinars may be refunded or credited, and missed paid webinars may be serviced through recording access instead of refund.</p>
-              <p>Avatar may investigate any refund or chargeback request, seek responses from affected counterparties, require supporting evidence, issue a full refund, partial refund, wallet credit, replacement access, rescheduled access, or rejection, and designate the final Platform resolution in accordance with its internal dispute process.</p>
-              <p>Marketplace entities in India are also expected to publish return, refund, exchange, warranty, guarantee, delivery, payment, and grievance information clearly and prominently.</p>
+              <p>The business overview contemplates a dedicated dispute handling mechanism, under which buyers may open a dispute within 7 days of purchase if a tool is non-functional, misleading, or infected, after which Avatar reviews the submission and may issue a refund, request seller remediation, or release funds.</p>
+              <p>Avatar reserves the right to deny refund requests that are submitted outside applicable timelines, lack required evidence, involve customized services already delivered, or exhibit patterns of consumer abuse.</p>
             </div>
           </section>
 
           {/* 17 */}
           <section>
-            <h2 className={H2}>17. Intellectual Property Framework</h2>
+            <h2 className={H2}>17. Intellectual Property Ownership and Rights</h2>
             <div className={BODY}>
-              <p>Avatar retains all rights, title, and interest in and to the Platform itself, including website design, software, code, workflows, databases, data models, user interface, recommendation systems, branding, trademarks, logos, trade dress, certifications, and proprietary first-party content, except for third-party materials lawfully provided by users.</p>
-              <p>The business overview states that Sellers retain ownership of their tools, automation scripts, prompts, APIs, agents, and related product IP, while Avatar receives a non-exclusive, royalty-free license to display, promote, and distribute such tools on the Platform and related marketing channels.</p>
-              <p>No transfer of ownership occurs merely because content is listed, purchased, viewed, or delivered through the Platform unless a separate written assignment expressly states otherwise.</p>
+              <p>As between you and Avatar, Avatar and its licensors own all rights, title, and interest in and to the Platform, including software, design, branding, marks, domain names, UI/UX elements, databases, compilation rights, proprietary tools, and first-party content.</p>
+
+              <p>Users retain ownership of their original uploaded tools, datasets, course materials, service work product, reviews, and materials, subject to the non-exclusive license granted to Avatar to host, display, process, market, index, format, deliver, and back up such content for platform operations.</p>
+              <p>Nothing in these Terms transfers ownership of third-party IP to Avatar or to another user unless explicitly agreed in a separate written assignment or license agreement.</p>
             </div>
           </section>
 
           {/* 18 */}
           <section>
-            <h2 className={H2}>18. User Content License</h2>
+            <h2 className={H2}>18. Copyright Takedowns and IP Infringement Notice</h2>
             <div className={BODY}>
-              <p>To the extent you upload, submit, publish, transmit, post, or otherwise make available any listing content, screenshots, demo assets, descriptions, reviews, ratings, profile materials, course materials, discussion posts, or other materials on or through the Platform, you grant Avatar a worldwide, non-exclusive, royalty-free, sublicensable, transferable, revocable only upon lawful delisting, and technically necessary license to host, copy, store, format, reproduce, display, adapt for interface purposes, market, distribute, moderate, analyze, and use such materials for Platform operations, promotion, compliance, recommendation, fraud prevention, archival, dispute resolution, and service improvement.</p>
-              <p>The business overview similarly contemplates that user community posts remain user-owned while Avatar receives a display license, and that marketplace content is licensed to Avatar for display and distribution purposes rather than transferred in ownership.</p>
+              <p>Avatar respects intellectual property rights and maintains an IP takedown procedure. If you believe any content listed on the Platform infringes your copyright, trademark, trade secret, or other proprietary right, you may submit a notice to Avatar&apos;s Grievance Officer with the following information:</p>
+              <ul className="list-disc pl-5 space-y-1.5">
+                <li>Identification of the infringed work or trademark.</li>
+                <li>Identification and URL of the allegedly infringing listing or content.</li>
+                <li>Your contact details and proof of authorization to act on behalf of the rightsholder.</li>
+                <li>A statement that you have a good-faith belief that the use is unauthorized.</li>
+                <li>A statement made under penalty of perjury that the notice is accurate.</li>
+              </ul>
+              <p>Avatar may remove or disable access to the flagged content, notify the affected seller or instructor, and permit counter-notices in accordance with law.</p>
             </div>
           </section>
 
           {/* 19 */}
           <section>
-            <h2 className={H2}>19. Reviews, Ratings, and Community Features</h2>
+            <h2 className={H2}>19. Confidentiality and Feedback</h2>
             <div className={BODY}>
-              <p>The Platform may allow reviews, ratings, comments, Q&amp;A, forums, event participation, and other interactive features. Such features exist to support transparency, community engagement, and consumer decision-making.</p>
-              <p>Users must ensure that all review and community contributions are honest, experience-based, lawful, and non-abusive. Avatar may remove, suppress, refuse, investigate, or preserve any such content where necessary for quality control, legal compliance, fraud detection, evidence preservation, or protection of users and the Platform.</p>
+              <p>If you receive confidential platform specifications, API documentation, non-public features, beta tools, commercial terms, or security disclosures from Avatar, you agree to keep such information confidential and use it solely for the authorized purpose.</p>
+              <p>If you submit feedback, feature requests, bug reports, or suggestions to Avatar, you grant Avatar an irrevocable, royalty-free, perpetual license to use, implement, publish, and commercialize such feedback without restriction or compensation.</p>
             </div>
           </section>
 
           {/* 20 */}
           <section>
-            <h2 className={H2}>20. Takedown, IP Complaints, and Notice Mechanism</h2>
+            <h2 className={H2}>20. Data Protection and Privacy</h2>
             <div className={BODY}>
-              <p>Any person claiming that content on the Platform infringes copyright, trademark, proprietary rights, privacy rights, or other legal rights may submit a written notice to Avatar containing sufficient particulars of the complainant, the alleged rights, the disputed material, the relevant URL or listing, supporting evidence, and a declaration of good faith.</p>
-              <p>Avatar may remove, disable, geo-block, flag, de-index, or temporarily suspend access to disputed material; seek a response or counter-notice from the affected user; preserve records; and take further action against repeat infringers or malicious actors.</p>
-              <p>Avatar&apos;s response mechanism is also relevant to maintenance of intermediary due diligence, as Indian law recognizes safe harbour for intermediaries subject to statutory conditions and due diligence obligations.</p>
+              <p>Avatar processes personal data in accordance with its Privacy Policy and applicable data protection laws, including the Digital Personal Data Protection Act, 2023.</p>
+              <p>By using the Platform, you consent to the collection, use, storage, sharing, and processing of personal data as set forth in the Privacy Policy.</p>
+              <p>Sellers, Instructors, and Service Providers who receive personal data of Buyers or learners through the Platform agree to process such data strictly for fulfilling the transaction, support, or course delivery, and not for unauthorized marketing, resale, or unlawful harvesting.</p>
             </div>
           </section>
 
           {/* 21 */}
           <section>
-            <h2 className={H2}>21. Privacy, Data Security, and Compliance Cooperation</h2>
+            <h2 className={H2}>21. Moderation, Reviews, and Ratings</h2>
             <div className={BODY}>
-              <p>Processing of personal data through the Platform is governed by the separate Privacy Policy. Users agree that Avatar may collect, store, process, use, disclose, and retain personal data in accordance with that policy and applicable law.</p>
-              <p>The Digital Personal Data Protection Act, 2023 provides for consent-based and lawful processing, rights relating to access, correction, erasure, grievance redressal, and duties on data fiduciaries to implement reasonable security safeguards.</p>
-              <p>Users shall cooperate with reasonable compliance requests relating to identity verification, security reviews, fraud investigations, legal notices, tax matters, sanctions screening, regulatory inquiries, and data subject rights administration.</p>
+              <p>Avatar may operate rating and review features for offerings, courses, instructors, and sellers. Reviews must reflect genuine user experiences and comply with content rules.</p>
+              <p>Avatar reserves the right to moderate, hide, remove, or flag fake reviews, incentivized reviews, abusive posts, defamatory comments, competitor spam, or manipulative ratings.</p>
+              <p>Users shall not manipulate review systems through automated bots, fake accounts, coordinated rating attacks, or paid review schemes.</p>
             </div>
           </section>
 
           {/* 22 */}
           <section>
-            <h2 className={H2}>22. Intermediary Status and Allocation of Liability</h2>
+            <h2 className={H2}>22. Third-Party Links, API Integrations, and External Tools</h2>
+            <div className={BODY}>
+              <p>The Platform may display links, embeds, integrations, API endpoints, webhooks, or references to third-party websites, AI models, storage systems, payment gateways, communication apps, or external tools.</p>
+              <p>Avatar is not responsible for the availability, security, terms, content, privacy practices, accuracy, or outputs of third-party tools, APIs, websites, or external applications.</p>
+              <p>Your interaction with any third-party tool or service is governed solely by the terms and policies of that third party.</p>
+            </div>
+          </section>
+
+          {/* 23 */}
+          <section>
+            <h2 className={H2}>23. Platform Maintenance, Security, and Availability</h2>
+            <div className={BODY}>
+              <p>Avatar strives to maintain platform availability, security, and performance, but does not guarantee continuous, uninterrupted, error-free, or fully secure operation.</p>
+              <p>Avatar may perform maintenance, deploy updates, modify features, adjust API limits, restrict access, or temporarily suspend the Platform for security, technical, operational, or legal reasons without prior notice.</p>
+              <p>Avatar is not responsible for data loss, service interruption, transaction failure, or access delay resulting from scheduled maintenance, emergency security patches, network failures, cloud provider downtime, or force majeure events.</p>
+            </div>
+          </section>
+
+          {/* 24 */}
+          <section>
+            <h2 className={H2}>24. Suspension, Termination, and Delisting</h2>
+            <div className={BODY}>
+              <p>Avatar may, at its sole discretion, suspend, restrict, delist, block, or terminate any user account, listing, service profile, course, webinar access, or platform access immediately and without prior notice if:</p>
+              <ul className="list-disc pl-5 space-y-1.5">
+                <li>you breach these Terms, the Privacy Policy, or operational rules;</li>
+                <li>Avatar suspects fraud, cyber abuse, malware, infringement, money laundering, or illegal activity;</li>
+                <li>required verification or KYC documents are invalid, incomplete, or fraudulent;</li>
+                <li>your listing generates repeated consumer disputes, refund requests, or quality complaints;</li>
+                <li>ordered by a court, law enforcement agency, regulator, or statutory authority; or</li>
+                <li>necessary to protect Avatar, its users, partners, or the public from legal, financial, or operational harm.</li>
+              </ul>
+              <p>Upon termination, your right to access or use the Platform ceases immediately. Provisions intended by their nature to survive termination shall remain in effect.</p>
+            </div>
+          </section>
+
+          {/* 25 */}
+          <section>
+            <h2 className={H2}>25. Intermediary Allocation of Responsibility</h2>
             <div className={BODY}>
               <p>Avatar&apos;s role is limited to the extent described in these Terms and the Platform architecture. As reflected in the business overview, Avatar&apos;s core responsibilities include operating the Platform, managing onboarding and listing review, processing or facilitating payments, operating dispute and refund systems, protecting platform-level user data, and ensuring the quality of Avatar&apos;s own first-party offerings.</p>
               <p>Nothing in these Terms shall be interpreted as Avatar assuming legal responsibility for third-party content merely by hosting, reviewing, ranking, processing payment for, or facilitating access to such content, except to the extent liability cannot be excluded by law or arises from Avatar&apos;s own independent act, omission, first-party representation, or statutory obligation.</p>
             </div>
           </section>
 
-          {/* 23 */}
-          <section>
-            <h2 className={H2}>23. Disclaimer of Warranties</h2>
-            <div className={BODY}>
-              <p>The Platform and all offerings, whether first-party or third-party, are provided on an &quot;as is,&quot; &quot;as available,&quot; and &quot;with all faults&quot; basis to the fullest extent permitted by law.</p>
-              <p>Avatar does not warrant uninterrupted availability, merchantability, fitness for a particular purpose, non-infringement, compatibility, profitability, educational outcomes, commercial success, legal sufficiency for a user&apos;s specific business purpose, error-free operation, or freedom from all harmful components, especially in relation to third-party offerings.</p>
-            </div>
-          </section>
-
-          {/* 24 */}
-          <section>
-            <h2 className={H2}>24. Limitation of Liability</h2>
-            <div className={BODY}>
-              <p>To the maximum extent permitted by law, Avatar, its affiliates, officers, directors, employees, shareholders, consultants, contractors, licensors, and service providers shall not be liable for any indirect, incidental, consequential, special, exemplary, punitive, or speculative damages, including loss of profits, revenue, goodwill, anticipated savings, business opportunity, data, reputation, or business interruption, arising out of or in connection with the Platform or any Transaction.</p>
-              <p>Without prejudice to any non-excludable statutory rights, Avatar&apos;s aggregate liability arising from any claim or series of related claims shall not exceed the lower of: (a) the amount actually received by Avatar from the claimant in the 3 months preceding the event giving rise to the claim, or (b) INR 10,000, unless a different cap is mandatory under applicable law or separately agreed in writing.</p>
-              <p>Nothing in these Terms excludes liability that cannot lawfully be excluded or limited.</p>
-            </div>
-          </section>
-
-          {/* 25 */}
-          <section>
-            <h2 className={H2}>25. Indemnity</h2>
-            <div className={BODY}>
-              <p>You agree to defend, indemnify, and hold harmless Avatar and its affiliates, officers, directors, employees, contractors, agents, and service providers from and against any claims, proceedings, losses, liabilities, damages, penalties, taxes, interest, costs, and expenses, including legal fees, arising out of or relating to:</p>
-              <ul className="list-disc pl-5 space-y-1.5">
-                <li>your breach of these Terms;</li>
-                <li>your content, listing, service, course, tool, dataset, or other offering;</li>
-                <li>your violation of law or third-party rights;</li>
-                <li>your infringement of intellectual property, privacy, consumer, tax, or regulatory rights;</li>
-                <li>your fraud, negligence, wilful misconduct, or deceptive trade practice; or</li>
-                <li>your failure to obtain required permissions, licenses, or consents.</li>
-              </ul>
-            </div>
-          </section>
-
           {/* 26 */}
           <section>
-            <h2 className={H2}>26. Suspension, Restriction, Delisting, and Termination</h2>
+            <h2 className={H2}>26. Disclaimers and No Guarantees</h2>
             <div className={BODY}>
-              <p>Avatar may, with or without prior notice, suspend, restrict, disable, delist, demonetize, geo-block, de-rank, hold payouts, terminate access, cancel orders, or shut down accounts where Avatar reasonably believes there is fraud, security risk, legal exposure, policy breach, rights infringement, abuse of refunds, harmful content, sanctions concern, non-payment, repeated complaints, or other material risk to users or the Platform.</p>
-              <p>Users may stop using the Platform at any time, subject to survival of payment obligations, dispute obligations, licensing rights required for prior transactions, retained records, indemnities, and other clauses intended to survive termination.</p>
+              <p>Except as expressly set forth in these Terms or required by non-waivable applicable law, the Platform and all listed tools, courses, webinars, services, content, datasets, and features are provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis without warranties of any kind, whether express, implied, statutory, or otherwise.</p>
+              <p>Avatar expressly disclaims all implied warranties of merchantability, fitness for a particular purpose, title, quiet enjoyment, non-infringement, accuracy, completeness, and availability.</p>
+              <p>Avatar does not warrant or guarantee that:</p>
+              <ul className="list-disc pl-5 space-y-1.5">
+                <li>third-party tools, automations, or courses will meet your specific business or career requirements;</li>
+                <li>any course, certification, or webinar will guarantee job placement, revenue, income, exam success, or specific career advancement;</li>
+                <li>the Platform or any listed tool will operate without interruption, bug, latency, or security vulnerability; or</li>
+                <li>AI outputs generated by third-party tools, scripts, or automations will be error-free, unbiased, non-infringing, or suitable for production deployment.</li>
+              </ul>
             </div>
           </section>
 
           {/* 27 */}
           <section>
-            <h2 className={H2}>27. Communications and Electronic Records</h2>
+            <h2 className={H2}>27. Limitation of Liability</h2>
             <div className={BODY}>
-              <p>You consent to receive communications from Avatar electronically, including by email, SMS, in-app notification, dashboard notice, or Platform posting. Such communications may include OTPs, invoices, dispute notices, policy updates, service messages, legal notices, reminders, and commercial communications subject to your preferences and applicable law.</p>
-              <p>Electronic records, support tickets, logs, audit trails, invoices, chat records, verification records, and screenshots maintained by Avatar may be relied upon for operational, evidentiary, and dispute purposes, subject to applicable law.</p>
+              <p>To the maximum extent permitted by applicable law, Avatar, its directors, officers, employees, agents, affiliates, investors, and service providers shall not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, including loss of profits, loss of revenue, loss of data, loss of goodwill, business interruption, computer failure, third-party tool failure, or cost of substitute goods or services, arising out of or in connection with your access to or use of (or inability to access or use) the Platform or any listed offering.</p>
+              <p>To the maximum extent permitted by law, Avatar&apos;s aggregate liability arising out of or relating to these Terms or the Platform shall not exceed the total fees or commission actually received and retained by Avatar in respect of the specific transaction giving rise to the claim, or INR 10,000 (Indian Rupees Ten Thousand), whichever is lower.</p>
+              <p>Nothing in these Terms excludes liability that cannot lawfully be excluded or limited.</p>
             </div>
           </section>
 
@@ -385,13 +400,13 @@ export default function TermsConditionPage() {
               <p>Indian e-commerce rules require marketplace entities to appoint a grievance officer, acknowledge complaints within 48 hours, and redress complaints within one month.</p>
               <p>Users should submit complaints through the designated Platform mechanism with sufficient transaction details, account information, and evidence to enable resolution.</p>
             </div>
-            <div className="mt-5 rounded-xl border border-white/8 bg-ink-900 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Grievance Officer</p>
+            <div className="mt-5 rounded-xl border border-slate-200/80 bg-slate-50/80 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-3">Grievance Officer</p>
               <div className="space-y-2 text-[13px]">
-                <p><span className="text-white/40 mr-2">Name</span><span className="text-white/80">Richa Rathod</span></p>
-                <p><span className="text-white/40 mr-2">Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-400 hover:text-brand-300 transition-colors">cs@aslindustries.in</a></p>
-                <p><span className="text-white/40 mr-2">Phone</span><a href="tel:+918097207334" className="text-brand-400 hover:text-brand-300 transition-colors">+91 8097207334</a></p>
-                <p><span className="text-white/40 mr-2">Address</span><span className="text-white/80">NESCO IT Park, 10th Floor Building 4, Goregaon East, Mumbai-400063, Maharashtra, India</span></p>
+                <p><span className="text-slate-400 mr-2">Name</span><span className="text-slate-800 font-medium">Richa Rathod</span></p>
+                <p><span className="text-slate-400 mr-2">Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">cs@aslindustries.in</a></p>
+                <p><span className="text-slate-400 mr-2">Phone</span><a href="tel:+918097207334" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">+91 8097207334</a></p>
+                <p><span className="text-slate-400 mr-2">Address</span><span className="text-slate-800 font-medium">NESCO IT Park, 10th Floor Building 4, Goregaon East, Mumbai-400063, Maharashtra, India</span></p>
               </div>
             </div>
           </section>
@@ -446,35 +461,35 @@ export default function TermsConditionPage() {
           {/* 34 */}
           <section>
             <h2 className={H2}>34. Contact Details</h2>
-            <div className="mt-1 rounded-xl border border-white/8 bg-ink-900 p-5 space-y-4">
+            <div className="mt-1 rounded-xl border border-slate-200/80 bg-slate-50/80 p-5 space-y-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Avatar Industries Limited</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-3">Avatar Industries Limited</p>
                 <div className="space-y-2 text-[13px]">
-                  <p><span className="text-white/40 mr-2">Website</span><Link href="https://www.avatarindia.com" className="text-brand-400 hover:text-brand-300 transition-colors">www.avatarindia.com</Link></p>
-                  <p><span className="text-white/40 mr-2">Support Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-400 hover:text-brand-300 transition-colors">cs@aslindustries.in</a></p>
-                  <p><span className="text-white/40 mr-2">Customer Care</span><a href="tel:+918097207334" className="text-brand-400 hover:text-brand-300 transition-colors">+91 8097207334</a></p>
-                  <p><span className="text-white/40 mr-2">Office</span><span className="text-white/80">NESCO IT Park, 10th Floor Building 4, Goregaon East, Mumbai-400063, Maharashtra, India</span></p>
+                  <p><span className="text-slate-400 mr-2">Website</span><Link href="https://www.avatarindia.com" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">www.avatarindia.com</Link></p>
+                  <p><span className="text-slate-400 mr-2">Support Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">cs@aslindustries.in</a></p>
+                  <p><span className="text-slate-400 mr-2">Customer Care</span><a href="tel:+918097207334" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">+91 8097207334</a></p>
+                  <p><span className="text-slate-400 mr-2">Office</span><span className="text-slate-800 font-medium">NESCO IT Park, 10th Floor Building 4, Goregaon East, Mumbai-400063, Maharashtra, India</span></p>
                 </div>
               </div>
-              <div className="pt-4 border-t border-white/8">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Grievance Officer</p>
+              <div className="pt-4 border-t border-slate-200/80">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-3">Grievance Officer</p>
                 <div className="space-y-2 text-[13px]">
-                  <p><span className="text-white/40 mr-2">Name</span><span className="text-white/80">Richa Rathod</span></p>
-                  <p><span className="text-white/40 mr-2">Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-400 hover:text-brand-300 transition-colors">cs@aslindustries.in</a></p>
-                  <p><span className="text-white/40 mr-2">Phone</span><a href="tel:+918097207334" className="text-brand-400 hover:text-brand-300 transition-colors">+91 8097207334</a></p>
+                  <p><span className="text-slate-400 mr-2">Name</span><span className="text-slate-800 font-medium">Richa Rathod</span></p>
+                  <p><span className="text-slate-400 mr-2">Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">cs@aslindustries.in</a></p>
+                  <p><span className="text-slate-400 mr-2">Phone</span><a href="tel:+918097207334" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">+91 8097207334</a></p>
                 </div>
               </div>
             </div>
           </section>
 
           {/* Agreement notice */}
-          <div className="border-t border-white/8 pt-8">
-            <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-2">Agreement Notice</p>
-              <p className="text-[13px] text-white/60 leading-relaxed mb-2">
+          <div className="border-t border-slate-200/80 pt-8">
+            <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-700 mb-2">Agreement Notice</p>
+              <p className="text-[13px] text-slate-600 leading-relaxed mb-2">
                 By using the Avatar AI Marketplace Platform, you acknowledge that you have read, understood, and agree to be bound by these Terms &amp; Conditions. If you have any questions or concerns, please contact our Grievance Officer using the details provided above.
               </p>
-              <p className="text-[12px] text-white/30">
+              <p className="text-[12px] text-slate-400">
                 These terms are designed to comply with the Information Technology Act, 2000, Digital Personal Data Protection Act, 2023, Consumer Protection (E-Commerce) Rules, 2020, and other applicable Indian laws.
               </p>
             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { LogOut, User, ChevronDown, Menu, X, Handshake, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
@@ -14,11 +14,14 @@ import { getMyPartner } from "@/lib/partnersApi";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 
 export function Navbar() {
-  const [mobileOpen,     setMobileOpen]     = useState(false);
-  const [userMenuOpen,   setUserMenuOpen]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
+  
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
   const { data: d2hStatus } = useD2HStatus({
     enabled: hasHydrated && Boolean(user),
@@ -46,9 +49,15 @@ export function Navbar() {
       : (user.firstName?.[0] ?? user.email[0]).toUpperCase()
     : "";
 
+  const isActiveRoute = (href: string) => {
+    if (!pathname) return false;
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   return (
     <>
-      <header className="fixed top-0 inset-x-0 z-50 anim-slide-down bg-white border-b border-border">
+      <header className="fixed top-0 inset-x-0 z-50 anim-slide-down bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
         <div className="container-x flex items-center justify-between h-16">
           <Link
             href="/"
@@ -66,21 +75,37 @@ export function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="relative px-4 py-2 text-[13px] font-medium text-text-muted hover:text-text
-                           transition-colors duration-200 rounded-lg hover:bg-surface-alt group"
-              >
-                {item.label}
-                <span
-                  className="absolute bottom-1 left-4 right-4 h-px bg-brand-500
-                                 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full"
-                />
-              </Link>
-            ))}
+          <nav className="hidden md:flex items-center gap-1 sm:gap-1.5">
+            {NAV_ITEMS.map((item) => {
+              const active = isActiveRoute(item.href);
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cn(
+                    "relative inline-flex items-center gap-1.5 px-3 py-2 text-[13.5px] rounded-lg transition-all duration-200 group",
+                    active
+                      ? "text-brand-600 font-bold bg-brand-50/50"
+                      : "font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  )}
+                >
+                  {active && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-600 animate-pulse shrink-0" />
+                  )}
+                  <span>{item.label}</span>
+
+                  {/* Bottom underline accent */}
+                  <span
+                    className={cn(
+                      "absolute bottom-0 left-2.5 right-2.5 h-[2.5px] rounded-full transition-all duration-300 origin-left",
+                      active
+                        ? "bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-500 scale-x-100 opacity-100"
+                        : "bg-brand-500 scale-x-0 group-hover:scale-x-100 opacity-0 group-hover:opacity-100"
+                    )}
+                  />
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right actions */}
@@ -195,7 +220,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className=" hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
+                className="hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
                          border border-brand-300 text-brand-600 hover:bg-brand-50 hover:border-brand-500
                          transition-all duration-200"
               >
@@ -238,18 +263,28 @@ export function Navbar() {
             : "opacity-0 -translate-y-2 pointer-events-none",
         )}
       >
-        <nav className="container-x py-4 flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className="px-4 py-2.5 text-[14px] font-medium text-text-muted hover:text-text
-                         hover:bg-surface-alt rounded-xl transition-all duration-150"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="container-x py-4 flex flex-col gap-1.5">
+          {NAV_ITEMS.map((item) => {
+            const active = isActiveRoute(item.href);
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "flex items-center justify-between px-4 py-2.5 text-[14px] rounded-xl transition-all duration-150",
+                  active
+                    ? "text-brand-600 font-bold bg-brand-50/60 border-l-3 border-brand-600 pl-3.5"
+                    : "font-medium text-text-muted hover:text-text hover:bg-surface-alt"
+                )}
+              >
+                <span>{item.label}</span>
+                {active && (
+                  <span className="h-2 w-2 rounded-full bg-brand-600 animate-pulse" />
+                )}
+              </Link>
+            );
+          })}
           <div className="mt-3 pt-3 border-t border-border flex flex-col gap-2">
             {user ? (
               <>

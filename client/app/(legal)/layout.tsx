@@ -8,34 +8,33 @@ export const metadata: Metadata = {
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-ink-950 relative">
-      {/* Background */}
+    <div className="min-h-screen bg-slate-50 relative text-slate-900">
+      {/* Background Ambient Glow */}
       <div
         className="pointer-events-none fixed inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,60,120,0.25) 0%, transparent 65%), " +
-            "radial-gradient(ellipse 50% 40% at 80% 90%, rgba(0,80,160,0.12) 0%, transparent 55%)",
+            "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59,130,246,0.06) 0%, transparent 65%), " +
+            "radial-gradient(ellipse 50% 40% at 80% 90%, rgba(99,102,241,0.04) 0%, transparent 55%)",
         }}
         aria-hidden
       />
-      <div className="pointer-events-none fixed inset-0 dot-grid-dark opacity-40" aria-hidden />
 
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
         <div className="mx-auto max-w-4xl px-6 h-16 flex items-center gap-4">
           <Link href="/" aria-label="Avatar India home" className="hover:opacity-80 transition-opacity duration-200 shrink-0">
             <Image
-              src="/landingpage-images/Avatar_logo_Light.svg"
+              src="/landingpage-images/Avatar_dark_logo.png"
               alt="Avatar India"
-              width={100}
-              height={28}
-              className="h-6 w-auto"
+              width={140}
+              height={38}
+              className="h-9 w-auto"
               priority
             />
           </Link>
-          <span className="text-white/20 text-lg font-light">/</span>
-          <span className="text-white/40 text-sm">Legal</span>
+          <span className="text-slate-300 text-lg font-light">/</span>
+          <span className="text-slate-600 text-sm font-semibold">Legal</span>
         </div>
       </header>
 
@@ -45,13 +44,13 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8">
+      <footer className="border-t border-slate-200/80 bg-white py-8">
         <div className="mx-auto max-w-4xl px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-white/25 text-xs">© 2026 AVATAR India. All rights reserved.</p>
-          <div className="flex items-center gap-4 text-xs">
-            <Link href="/privacy-policy" className="text-white/35 hover:text-brand-400 transition-colors duration-200">Privacy Policy</Link>
-            <Link href="/terms-and-conditions" className="text-white/35 hover:text-brand-400 transition-colors duration-200">Terms &amp; Conditions</Link>
-            <Link href="/" className="text-white/35 hover:text-brand-400 transition-colors duration-200">Home</Link>
+          <p className="text-slate-500 text-xs">© 2026 AVATAR India. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-xs font-medium">
+            <Link href="/privacy-policy" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Privacy Policy</Link>
+            <Link href="/terms-and-conditions" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Terms &amp; Conditions</Link>
+            <Link href="/" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Home</Link>
           </div>
         </div>
       </footer>

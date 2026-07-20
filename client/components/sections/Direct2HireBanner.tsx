@@ -32,7 +32,7 @@ const STEPS = [
     heading: "Assessment",
     title: "AI Assessment",
     subtitle: "Smart Skill Profiling",
-    desc: "Complete a 5-minute interactive questionnaire to analyze your current skill matrix and receive an AI-personalized career roadmap.",
+    desc: "Complete a interactive questionnaire to analyze your current skill matrix and receive an AI-personalized career roadmap.",
     highlights: [
       "Personalized Skill Matrix",
       "Instant AI Roadmap",
@@ -64,7 +64,7 @@ const STEPS = [
     num: 4,
     icon: Briefcase,
     heading: "Internship",
-    title: "Curated Internship",
+    title: "Structured Internship",
     subtitle: "Real-World Experience",
     desc: "Work on live production projects for top hiring partner startups and build a verified portfolio that hiring managers respect.",
     highlights: [
@@ -119,7 +119,7 @@ const STATS = [
 
 const FEATURES = [
   { icon: Zap, label: "AI-Powered Guidance" },
-  { icon: Users, label: "1-on-1 Mentorship" },
+  { icon: Users, label: "1-on-1 Counseling" },
   { icon: Briefcase, label: "Guaranteed Internship" },
   { icon: ShieldCheck, label: "Placement Support" },
 ];
@@ -381,7 +381,7 @@ export function Direct2HireBanner() {
                       </div>
 
                       {/* Step Key Highlights Pills */}
-                      <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2 sm:gap-3">
+                      {/* <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2 sm:gap-3">
                         <span className="text-xs font-semibold text-slate-500 mr-1">
                           Key Deliverables:
                         </span>
@@ -394,7 +394,7 @@ export function Direct2HireBanner() {
                             {h}
                           </span>
                         ))}
-                      </div>
+                      </div> */}
                     </motion.div>
                   </AnimatePresence>
                 </div>

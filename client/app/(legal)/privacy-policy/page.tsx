@@ -7,32 +7,32 @@ export const metadata: Metadata = {
 };
 
 /* ── Shared typography helpers ── */
-const H2 = "text-xl font-semibold text-white mb-4 pb-3 border-b border-white/8";
-const BODY = "text-[14px] text-white/60 leading-relaxed space-y-3";
+const H2 = "text-xl font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200/80";
+const BODY = "text-[14px] text-slate-600 leading-relaxed space-y-3 font-normal";
 
 export default function PrivacyPolicyPage() {
   return (
     <>
       {/* ── Page Hero ── */}
       <div className="mb-10">
-        <div className="flex items-center gap-2 text-[12px] text-white/30 mb-4">
-          <Link href="/" className="hover:text-brand-400 transition-colors duration-200">Home</Link>
+        <div className="flex items-center gap-2 text-[12px] text-slate-400 mb-4">
+          <Link href="/" className="hover:text-brand-600 transition-colors duration-200">Home</Link>
           <span>/</span>
-          <span className="text-white/50">Privacy Policy</span>
+          <span className="text-slate-600 font-medium">Privacy Policy</span>
         </div>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-2">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-2">
           Your Privacy Matters
         </p>
-        <h1 className="text-4xl font-bold text-white tracking-tight mb-3">
+        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
           Privacy Policy
         </h1>
-        <p className="text-white/40 text-[14px]">
+        <p className="text-slate-500 text-[14px]">
           How we collect, use, and protect your personal data on the Avatar India platform.
         </p>
       </div>
 
       {/* ── Meta card ── */}
-      <div className="rounded-2xl border border-white/8 bg-ink-800 p-6 mb-6">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 mb-6 shadow-xs">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
           {[
             { label: "Website", value: "www.avatarindia.com", href: "https://www.avatarindia.com" },
@@ -42,13 +42,13 @@ export default function PrivacyPolicyPage() {
             { label: "Last Updated", value: "June 12, 2026" },
           ].map(({ label, value, href }) => (
             <div key={label}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1">{label}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1">{label}</p>
               {href ? (
-                <Link href={href} className="text-[13px] font-medium text-brand-400 hover:text-brand-300 transition-colors">
+                <Link href={href} className="text-[13px] font-semibold text-brand-600 hover:text-brand-700 transition-colors">
                   {value}
                 </Link>
               ) : (
-                <p className="text-[13px] font-medium text-white/70">{value}</p>
+                <p className="text-[13px] font-semibold text-slate-800">{value}</p>
               )}
             </div>
           ))}
@@ -56,17 +56,17 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* ── Content card ── */}
-      <div className="rounded-2xl border border-white/8 bg-ink-800">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs">
         <div className="p-6 sm:p-10 space-y-10">
 
           {/* 1 */}
           <section>
             <h2 className={H2}>1. Introduction</h2>
             <div className={BODY}>
-              <p>This Privacy Policy explains how Avatar Industries Limited, operating the website <strong className="text-white/85">www.avatarindia.com</strong> and related applications, collects, uses, stores, shares, and protects personal data of visitors, registered users, buyers, sellers, instructors, partners, freelancers, and other users of the Avatar platform.</p>
+              <p>This Privacy Policy explains how Avatar Industries Limited, operating the website <strong className="font-semibold text-slate-900">www.avatarindia.com</strong> and related applications, collects, uses, stores, shares, and protects personal data of visitors, registered users, buyers, sellers, instructors, partners, freelancers, and other users of the Avatar platform.</p>
               <p>Avatar operates an India-first AI marketplace ecosystem covering AI tools, courses, webinars, communities, and AI-related services.</p>
               <p>Avatar acts as a digital platform that enables transactions and interactions between users, including third-party sellers, educators, and service providers, while also providing certain first-party offerings such as Avatar-hosted webinars and platform services.</p>
-              <p>This Privacy Policy is intended to align with the <strong className="text-white/85">Digital Personal Data Protection Act, 2023</strong>, which requires notice-based and consent-based processing of digital personal data, reasonable security safeguards, and grievance redressal rights for data principals.</p>
+              <p>This Privacy Policy is intended to align with the <strong className="font-semibold text-slate-900">Digital Personal Data Protection Act, 2023</strong>, which requires notice-based and consent-based processing of digital personal data, reasonable security safeguards, and grievance redressal rights for data principals.</p>
             </div>
           </section>
 
@@ -74,7 +74,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className={H2}>2. Who We Are</h2>
             <div className={BODY}>
-              <p>For the purposes of this Privacy Policy, <strong className="text-white/85">&quot;Avatar,&quot; &quot;Company,&quot; &quot;we,&quot; &quot;us,&quot;</strong> and <strong className="text-white/85">&quot;our&quot;</strong> mean Avatar Industries Limited and its affiliates, successors, and permitted assigns. <strong className="text-white/85">&quot;You&quot;</strong> and <strong className="text-white/85">&quot;your&quot;</strong> mean any user who accesses or uses the platform.</p>
+              <p>For the purposes of this Privacy Policy, <strong className="font-semibold text-slate-900">&quot;Avatar,&quot; &quot;Company,&quot; &quot;we,&quot; &quot;us,&quot;</strong> and <strong className="font-semibold text-slate-900">&quot;our&quot;</strong> mean Avatar Industries Limited and its affiliates, successors, and permitted assigns. <strong className="font-semibold text-slate-900">&quot;You&quot;</strong> and <strong className="font-semibold text-slate-900">&quot;your&quot;</strong> mean any user who accesses or uses the platform.</p>
               <p>Avatar is the data fiduciary for personal data processed through the platform in relation to user accounts, platform administration, transactions, security, analytics, customer support, dispute handling, and compliance records, as contemplated in the business overview.</p>
             </div>
           </section>
@@ -101,23 +101,35 @@ export default function PrivacyPolicyPage() {
             <h2 className={H2}>4. Categories of Personal Data Collected</h2>
             <div className={BODY}>
               <p>Avatar may collect the following categories of personal data, depending on how the platform is used:</p>
-              <div className="space-y-2.5 rounded-xl border border-white/6 bg-ink-900 p-4">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-4">
                 {[
-                  ["Identity data", "name, date of birth, photograph, profile details, company name, director or authorized signatory details, and government-issued identity information required for verification."],
-                  ["Contact data", "email address, mobile number, billing address, registered office address, and correspondence details."],
+                  ["Identity data", "Name, date of birth, photograph, profile details, company name, director or authorized signatory details, and government-issued identity information required for verification."],
+                  ["Contact data", "Email address, mobile number, billing address, registered office address, and correspondence details."],
                   ["KYC and compliance data", "Aadhaar details, PAN, GSTIN, bank details, tax identifiers, business registration details, and supporting documents submitted during seller, instructor, partner, or payout onboarding."],
-                  ["Transaction data", "order history, invoices, subscriptions, payment status, refunds, disputes, payouts, tax deductions, and related commerce records."],
-                  ["Usage data", "login data, IP address, browser type, device details, operating system, app identifiers, referral URLs, session timestamps, clicks, feature usage, and platform activity logs."],
-                  ["Content data", "course submissions, reviews, ratings, support messages, forum posts, webinar participation details, uploaded listing materials, screenshots, videos, and communications made through the platform."],
-                  ["Support and grievance data", "complaint records, refund requests, takedown notices, dispute submissions, legal correspondence, and grievance redressal records."],
-                  ["Marketing and preference data", "newsletter preferences, campaign interactions, survey responses, waitlist forms, and cookie preferences."],
+                  ["Transaction data", "Order history, invoices, subscriptions, payment status, refunds, disputes, payouts, tax deductions, and related commerce records."],
+                  ["Usage data", "Login data, IP address, browser type, device details, operating system, app identifiers, referral URLs, session timestamps, clicks, feature usage, and platform activity logs."],
+                  ["Content data", "Course submissions, reviews, ratings, support messages, forum posts, webinar participation details, uploaded listing materials, screenshots, videos, and communications made through the platform."],
+                  ["Support and grievance data", "Complaint records, refund requests, takedown notices, dispute submissions, legal correspondence, and grievance redressal records."],
+                  ["Marketing and preference data", "Newsletter preferences, campaign interactions, survey responses, waitlist forms, and cookie preferences."],
                 ].map(([key, val]) => (
-                  <div key={key} className="flex gap-2">
-                    <span className="shrink-0 text-brand-400 font-medium text-[13px]">{key}:</span>
-                    <span className="text-white/55 text-[13px]">{val}</span>
+                  <div
+                    key={key}
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 transition-all duration-200 hover:border-brand-300 hover:bg-white hover:shadow-xs flex flex-col justify-start"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="h-2 w-2 rounded-full bg-brand-500 shrink-0" />
+                      <h3 className="text-[13.5px] font-bold text-slate-900 capitalize tracking-tight">
+                        {key}
+                      </h3>
+                    </div>
+                    <p className="text-[13px] text-slate-600 leading-relaxed font-normal">
+                      {val}
+                    </p>
                   </div>
                 ))}
               </div>
+
               <p>Avatar does not intentionally seek unnecessary personal data and expects users to provide only data reasonably required for platform access, lawful onboarding, payment settlement, support, or compliance.</p>
             </div>
           </section>
@@ -261,13 +273,13 @@ export default function PrivacyPolicyPage() {
             <div className={BODY}>
               <p>In accordance with applicable e-commerce and data governance expectations, Avatar has designated a grievance officer. The officer&apos;s contact details are published below.</p>
             </div>
-            <div className="mt-5 rounded-xl border border-white/8 bg-ink-900 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Grievance Officer</p>
+            <div className="mt-5 rounded-xl border border-slate-200/80 bg-slate-50/80 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-600 mb-3">Grievance Officer</p>
               <div className="space-y-2 text-[13px]">
-                <p><span className="text-white/40 mr-2">Name</span><span className="text-white/80">Richa Rathod</span></p>
-                <p><span className="text-white/40 mr-2">Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-400 hover:text-brand-300 transition-colors">cs@aslindustries.in</a></p>
-                <p><span className="text-white/40 mr-2">Phone</span><a href="tel:+918097207334" className="text-brand-400 hover:text-brand-300 transition-colors">+91 8097207334</a></p>
-                <p><span className="text-white/40 mr-2">Address</span><span className="text-white/80">NESCO IT Park, 10th Floor Building 4, Goregaon East, Mumbai-400063, Maharashtra, India</span></p>
+                <p><span className="text-slate-400 mr-2">Name</span><span className="text-slate-800 font-medium">Richa Rathod</span></p>
+                <p><span className="text-slate-400 mr-2">Email</span><a href="mailto:cs@aslindustries.in" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">cs@aslindustries.in</a></p>
+                <p><span className="text-slate-400 mr-2">Phone</span><a href="tel:+918097207334" className="text-brand-600 hover:text-brand-700 transition-colors font-medium">+91 8097207334</a></p>
+                <p><span className="text-slate-400 mr-2">Address</span><span className="text-slate-800 font-medium">NESCO IT Park, 10th Floor Building 4, Goregaon East, Mumbai-400063, Maharashtra, India</span></p>
               </div>
             </div>
             <div className={`${BODY} mt-4`}>
@@ -285,13 +297,13 @@ export default function PrivacyPolicyPage() {
           </section>
 
           {/* Footer note */}
-          <div className="border-t border-white/8 pt-8">
-            <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-2">Questions or Concerns?</p>
-              <p className="text-[13px] text-white/60 leading-relaxed mb-2">
+          <div className="border-t border-slate-200/80 pt-8">
+            <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-700 mb-2">Questions or Concerns?</p>
+              <p className="text-[13px] text-slate-600 leading-relaxed mb-2">
                 If you have any questions about this Privacy Policy or how we handle your personal data, please don&apos;t hesitate to reach out to our Grievance Officer using the contact information provided above.
               </p>
-              <p className="text-[12px] text-white/30">
+              <p className="text-[12px] text-slate-400">
                 This policy is designed to comply with the Digital Personal Data Protection Act, 2023 and other applicable Indian laws.
               </p>
             </div>

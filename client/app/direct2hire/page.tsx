@@ -82,13 +82,13 @@ const JOURNEY_STEPS = [
   {
     num: "02",
     icon: Users,
-    title: "Career Counselling",
+    title: "Career Counseling",
     desc: "A 1-on-1 session with an experienced counselor to discuss your goals, strengths, and next steps — scheduled after your AI assessment.",
   },
   {
     num: "03",
     icon: Sparkles,
-    title: "AI Fundamentals Program",
+    title: "AI Learning Programs",
     desc: "A structured, mentor-guided program that builds the practical AI and digital skills employers are actively hiring for.",
   },
   {
@@ -201,7 +201,7 @@ const DIFFERENTIATORS = [
 const FAQS = [
   {
     q: "Is the ₹499 session the entire Direct2Hire program?",
-    a: "It covers your first steps in Direct2Hire — an AI assessment with a personalized course recommendation, plus a 1-on-1 counselling session. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step journey.",
+    a: "It covers your first steps in Direct2Hire — an AI assessment with a personalized course recommendation, plus a 1-on-1 counseling session. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step journey.",
   },
   {
     q: "Am I locked into the full program after the session?",
@@ -209,7 +209,7 @@ const FAQS = [
   },
   {
     q: "Is ₹499 really enough for proper guidance?",
-    a: "Yes. You get an AI-powered assessment with a course recommendation, a 30-minute 1-on-1 counselling consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
+    a: "Yes. You get an AI-powered assessment with a course recommendation, a 30-minute 1-on-1 counseling consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
   },
   {
     q: "Who will conduct the session?",
@@ -217,7 +217,7 @@ const FAQS = [
   },
   {
     q: "How is this different from free advice online?",
-    a: "Free advice is generic. Our guidance is built specifically for you — based on your assessment results, background, interests, and goals — and comes with a concrete action plan and 7 days of follow-up mentorship.",
+    a: "Free advice is generic. Our guidance is built specifically for you — based on your assessment results, background, interests, and goals — and comes with a concrete action plan.",
   },
   {
     q: "Is this only for final-year students?",
@@ -226,10 +226,6 @@ const FAQS = [
   {
     q: "Can my parents join the session?",
     a: "Absolutely. We encourage parents to join — career decisions are family decisions in India, and having everyone aligned on the plan makes execution much easier.",
-  },
-  {
-    q: "What happens after the 7 day mentorship?",
-    a: "You keep lifetime access to your career report and roadmap, plus access to our community. You can also continue with our learning programs, internships, and placement support whenever you're ready.",
   },
 ];
 
@@ -308,7 +304,7 @@ export default function Direct2HirePage() {
                     expert guidance every step of the way.
                   </p>
                   <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-4 sm:mb-8">
-                    Start your journey from Career Counselling to AI Learning,
+                    Start your journey from Career Counseling to AI Learning,
                     Internship and Placement for just{"  "}
                     <span className="text-text-subtle line-through">
                       ₹24,999
@@ -863,7 +859,7 @@ export default function Direct2HirePage() {
                     </span>
                   </h2>
                   <p className="mt-3 text-text-muted max-w-xl">
-                    AI assessment, counselling, AI skilling, internship, and
+                    AI assessment, counseling, AI skilling, internship, and
                     placement — real value worth{" "}
                     <span className="line-through text-text-subtle">
                       ₹12,995
@@ -931,8 +927,7 @@ export default function Direct2HirePage() {
                     className="relative mt-6 sm:mt-7 w-full sm:w-fit"
                   >
                     <Button variant="primary" size="md" className="w-full">
-                      Book Your Session{" "}
-                      <ArrowRight className="h-4 w-4 shrink-0" />
+                      Book Your Seat <ArrowRight className="h-4 w-4 shrink-0" />
                     </Button>
                   </Link>
                   <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
@@ -1061,7 +1056,7 @@ export default function Direct2HirePage() {
                       size="lg"
                       className="w-full sm:w-auto"
                     >
-                      Book Your Session Now <ArrowRight className="h-4 w-4" />
+                      Book Your Seats Now <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>

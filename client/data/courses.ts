@@ -51,7 +51,7 @@ export const COURSES: Course[] = [
     reviews: "1.2k Reviews",
     startDate: "17 Jul 2026",
     seats: "Limited Seats",
-    heroImage: "/landingpage-images/course-1.png",
+    heroImage: "/landingpage-images/course-1.jpg",
     bannerImage: "/landingpage-images/course-2.png",
 
     whatYouLearn: [
@@ -166,7 +166,7 @@ export const COURSES: Course[] = [
     reviews: "840 Reviews",
     startDate: "24 Jul 2026",
     seats: "Limited Seats",
-    heroImage: "/landingpage-images/course-5.jpg",
+    heroImage: "/landingpage-images/course-2.jpg",
     bannerImage: "/landingpage-images/course-6.jpg",
 
     whatYouLearn: [
@@ -266,7 +266,7 @@ export const COURSES: Course[] = [
     reviews: "805 Reviews",
     startDate: "Coming Soon",
     seats: "Limited Seats",
-    heroImage: "/landingpage-images/course-3.png",
+    heroImage: "/landingpage-images/course-3.jpg",
     bannerImage: "/landingpage-images/course-4.jpg",
     whatYouLearn: [
       {

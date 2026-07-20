@@ -113,5 +113,6 @@ export interface AdvisorCtaData {
   heading: string;
   description: string;
   ctaLabel: string;
+  ctaLabel2: string;
   image: string;
 }

@@ -88,11 +88,11 @@ const FAQS = [
   },
   {
     q: "How do the referral bonuses work?",
-    a: "Every student who enrolls using your institute's referral code earns you a bonus. Payouts are tracked in your partner dashboard and released on a monthly cycle.",
+    a: "Every successful enrollment through your unique partner code earns your organization or you as an individual partner attractive rewards. Track enrollments, rewards, and payouts through your partner dashboard, with settlements processed monthly.",
   },
   {
     q: "Is there any cost to partner with you?",
-    a: "No. Partnering with us is completely free for your institute — there are no fees to apply, list your code, or access your dashboard.",
+    a: "No. Joining the Avatar India Partner Program is completely free. There are no registration fees, subscription charges, or hidden costs to become a partner, receive your unique partner code, or access your Partner Dashboard.",
   },
   {
     q: "Will I get access to a dashboard?",
@@ -261,7 +261,10 @@ export default function PartnersPage() {
 
             {/* ── APPLY CARD ── */}
             <ScrollReveal animation="fade-left" delay={120}>
-              <div id="apply" className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm scroll-mt-24">
+              <div
+                id="apply"
+                className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm scroll-mt-24"
+              >
                 <h2 className="text-lg font-bold text-slate-800 mb-1">
                   Apply for Partnership
                 </h2>
@@ -697,7 +700,9 @@ export default function PartnersPage() {
                 type="button"
                 onClick={() => {
                   if (!user) {
-                    router.push(`/login?returnTo=${encodeURIComponent("/partners")}`);
+                    router.push(
+                      `/login?returnTo=${encodeURIComponent("/partners")}`,
+                    );
                     return;
                   }
                   document

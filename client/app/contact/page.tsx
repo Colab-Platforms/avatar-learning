@@ -57,7 +57,7 @@ const CONTACT_INFO = [
 const SOCIAL_LINKS = [
   {
     label: "Facebook",
-    href: "https://www.facebook.com/share/1JpYwqS4jQ/",
+    href: "https://facebook.com/share/1GD7gUhDrc/",
     bg: "bg-[#1877f2] hover:bg-[#1465d0]",
     svg: (
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
@@ -199,7 +199,7 @@ export default function ContactPage() {
               </h1>
               <p className="text-white/50 text-[14px] leading-relaxed max-w-lg">
                 Have questions, feedback, or need assistance? Our team is ready
-                to help — typically within 24 hours.
+                to help — Typically within 24-48 hours.
               </p>
             </ScrollReveal>
           </div>
@@ -267,7 +267,8 @@ export default function ContactPage() {
                       Send a Message
                     </h2>
                     <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
-                      We typically respond within 24 hours
+                      We typically respond within 30 minutes during working
+                      hours.
                     </p>
                   </div>
                 </div>

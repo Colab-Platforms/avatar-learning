@@ -13,7 +13,7 @@ const TRUST_ITEMS = [
 export function AdvisorCTA() {
   return (
     <section className="relative bg-surface-alt text-text">
-      <div className="container-x py-16">
+      <div className="container-x pt-0 pb-16">
         <div className="grid md:grid-cols-2 gap-20 items-center">
           {/* ── Left: copy ── */}
           <div>
@@ -41,7 +41,7 @@ export function AdvisorCTA() {
               </p>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={240}>
+            {/* <ScrollReveal animation="fade-up" delay={240}>
               <ul className="mt-8 space-y-3">
                 {TRUST_ITEMS.map((item) => (
                   <li
@@ -55,10 +55,10 @@ export function AdvisorCTA() {
                   </li>
                 ))}
               </ul>
-            </ScrollReveal>
+            </ScrollReveal> */}
 
             {/* Rating row */}
-            <ScrollReveal animation="fade-up" delay={300}>
+            {/* <ScrollReveal animation="fade-up" delay={300}>
               <div className="mt-6 flex items-center gap-2">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
@@ -72,15 +72,23 @@ export function AdvisorCTA() {
                   4.9 · 500+ sessions completed
                 </span>
               </div>
-            </ScrollReveal>
+            </ScrollReveal> */}
 
             <ScrollReveal animation="fade-up" delay={360}>
-              <Link href={"/contact"}>
-                <Button variant="primary" size="lg" className="mt-8">
-                  {ADVISOR_CTA.ctaLabel}
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 ">
+                <Link href={"/direct2hire"}>
+                  <Button variant="primary" size="lg" className="mt-8">
+                    {ADVISOR_CTA.ctaLabel}
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href={"/courses"}>
+                  <Button variant="primary" size="lg" className="mt-8">
+                    {ADVISOR_CTA.ctaLabel2}
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </ScrollReveal>
           </div>
 
