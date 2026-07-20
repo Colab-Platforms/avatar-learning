@@ -39,8 +39,8 @@ export function CourseCard({ course }: CourseCardProps) {
 
         {/* Avatar / Watermark marker (top left) */}
         <div className="absolute top-0 left-4 bg-white px-2.5 py-4 rounded-b-xl shadow-sm flex items-center justify-center z-10">
-          <div className="h-8 w-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-sm border border-brand-100">
-            AL
+          <div className="relative h-8 w-8">
+            <Image src="/favicon.png" alt="" fill sizes="32px" className="object-contain" />
           </div>
         </div>
 
@@ -53,8 +53,8 @@ export function CourseCard({ course }: CourseCardProps) {
       {/* ── Bottom Half: Content ── */}
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-3">
-          <div className="h-5 w-5 rounded bg-brand-50 border border-brand-100 flex items-center justify-center overflow-hidden">
-            <span className="text-[10px] font-bold text-brand-600">AL</span>
+          <div className="relative h-5 w-5">
+            <Image src="/favicon.png" alt="" fill sizes="20px" className="object-contain" />
           </div>
           <span className="text-sm text-text-muted font-medium">
             Avatar Learning

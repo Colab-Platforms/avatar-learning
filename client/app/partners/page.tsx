@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Percent,
   Briefcase,
@@ -43,12 +44,12 @@ const BENEFITS = [
   {
     icon: Percent,
     title: "Earn Attractive Referral Bonuses",
-    desc: "Get a unique referral code for your institute. Earn bonuses for every student who enrolls through your code.",
+    desc: "Register as an Avatar India Partner, receive your exclusive partner code, and earn rewards on every successful enrollment.",
   },
   {
     icon: Briefcase,
     title: "Enhance Student Placement Outcomes",
-    desc: "Offer your students industry-ready AI programs, guaranteed internships, and direct placement support — completely free for your institute.",
+    desc: "Boost Student Employability Help your students become AI job-ready through expert-led training, real-world projects, internship opportunities, and placement support—completely free for your organization.",
   },
   {
     icon: LayoutDashboard,
@@ -110,6 +111,7 @@ const inputCls = cn(
 
 export default function PartnersPage() {
   const user = useAppSelector((s) => s.auth.user);
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<PartnerType>("INDIVIDUAL");
   const [form, setForm] = useState({
@@ -170,6 +172,10 @@ export default function PartnersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      router.push(`/login?returnTo=${encodeURIComponent("/partners")}`);
+      return;
+    }
     setErrorMsg("");
     setSubmitting(true);
     try {
@@ -215,8 +221,8 @@ export default function PartnersPage() {
 
       <main className="min-h-screen overflow-x-hidden bg-white text-slate-800">
         {/* ── HERO ── */}
-        <section className="relative container-x max-w-7xl pt-28 pb-16">
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
+        <section className="relative container-x max-w-7xl pt-28 pb-8">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-start">
             <ScrollReveal animation="fade-up">
               <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600 mb-3">
                 For Educational Institutes
@@ -227,8 +233,9 @@ export default function PartnersPage() {
                 Grow Together.
               </h1>
               <p className="text-slate-500 text-[15px] leading-relaxed max-w-lg mb-8">
-                Help your students launch AI careers and earn attractive
-                referral bonuses through your institute&apos;s unique code.
+                Empower your students or workforce with industry-ready AI skills
+                while earning attractive rewards through your organization's
+                exclusive partner code.
               </p>
 
               <div className="flex flex-wrap gap-x-6 gap-y-3 mb-10">
@@ -244,9 +251,9 @@ export default function PartnersPage() {
                 ))}
               </div>
 
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm aspect-16/10 max-w-lg">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm aspect-4/3 max-w-lg">
                 <Image
-                  src="/counselling-images/Collage-Students.png"
+                  src="/counselling-images/partnerimg1.png"
                   alt="Institute partnership"
                   fill
                   className="object-cover"
@@ -265,28 +272,11 @@ export default function PartnersPage() {
                   Get your unique referral code and start earning.
                 </p>
 
-                {!user ? (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-6 text-center">
-                    <p className="text-[13px] text-slate-500 mb-4">
-                      Log in to your account to apply for partnership.
-                    </p>
-                    <Link
-                      href={`/login?returnTo=${encodeURIComponent("/partners")}`}
-                      className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-[13px] font-bold text-white
-                                 hover:brightness-110 active:scale-[0.98] transition-all duration-250 cursor-pointer shadow-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
-                      }}
-                    >
-                      Log In
-                    </Link>
-                  </div>
-                ) : existingPartner === undefined ? (
+                {user && existingPartner === undefined ? (
                   <div className="py-10 flex justify-center">
                     <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                   </div>
-                ) : existingPartner ? (
+                ) : user && existingPartner ? (
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-8 text-center space-y-3">
                     {existingPartner.status === "APPROVED" ? (
                       <>
@@ -643,13 +633,13 @@ export default function PartnersPage() {
 
         {/* ── BENEFITS ── */}
         <div className="h-px w-full bg-slate-200" />
-        <section className="container-x max-w-7xl py-14">
+        <section className="container-x max-w-7xl pt-8 pb-14">
           <ScrollReveal animation="fade-up">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">
               Benefits of Partnering With Us
             </h2>
             <p className="text-slate-500 text-[14px] mb-10">
-              A true win-win partnership for your institute and students.
+              Empowering organizations. Transforming careers. Growing together.
             </p>
           </ScrollReveal>
 
@@ -681,7 +671,7 @@ export default function PartnersPage() {
             >
               <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                 <img
-                  src="/Web Room.jpg"
+                  src="/counselling-images/partnerimg2.png"
                   alt="Students in classroom"
                   className="absolute inset-0 w-full h-full object-cover block"
                 />
@@ -699,12 +689,12 @@ export default function PartnersPage() {
                 Partner With Us
               </p>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 max-w-2xl mx-auto mb-4">
-                Ready to start earning while empowering{" "}
-                <span className="text-blue-600">your students</span>?
+                Ready to empower future talent while creating a new{" "}
+                <span className="text-blue-600">revenue opportunity</span>?
               </h2>
               <p className="text-slate-500 text-[14px] mb-8">
-                Join 100+ institutes already part of the Direct2Hire partner
-                network.
+                Join 100+ partner organizations already transforming careers
+                through the Avatar India Direct2Hire Partner Program.
               </p>
               <a
                 href="#apply"

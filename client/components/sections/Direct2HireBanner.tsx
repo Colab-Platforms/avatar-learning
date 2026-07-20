@@ -204,7 +204,7 @@ export function Direct2HireBanner() {
                   >
                     <p className="text-slate-600 text-sm sm:text-[15px] leading-relaxed">
                       An all-in-one AI career pathway. Get evaluated, receive
-                      1-on-1 industry mentorship, build real projects in curated
+                      1-on-1 Counseling, build real projects in curated
                       internships, and secure job placement with top corporates.
                     </p>
                   </PretextAnimatedHeight>

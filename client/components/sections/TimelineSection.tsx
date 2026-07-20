@@ -58,14 +58,14 @@ const STEP_COUNT = TIMELINE_STEPS.length;
  * It walks (subtle bob + tilt) while in transit, then settles flat
  * with a small scale-pop once the line reaches 100%.
  */
-function StudentRider({ completed }: { completed: boolean }) {
+function StudentRider({ completed, slow }: { completed: boolean; slow: boolean }) {
   return (
     <div
       className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20"
       style={{
         animation: completed
-          ? "student-land 0.5s cubic-bezier(0.34,1.56,0.64,1) both"
-          : "student-bob 0.6s ease-in-out infinite",
+          ? `student-land ${slow ? 0.9 : 0.5}s cubic-bezier(0.34,1.56,0.64,1) both`
+          : `student-bob ${slow ? 1.1 : 0.6}s ease-in-out infinite`,
       }}
     >
       <Image
@@ -85,11 +85,20 @@ export function TimelineSection() {
   const [activeCount, setActiveCount] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduceMotion(mq.matches);
     const handler = () => setReduceMotion(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    setIsMobile(mq.matches);
+    const handler = () => setIsMobile(mq.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
@@ -211,13 +220,13 @@ export function TimelineSection() {
                   filter: "drop-shadow(0 2px 6px rgba(42,120,204,0.35))",
                 }}
               >
-                <StudentRider completed={completed} />
+                <StudentRider completed={completed} slow={false} />
               </div>
             )}
           </div>
 
           {/* Mobile/tablet connecting line — vertical track + fill (phones + tablets, hidden on lg+) */}
-          <div className="lg:hidden absolute top-0 bottom-0 left-1/2 w-0.5 -translate-x-1/2 z-0">
+          <div className="lg:hidden absolute top-0 bottom-0 left-6 sm:left-1/2 sm:-translate-x-1/2 w-0.5 z-0">
             <div className="absolute inset-0 bg-border rounded-full" />
             <div
               className="absolute inset-x-0 top-0 rounded-full bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400"
@@ -225,7 +234,7 @@ export function TimelineSection() {
                 height: `${clampedFill}%`,
                 transition: reduceMotion
                   ? "none"
-                  : "height 0.4s cubic-bezier(0.22,1,0.36,1)",
+                  : `height ${isMobile ? 0.7 : 0.4}s cubic-bezier(0.22,1,0.36,1)`,
               }}
             />
             {/* Student image riding the vertical track — only hidden at 0% or 100% */}
@@ -235,11 +244,11 @@ export function TimelineSection() {
                 style={{
                   top: `${clampedFill}%`,
                   transform: "translate(-50%, -50%)",
-                  transition: "top 0.4s cubic-bezier(0.22,1,0.36,1)",
+                  transition: `top ${isMobile ? 0.7 : 0.4}s cubic-bezier(0.22,1,0.36,1)`,
                   filter: "drop-shadow(0 2px 6px rgba(42,120,204,0.35))",
                 }}
               >
-                <StudentRider completed={completed} />
+                <StudentRider completed={completed} slow={isMobile} />
               </div>
             )}
           </div>
@@ -256,7 +265,7 @@ export function TimelineSection() {
                   {/* Mobile/Tablet vertical line between steps */}
                   {index > 0 && (
                     <div
-                      className="absolute -top-4 left-1/2 w-0.5 h-4 lg:hidden transform -translate-x-1/2 transition-colors duration-500"
+                      className="absolute -top-4 left-6 sm:left-1/2 sm:-translate-x-1/2 w-0.5 h-4 lg:hidden transition-colors duration-700 sm:duration-500"
                       style={{
                         background: isActive
                           ? "linear-gradient(to bottom, rgba(42,120,204,0.8), rgba(42,120,204,0.2))"
@@ -265,9 +274,9 @@ export function TimelineSection() {
                     />
                   )}
 
-                  <div className="flex flex-col items-center text-center group">
+                  <div className="flex flex-row items-start text-left gap-4 sm:flex-col sm:items-center sm:text-center sm:gap-0 group">
                     {/* Icon Circle */}
-                    <div className="relative mb-4 sm:mb-6 flex items-center justify-center">
+                    <div className="relative shrink-0 mb-0 sm:mb-4 md:mb-6 flex items-center justify-center">
                       {/* Completion burst ring — fires once on the final step */}
                       {justCompleted && (
                         <span
@@ -278,7 +287,7 @@ export function TimelineSection() {
 
                       {/* Ambient glow — only once active */}
                       <div
-                        className="absolute inset-0 rounded-full scale-110 transition-all duration-500"
+                        className="absolute inset-0 rounded-full scale-110 transition-all duration-700 sm:duration-500"
                         style={{
                           background: isActive
                             ? "rgba(42,120,204,0.14)"
@@ -288,7 +297,7 @@ export function TimelineSection() {
 
                       {/* Icon container */}
                       <div
-                        className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-500 ease-out"
+                        className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-700 sm:duration-500 ease-out"
                         style={{
                           border: isActive
                             ? "1px solid #2A78CC"
@@ -305,7 +314,7 @@ export function TimelineSection() {
 
                         {/* Step number badge */}
                         <div
-                          className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-500"
+                          className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-700 sm:duration-500"
                           style={{
                             background: isActive ? "#153C66" : "#D3DCE6",
                             color: isActive ? "#FFFFFF" : "#475569",
@@ -323,15 +332,15 @@ export function TimelineSection() {
                     </div>
 
                     {/* Step content */}
-                    <div className="flex-1 min-h-0">
+                    <div className="flex-1 min-h-0 pt-1 sm:pt-0">
                       <h3
-                        className="font-semibold text-xs sm:text-sm md:text-base mb-1.5 sm:mb-2 transition-colors duration-500"
+                        className="font-semibold text-xs sm:text-sm md:text-base mb-1.5 sm:mb-2 transition-colors duration-700 sm:duration-500"
                         style={{ color: isActive ? "#0F172A" : "#94A3B8" }}
                       >
                         {step.title}
                       </h3>
                       <p
-                        className="text-xs leading-normal sm:leading-relaxed transition-colors duration-500"
+                        className="text-xs leading-normal sm:leading-relaxed transition-colors duration-700 sm:duration-500"
                         style={{ color: isActive ? "#475569" : "#94A3B8" }}
                       >
                         {step.description}

@@ -98,7 +98,7 @@ const SOCIAL_LINKS = [
   },
   {
     label: "LinkedIn",
-    href: "",
+    href: "https://linkedin.com/in/avatar-india-358b39413/",
     bg: "bg-[#0077b5] hover:bg-[#005e8f]",
     svg: (
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">

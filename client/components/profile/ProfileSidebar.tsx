@@ -59,7 +59,7 @@ export function ProfileSidebar({
             </div>
 
             {/* badges */}
-            <div className="flex flex-col items-end gap-1.5 pb-1 shrink-0">
+            <div className="flex flex-row items-center gap-1.5 pb-1 shrink-0">
               {user.isEmailVerified && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200
                                  bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 whitespace-nowrap">
