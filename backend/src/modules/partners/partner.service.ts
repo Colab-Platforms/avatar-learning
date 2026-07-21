@@ -1,9 +1,29 @@
 import crypto from "crypto";
+import dayjs from "dayjs";
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
-import { sendPartnerApplicationEmail, sendPartnerClaimEmail } from "./partner.mail.js";
+import {
+  sendPartnerApplicationEmail,
+  sendPartnerClaimEmail,
+} from "./partner.mail.js";
 import { ApplyPartnerBody } from "./partner.types.js";
+
+// Refund-safety hold. Matches the Direct2Hire refund policy:
+//   within 48 hours of purchase → 100% refund
+//   within 3–7 days             → 50% refund
+//   after 7 days                → 0% refund (non-refundable)
+// Held for 15 days (margin past the 7-day cutoff) before a partner is paid,
+// so a refund can never land after the commission has already gone out.
+// Shortened to 5 minutes outside production so the whole schedule → cron →
+// credit pipeline can be verified without waiting half a month.
+// const isProd = process.env.NODE_ENV === "production";
+const isProd = true; // TODO: Remove this line before deploying to production. It is only for testing the cron job in dev mode.
+const getEligibleAt = () =>
+  isProd
+    ? dayjs().add(COMMISSION_HOLD_DAYS, "day").toDate()
+    : dayjs().add(5, "minute").toDate();
+const COMMISSION_HOLD_DAYS = 15;
 
 // Commission model — differs by partner type.
 //
@@ -27,10 +47,10 @@ import { ApplyPartnerBody } from "./partner.types.js";
 // CORPORATE: no referral dashboard, never reaches this function.
 
 const INSTITUTE_TIERS: { min: number; max: number; rate: number }[] = [
-  { min: 1,   max: 10,  rate: 0 },  // pre-threshold, never pays — exists only to supply width=10
-  { min: 11,  max: 25,  rate: 20 },
-  { min: 26,  max: 50,  rate: 25 },
-  { min: 51,  max: 100, rate: 30 },
+  { min: 1, max: 10, rate: 0 }, // pre-threshold, never pays — exists only to supply width=10
+  { min: 11, max: 25, rate: 20 },
+  { min: 26, max: 50, rate: 25 },
+  { min: 51, max: 100, rate: 30 },
   { min: 101, max: 200, rate: 40 },
   { min: 201, max: 500, rate: 50 },
 ];
@@ -66,7 +86,9 @@ const computeCommission = (
     return {
       rate: INSTITUTE_UNCAPPED_RATE,
       commissionEarned: Math.round(
-        INSTITUTE_UNCAPPED_PRECEDING_WIDTH * amount * (INSTITUTE_UNCAPPED_RATE / 100),
+        INSTITUTE_UNCAPPED_PRECEDING_WIDTH *
+          amount *
+          (INSTITUTE_UNCAPPED_RATE / 100),
       ),
     };
   }
@@ -86,13 +108,21 @@ const computeCommission = (
   };
 };
 
-const generateUniqueReferralCode = async (): Promise<string> => {
+const generateUniqueReferralCode = async (
+  partnerType: "INDIVIDUAL" | "INSTITUTE" | "CORPORATE",
+): Promise<string> => {
+  const prefix = partnerType === "INDIVIDUAL" ? "IND" : "INS";
   for (let i = 0; i < 5; i++) {
-    const code = crypto.randomBytes(6).toString("hex").toUpperCase();
-    const existing = await prisma.partner.findUnique({ where: { referralCode: code } });
+    const code = `${prefix}${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
+    const existing = await prisma.partner.findUnique({
+      where: { referralCode: code },
+    });
     if (!existing) return code;
   }
-  throw new ApiError("Failed to generate a unique referral code", STATUS_CODES.SERVER_ERROR);
+  throw new ApiError(
+    "Failed to generate a unique referral code",
+    STATUS_CODES.SERVER_ERROR,
+  );
 };
 
 export class PartnerService {
@@ -118,6 +148,14 @@ export class PartnerService {
       profession: body.profession || null,
       linkedin: body.linkedin || null,
       website: body.website || null,
+      purpose: body.purpose,
+      aadharNumber: body.aadharNumber || null,
+      aadharFileUrl: body.aadharFileUrl || null,
+      panNumber: body.panNumber || null,
+      panFileUrl: body.panFileUrl || null,
+      bankAccountNumber: body.bankAccountNumber || null,
+      bankIfsc: body.bankIfsc || null,
+      bankProofFileUrl: body.bankProofFileUrl || null,
     };
 
     const partner = await prisma.partner.create({ data: { userId, ...data } });
@@ -132,74 +170,156 @@ export class PartnerService {
 
   async getMyReferrals(userId: string, take?: number, skip?: number) {
     const partner = await prisma.partner.findUnique({ where: { userId } });
-    if (!partner) throw new ApiError("Partner profile not found", STATUS_CODES.NOT_FOUND);
+    if (!partner)
+      throw new ApiError("Partner profile not found", STATUS_CODES.NOT_FOUND);
 
     const referrals = await prisma.partnerReferral.findMany({
       where: { partnerId: partner.id },
       include: {
-        referredUser: { select: { firstName: true, lastName: true, email: true } },
+        referredUser: {
+          select: { firstName: true, lastName: true, email: true },
+        },
       },
       orderBy: { createdAt: "desc" },
       ...(take !== undefined && { take }),
       ...(skip !== undefined && { skip }),
     });
-    const totalRecords = await prisma.partnerReferral.count({ where: { partnerId: partner.id } });
+    const totalRecords = await prisma.partnerReferral.count({
+      where: { partnerId: partner.id },
+    });
     return { referrals, totalRecords };
   }
 
   async claim(userId: string) {
     const partner = await prisma.partner.findUnique({ where: { userId } });
-    if (!partner) throw new ApiError("Partner profile not found", STATUS_CODES.NOT_FOUND);
+    if (!partner)
+      throw new ApiError("Partner profile not found", STATUS_CODES.NOT_FOUND);
     if (partner.status !== "APPROVED") {
-      throw new ApiError("Only approved partners can claim payouts", STATUS_CODES.FORBIDDEN);
+      throw new ApiError(
+        "Only approved partners can claim payouts",
+        STATUS_CODES.FORBIDDEN,
+      );
     }
     if (partner.walletBalance <= 0) {
-      throw new ApiError("No balance available to claim", STATUS_CODES.BAD_REQUEST);
+      throw new ApiError(
+        "No balance available to claim",
+        STATUS_CODES.BAD_REQUEST,
+      );
     }
 
     const amount = partner.walletBalance;
     const [claimRecord] = await prisma.$transaction([
       prisma.partnerClaim.create({ data: { partnerId: partner.id, amount } }),
-      prisma.partner.update({ where: { id: partner.id }, data: { walletBalance: 0 } }),
+      prisma.partner.update({
+        where: { id: partner.id },
+        data: { walletBalance: 0 },
+      }),
     ]);
 
     await sendPartnerClaimEmail(partner, amount);
     return claimRecord;
   }
 
-  // Called from the Direct2Hire payment-confirmation path. Non-throwing by
-  // contract with callers other than internal bugs — a referred user who was
-  // never actually referred (the overwhelming majority) is a cheap no-op.
-  async creditReferralIfEligible(userId: string, amount: number) {
+  // Called from the Direct2Hire payment-confirmation path. Does NOT credit
+  // anything yet — a refund is still possible within the enrollment's
+  // refund window, so this only schedules the referral to be picked up by
+  // the daily maturity sweep (processMaturedReferrals) 15 days from now.
+  // Idempotent: a referral already scheduled (eligibleAt set) is left alone,
+  // so repeat payment-confirm calls (e.g. admin re-clicking mark-paid) never
+  // reset the clock. Non-throwing by contract — an unreferred user (the
+  // overwhelming majority) is a cheap no-op.
+  async scheduleReferralCredit(
+    userId: string,
+    direct2hireEnrollmentId: string,
+    amount: number,
+  ) {
     const referral = await prisma.partnerReferral.findFirst({
-      where: { referredUserId: userId, creditedAt: null },
-      include: { partner: { select: { type: true } } },
+      where: { referredUserId: userId, creditedAt: null, eligibleAt: null },
     });
     if (!referral || amount <= 0) return;
 
-    const priorCreditedCount = await prisma.partnerReferral.count({
-      where: { partnerId: referral.partnerId, creditedAt: { not: null } },
+    await prisma.partnerReferral.update({
+      where: { id: referral.id },
+      data: {
+        direct2hireEnrollmentId,
+        pendingAmount: amount,
+        eligibleAt: getEligibleAt(),
+      },
     });
-    const { rate, commissionEarned } = computeCommission(
-      priorCreditedCount + 1,
-      referral.partner.type,
-      amount,
-    );
+  }
 
-    await prisma.$transaction([
-      prisma.partnerReferral.update({
-        where: { id: referral.id },
-        data: { creditedAt: new Date(), commissionRate: rate, commissionEarned },
-      }),
-      ...(commissionEarned > 0
-        ? [
-            prisma.partner.update({
-              where: { id: referral.partnerId },
-              data: { walletBalance: { increment: commissionEarned } },
-            }),
-          ]
-        : []),
-    ]);
+  // Daily sweep (see backend/src/jobs/partnerCommission.job.ts): finds every
+  // referral whose 15-day hold has elapsed and either credits it (enrollment
+  // still PAID) or permanently skips it (enrollment REFUNDED during the
+  // hold — the refund policy's own window closes at day 7, well before the
+  // 15-day hold ends, so a refund can no longer happen by the time this runs).
+  async processMaturedReferrals(): Promise<{
+    credited: number;
+    refunded: number;
+  }> {
+    const due = await prisma.partnerReferral.findMany({
+      where: {
+        creditedAt: null,
+        isRefunded: false,
+        eligibleAt: { lte: new Date() },
+      },
+      include: {
+        partner: { select: { id: true, type: true } },
+        direct2hireEnrollment: { select: { status: true } },
+      },
+    });
+
+    let credited = 0;
+    let refunded = 0;
+
+    // Sequential, not Promise.all — commission depends on the partner's
+    // running credited-count, so concurrent processing of two due referrals
+    // for the same partner could race and miscompute the tier.
+    for (const referral of due) {
+      if (referral.direct2hireEnrollment?.status === "REFUNDED") {
+        await prisma.partnerReferral.update({
+          where: { id: referral.id },
+          data: { isRefunded: true },
+        });
+        refunded++;
+        continue;
+      }
+
+      const priorCreditedCount = await prisma.partnerReferral.count({
+        where: {
+          partnerId: referral.partnerId,
+          creditedAt: { not: null },
+          isRefunded: false,
+        },
+      });
+      const { rate, commissionEarned } = computeCommission(
+        priorCreditedCount + 1,
+        referral.partner.type,
+        referral.pendingAmount ?? 0,
+      );
+
+      await prisma.$transaction([
+        prisma.partnerReferral.update({
+          where: { id: referral.id },
+          data: {
+            creditedAt: new Date(),
+            commissionRate: rate,
+            commissionEarned,
+          },
+        }),
+        ...(commissionEarned > 0
+          ? [
+              prisma.partner.update({
+                where: { id: referral.partnerId },
+                data: { walletBalance: { increment: commissionEarned } },
+              }),
+            ]
+          : []),
+      ]);
+      credited++;
+    }
+
+    return { credited, refunded };
   }
 }
 
@@ -212,7 +332,9 @@ export class AdminPartnerService {
     const partners = await prisma.partner.findMany({
       where,
       include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
       },
       orderBy: { createdAt: "desc" },
       ...(take !== undefined && { take }),
@@ -226,18 +348,22 @@ export class AdminPartnerService {
     const partner = await prisma.partner.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
         referrals: { orderBy: { createdAt: "desc" } },
         claims: { orderBy: { requestedAt: "desc" } },
       },
     });
-    if (!partner) throw new ApiError("Partner not found", STATUS_CODES.NOT_FOUND);
+    if (!partner)
+      throw new ApiError("Partner not found", STATUS_CODES.NOT_FOUND);
     return partner;
   }
 
-  async approve(id: string) {
+  async approve(id: string, note?: string) {
     const partner = await prisma.partner.findUnique({ where: { id } });
-    if (!partner) throw new ApiError("Partner not found", STATUS_CODES.NOT_FOUND);
+    if (!partner)
+      throw new ApiError("Partner not found", STATUS_CODES.NOT_FOUND);
     if (partner.type === "CORPORATE") {
       throw new ApiError(
         "Corporate applications do not get a referral dashboard",
@@ -245,19 +371,30 @@ export class AdminPartnerService {
       );
     }
 
-    const referralCode = partner.referralCode ?? (await generateUniqueReferralCode());
+    const referralCode =
+      partner.referralCode ?? (await generateUniqueReferralCode(partner.type));
     return prisma.partner.update({
       where: { id },
-      data: { status: "APPROVED", approvedAt: new Date(), referralCode },
+      data: {
+        status: "APPROVED",
+        approvedAt: new Date(),
+        referralCode,
+        reviewNote: note || null,
+      },
     });
   }
 
-  async reject(id: string) {
+  async reject(id: string, note?: string) {
     const partner = await prisma.partner.findUnique({ where: { id } });
-    if (!partner) throw new ApiError("Partner not found", STATUS_CODES.NOT_FOUND);
+    if (!partner)
+      throw new ApiError("Partner not found", STATUS_CODES.NOT_FOUND);
     return prisma.partner.update({
       where: { id },
-      data: { status: "REJECTED", rejectedAt: new Date() },
+      data: {
+        status: "REJECTED",
+        rejectedAt: new Date(),
+        reviewNote: note || null,
+      },
     });
   }
 
@@ -288,7 +425,9 @@ export class AdminPartnerService {
   }
 
   async markClaimPaid(claimId: string) {
-    const claim = await prisma.partnerClaim.findUnique({ where: { id: claimId } });
+    const claim = await prisma.partnerClaim.findUnique({
+      where: { id: claimId },
+    });
     if (!claim) throw new ApiError("Claim not found", STATUS_CODES.NOT_FOUND);
     return prisma.partnerClaim.update({
       where: { id: claimId },

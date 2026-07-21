@@ -15,6 +15,10 @@ router.patch(
     "/direct2hire/:enrollmentId/mark-paid",
     direct2hireController.markPaid,
 );
+router.patch(
+    "/direct2hire/:enrollmentId/mark-refunded",
+    direct2hireController.markRefunded,
+);
 router.get(
     "/direct2hire/students",
     direct2hireAdminController.getAllStudents,

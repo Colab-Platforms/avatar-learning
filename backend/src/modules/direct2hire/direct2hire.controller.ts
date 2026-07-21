@@ -149,3 +149,18 @@ export const markPaid = async (req: Request, res: Response): Promise<void> => {
     );
   }
 };
+
+export const markRefunded = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const enrollment = await service.markRefunded(param(req, "enrollmentId"));
+    sendResponse(res, true, enrollment, "Enrollment marked as refunded");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};

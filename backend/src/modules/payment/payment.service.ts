@@ -132,7 +132,7 @@ async function completePayment(params: {
       ) {
         await tx.direct2HireEnrollment.update({
           where: { id: order.direct2hireEnrollmentId },
-          data: { status: "PAID" },
+          data: { status: "PAID", paidAt: new Date() },
         });
 
         if (lead) {
@@ -154,12 +154,15 @@ async function completePayment(params: {
     });
 
     if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
-      // Grant course access + credit any referring partner. Best-effort — a
-      // hiccup here must never fail a payment that has already been captured.
+      // Grant course access + schedule any referring partner's commission
+      // (held for a refund-safety window, not credited yet — see
+      // partnerService.scheduleReferralCredit). Best-effort — a hiccup here
+      // must never fail a payment that has already been captured.
       try {
         await direct2hireService.grantCourseAccess(order.userId);
-        await partnerService.creditReferralIfEligible(
+        await partnerService.scheduleReferralCredit(
           order.userId,
+          order.direct2hireEnrollmentId,
           DIRECT2HIRE_COMMISSION_BASE_AMOUNT,
         );
       } catch (err) {
@@ -617,15 +620,29 @@ export class PaymentService {
       });
       if (!tx) return;
 
+      const order = await prisma.paymentOrder.findUnique({
+        where: { id: tx.paymentOrderId },
+      });
+      if (!order) return;
+
       await prisma.$transaction(async (db) => {
         await db.paymentTransaction.update({
           where: { id: tx.id },
           data: { status: "REFUNDED" },
         });
         await db.paymentOrder.update({
-          where: { id: tx.paymentOrderId },
+          where: { id: order.id },
           data: { status: "REFUNDED" },
         });
+        // Marks the enrollment refunded so the partner-commission maturity
+        // sweep (partnerService.processMaturedReferrals) permanently skips
+        // it instead of crediting the referring partner.
+        if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
+          await db.direct2HireEnrollment.update({
+            where: { id: order.direct2hireEnrollmentId },
+            data: { status: "REFUNDED" },
+          });
+        }
       });
     }
   }

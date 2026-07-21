@@ -48,6 +48,7 @@ export const COURSE_IMAGES_FOLDER = 'course-images';
 export const INVESTOR_DOCS_FOLDER = 'investor-documents';
 export const COURSE_FILES_FOLDER = 'course-files';
 export const D2H_INTERNSHIP_FOLDER = 'direct2hire-internships';
+export const PARTNER_KYC_FOLDER = 'partner-kyc';
 
 export const getCourseImageUploadSignature = () => {
     const timestamp = Math.round(Date.now() / 1000);
@@ -120,6 +121,23 @@ export const getCourseFileUploadSignature = () => {
 export const getD2HInternshipUploadSignature = () => {
     const timestamp = Math.round(Date.now() / 1000);
     const folder = D2H_INTERNSHIP_FOLDER;
+    const signature = cloudinary.utils.api_sign_request(
+        { timestamp, folder },
+        process.env.CLOUDINARY_API_SECRET!
+    );
+    return {
+        timestamp,
+        signature,
+        apiKey: process.env.CLOUDINARY_API_KEY!,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+        folder,
+    };
+};
+
+export const getPartnerKycUploadSignature = () => {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = PARTNER_KYC_FOLDER;
+    // Signed for resource_type 'auto' — Aadhar/PAN/bank proof come in as image or PDF scans
     const signature = cloudinary.utils.api_sign_request(
         { timestamp, folder },
         process.env.CLOUDINARY_API_SECRET!

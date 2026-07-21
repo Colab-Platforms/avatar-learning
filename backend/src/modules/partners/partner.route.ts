@@ -4,6 +4,7 @@ import * as partnerController from "./partner.controller.js";
 
 const router = Router();
 
+router.get("/kyc/upload/sign", auth("USER"), partnerController.signKycUpload);
 router.post("/apply", auth("USER"), partnerController.apply);
 router.get("/me", auth("USER"), partnerController.getMine);
 router.get("/me/referrals", auth("USER"), partnerController.getMyReferrals);

@@ -3,6 +3,7 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
+import { getPartnerKycUploadSignature } from "@/utils/cloudinary.js";
 import { PartnerService, AdminPartnerService } from "./partner.service.js";
 import { validateApplyPartner } from "./partner.validators.js";
 
@@ -12,6 +13,17 @@ const adminService = new AdminPartnerService();
 const param = (req: Request, key: string): string => String(req.params[key]);
 
 // ─── User ─────────────────────────────────────────────────────────────────────
+
+// Signed direct-upload params for KYC files (Aadhar/PAN/bank proof) — client
+// uploads straight to Cloudinary, same pattern as resume/investor docs.
+export const signKycUpload = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const signData = getPartnerKycUploadSignature();
+    sendResponse(res, true, signData, "Upload signature generated");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
 
 export const apply = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -82,7 +94,8 @@ export const adminGetById = async (req: Request, res: Response): Promise<void> =
 
 export const adminApprove = async (req: Request, res: Response): Promise<void> => {
   try {
-    const partner = await adminService.approve(param(req, "id"));
+    const note = typeof req.body?.note === "string" ? req.body.note.trim() : undefined;
+    const partner = await adminService.approve(param(req, "id"), note);
     sendResponse(res, true, partner, "Partner approved");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
@@ -91,7 +104,8 @@ export const adminApprove = async (req: Request, res: Response): Promise<void> =
 
 export const adminReject = async (req: Request, res: Response): Promise<void> => {
   try {
-    const partner = await adminService.reject(param(req, "id"));
+    const note = typeof req.body?.note === "string" ? req.body.note.trim() : undefined;
+    const partner = await adminService.reject(param(req, "id"), note);
     sendResponse(res, true, partner, "Partner rejected");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);

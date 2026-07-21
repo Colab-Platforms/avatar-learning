@@ -4,9 +4,9 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { partnerService } from "@/modules/partners/partner.service.js";
 import { D2HCourseSummary } from "./direct2hire.types.js";
 
-// Fixed commission base amount for partner referrals — flat ₹499 per Direct2Hire
+// Fixed commission base amount for partner referrals — flat ₹999 per Direct2Hire
 // payment, regardless of which D2H course the student actually enrolls in.
-export const DIRECT2HIRE_COMMISSION_BASE_AMOUNT = 499;
+export const DIRECT2HIRE_COMMISSION_BASE_AMOUNT = 999;
 
 export class Direct2HireService {
     async getOrCreateEnrollment(userId: string) {
@@ -91,20 +91,44 @@ export class Direct2HireService {
 
         const updated = await prisma.direct2HireEnrollment.update({
             where: { id: enrollmentId },
-            data: { status: "PAID" },
+            data: { status: "PAID", paidAt: enrollment.paidAt ?? new Date() },
         });
 
         await this.grantCourseAccess(enrollment.userId);
-        await this.creditPartnerCommission(enrollment.userId);
+        await this.scheduleCommission(enrollment.userId, enrollmentId);
 
         return updated;
     }
 
-    private async creditPartnerCommission(userId: string) {
+    async markRefunded(enrollmentId: string) {
+        const enrollment = await prisma.direct2HireEnrollment.findUnique({
+            where: { id: enrollmentId },
+        });
+        if (!enrollment)
+            throw new ApiError("Enrollment not found", STATUS_CODES.NOT_FOUND);
+        if (enrollment.status !== "PAID") {
+            throw new ApiError(
+                "Only a paid enrollment can be marked refunded",
+                STATUS_CODES.BAD_REQUEST,
+            );
+        }
+
+        return prisma.direct2HireEnrollment.update({
+            where: { id: enrollmentId },
+            data: { status: "REFUNDED" },
+        });
+    }
+
+    // Does not credit the partner yet — see partnerService.scheduleReferralCredit.
+    private async scheduleCommission(userId: string, enrollmentId: string) {
         try {
-            await partnerService.creditReferralIfEligible(userId, DIRECT2HIRE_COMMISSION_BASE_AMOUNT);
+            await partnerService.scheduleReferralCredit(
+                userId,
+                enrollmentId,
+                DIRECT2HIRE_COMMISSION_BASE_AMOUNT,
+            );
         } catch (err) {
-            console.error("[Partners] Failed to credit referral commission:", err);
+            console.error("[Partners] Failed to schedule referral commission:", err);
         }
     }
 
@@ -145,10 +169,10 @@ export class Direct2HireService {
         if (enrollment.status !== "PAID") {
             await prisma.direct2HireEnrollment.update({
                 where: { id: enrollment.id },
-                data: { status: "PAID" },
+                data: { status: "PAID", paidAt: enrollment.paidAt ?? new Date() },
             });
             await this.grantCourseAccess(userId);
-            await this.creditPartnerCommission(userId);
+            await this.scheduleCommission(userId, enrollment.id);
         }
 
         await prisma.direct2HireLead.updateMany({
