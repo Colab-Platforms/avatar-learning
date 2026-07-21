@@ -493,19 +493,41 @@
 
 /* ── Avatar breathe ── */
 @keyframes avatarBreathe {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.15); }
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
+
 .chatbot-avatar-breathe {
   animation: avatarBreathe 3s ease-in-out infinite;
 }
 
 /* ── Avatar pulse ring ── */
 @keyframes avatarRing {
-  0% { transform: scale(1); opacity: 0.5; }
-  70% { transform: scale(1.55); opacity: 0; }
-  100% { transform: scale(1.55); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+
+  70% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
 }
+
 .chatbot-avatar-ring {
   position: absolute;
   inset: 0;
@@ -530,11 +552,13 @@
   transition: background 0.2s, border-color 0.2s, transform 0.15s;
   white-space: nowrap;
 }
+
 .chatbot-chip:hover {
   background: var(--color-brand-100);
   border-color: var(--color-brand-300);
   transform: translateY(-1px);
 }
+
 .chatbot-chip:active {
   transform: scale(0.97);
 }
@@ -545,27 +569,33 @@
   font-size: 13.5px;
   line-height: 1.7;
 }
+
 .chatbot-markdown p:last-child {
   margin-bottom: 0;
 }
+
 .chatbot-markdown strong {
   font-weight: 600;
   color: var(--color-brand-600);
 }
+
 .chatbot-markdown em {
   color: var(--color-text-muted);
 }
+
 .chatbot-markdown ul,
 .chatbot-markdown ol {
   padding-left: 1.2rem;
   margin: 0.4em 0;
 }
+
 .chatbot-markdown li {
   font-size: 13.5px;
   line-height: 1.65;
   color: var(--color-text-muted);
   margin-bottom: 0.2em;
 }
+
 .chatbot-markdown h1,
 .chatbot-markdown h2,
 .chatbot-markdown h3 {
@@ -574,6 +604,7 @@
   color: var(--color-brand-500);
   margin: 0.5em 0 0.25em;
 }
+
 .chatbot-markdown code {
   font-size: 12px;
   padding: 0.15em 0.45em;
@@ -582,6 +613,7 @@
   color: var(--color-brand-600);
   font-family: ui-monospace, monospace;
 }
+
 .chatbot-markdown pre {
   margin: 0.5em 0;
   padding: 0.75rem 1rem;
@@ -590,6 +622,7 @@
   border: 1px solid var(--color-border);
   overflow-x: auto;
 }
+
 .chatbot-markdown pre code {
   background: transparent;
   padding: 0;
@@ -1017,6 +1050,8 @@
   }
 
   @keyframes chatbot-cursor-blink {
-    to { opacity: 0; }
+    to {
+      opacity: 0;
+    }
   }
 }

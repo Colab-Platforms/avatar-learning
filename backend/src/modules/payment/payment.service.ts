@@ -21,7 +21,7 @@ import type {
   Direct2HireLeadInput,
 } from "./payment.types.js";
 
-const DIRECT2HIRE_PRICE_RUPEES = 499;
+const DIRECT2HIRE_PRICE_RUPEES = 999;
 
 interface OrderContext {
   productType: "COURSE" | "DIRECT2HIRE";

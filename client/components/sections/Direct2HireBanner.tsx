@@ -109,7 +109,7 @@ const STATS = [
   },
   {
     icon: Building2,
-    value: "20+",
+    value: "50+",
     label: "Corporate Partners",
     subtext: "Top-tier companies actively hiring",
     badge: "Exclusive Access",

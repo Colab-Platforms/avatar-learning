@@ -46,7 +46,7 @@ export function CyclingText({ words, style, className, cursorClassName }: Cyclin
   const currentWord = words[wordIndex] ?? "";
 
   return (
-    <span className="inline-flex items-baseline">
+    <span className="inline-flex items-baseline whitespace-nowrap">
       <span style={style} className={className}>
         {currentWord.slice(0, subIndex)}
       </span>

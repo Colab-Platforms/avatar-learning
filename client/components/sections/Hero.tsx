@@ -69,14 +69,14 @@ export function Hero() {
               <br />
               to Clarity.
               <br />
-              <span className="inline-flex items-baseline flex-wrap">
+              <span className="inline-flex items-baseline whitespace-nowrap text-[1.35rem] min-[390px]:text-[1.65rem] sm:text-[2.25rem] md:text-[2.65rem] lg:text-[2.4rem] xl:text-[3.15rem]">
                 <span style={HERO_GRADIENT_STYLE}>Get&nbsp;</span>
                 <CyclingText
                   words={[
-                    "Counseling",
-                    "AI Learning",
-                    "Internship",
-                    "Placement",
+                    "AI Career Counseling",
+                    "AI Skill Development",
+                    "AI Internships",
+                    "AI Placement Support",
                   ]}
                   style={HERO_GRADIENT_STYLE}
                 />

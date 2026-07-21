@@ -41,9 +41,9 @@ const TIMELINE_STEPS: TimelineStep[] = [
   },
   {
     id: 4,
-    title: "Earn Your Certificate",
-    description: "Successfully complete and get certified",
-    icon: <Award className="h-6 w-6" />,
+    title: "Project Submission & Validation",
+    description: "Submit projects and verify outcomes",
+    icon: <Shield className="h-6 w-6" />,
   },
   {
     id: 5,
@@ -53,9 +53,9 @@ const TIMELINE_STEPS: TimelineStep[] = [
   },
   {
     id: 6,
-    title: "Project Submission & Validation",
-    description: "Submit projects and verify outcomes",
-    icon: <Shield className="h-6 w-6" />,
+    title: "Earn Your Certificate",
+    description: "Successfully complete and get certified",
+    icon: <Award className="h-6 w-6" />,
   },
 ];
 

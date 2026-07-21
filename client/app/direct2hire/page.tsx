@@ -25,6 +25,7 @@ import {
   Users,
   Award,
   Calculator,
+  Flame,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
+import { UrgencyBanner } from "./UrgencyBanner";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
@@ -43,7 +45,7 @@ import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 const STATS = [
   { value: "10,000+", label: "Students Got Their Dream Job" },
   { value: "96.3%", label: "Placement Rate" },
-  { value: "20+", label: "Corporates Listed as Placement Partners" },
+  { value: "50+", label: "Corporates Listed as Placement Partners" },
 ];
 
 const WHO_FOR = [
@@ -76,7 +78,7 @@ const JOURNEY_STEPS = [
   {
     num: "01",
     icon: BrainCircuit,
-    title: "AI-Powered Assessment",
+    title: "AI-Powered Quiz",
     desc: "Complete a short questionnaire in your dashboard and receive an AI-powered course recommendation tailored to your goals, interests, and personality.",
   },
   {
@@ -162,7 +164,7 @@ const VALUE_STACK = [
   { icon: Users, label: "Career Counseling Session", price: "₹2000/-" },
   {
     icon: BrainCircuit,
-    label: "AI Powered Assessment + Feedback",
+    label: "AI Powered Quiz + Feedback",
     price: "₹2000/-",
   },
   {
@@ -184,7 +186,7 @@ const DIFFERENTIATORS = [
   {
     icon: BadgePercent,
     title: "Affordable & Transparent",
-    desc: "Most platforms charge ₹2,000–₹15,000 for similar sessions. We deliver real clarity and a complete roadmap at just ₹499 with no hidden costs.",
+    desc: "Most platforms charge ₹2,000–₹15,000 for similar sessions. We deliver real clarity and a complete roadmap at just ₹999 with no hidden costs.",
   },
   {
     icon: Map,
@@ -200,15 +202,15 @@ const DIFFERENTIATORS = [
 
 const FAQS = [
   {
-    q: "Is the ₹499 session the entire Direct2Hire program?",
+    q: "Is the ₹999 session the entire Direct2Hire program?",
     a: "It covers your first steps in Direct2Hire — an AI assessment with a personalized course recommendation, plus a 1-on-1 counseling session. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step journey.",
   },
   {
     q: "Am I locked into the full program after the session?",
-    a: "No. The ₹499 session stands on its own — you walk away with real clarity and a roadmap either way. Continuing to the AI program, internship, and placement is entirely optional and depends on fit.",
+    a: "No. The ₹999 session stands on its own — you walk away with real clarity and a roadmap either way. Continuing to the AI program, internship, and placement is entirely optional and depends on fit.",
   },
   {
-    q: "Is ₹499 really enough for proper guidance?",
+    q: "Is ₹999 really enough for proper guidance?",
     a: "Yes. You get an AI-powered assessment with a course recommendation, a 30-minute 1-on-1 counseling consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
   },
   {
@@ -249,7 +251,7 @@ export default function Direct2HirePage() {
     ? "Processing Payment…"
     : enrolled
       ? "Enrolled ✓"
-      : "Enroll Now for ₹499";
+      : "Enroll Now for ₹999";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -289,7 +291,7 @@ export default function Direct2HirePage() {
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     </span>
-                    Only a few slots left for this month
+                    Admissions Open • 96% Discount Active
                   </span>
                   <h1 className="h-display text-text mb-3 sm:mb-6">
                     Become AI Job Ready in{" "}
@@ -310,7 +312,7 @@ export default function Direct2HirePage() {
                       ₹24,999
                     </span>{" "}
                     <span className="text-brand-600 font-bold text-xl">
-                      ₹499/-
+                      ₹999/-
                     </span>
                   </p>
                 </ScrollReveal>
@@ -338,6 +340,7 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={150}>
+                  <UrgencyBanner />
                   <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
                     <Link
                       href={enrolled ? "/dashboard" : "/direct2hire/enroll"}
@@ -855,31 +858,18 @@ export default function Direct2HirePage() {
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                     The Full Direct2Hire Journey{" "}
                     <span className="text-gradient-brand">
-                      Starts at ₹499/-
+                      Starts at ₹999/-
                     </span>
                   </h2>
                   <p className="mt-3 text-text-muted max-w-xl">
                     AI assessment, counseling, AI skilling, internship, and
                     placement — real value worth{" "}
                     <span className="line-through text-text-subtle">
-                      ₹12,995
+                      ₹24,999
                     </span>
                     , now available at a fraction of the cost.
                   </p>
                 </div>
-                <Link
-                  href="/direct2hire/enroll"
-                  className="w-full sm:w-fit shrink-0"
-                >
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="w-full sm:w-fit"
-                  >
-                    Get Your Career Plan For ₹499/-{" "}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
               </div>
             </ScrollReveal>
 
@@ -916,15 +906,15 @@ export default function Direct2HirePage() {
                     You Pay Only
                   </p>
                   <p className="relative text-4xl sm:text-6xl font-black text-gradient-brand">
-                    ₹499/-
+                    ₹999/-
                   </p>
                   <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
                     <IndianRupee className="h-3 w-3 shrink-0" />
-                    Save ₹24,500 (98% OFF)
+                    Save ₹24,000 (96% OFF)
                   </span>
                   <Link
                     href="/direct2hire/enroll"
-                    className="relative mt-6 sm:mt-7 w-full sm:w-fit"
+                    className="relative mt-3 w-full sm:w-fit"
                   >
                     <Button variant="primary" size="md" className="w-full">
                       Book Your Seat <ArrowRight className="h-4 w-4 shrink-0" />
@@ -1044,24 +1034,29 @@ export default function Direct2HirePage() {
                   Ready to take control{" "}
                   <span className="text-gradient-brand">of your future?</span>
                 </h2>
-                <p className="relative text-text-muted max-w-lg mx-auto mb-5 sm:mb-8 text-[15px]">
+                <p className="relative text-text-muted max-w-lg mx-auto mb-4 sm:mb-6 text-[15px]">
                   One 30-minute session can save you years of confusion and
                   lakhs of rupees. Get clear direction, a personalized roadmap,
-                  and expert support — starting at just ₹499.
+                  and expert support — starting at just ₹999.
                 </p>
-                <div className="relative flex flex-wrap justify-center gap-3">
-                  <Link href="/direct2hire/enroll" className="w-full sm:w-auto">
-                    <Button
-                      variant="primary"
-                      size="lg"
+                <div className="relative flex flex-col items-center">
+                  <div className="flex flex-wrap justify-center gap-3 w-full sm:w-auto">
+                    <Link
+                      href="/direct2hire/enroll"
                       className="w-full sm:w-auto"
                     >
-                      Book Your Seats Now <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-full sm:w-auto"
+                      >
+                        Book Your Seats Now <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
                 <p className="relative mt-5 text-[12px] text-text-subtle">
-                  30-minute call • Limited slots this month
+                  30-minute call • Limited time offer
                 </p>
               </div>
             </ScrollReveal>

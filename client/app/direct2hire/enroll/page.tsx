@@ -96,7 +96,7 @@ export default function Direct2HireEnrollPage() {
             Enroll in Direct2Hire
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Fill in your details, then complete a one-time payment of ₹499 to
+            Fill in your details, then complete a one-time payment of ₹999 to
             unlock your Direct2Hire dashboard.
           </p>
         </div>
@@ -241,7 +241,7 @@ export default function Direct2HireEnrollPage() {
               <div className="flex-1">
                 <h2 className="text-lg font-bold text-slate-800">Payment</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Complete your enrollment with a one-time payment of ₹499.
+                  Complete your enrollment with a one-time payment of ₹999.
                 </p>
               </div>
             </div>
@@ -257,7 +257,7 @@ export default function Direct2HireEnrollPage() {
                   Processing Payment…
                 </>
               ) : (
-                <>Pay ₹499 &amp; Continue</>
+                <>Pay ₹999 &amp; Continue</>
               )}
             </button>
 
