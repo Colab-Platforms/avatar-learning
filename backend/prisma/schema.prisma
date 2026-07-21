@@ -54,6 +54,7 @@ enum ApplicationStatus {
 enum Direct2HireStatus {
   PENDING
   PAID
+  REFUNDED
 }
 
 enum PaymentOrderStatus {
@@ -603,11 +604,14 @@ model Direct2HireEnrollment {
   userId String            @map("user_id")
   status Direct2HireStatus @default(PENDING)
 
+  paidAt DateTime? @map("paid_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  paymentOrders PaymentOrder[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentOrders   PaymentOrder[]
+  partnerReferral PartnerReferral?
 
   @@index([userId])
   @@map("direct2hire_enrollments")
@@ -668,9 +672,24 @@ model Partner {
   profession String? // individual only — current role/profession
   linkedin   String? // individual only — optional LinkedIn profile URL
   website    String? // corporate only — optional company website
+  purpose    String? // why they want to partner
+
+  // KYC onboarding — required for INDIVIDUAL/INSTITUTE before admin review,
+  // never collected for CORPORATE (no wallet/payout for that type).
+  aadharNumber      String? @map("aadhar_number")
+  aadharFileUrl     String? @map("aadhar_file_url")
+  panNumber         String? @map("pan_number")
+  panFileUrl        String? @map("pan_file_url")
+  bankAccountNumber String? @map("bank_account_number")
+  bankIfsc          String? @map("bank_ifsc")
+  bankProofFileUrl  String? @map("bank_proof_file_url") // passbook or cancelled cheque
 
   referralCode  String? @unique @map("referral_code")
   walletBalance Int     @default(0) @map("wallet_balance")
+
+  // Admin's note on the approve/reject decision — shown back to the
+  // applicant (e.g. why a rejection happened) so they know what to fix.
+  reviewNote String? @map("review_note")
 
   approvedAt DateTime? @map("approved_at")
   rejectedAt DateTime? @map("rejected_at")
@@ -690,17 +709,27 @@ model PartnerReferral {
   partnerId String @map("partner_id")
 
   referredUserId          String    @unique @map("referred_user_id")
-  direct2hireEnrollmentId String?   @map("direct2hire_enrollment_id")
+  direct2hireEnrollmentId String?   @unique @map("direct2hire_enrollment_id")
   commissionEarned        Int       @default(0) @map("commission_earned")
   commissionRate          Int?      @map("commission_rate")
   creditedAt              DateTime? @map("credited_at")
 
+  // Refund-safety window: commission is scheduled (not credited) at payment
+  // time, and only actually paid out 10 days later by a cron sweep — by
+  // then the enrollment's refund window (see Direct2HireEnrollment) has
+  // closed, so a refunded student never generates a payout.
+  eligibleAt    DateTime? @map("eligible_at")
+  pendingAmount Int?      @map("pending_amount")
+  isRefunded    Boolean   @default(false) @map("is_refunded")
+
   createdAt DateTime @default(now()) @map("created_at")
 
-  partner      Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  referredUser User    @relation(fields: [referredUserId], references: [id], onDelete: Cascade)
+  partner               Partner                @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  referredUser          User                   @relation(fields: [referredUserId], references: [id], onDelete: Cascade)
+  direct2hireEnrollment Direct2HireEnrollment? @relation(fields: [direct2hireEnrollmentId], references: [id])
 
   @@index([partnerId])
+  @@index([eligibleAt])
   @@map("partner_referrals")
 }
 

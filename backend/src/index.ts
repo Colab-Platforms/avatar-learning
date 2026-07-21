@@ -7,6 +7,8 @@ import helmet from "helmet";
 import sanitizeMiddleware from "./middlewares/sanitize.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 import compression from "compression";
+import { startSessionCleanupJob } from "./jobs/sessionCleanup.job.js";
+import { startPartnerCommissionJob } from "./jobs/partnerCommission.job.js";
 const app = express();
 dotenv.config();
 
@@ -63,4 +65,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  startSessionCleanupJob();
+  startPartnerCommissionJob();
 });
