@@ -389,6 +389,15 @@ export interface AdminPartner {
   profession: string | null;
   linkedin: string | null;
   website: string | null;
+  purpose: string | null;
+  aadharNumber: string | null;
+  aadharFileUrl: string | null;
+  panNumber: string | null;
+  panFileUrl: string | null;
+  bankAccountNumber: string | null;
+  bankIfsc: string | null;
+  bankProofFileUrl: string | null;
+  reviewNote: string | null;
   referralCode: string | null;
   walletBalance: number;
   createdAt: string;
@@ -448,11 +457,11 @@ export const fetchPartnerApplications = (
 export const fetchPartnerDetail = (id: string): Promise<AdminPartnerDetail> =>
   apiClient.get(`/admin/partners/${id}`).then((r) => r.data.data);
 
-export const approvePartner = (id: string): Promise<AdminPartner> =>
-  apiClient.patch(`/admin/partners/${id}/approve`).then((r) => r.data.data);
+export const approvePartner = (id: string, note?: string): Promise<AdminPartner> =>
+  apiClient.patch(`/admin/partners/${id}/approve`, { note }).then((r) => r.data.data);
 
-export const rejectPartner = (id: string): Promise<AdminPartner> =>
-  apiClient.patch(`/admin/partners/${id}/reject`).then((r) => r.data.data);
+export const rejectPartner = (id: string, note?: string): Promise<AdminPartner> =>
+  apiClient.patch(`/admin/partners/${id}/reject`, { note }).then((r) => r.data.data);
 
 export const fetchPartnerClaims = (
   page: number = 1,
@@ -475,7 +484,8 @@ export const markClaimPaid = (claimId: string): Promise<AdminPartnerClaim> =>
 export interface AdminD2HEnrollment {
   id: string;
   userId: string;
-  status: "PENDING" | "PAID";
+  status: "PENDING" | "PAID" | "REFUNDED";
+  paidAt: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -498,6 +508,14 @@ export const fetchD2HEnrollmentsPaginated = (
 export const markD2HPaid = (enrollmentId: string) =>
   apiClient
     .patch(`/admin/direct2hire/${enrollmentId}/mark-paid`)
+    .then((r) => r.data.data);
+
+// Within the 10-day refund-safety window, this also stops the referring
+// partner's scheduled commission from ever crediting (see backend
+// partnerService.processMaturedReferrals).
+export const markD2HRefunded = (enrollmentId: string) =>
+  apiClient
+    .patch(`/admin/direct2hire/${enrollmentId}/mark-refunded`)
     .then((r) => r.data.data);
 
 // ─── Direct2Hire Student Profiles (read-only) ─────────────────────────────────

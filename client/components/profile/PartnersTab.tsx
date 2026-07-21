@@ -46,6 +46,12 @@ export function PartnersTab() {
           <p className="text-[13px] text-text-subtle max-w-sm mx-auto leading-relaxed">
             {STATUS_COPY[partner.status].body}
           </p>
+          {partner.status === "REJECTED" && partner.reviewNote && (
+            <p className="text-[13px] text-text-muted bg-surface-alt border border-border rounded-lg px-4 py-2.5 max-w-sm mx-auto text-left">
+              <span className="font-semibold text-text">Reason: </span>
+              {partner.reviewNote}
+            </p>
+          )}
           {partner.status === "REJECTED" && (
             <Link href="/partners" className="mt-4 inline-block text-[13px] text-brand-600 hover:text-brand-700 transition-colors">
               Apply Again →

@@ -734,7 +734,7 @@ export default function Direct2HirePage() {
             <ScrollReveal animation="fade-up" className="mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 What You Get in the{" "}
-                <span className="text-gradient-brand">₹499</span>
+                <span className="text-gradient-brand">₹999</span>
               </h2>
             </ScrollReveal>
 

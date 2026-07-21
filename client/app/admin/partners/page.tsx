@@ -25,14 +25,52 @@ const DETAIL_FIELDS: { key: keyof AdminPartnerDetail; label: string }[] = [
   { key: "profession", label: "Profession" },
   { key: "linkedin", label: "LinkedIn" },
   { key: "website", label: "Website" },
+  { key: "purpose", label: "Purpose of Partnership" },
+  { key: "aadharNumber", label: "Aadhar Number" },
+  { key: "panNumber", label: "PAN Number" },
+  { key: "bankAccountNumber", label: "Bank Account Number" },
+  { key: "bankIfsc", label: "IFSC Code" },
 ];
 
-function PartnerDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
+const KYC_DOCS: { key: "aadharFileUrl" | "panFileUrl" | "bankProofFileUrl"; label: string }[] = [
+  { key: "aadharFileUrl", label: "Aadhar Card" },
+  { key: "panFileUrl", label: "PAN Card" },
+  { key: "bankProofFileUrl", label: "Passbook / Cancelled Cheque" },
+];
+
+function PartnerDetailModal({
+  id,
+  onClose,
+  onApprove,
+  onReject,
+}: {
+  id: string;
+  onClose: () => void;
+  onApprove: (id: string, note: string) => Promise<void>;
+  onReject: (id: string, note: string) => Promise<void>;
+}) {
   const [detail, setDetail] = useState<AdminPartnerDetail | null>(null);
+  const [note, setNote] = useState("");
+  const [acting, setActing] = useState<"approve" | "reject" | null>(null);
+  const [actionErr, setActionErr] = useState("");
 
   useEffect(() => {
     fetchPartnerDetail(id).then(setDetail).catch(() => setDetail(null));
   }, [id]);
+
+  const runAction = async (kind: "approve" | "reject") => {
+    setActionErr("");
+    setActing(kind);
+    try {
+      if (kind === "approve") await onApprove(id, note);
+      else await onReject(id, note);
+      onClose();
+    } catch (err: any) {
+      setActionErr(err?.response?.data?.message ?? `Failed to ${kind} partner.`);
+    } finally {
+      setActing(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
@@ -75,6 +113,30 @@ function PartnerDetailModal({ id, onClose }: { id: string; onClose: () => void }
               })}
             </div>
 
+            {KYC_DOCS.some((d) => detail[d.key]) && (
+              <>
+                <div className="h-px bg-white/10" />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-2">
+                    KYC Documents
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {KYC_DOCS.filter((d) => detail[d.key]).map((d) => (
+                      <a
+                        key={d.key}
+                        href={detail[d.key] as string}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-500/30 bg-brand-500/8 text-xs font-medium text-brand-300 hover:bg-brand-500/15 transition-colors"
+                      >
+                        {d.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="h-px bg-white/10" />
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -114,6 +176,69 @@ function PartnerDetailModal({ id, onClose }: { id: string; onClose: () => void }
                         </span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {detail.status !== "PENDING" && detail.reviewNote && (
+              <>
+                <div className="h-px bg-white/10" />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-1">
+                    Admin Feedback
+                  </p>
+                  <p className="text-sm text-white/85 wrap-break-word">{detail.reviewNote}</p>
+                </div>
+              </>
+            )}
+
+            {detail.status === "PENDING" && (
+              <>
+                <div className="h-px bg-white/10" />
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-1.5">
+                      Feedback (shown to applicant, required for rejection)
+                    </p>
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      rows={3}
+                      placeholder="e.g. Aadhar document is blurry, please re-upload"
+                      className="w-full rounded-lg border border-white/10 bg-ink-950 px-3 py-2 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-brand-500/50 resize-none"
+                    />
+                  </div>
+
+                  {actionErr && (
+                    <p className="text-xs text-red-400">{actionErr}</p>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    {detail.type !== "CORPORATE" && (
+                      <button
+                        onClick={() => runAction("approve")}
+                        disabled={acting !== null}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50 transition-colors"
+                      >
+                        {acting === "approve" ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        Approve
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (!note.trim()) {
+                          setActionErr("Please add feedback explaining the rejection.");
+                          return;
+                        }
+                        runAction("reject");
+                      }}
+                      disabled={acting !== null}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 bg-red-500/8 text-xs font-semibold text-red-300 hover:bg-red-500/15 disabled:opacity-50 transition-colors"
+                    >
+                      {acting === "reject" ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                      Reject
+                    </button>
                   </div>
                 </div>
               </>
@@ -176,28 +301,14 @@ export default function AdminPartnersPage() {
     else loadClaims();
   }, [tab, loadApplications, loadClaims]);
 
-  const handleApprove = async (id: string) => {
-    setActingId(id);
-    try {
-      const updated = await approvePartner(id);
-      setPartners((prev) => prev.map((p) => (p.id === id ? updated : p)));
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? "Failed to approve partner.");
-    } finally {
-      setActingId(null);
-    }
+  const handleApprove = async (id: string, note: string) => {
+    const updated = await approvePartner(id, note);
+    setPartners((prev) => prev.map((p) => (p.id === id ? updated : p)));
   };
 
-  const handleReject = async (id: string) => {
-    setActingId(id);
-    try {
-      const updated = await rejectPartner(id);
-      setPartners((prev) => prev.map((p) => (p.id === id ? updated : p)));
-    } catch {
-      setError("Failed to reject partner.");
-    } finally {
-      setActingId(null);
-    }
+  const handleReject = async (id: string, note: string) => {
+    const updated = await rejectPartner(id, note);
+    setPartners((prev) => prev.map((p) => (p.id === id ? updated : p)));
   };
 
   const handleMarkPaid = async (claimId: string) => {
@@ -308,35 +419,12 @@ export default function AdminPartnersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setViewId(p.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-white/10 bg-white/5 text-xs font-medium text-white/60 hover:bg-white/10 transition-colors"
-                        >
-                          <Eye size={12} /> View
-                        </button>
-                        {p.status === "PENDING" && (
-                          <>
-                            {p.type !== "CORPORATE" && (
-                              <button
-                                onClick={() => handleApprove(p.id)}
-                                disabled={actingId === p.id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/8 text-xs font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50 transition-colors"
-                              >
-                                {actingId === p.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                                Approve
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleReject(p.id)}
-                              disabled={actingId === p.id}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-500/30 bg-red-500/8 text-xs font-medium text-red-300 hover:bg-red-500/15 disabled:opacity-50 transition-colors"
-                            >
-                              <X size={12} /> Reject
-                            </button>
-                          </>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => setViewId(p.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-white/10 bg-white/5 text-xs font-medium text-white/60 hover:bg-white/10 transition-colors"
+                      >
+                        <Eye size={12} /> {p.status === "PENDING" ? "Review" : "View"}
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -407,7 +495,14 @@ export default function AdminPartnersPage() {
         </div>
       )}
 
-      {viewId && <PartnerDetailModal id={viewId} onClose={() => setViewId(null)} />}
+      {viewId && (
+        <PartnerDetailModal
+          id={viewId}
+          onClose={() => setViewId(null)}
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
+      )}
     </div>
   );
 }

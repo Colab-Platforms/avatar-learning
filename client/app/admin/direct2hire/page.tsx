@@ -6,6 +6,7 @@ import { Users, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   fetchD2HEnrollmentsPaginated,
   markD2HPaid,
+  markD2HRefunded,
   type AdminD2HEnrollment,
 } from "@/lib/adminApi";
 import type { PaginatedResponse } from "@/lib/coursesApi";
@@ -52,6 +53,18 @@ export default function AdminDirect2HirePage() {
       await load();
     } catch {
       setError("Failed to mark enrollment as paid.");
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  const handleMarkRefunded = async (id: string) => {
+    setMarkingId(id);
+    try {
+      await markD2HRefunded(id);
+      await load();
+    } catch {
+      setError("Failed to mark enrollment as refunded.");
     } finally {
       setMarkingId(null);
     }
@@ -118,7 +131,9 @@ export default function AdminDirect2HirePage() {
                   className={`col-span-4 sm:col-span-2 text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${
                     e.status === "PAID"
                       ? "bg-brand-500/10 text-brand-400"
-                      : "bg-white/5 text-white/30"
+                      : e.status === "REFUNDED"
+                        ? "bg-red-500/10 text-red-400"
+                        : "bg-white/5 text-white/30"
                   }`}
                 >
                   {e.status}
@@ -134,19 +149,34 @@ export default function AdminDirect2HirePage() {
                   </Link>
                   <button
                     onClick={() => handleMarkPaid(e.id)}
-                    disabled={e.status === "PAID" || markingId === e.id}
+                    disabled={e.status !== "PENDING" || markingId === e.id}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
                                bg-brand-500 text-ink-950 hover:bg-brand-400 transition-colors
                                disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {markingId === e.id ? (
                       <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
-                    ) : e.status === "PAID" ? (
-                      "Paid"
-                    ) : (
+                    ) : e.status === "PENDING" ? (
                       "Mark Paid"
+                    ) : (
+                      e.status.charAt(0) + e.status.slice(1).toLowerCase()
                     )}
                   </button>
+                  {e.status === "PAID" && (
+                    <button
+                      onClick={() => handleMarkRefunded(e.id)}
+                      disabled={markingId === e.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                                 border border-red-500/30 text-red-300 hover:bg-red-500/10 transition-colors
+                                 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {markingId === e.id ? (
+                        <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        "Mark Refunded"
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

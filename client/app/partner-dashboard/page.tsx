@@ -34,9 +34,9 @@ import {
    individually. The referral that CROSSES INTO a new tier (#11, #26, #51,
    #101, #201, #501) pays a lump sum sized by the width of the tier just
    completed, at the new tier's rate — every other referral in between pays
-   ₹0 on its own. Past #501 (no next threshold to wait for) it's flat ₹299
+   ₹0 on its own. Past #501 (no next threshold to wait for) it's flat ₹599
    per referral. */
-const D2H_AMOUNT = 499;
+const D2H_AMOUNT = 999;
 const INSTITUTE_TIERS = [
   { min: 1,   max: 10,  rate: 0 },
   { min: 11,  max: 25,  rate: 20 },
@@ -82,7 +82,7 @@ const getNextMilestone = (credited: number) => {
 const FAQS = [
   {
     q: "How are referral bonuses calculated?",
-    a: "Individual partners earn a flat 10% on every referral, credited instantly. Institute partners earn milestone bonuses instead — referrals 1–10 don't pay individually, then hitting referral #11, #26, #51, #101, #201, or #501 each unlocks one lump-sum bonus covering that whole range. Referrals in between pay ₹0 on their own. Past referral #500, it switches to a flat ₹299 per referral.",
+    a: "Individual partners earn a flat 10% on every referral, credited instantly. Institute partners earn milestone bonuses instead — referrals 1–10 don't pay individually, then hitting referral #11, #26, #51, #101, #201, or #501 each unlocks one lump-sum bonus covering that whole range. Referrals in between pay ₹0 on their own. Past referral #500, it switches to a flat ₹599 per referral.",
   },
   {
     q: "When can I request a withdrawal?",
@@ -99,14 +99,6 @@ const FAQS = [
 ];
 
 /* ─── helpers ────────────────────────────────────────────────────────── */
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function formatCurrency(n: number) {
   return `₹${n.toLocaleString("en-IN")}`;
 }
@@ -281,6 +273,12 @@ export default function PartnerDashboardPage() {
                 <p className="text-[14px] text-text-muted">
                   Your last application wasn&apos;t approved. You&apos;re welcome to apply again with updated details.
                 </p>
+                {partner.reviewNote && (
+                  <p className="text-[13px] text-text-muted bg-surface-alt border border-border rounded-lg px-4 py-2.5 text-left">
+                    <span className="font-semibold text-text">Reason: </span>
+                    {partner.reviewNote}
+                  </p>
+                )}
                 <Link
                   href="/partners"
                   className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-white px-5 py-2.5 rounded-xl"
@@ -317,8 +315,6 @@ export default function PartnerDashboardPage() {
   const nextMilestone = partner.type === "INSTITUTE" ? getNextMilestone(creditedCount) : null;
   const conversionPct =
     total > 0 ? Math.round((creditedCount / total) * 100) : 0;
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
@@ -561,102 +557,6 @@ export default function PartnerDashboardPage() {
               </div>
 
             </div>
-          </div>
-
-          {/* ── Referrals table ── */}
-          <div className="rounded-2xl border border-border bg-white overflow-hidden">
-            <div className="px-6 py-5 border-b border-border flex items-center justify-between">
-              <div>
-                <p className="text-[15px] font-semibold text-text">Your Referrals</p>
-                <p className="text-[13px] text-text-muted mt-0.5">{creditedCount} total referrals</p>
-              </div>
-              <span className="text-[12px] text-text-subtle">
-                Page {page} of {totalPages || 1}
-              </span>
-            </div>
-
-            {creditedReferrals.length === 0 ? (
-              <div className="py-16 text-center">
-                <Users className="h-10 w-10 text-text-subtle mx-auto mb-3" />
-                <p className="text-[14px] text-text-muted">No referrals yet — share your link to start earning.</p>
-              </div>
-            ) : (
-              <>
-                {/* Table header */}
-                <div className="hidden sm:grid grid-cols-[1fr_140px_100px_120px] gap-4 px-6 py-3
-                                bg-surface-alt border-b border-border
-                                text-[11px] font-semibold uppercase tracking-widest text-text-subtle">
-                  <span>Referred Person</span>
-                  <span>Date</span>
-                  <span>Rate</span>
-                  <span className="text-right">Commission</span>
-                </div>
-
-                <div className="divide-y divide-border">
-                  {creditedReferrals.map((r) => (
-                    <div
-                      key={r.id}
-                      className="grid grid-cols-1 sm:grid-cols-[1fr_140px_100px_120px] gap-2 sm:gap-4
-                                 px-6 py-4 items-center hover:bg-surface-alt/50 transition-colors duration-150"
-                    >
-                      {/* Name */}
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-text truncate">
-                          {[r.referredUser.firstName, r.referredUser.lastName]
-                            .filter(Boolean)
-                            .join(" ") || r.referredUser.email}
-                        </p>
-                        <p className="text-[11px] text-text-subtle sm:hidden">{formatDate(r.createdAt)}</p>
-                      </div>
-
-                      {/* Date */}
-                      <p className="hidden sm:block text-[13px] text-text-muted">
-                        {formatDate(r.createdAt)}
-                      </p>
-
-                      {/* Rate */}
-                      <p className="hidden sm:block text-[13px] text-text-muted">
-                        {r.commissionRate != null ? `${r.commissionRate}%` : "—"}
-                      </p>
-
-                      {/* Commission */}
-                      <div className="sm:text-right">
-                        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-emerald-600">
-                          {formatCurrency(r.commissionEarned)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="text-[13px] font-medium text-text-muted border border-border rounded-lg px-4 py-2
-                                 hover:border-brand-300 hover:text-brand-600 transition-all duration-200
-                                 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-[13px] text-text-subtle">
-                      {page} / {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      className="text-[13px] font-medium text-text-muted border border-border rounded-lg px-4 py-2
-                                 hover:border-brand-300 hover:text-brand-600 transition-all duration-200
-                                 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
           </div>
 
           {/* ── FAQ ── */}

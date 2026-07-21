@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,11 +26,23 @@ import { useAppSelector } from "@/store/hooks";
 import {
   applyAsPartner,
   getMyPartner,
+  PARTNER_ONBOARDING_DRAFT_KEY,
   type Partner,
   type PartnerType,
 } from "@/lib/partnersApi";
+import {
+  getCountries,
+  getStatesForCountry,
+  DEFAULT_COUNTRY_CODE,
+} from "@/data/countries";
 
 const SUPPORT_EMAIL = "support@avatarindia.com";
+
+const PURPOSE_PLACEHOLDER: Record<PartnerType, string> = {
+  INDIVIDUAL: "e.g. I mentor students and want to refer them to Direct2Hire",
+  INSTITUTE: "e.g. Placement support for our final-year students",
+  CORPORATE: "e.g. Hiring pipeline for entry-level AI roles",
+};
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -121,10 +133,13 @@ export default function PartnersPage() {
     email: "",
     phone: "",
     instituteType: "",
-    location: "",
+    country: DEFAULT_COUNTRY_CODE,
+    state: "",
+    city: "",
     profession: "",
     linkedin: "",
     website: "",
+    purpose: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -133,6 +148,17 @@ export default function PartnersPage() {
   const [existingPartner, setExistingPartner] = useState<
     Partner | null | undefined
   >(undefined);
+
+  const switchTab = (tab: PartnerType) => setActiveTab(tab);
+
+  const countries = useMemo(() => getCountries(), []);
+  const states = useMemo(
+    () => getStatesForCountry(form.country),
+    [form.country],
+  );
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    setForm((p) => ({ ...p, country: e.target.value, state: "" }));
 
   useEffect(() => {
     if (!user) {
@@ -156,7 +182,14 @@ export default function PartnersPage() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm((p) => ({ ...p, [field]: e.target.value }));
 
-  const resetForm = () =>
+  // Digits only, capped at 10 — matches backend's 10-digit Indian mobile check.
+  const setPhone = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((p) => ({
+      ...p,
+      phone: e.target.value.replace(/\D/g, "").slice(0, 10),
+    }));
+
+  const resetForm = () => {
     setForm({
       organizationName: "",
       contactPerson: "",
@@ -164,44 +197,36 @@ export default function PartnersPage() {
       email: user?.email ?? "",
       phone: "",
       instituteType: "",
-      location: "",
+      country: "India",
+      state: "",
+      city: "",
       profession: "",
       linkedin: "",
       website: "",
+      purpose: "",
     });
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      router.push(`/login?returnTo=${encodeURIComponent("/partners")}`);
-      return;
-    }
+  const needsKyc = activeTab === "INDIVIDUAL" || activeTab === "INSTITUTE";
+
+  // Corporate has no KYC — applies directly from this page.
+  const submitCorporateApplication = async () => {
     setErrorMsg("");
     setSubmitting(true);
     try {
       await applyAsPartner({
-        type: activeTab,
+        type: "CORPORATE",
         organizationName: form.organizationName || undefined,
         contactPerson: form.contactPerson || undefined,
         designation: form.designation || undefined,
-        instituteType:
-          activeTab === "INSTITUTE" ? form.instituteType : undefined,
         phone: form.phone,
         email: form.email,
-        location:
-          activeTab !== "CORPORATE" ? form.location || undefined : undefined,
-        profession:
-          activeTab === "INDIVIDUAL" ? form.profession || undefined : undefined,
-        linkedin:
-          activeTab === "INDIVIDUAL" ? form.linkedin || undefined : undefined,
-        website:
-          activeTab === "CORPORATE" ? form.website || undefined : undefined,
+        website: form.website || undefined,
+        purpose: form.purpose,
       });
-      if (activeTab === "CORPORATE") {
-        window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-          `Corporate Partnership — ${form.organizationName || form.contactPerson}`,
-        )}`;
-      }
+      window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+        `Corporate Partnership — ${form.organizationName || form.contactPerson}`,
+      )}`;
       setSubmitted(true);
       resetForm();
       setTimeout(() => setSubmitted(false), 5000);
@@ -213,6 +238,37 @@ export default function PartnersPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      router.push(`/login?returnTo=${encodeURIComponent("/partners")}`);
+      return;
+    }
+
+    if (activeTab === "CORPORATE") {
+      await submitCorporateApplication();
+      return;
+    }
+
+    // Individual/Institute: hand off these details to the onboarding page
+    // to complete KYC (Aadhar/PAN/bank) — native required-field validation
+    // on this form already ran since this is a real submit event. Resolve
+    // country/state from ISO codes to display names here, since the
+    // onboarding page only composes a plain "City, State, Country" string.
+    sessionStorage.setItem(
+      PARTNER_ONBOARDING_DRAFT_KEY,
+      JSON.stringify({
+        type: activeTab,
+        ...form,
+        country:
+          countries.find((c) => c.isoCode === form.country)?.name ??
+          form.country,
+        state: states.find((s) => s.isoCode === form.state)?.name ?? form.state,
+      }),
+    );
+    router.push("/partners/onboarding");
   };
 
   return (
@@ -319,6 +375,12 @@ export default function PartnersPage() {
                           Your application wasn&apos;t approved. Reach out if
                           you&apos;d like to discuss.
                         </p>
+                        {existingPartner.reviewNote && (
+                          <p className="text-[13px] text-slate-600 bg-slate-100 rounded-lg px-4 py-2.5 text-left">
+                            <span className="font-bold">Reason: </span>
+                            {existingPartner.reviewNote}
+                          </p>
+                        )}
                         <Link
                           href="/contact"
                           className="inline-block text-[13px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
@@ -335,7 +397,7 @@ export default function PartnersPage() {
                         <button
                           key={tab.id}
                           type="button"
-                          onClick={() => setActiveTab(tab.id)}
+                          onClick={() => switchTab(tab.id)}
                           className={cn(
                             "flex flex-col items-center gap-1 rounded-lg py-2.5 px-1 text-[11px] font-bold transition-all duration-200 cursor-pointer",
                             activeTab === tab.id
@@ -362,7 +424,7 @@ export default function PartnersPage() {
                       </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleFormSubmit} className="space-y-4">
                       {activeTab === "INDIVIDUAL" ? (
                         <>
                           <div className="space-y-1.5">
@@ -399,24 +461,75 @@ export default function PartnersPage() {
                               </label>
                               <input
                                 type="tel"
+                                inputMode="numeric"
                                 value={form.phone}
-                                onChange={set("phone")}
+                                onChange={setPhone}
                                 required
-                                placeholder="+91 00000 00000"
+                                pattern="[6-9]\d{9}"
+                                maxLength={10}
+                                title="Enter a valid 10-digit mobile number"
+                                placeholder="98765 43210"
                                 className={inputCls}
                               />
                             </div>
                           </div>
 
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                Country
+                              </label>
+                              <select
+                                value={form.country}
+                                onChange={handleCountryChange}
+                                className={cn(
+                                  inputCls,
+                                  "appearance-none cursor-pointer",
+                                )}
+                              >
+                                {countries.map((c) => (
+                                  <option key={c.isoCode} value={c.isoCode}>
+                                    {c.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                State
+                              </label>
+                              <select
+                                value={form.state}
+                                onChange={set("state")}
+                                disabled={states.length === 0}
+                                className={cn(
+                                  inputCls,
+                                  "appearance-none cursor-pointer disabled:opacity-50",
+                                )}
+                              >
+                                <option value="">
+                                  {states.length === 0
+                                    ? "No states available"
+                                    : "Select state"}
+                                </option>
+                                {states.map((s) => (
+                                  <option key={s.isoCode} value={s.isoCode}>
+                                    {s.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
                           <div className="space-y-1.5">
                             <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                              City / Location
+                              City
                             </label>
                             <input
                               type="text"
-                              value={form.location}
-                              onChange={set("location")}
-                              placeholder="City / Location"
+                              value={form.city}
+                              onChange={set("city")}
+                              placeholder="City"
                               className={inputCls}
                             />
                           </div>
@@ -530,16 +643,20 @@ export default function PartnersPage() {
                             </label>
                             <input
                               type="tel"
+                              inputMode="numeric"
                               value={form.phone}
-                              onChange={set("phone")}
+                              onChange={setPhone}
                               required
-                              placeholder="+91 00000 00000"
+                              pattern="[6-9]\d{9}"
+                              maxLength={10}
+                              title="Enter a valid 10-digit mobile number"
+                              placeholder="98765 43210"
                               className={inputCls}
                             />
                           </div>
 
                           {activeTab === "INSTITUTE" ? (
-                            <div className="grid grid-cols-2 gap-4">
+                            <>
                               <div className="space-y-1.5">
                                 <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
                                   Institute Type *
@@ -563,19 +680,67 @@ export default function PartnersPage() {
                                   ))}
                                 </select>
                               </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                    Country
+                                  </label>
+                                  <select
+                                    value={form.country}
+                                    onChange={handleCountryChange}
+                                    className={cn(
+                                      inputCls,
+                                      "appearance-none cursor-pointer",
+                                    )}
+                                  >
+                                    {countries.map((c) => (
+                                      <option key={c.isoCode} value={c.isoCode}>
+                                        {c.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                    State
+                                  </label>
+                                  <select
+                                    value={form.state}
+                                    onChange={set("state")}
+                                    disabled={states.length === 0}
+                                    className={cn(
+                                      inputCls,
+                                      "appearance-none cursor-pointer disabled:opacity-50",
+                                    )}
+                                  >
+                                    <option value="">
+                                      {states.length === 0
+                                        ? "No states available"
+                                        : "Select state"}
+                                    </option>
+                                    {states.map((s) => (
+                                      <option key={s.isoCode} value={s.isoCode}>
+                                        {s.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
                               <div className="space-y-1.5">
                                 <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                                  City / State
+                                  City
                                 </label>
                                 <input
                                   type="text"
-                                  value={form.location}
-                                  onChange={set("location")}
-                                  placeholder="City / State"
+                                  value={form.city}
+                                  onChange={set("city")}
+                                  placeholder="City"
                                   className={inputCls}
                                 />
                               </div>
-                            </div>
+                            </>
                           ) : (
                             <div className="space-y-1.5">
                               <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
@@ -593,33 +758,51 @@ export default function PartnersPage() {
                         </>
                       )}
 
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3
-                                   text-[14px] font-bold text-white hover:brightness-110 active:scale-[0.98]
-                                   disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100
-                                   transition-all duration-250 cursor-pointer shadow-sm"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
-                        }}
-                      >
-                        {submitting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />{" "}
-                            Submitting…
-                          </>
-                        ) : (
-                          "Submit Application"
-                        )}
-                      </button>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                          Purpose of Partnership *
+                        </label>
+                        <textarea
+                          value={form.purpose}
+                          onChange={(e) =>
+                            setForm((p) => ({ ...p, purpose: e.target.value }))
+                          }
+                          required
+                          rows={3}
+                          placeholder={PURPOSE_PLACEHOLDER[activeTab]}
+                          className={cn(inputCls, "resize-none")}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className="flex-1 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3
+                                     text-[14px] font-bold text-white hover:brightness-110 active:scale-[0.98]
+                                     disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100
+                                     transition-all duration-250 cursor-pointer shadow-sm"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                          }}
+                        >
+                          {submitting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                              Submitting…
+                            </>
+                          ) : needsKyc ? (
+                            "Continue to Onboarding"
+                          ) : (
+                            "Submit Application"
+                          )}
+                        </button>
+                      </div>
 
                       <p className="text-center text-[11px] text-slate-400 font-medium">
-                        {activeTab === "INDIVIDUAL" &&
-                          "We'll review and get back within 48 hours"}
-                        {activeTab === "INSTITUTE" &&
-                          "We'll review and get back within 48 hours with your unique referral code"}
+                        {needsKyc &&
+                          "Next: verify your identity with Aadhar, PAN & bank details"}
                         {activeTab === "CORPORATE" &&
                           `Our team will connect within 48 hours to explore partnership opportunities · also emails ${SUPPORT_EMAIL}`}
                       </p>
