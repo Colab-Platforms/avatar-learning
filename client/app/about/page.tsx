@@ -55,14 +55,14 @@ const MISSION_POINTS = [
 
 const DIVISIONS = [
   {
+    icon: FlaskConical,
+    label: "Counselling",
+    desc: "Expert guidance to turn your ambitions into a successful career",
+  },
+  {
     icon: GraduationCap,
     label: "AI Learning",
     desc: "Weekend-first live programs with real projects and certificates.",
-  },
-  {
-    icon: Bot,
-    label: "Agent Marketplace",
-    desc: "Deployable AI agents that integrate into any business workflow.",
   },
   {
     icon: Briefcase,
@@ -70,9 +70,9 @@ const DIVISIONS = [
     desc: "Real projects. Real mentors. Real industry experience.",
   },
   {
-    icon: FlaskConical,
-    label: "Counselling",
-    desc: "Expert guidance to turn your ambitions into a successful career",
+    icon: Bot,
+    label: "Placement",
+    desc: "Industry-ready placement support with interviews and hiring opportunities",
   },
 ];
 
@@ -101,16 +101,19 @@ export default function AboutPage() {
       <main
         className="min-h-screen text-slate-800 overflow-x-hidden"
         style={{
-          background:
-            "#FFFFFF",
+          background: "#FFFFFF",
         }}
       >
         {/* ambient */}
-        <div className="pointer-events-none fixed inset-0 dot-grid opacity-[0.10]" aria-hidden />
+        <div
+          className="pointer-events-none fixed inset-0 dot-grid opacity-[0.10]"
+          aria-hidden
+        />
         <div
           className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] opacity-30"
           style={{
-            background: "radial-gradient(ellipse at top, rgba(99,102,241,0.10) 0%, transparent 65%)",
+            background:
+              "radial-gradient(ellipse at top, rgba(99,102,241,0.10) 0%, transparent 65%)",
             filter: "blur(70px)",
           }}
           aria-hidden
@@ -118,11 +121,15 @@ export default function AboutPage() {
 
         {/* ══ HERO ══ */}
         <section className="relative py-12 sm:pt-25 overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 dot-grid opacity-[0.08]" aria-hidden />
+          <div
+            className="pointer-events-none absolute inset-0 dot-grid opacity-[0.08]"
+            aria-hidden
+          />
           <div
             className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] opacity-20"
             style={{
-              background: "radial-gradient(ellipse at top right, rgba(99,102,241,0.18) 0%, transparent 65%)",
+              background:
+                "radial-gradient(ellipse at top right, rgba(99,102,241,0.18) 0%, transparent 65%)",
               filter: "blur(80px)",
             }}
             aria-hidden
@@ -138,7 +145,13 @@ export default function AboutPage() {
                   </div>
                   <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight text-slate-900 mb-6">
                     Powering the AI Revolution —{" "}
-                    <span className="text-transparent bg-clip-text" style={{ backgroundImage: "linear-gradient(90deg, #4F46E5 0%, #2563EB 100%)" }}>
+                    <span
+                      className="text-transparent bg-clip-text"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(90deg, #4F46E5 0%, #2563EB 100%)",
+                      }}
+                    >
                       For Everyone
                     </span>
                   </h1>
@@ -166,7 +179,10 @@ export default function AboutPage() {
                                  text-[14px] font-semibold text-white
                                  hover:brightness-110 hover:scale-[1.04]
                                  shadow-md transition-all duration-250"
-                      style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                      }}
                     >
                       Explore Programs <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -211,7 +227,9 @@ export default function AboutPage() {
                     <p className="text-[10px] text-slate-400 uppercase tracking-wider">
                       Countries Reached
                     </p>
-                    <p className="text-2xl font-bold text-slate-800 mt-0.5">35+</p>
+                    <p className="text-2xl font-bold text-slate-800 mt-0.5">
+                      35+
+                    </p>
                   </div>
 
                   {/* floating stat — top right */}
@@ -219,9 +237,15 @@ export default function AboutPage() {
                     className="absolute -top-4 -right-4 rounded-xl border border-blue-100
                                   bg-white/95 backdrop-blur-sm px-4 py-3 shadow-sm hidden md:block"
                   >
-                    <p className="text-[10px] text-blue-500 uppercase tracking-wider">Since</p>
-                    <p className="text-xl font-bold text-slate-800 mt-0.5">2026</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Building AI Future</p>
+                    <p className="text-[10px] text-blue-500 uppercase tracking-wider">
+                      Since
+                    </p>
+                    <p className="text-xl font-bold text-slate-800 mt-0.5">
+                      2026
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Building AI Future
+                    </p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -235,10 +259,17 @@ export default function AboutPage() {
                     <div
                       className="rounded-2xl border border-slate-200 p-6 text-center
                                  hover:border-blue-200 hover:-translate-y-1 transition-all duration-300"
-                      style={{ background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)" }}
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                      }}
                     >
-                      <p className="text-3xl font-bold text-slate-900 mb-1">{s.value}</p>
-                      <p className="text-[12px] text-slate-400 uppercase tracking-wider">{s.label}</p>
+                      <p className="text-3xl font-bold text-slate-900 mb-1">
+                        {s.value}
+                      </p>
+                      <p className="text-[12px] text-slate-400 uppercase tracking-wider">
+                        {s.label}
+                      </p>
                     </div>
                   </AnimateOnScroll>
                 ))}
@@ -248,12 +279,19 @@ export default function AboutPage() {
         </section>
 
         {/* ══ OUR STORY ══ */}
-        <section className="py-12 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FAFAFA" }}>
-          <div className="pointer-events-none absolute inset-0 dot-grid opacity-[0.07]" aria-hidden />
+        <section
+          className="py-12 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FAFAFA" }}
+        >
+          <div
+            className="pointer-events-none absolute inset-0 dot-grid opacity-[0.07]"
+            aria-hidden
+          />
           <div
             className="pointer-events-none absolute bottom-0 left-0 w-[600px] h-[400px] opacity-20"
             style={{
-              background: "radial-gradient(ellipse at bottom left, rgba(99,102,241,0.08) 0%, transparent 65%)",
+              background:
+                "radial-gradient(ellipse at bottom left, rgba(99,102,241,0.08) 0%, transparent 65%)",
               filter: "blur(80px)",
             }}
             aria-hidden
@@ -266,7 +304,13 @@ export default function AboutPage() {
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mb-6">
                 From a Simple Idea to a{" "}
-                <span className="text-transparent bg-clip-text" style={{ backgroundImage: "linear-gradient(90deg, #4F46E5 0%, #2563EB 100%)" }}>
+                <span
+                  className="text-transparent bg-clip-text"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, #4F46E5 0%, #2563EB 100%)",
+                  }}
+                >
                   Global AI Ecosystem
                 </span>
               </h2>
@@ -284,7 +328,8 @@ export default function AboutPage() {
                 businesses, and enterprise clients across 35+ countries. Our
                 ecosystem spans AI education, intelligent automation, a
                 marketplace of deployable AI agents, SaaS products, talent
-                networks, and ongoing research. And we&apos;re just getting started.
+                networks, and ongoing research. And we&apos;re just getting
+                started.
               </p>
             </ScrollReveal>
           </div>
@@ -299,12 +344,16 @@ export default function AboutPage() {
           <div
             className="pointer-events-none absolute top-0 right-0 w-[600px] h-[400px] opacity-15"
             style={{
-              background: "radial-gradient(ellipse at top right, rgba(59,130,246,0.15) 0%, transparent 65%)",
+              background:
+                "radial-gradient(ellipse at top right, rgba(59,130,246,0.15) 0%, transparent 65%)",
               filter: "blur(80px)",
             }}
             aria-hidden
           />
-          <div className="pointer-events-none absolute inset-0 dot-grid opacity-[0.07]" aria-hidden />
+          <div
+            className="pointer-events-none absolute inset-0 dot-grid opacity-[0.07]"
+            aria-hidden
+          />
 
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="text-center mb-14">
@@ -326,7 +375,10 @@ export default function AboutPage() {
                 <div
                   className="group h-full rounded-2xl border border-slate-200 p-8 sm:p-10
                              hover:border-blue-300/50 hover:-translate-y-1.5 transition-all duration-350"
-                  style={{ background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)" }}
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                  }}
                 >
                   <div
                     className="flex h-12 w-12 items-center justify-center rounded-xl mb-6
@@ -347,7 +399,10 @@ export default function AboutPage() {
                   </p>
                   <ul className="space-y-3">
                     {VISION_POINTS.map((pt) => (
-                      <li key={pt} className="flex items-start gap-3 text-[13px] text-slate-600">
+                      <li
+                        key={pt}
+                        className="flex items-start gap-3 text-[13px] text-slate-600"
+                      >
                         <CheckCircle2 className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
                         {pt}
                       </li>
@@ -361,7 +416,10 @@ export default function AboutPage() {
                 <div
                   className="group h-full rounded-2xl border border-slate-200 p-8 sm:p-10
                              hover:border-indigo-300/50 hover:-translate-y-1.5 transition-all duration-350"
-                  style={{ background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)" }}
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                  }}
                 >
                   <div
                     className="flex h-12 w-12 items-center justify-center rounded-xl mb-6
@@ -382,7 +440,10 @@ export default function AboutPage() {
                   </p>
                   <ul className="space-y-3">
                     {MISSION_POINTS.map((pt) => (
-                      <li key={pt} className="flex items-start gap-3 text-[13px] text-slate-600">
+                      <li
+                        key={pt}
+                        className="flex items-start gap-3 text-[13px] text-slate-600"
+                      >
                         <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
                         {pt}
                       </li>
@@ -399,7 +460,10 @@ export default function AboutPage() {
           className="py-12 border-t border-purple-100/50 relative overflow-hidden"
           style={{ background: "#FAFAFA" }}
         >
-          <div className="pointer-events-none absolute inset-0 dot-grid opacity-[0.08]" aria-hidden />
+          <div
+            className="pointer-events-none absolute inset-0 dot-grid opacity-[0.08]"
+            aria-hidden
+          />
 
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="text-center mb-14">
@@ -421,7 +485,10 @@ export default function AboutPage() {
                   <div
                     className="group h-full rounded-2xl border border-slate-200 p-6
                                hover:border-blue-300/50 hover:-translate-y-1.5 transition-all duration-350 cursor-default"
-                    style={{ background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)" }}
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                    }}
                   >
                     <div
                       className="flex h-11 w-11 items-center justify-center rounded-xl mb-4
@@ -434,7 +501,9 @@ export default function AboutPage() {
                     <h3 className="font-semibold text-[15px] text-slate-900 mb-2 group-hover:text-blue-700 transition-colors duration-300">
                       {d.label}
                     </h3>
-                    <p className="text-[13px] text-slate-500 leading-relaxed">{d.desc}</p>
+                    <p className="text-[13px] text-slate-500 leading-relaxed">
+                      {d.desc}
+                    </p>
                   </div>
                 </AnimateOnScroll>
               ))}
@@ -443,11 +512,15 @@ export default function AboutPage() {
         </section>
 
         {/* ══ PARTNERS ══ */}
-        <section className="py-12 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+        <section
+          className="py-12 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FFFFFF" }}
+        >
           <div
             className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[300px] opacity-20"
             style={{
-              background: "radial-gradient(ellipse at top, rgba(99,102,241,0.12) 0%, transparent 65%)",
+              background:
+                "radial-gradient(ellipse at top, rgba(99,102,241,0.12) 0%, transparent 65%)",
               filter: "blur(60px)",
             }}
             aria-hidden
@@ -475,11 +548,18 @@ export default function AboutPage() {
                     title={name}
                     className="group relative rounded-xl border border-slate-200 px-4 py-6 flex flex-col items-center justify-center gap-2
                                hover:border-blue-200 hover:shadow-sm transition-all duration-300 cursor-default"
-                    style={{ background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFF 100%)" }}
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #FFFFFF 0%, #F8FAFF 100%)",
+                    }}
                   >
                     <Icon
                       className="h-7 w-7 transition-all duration-300 text-slate-300 group-hover:scale-110"
-                      style={{ color: `color-mix(in srgb, ${color} 80%, transparent)` } as React.CSSProperties}
+                      style={
+                        {
+                          color: `color-mix(in srgb, ${color} 80%, transparent)`,
+                        } as React.CSSProperties
+                      }
                     />
                     <span className="text-[10px] font-medium text-slate-0 group-hover:text-slate-400 text-center leading-snug transition-all duration-300 absolute bottom-2">
                       {name}
@@ -489,7 +569,11 @@ export default function AboutPage() {
               </div>
             </ScrollReveal>
 
-            <ScrollReveal animation="fade-up" delay={150} className="text-center mt-10">
+            <ScrollReveal
+              animation="fade-up"
+              delay={150}
+              className="text-center mt-10"
+            >
               <p className="text-[13px] text-slate-400 mb-4">
                 Interested in partnering with Avatar?
               </p>
@@ -506,14 +590,19 @@ export default function AboutPage() {
         </section>
 
         {/* ══ CTA ══ */}
-        <section className="py-12 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FAFAFA" }}>
+        <section
+          className="py-12 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FAFAFA" }}
+        >
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div
                 className="relative rounded-3xl overflow-hidden border border-blue-200/80 p-10 sm:p-16 text-center"
                 style={{
-                  background: "linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 50%, #F1F5F9 100%)",
-                  boxShadow: "0 10px 40px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
+                  background:
+                    "linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 50%, #F1F5F9 100%)",
+                  boxShadow:
+                    "0 10px 40px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
                 }}
               >
                 <div
@@ -522,7 +611,10 @@ export default function AboutPage() {
                 />
                 <div
                   className="absolute top-0 inset-x-0 h-px"
-                  style={{ background: "linear-gradient(90deg, transparent, rgba(148,163,184,0.4) 30%, rgba(100,116,139,0.5) 50%, rgba(148,163,184,0.4) 70%, transparent)" }}
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(148,163,184,0.4) 30%, rgba(100,116,139,0.5) 50%, rgba(148,163,184,0.4) 70%, transparent)",
+                  }}
                 />
 
                 <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3 cursor-default">
@@ -542,7 +634,10 @@ export default function AboutPage() {
                                text-[14px] font-semibold text-white
                                hover:brightness-110 hover:scale-[1.04]
                                shadow-md transition-all duration-250"
-                    style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                    }}
                   >
                     Get Started Free <ArrowRight className="h-4 w-4" />
                   </Link>

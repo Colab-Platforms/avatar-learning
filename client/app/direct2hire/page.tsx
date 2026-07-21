@@ -34,6 +34,7 @@ import {
   AnimateOnScroll,
   Button,
   HelpWidget,
+  ShinyText,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
@@ -229,6 +230,16 @@ const FAQS = [
     q: "Can my parents join the session?",
     a: "Absolutely. We encourage parents to join — career decisions are family decisions in India, and having everyone aligned on the plan makes execution much easier.",
   },
+  {
+    q: "What is your refund policy?",
+    a: `We offer a simple and transparent refund policy to ensure a fair experience for all learners:
+
+• Within 48 hours of purchase: Eligible for a 100% refund.
+• Between Day 3 and Day 7: Eligible for a 50% refund.
+• After 7 days from the date of purchase: No refund will be applicable.
+
+Note: Avatar India reserves the right to verify refund requests and may decline refunds in cases of policy misuse, fraudulent activity, or violation of our Terms & Conditions.`,
+  },
 ];
 
 /* ─── page ──────────────────────────────────────────────────────────── */
@@ -286,13 +297,13 @@ export default function Direct2HirePage() {
               {/* left */}
               <div className="lg:col-span-5 xl:col-span-5">
                 <ScrollReveal animation="fade-up" delay={0}>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700 mb-4">
+                  {/* <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700 mb-4">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     </span>
                     Admissions Open • 96% Discount Active
-                  </span>
+                  </span> */}
                   <h1 className="h-display text-text mb-3 sm:mb-6">
                     Become AI Job Ready in{" "}
                     <span className="text-gradient-brand">Just 120 Days.</span>
@@ -479,7 +490,16 @@ export default function Direct2HirePage() {
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-5 sm:mb-12">
                 <div>
-                  <p className="eyebrow mb-3 sm:mb-4">The Cost of Confusion</p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                    <ShinyText
+                      text="THE COST OF CONFUSION"
+                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                      color="#2563eb"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
+                  </div>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text max-w-xl">
                     <span className="text-gradient-brand">90% students</span>
                     {"  "}
@@ -560,7 +580,16 @@ export default function Direct2HirePage() {
               animation="fade-up"
               className="mb-5 sm:mb-12 text-center"
             >
-              <p className="eyebrow mb-3 sm:mb-4">Who Is This For ?</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                <ShinyText
+                  text="WHO IS THIS FOR ?"
+                  className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                  color="#2563eb"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
+              </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 Direct2Hire Is Built For{" "}
                 <span className="text-gradient-brand">
@@ -677,7 +706,16 @@ export default function Direct2HirePage() {
         >
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="mb-6 sm:mb-14">
-              <p className="eyebrow mb-3 sm:mb-4">The Complete Program</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                <ShinyText
+                  text="THE COMPLETE PROGRAM"
+                  className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                  color="#2563eb"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
+              </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 One Program.{" "}
                 <span className="text-gradient-brand">Five Guided Steps.</span>
@@ -794,7 +832,16 @@ export default function Direct2HirePage() {
             <div className="grid lg:grid-cols-5 gap-6 lg:gap-10 items-center">
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
-                  <p className="eyebrow mb-3 sm:mb-4">The Outcome</p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                    <ShinyText
+                      text="THE OUTCOME"
+                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                      color="#2563eb"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
+                  </div>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text mb-3 sm:mb-4">
                     You Don&apos;t Just Get Advice.{" "}
                     <span className="text-gradient-brand">You Get Hired.</span>
@@ -854,16 +901,25 @@ export default function Direct2HirePage() {
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-5 sm:mb-12">
                 <div>
-                  <p className="eyebrow mb-3 sm:mb-4">Complete Breakdown</p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                    <ShinyText
+                      text="COMPLETE BREAKDOWN"
+                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                      color="#2563eb"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
+                  </div>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                     The Full Direct2Hire Journey{" "}
                     <span className="text-gradient-brand">
                       Starts at ₹999/-
                     </span>
                   </h2>
-                  <p className="mt-3 text-text-muted max-w-xl">
-                    AI assessment, counseling, AI skilling, internship, and
-                    placement — real value worth{" "}
+                  <p className="mt-3 text-text-muted ">
+                    Quiz, Counseling, Learning, Internship, and Placement — Real
+                    value worth{" "}
                     <span className="line-through text-text-subtle">
                       ₹24,999
                     </span>
@@ -938,7 +994,16 @@ export default function Direct2HirePage() {
               animation="fade-up"
               className="text-center mb-6 sm:mb-14"
             >
-              <p className="eyebrow mb-3 sm:mb-4">What Makes Us Different</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                <ShinyText
+                  text="WHAT MAKES US DIFFERENT"
+                  className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                  color="#2563eb"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
+              </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
                 Why Students{" "}
                 <span className="text-gradient-brand">Choose Avatar</span>
@@ -1027,9 +1092,16 @@ export default function Direct2HirePage() {
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-6 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-                <p className="relative eyebrow mb-2 sm:mb-3">
-                  Your Future Starts Here
-                </p>
+                <div className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-2 sm:mb-3">
+                  <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                  <ShinyText
+                    text="YOUR FUTURE STARTS HERE"
+                    className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                    color="#2563eb"
+                    shineColor="#93c5fd"
+                    speed={2.5}
+                  />
+                </div>
                 <h2 className="relative text-3xl sm:text-4xl font-bold text-text mb-3 sm:mb-4">
                   Ready to take control{" "}
                   <span className="text-gradient-brand">of your future?</span>
@@ -1072,9 +1144,16 @@ export default function Direct2HirePage() {
               {/* left */}
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
-                  <p className="eyebrow mb-3 sm:mb-4">
-                    Frequently Asked Questions
-                  </p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
+                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                    <ShinyText
+                      text="FREQUENTLY ASKED QUESTIONS"
+                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
+                      color="#2563eb"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
+                  </div>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text mb-3 sm:mb-4">
                     Got Questions?{" "}
                     <span className="text-gradient-brand">
@@ -1150,9 +1229,9 @@ export default function Direct2HirePage() {
                             )}
                           >
                             <div className="overflow-hidden">
-                              <p className="px-6 pb-5 text-[13.5px] text-text-muted leading-relaxed">
+                              <div className="px-6 pb-5 text-[13.5px] text-text-muted leading-relaxed whitespace-pre-line">
                                 {faq.a}
-                              </p>
+                              </div>
                             </div>
                           </div>
                         </div>

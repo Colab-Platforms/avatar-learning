@@ -110,6 +110,12 @@ const FAQS = [
     q: "Will I get access to a dashboard?",
     a: "Yes. Approved partners get a dedicated dashboard to track referrals, enrollments, and earnings in real time.",
   },
+  {
+    q: "What is your Referral Reward Policy?",
+    a: `Referral rewards become eligible for withdrawal 15 days after the referred learner successfully enrolls. This verification period helps ensure that the enrollment is genuine and active.
+If the referred learner cancels their enrollment, requests a refund, or leaves the program within the first 15 days, the referral will be considered cancelled, and the corresponding reward will not be eligible for withdrawal.
+Note : Avatar India reserves the right to review and reject referral rewards in cases of fraudulent, duplicate, or invalid referrals, or if the referral does not comply with our Partner Program Terms & Conditions.`,
+  },
 ];
 
 const inputCls = cn(
@@ -306,7 +312,7 @@ export default function PartnersPage() {
 
               <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm aspect-4/3 max-w-lg">
                 <Image
-                  src="/counselling-images/partnerimg1.png"
+                  src="/partner-images/partnerimg1.png"
                   alt="Institute partnership"
                   fill
                   className="object-cover"
@@ -854,7 +860,7 @@ export default function PartnersPage() {
             >
               <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                 <img
-                  src="/counselling-images/partnerimg2.png"
+                  src="/partner-images/partnerimg2.png"
                   alt="Students in classroom"
                   className="absolute inset-0 w-full h-full object-cover block"
                 />
