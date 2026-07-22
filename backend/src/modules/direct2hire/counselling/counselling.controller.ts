@@ -150,3 +150,22 @@ export const createBooking = async (
   }
 };
 
+export const getMyFeedback = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const feedback = await service.getFeedbackByUserId(req.user!.id);
+    sendResponse(res, true, feedback, "Counselling feedback fetched");
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
+    sendResponse(
+      res,
+      false,
+      null,
+      error.message ?? "Failed to fetch counselling feedback",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+

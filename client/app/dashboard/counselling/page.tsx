@@ -17,8 +17,10 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
+import { useCounsellingFeedback } from "@/hooks/queries/useCounsellingFeedback";
 import { useCreateCounsellingBooking } from "@/hooks/mutations/useCreateCounsellingBooking";
 import { CourseSelectionPanel } from "@/components/counselling/CourseSelectionPanel";
+import { CounsellorFeedbackCard } from "@/components/counselling/CounsellorFeedbackCard";
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -32,8 +34,12 @@ function formatDateTime(value?: string | null) {
 }
 
 export default function CounsellingPage() {
-  const { data: booking, isLoading } = useCounsellingBooking();
+  const { data: booking, isLoading: bookingLoading } = useCounsellingBooking();
   const createBookingMutation = useCreateCounsellingBooking();
+  const counsellingCompleted = booking?.counsellingCompleted ?? false;
+  const { data: feedback, isLoading: feedbackLoading } = useCounsellingFeedback(
+    counsellingCompleted,
+  );
 
   const [preferredMode, setPreferredMode] = useState<"VOICE" | "VIDEO">("VOICE");
   const [notes, setNotes] = useState("");
@@ -46,7 +52,7 @@ export default function CounsellingPage() {
     });
   };
 
-  if (isLoading) {
+  if (bookingLoading || (counsellingCompleted && feedbackLoading)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -56,7 +62,6 @@ export default function CounsellingPage() {
 
   const isBooked = !!booking;
   const bookingStatus = booking?.status || "NOT_BOOKED";
-  const counsellingCompleted = booking?.counsellingCompleted ?? false;
 
   if (counsellingCompleted) {
     return (
@@ -74,6 +79,7 @@ export default function CounsellingPage() {
             Pick the Direct2Hire learning track that&apos;s right for you.
           </p>
         </div>
+        {feedback ? <CounsellorFeedbackCard feedback={feedback} /> : null}
         <CourseSelectionPanel />
       </div>
     );

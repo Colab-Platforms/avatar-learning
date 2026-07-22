@@ -84,6 +84,16 @@ export interface AdminD2HStudentProfile {
     summary: string | null;
     generatedAt: Date;
   } | null;
+  feedback: {
+    assessmentAlignment: string;
+    recommendedCourse: string;
+    communicationRating: string;
+    motivationLevel: string;
+    overallPotential: string;
+    description: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
   payment: AdminD2HPaymentInfo | null;
   internship: AdminStudentInternshipProgressDto;
 }

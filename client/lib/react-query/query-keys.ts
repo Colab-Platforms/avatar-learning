@@ -14,8 +14,11 @@ export const queryKeys = {
   myApplications: ["my-applications"] as const,
   internshipCategories: ["internship-categories"] as const,
   direct2hireStatus: ["direct2hire-status"] as const,
+  currentUser: ["current-user"] as const,
+  profile: ["profile"] as const,
   counsellingProfile: ["counselling-profile"] as const,
   counsellingBooking: ["counselling-booking"] as const,
+  counsellingFeedback: ["counselling-feedback"] as const,
   courseSelection: ["course-selection"] as const,
   direct2hireLead: ["direct2hire-lead"] as const,
   adminDirect2hireStudent: (userId: string) =>

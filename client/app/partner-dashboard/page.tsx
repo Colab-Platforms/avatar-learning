@@ -27,6 +27,7 @@ import {
   type Partner,
   type PartnerReferral,
 } from "@/lib/partnersApi";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 /* ─── Commission model (mirrors backend partner.service.ts) ─────────────
    INDIVIDUAL: flat 10% credited instantly on every referral.
@@ -393,12 +394,15 @@ export default function PartnerDashboardPage() {
 
               {/* avatar */}
               <div className="flex flex-col items-center gap-3 py-2">
-                <div
-                  className="h-16 w-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white"
-                  style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
-                >
-                  {(user.firstName?.[0] ?? user.email[0]).toUpperCase()}
-                </div>
+                <UserAvatar
+                  profileImage={user.profileImage}
+                  firstName={user.firstName}
+                  lastName={user.lastName}
+                  email={user.email}
+                  size="lg"
+                  rounded="2xl"
+                  showSkeleton
+                />
                 <div className="text-center">
                   <p className="text-[15px] font-semibold text-text">{displayName}</p>
                   {orgName && (

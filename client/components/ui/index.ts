@@ -8,3 +8,4 @@ export { PenCursor } from "./PenCursor";
 export { CyclingText } from "./CyclingText";
 export { HelpWidget } from "./HelpWidget";
 export { ShinyText } from "./ShinyText";
+export { UserAvatar } from "./UserAvatar";

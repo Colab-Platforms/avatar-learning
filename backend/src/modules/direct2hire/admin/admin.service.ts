@@ -203,6 +203,18 @@ export class Direct2HireAdminService {
             generatedAt: true,
           },
         },
+        counsellingFeedback: {
+          select: {
+            assessmentAlignment: true,
+            recommendedCourse: true,
+            communicationRating: true,
+            motivationLevel: true,
+            overallPotential: true,
+            description: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
@@ -237,6 +249,7 @@ export class Direct2HireAdminService {
       counselling: user.counsellingProfile ?? null,
       booking: user.counsellingBooking ?? null,
       recommendation: user.courseRecommendation ?? null,
+      feedback: user.counsellingFeedback ?? null,
       payment: paymentByUserId.get(userId) ?? null,
       internship,
     };

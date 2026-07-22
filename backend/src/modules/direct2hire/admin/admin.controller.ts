@@ -5,6 +5,7 @@ import { Direct2HireAdminService } from "./admin.service.js";
 import { validateStudentUserIdParam } from "./admin.validator.js";
 import { CounsellingService } from "../counselling/counselling.service.js";
 import { validateConfirmCounsellingBooking } from "../counselling/counselling.validator.js";
+import { validateSaveCounsellingFeedback } from "../counselling/counselling-feedback.validator.js";
 
 const service = new Direct2HireAdminService();
 const counsellingService = new CounsellingService();
@@ -116,6 +117,79 @@ export const confirmBooking = async (
             false,
             null,
             error.message ?? "Failed to confirm counselling session",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getCounsellingFeedback = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const feedback = await counsellingService.getFeedbackByUserId(
+            value.userId,
+        );
+        sendResponse(res, true, feedback, "Counselling feedback fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch counselling feedback",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const saveCounsellingFeedback = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error: paramError, value: params } =
+            validateStudentUserIdParam(req.params);
+        if (paramError) {
+            sendResponse(
+                res,
+                false,
+                null,
+                paramError.message,
+                STATUS_CODES.BAD_REQUEST,
+            );
+            return;
+        }
+
+        const { error, value } = validateSaveCounsellingFeedback(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await counsellingService.saveFeedbackAndComplete(
+            params.userId,
+            value,
+        );
+        sendResponse(
+            res,
+            true,
+            result,
+            "Counselling feedback saved and session marked as completed",
+        );
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to save counselling feedback",
             error.statusCode ?? STATUS_CODES.SERVER_ERROR,
         );
     }

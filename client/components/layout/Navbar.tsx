@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutThunk } from "@/store/authSlice";
 import { getMyPartner } from "@/lib/partnersApi";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -42,12 +43,6 @@ export function Navbar() {
     await dispatch(logoutThunk());
     router.push("/");
   };
-
-  const avatarInitials = user
-    ? user.firstName && user.lastName
-      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-      : (user.firstName?.[0] ?? user.email[0]).toUpperCase()
-    : "";
 
   const isActiveRoute = (href: string) => {
     if (!pathname) return false;
@@ -123,15 +118,16 @@ export function Navbar() {
                   )}
                 >
                   {/* avatar circle */}
-                  <div
-                    className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-600) 100%)",
-                    }}
-                  >
-                    {avatarInitials}
-                  </div>
+                  <UserAvatar
+                    profileImage={user.profileImage}
+                    firstName={user.firstName}
+                    lastName={user.lastName}
+                    email={user.email}
+                    size="xs"
+                    rounded="2xl"
+                    className="!rounded-lg"
+                    showSkeleton
+                  />
                   <span className="text-[13px] text-text-muted max-w-[100px] truncate">
                     {user.firstName ?? user.email}
                   </span>

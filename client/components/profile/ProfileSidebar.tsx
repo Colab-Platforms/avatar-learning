@@ -1,11 +1,12 @@
 import {
   Mail, Phone, MapPin, Globe, Calendar,
   BadgeCheck, ShieldCheck, Pencil, X, Check,
-  Loader2, LogOut, Camera, BookOpen, Sparkles,
+  Loader2, LogOut, BookOpen, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "@/store/authSlice";
-import { formatDate, initials } from "./shared";
+import { formatDate } from "./shared";
+import { ProfileAvatarUpload } from "./ProfileAvatarUpload";
 
 export function ProfileSidebar({
   user, editing, loading, coursesCount, completedCount,
@@ -22,7 +23,6 @@ export function ProfileSidebar({
   onLogout: () => void;
 }) {
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "User";
-  const av = initials(user.firstName, user.lastName, user.email);
 
   return (
     <aside className="space-y-4 min-w-0">
@@ -37,26 +37,8 @@ export function ProfileSidebar({
 
         <div className="px-5 sm:px-6 pb-6">
           {/* avatar overlap */}
-          <div className="flex items-end justify-between -mt-10 mb-4">
-            <div className="relative group shrink-0">
-              <div
-                className="h-20 w-20 rounded-2xl border-4 border-white flex items-center
-                           justify-center text-2xl font-black text-white select-none
-                           shadow-md"
-                style={{ background: "linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-600) 100%)" }}
-              >
-                {av}
-              </div>
-              <button
-                disabled
-                title="Upload photo — coming soon"
-                className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg border border-border
-                           bg-white flex items-center justify-center
-                           opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-              >
-                <Camera className="h-3 w-3 text-text-subtle" />
-              </button>
-            </div>
+          <div className="flex items-start justify-between gap-4 -mt-10 mb-4">
+            <ProfileAvatarUpload user={user} />
 
             {/* badges */}
             <div className="flex flex-row items-center gap-1.5 pb-1 shrink-0">

@@ -11,7 +11,11 @@ cloudinary.config({
 });
 
 
-export const uploadToCloudinary = async (fileBuffer: Buffer, folder: string = 'ai-marketplace') => {
+export const uploadToCloudinary = async (
+    fileBuffer: Buffer,
+    folder: string = 'ai-marketplace',
+    resourceType: 'auto' | 'image' | 'raw' | 'video' = 'auto',
+): Promise<{ url: string; public_id: string }> => {
     try {
         if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
             console.warn('Cloudinary credentials missing in .env. Falling back to placeholder.');
@@ -23,15 +27,15 @@ export const uploadToCloudinary = async (fileBuffer: Buffer, folder: string = 'a
 
         return new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
-                { folder, resource_type: 'auto' },
+                { folder, resource_type: resourceType },
                 (error, result) => {
                     if (error) {
                         console.error('Cloudinary upload error:', error);
                         reject(new ApiError('File upload failed', STATUS_CODES.SERVER_ERROR));
                     } else {
                         resolve({
-                            url: result?.secure_url,
-                            public_id: result?.public_id,
+                            url: result?.secure_url ?? '',
+                            public_id: result?.public_id ?? '',
                         });
                     }
                 }
@@ -44,6 +48,7 @@ export const uploadToCloudinary = async (fileBuffer: Buffer, folder: string = 'a
 };
 
 export const RESUME_FOLDER = 'resumes';
+export const PROFILE_IMAGES_FOLDER = 'profile-images';
 export const COURSE_IMAGES_FOLDER = 'course-images';
 export const INVESTOR_DOCS_FOLDER = 'investor-documents';
 export const COURSE_FILES_FOLDER = 'course-files';

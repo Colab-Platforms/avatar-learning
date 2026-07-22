@@ -420,6 +420,19 @@ const authSlice = createSlice({
       state.error = null;
     },
 
+    setUser(state, action: PayloadAction<AuthUser>) {
+      state.user = action.payload;
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const { accessToken, refreshToken } = JSON.parse(stored);
+          persist(action.payload, accessToken, refreshToken);
+        }
+      } catch {
+        /* ignore */
+      }
+    },
+
     setTokens(
       state,
       action: PayloadAction<{
@@ -699,6 +712,7 @@ export const {
   hydrateAuth,
   logout,
   clearError,
+  setUser,
   setTokens,
 } = authSlice.actions;
 

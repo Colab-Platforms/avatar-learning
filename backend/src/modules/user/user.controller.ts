@@ -142,3 +142,21 @@ export const deleteResume = async (req: AuthRequest, res: Response): Promise<voi
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }
 };
+
+export const uploadProfileImage = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const result = await userService.uploadProfileImage(req.user!.id, req.file!);
+        sendResponse(res, true, result, "Profile image uploaded successfully", STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const removeProfileImage = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const result = await userService.removeProfileImage(req.user!.id);
+        sendResponse(res, true, result, "Profile image removed successfully", STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};

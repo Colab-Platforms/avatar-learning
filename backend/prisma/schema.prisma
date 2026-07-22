@@ -129,8 +129,9 @@ model User {
   gender         String?
   state          String?
   country        String?
-  profileImage   String? @map("profile_image")
-  resumeUrl      String? @map("resume_url")
+  profileImage           String? @map("profile_image")
+  profileImagePublicId   String? @map("profile_image_public_id")
+  resumeUrl              String? @map("resume_url")
   resumePublicId String? @map("resume_public_id")
 
   currentStudyLevel CurrentStudyLevel? @map("current_studylevel")
@@ -171,6 +172,7 @@ model User {
   counsellingProfile        CounsellingProfile?
   courseRecommendation      CourseRecommendation?
   counsellingBooking        CounsellingBooking?
+  counsellingFeedback       CounsellingFeedback?
   assessmentAttempts        AssessmentAttempt[]
   placementAttempts         PlacementAttempt[]
   placementAttemptOverrides PlacementAttemptOverride[] @relation("PlacementOverrideRecipient")
@@ -934,7 +936,26 @@ model CounsellingBooking {
   @@map("counselling_bookings")
 }
 
-model TopicProgress {
+  model CounsellingFeedback {
+    id     String @id @default(cuid())
+    userId String @unique @map("user_id")
+
+    assessmentAlignment String  @map("assessment_alignment")
+    recommendedCourse   String  @map("recommended_course")
+    communicationRating String  @map("communication_rating")
+    motivationLevel     String  @map("motivation_level")
+    overallPotential    String  @map("overall_potential")
+    description         String? @db.Text
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("counselling_feedbacks")
+  }
+
+  model TopicProgress {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
   topicId     String   @map("topic_id")

@@ -36,6 +36,14 @@ router.patch(
     direct2hireAdminController.markCounsellingCompleted,
 );
 router.get(
+    "/direct2hire/students/:userId/counselling/feedback",
+    direct2hireAdminController.getCounsellingFeedback,
+);
+router.put(
+    "/direct2hire/students/:userId/counselling/feedback",
+    direct2hireAdminController.saveCounsellingFeedback,
+);
+router.get(
     "/direct2hire/students/:userId/placement/summary",
     placementController.getStudentPlacementSummary,
 );

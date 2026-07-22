@@ -37,6 +37,9 @@ export default function DashboardLayout({
           `${authUser.firstName ?? ""} ${authUser.lastName ?? ""}`.trim() ||
           "Student",
         email: authUser.email ?? "",
+        profileImage: authUser.profileImage,
+        firstName: authUser.firstName,
+        lastName: authUser.lastName,
       }
     : null;
 

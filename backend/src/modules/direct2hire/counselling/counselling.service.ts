@@ -10,6 +10,10 @@ import { RecommendationService } from "../recommendation/recommendation.service.
 import type { CourseRecommendationResponse } from "../recommendation/recommendation.types.js";
 import type { CounsellingProfile, CounsellingBooking } from "@prisma/client";
 import { sendCounsellingScheduleEmail } from "./counselling.mail.js";
+import type {
+  SaveCounsellingFeedbackInput,
+  CounsellingFeedbackResponse,
+} from "./counselling-feedback.types.js";
 
 function emptyToNull(value: string | null | undefined): string | null {
   if (value == null || value.trim() === "") return null;
@@ -343,6 +347,17 @@ export class CounsellingService {
         STATUS_CODES.CONFLICT,
       );
     }
+
+    const feedback = await prisma.counsellingFeedback.findUnique({
+      where: { userId },
+    });
+    if (!feedback) {
+      throw new ApiError(
+        "Counselling feedback must be submitted before marking the session as completed",
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+
     if (existing.counsellingCompleted) {
       return existing;
     }
@@ -354,6 +369,65 @@ export class CounsellingService {
         counsellingCompletedAt: new Date(),
       },
     });
+  }
+
+  async getFeedbackByUserId(
+    userId: string,
+  ): Promise<CounsellingFeedbackResponse | null> {
+    const feedback = await prisma.counsellingFeedback.findUnique({
+      where: { userId },
+    });
+    return feedback as CounsellingFeedbackResponse | null;
+  }
+
+  async saveFeedbackAndComplete(
+    userId: string,
+    data: SaveCounsellingFeedbackInput,
+  ) {
+    const booking = await this.getBooking(userId);
+    if (!booking) {
+      throw new ApiError(
+        "Counselling booking not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+    }
+    if (booking.status !== "CONFIRMED") {
+      throw new ApiError(
+        "Counselling session must be confirmed before submitting feedback",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    const description =
+      data.description != null && data.description.trim() !== ""
+        ? data.description.trim()
+        : null;
+
+    const feedbackData = {
+      assessmentAlignment: data.assessmentAlignment,
+      recommendedCourse: data.recommendedCourse,
+      communicationRating: data.communicationRating,
+      motivationLevel: data.motivationLevel,
+      overallPotential: data.overallPotential,
+      description,
+    };
+
+    const [feedback, updatedBooking] = await prisma.$transaction([
+      prisma.counsellingFeedback.upsert({
+        where: { userId },
+        create: { userId, ...feedbackData },
+        update: feedbackData,
+      }),
+      prisma.counsellingBooking.update({
+        where: { userId },
+        data: {
+          counsellingCompleted: true,
+          counsellingCompletedAt: booking.counsellingCompletedAt ?? new Date(),
+        },
+      }),
+    ]);
+
+    return { feedback, booking: updatedBooking };
   }
 
   async getCourseSelectionState(userId: string) {

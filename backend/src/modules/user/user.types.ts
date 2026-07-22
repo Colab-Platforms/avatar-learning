@@ -9,6 +9,7 @@ export const userSelectFields = {
     state: true,
     country: true,
     profileImage: true,
+    profileImagePublicId: true,
     resumeUrl: true,
     resumePublicId: true,
     currentStudyLevel: true,

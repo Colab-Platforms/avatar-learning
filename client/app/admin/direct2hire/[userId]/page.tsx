@@ -22,12 +22,13 @@ import {
 } from "lucide-react";
 import { useAdminDirect2HireStudent } from "@/hooks/queries/useAdminDirect2HireStudent";
 import { useConfirmCounsellingBooking } from "@/hooks/mutations/useConfirmCounsellingBooking";
-import { useMarkCounsellingCompleted } from "@/hooks/mutations/useMarkCounsellingCompleted";
 import { useReviewInternshipSubmission } from "@/hooks/mutations/useReviewInternshipSubmission";
 import type { AdminD2HStudentProfile } from "@/lib/adminApi";
 import type { AdminStudentInternshipTask } from "@/lib/internshipApi";
 import { AdminPlacementAssessmentSection } from "@/components/admin/AdminPlacementAssessmentSection";
 import { AdminMockInterviewSection } from "@/components/admin/AdminMockInterviewSection";
+import { CounsellingFeedbackSection } from "@/components/admin/CounsellingFeedbackSection";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -548,44 +549,6 @@ function BookingSection({
   );
 }
 
-function CompletionSection({
-  userId,
-  booking,
-}: {
-  userId: string;
-  booking: NonNullable<AdminD2HStudentProfile["booking"]>;
-}) {
-  const markCompletedMutation = useMarkCounsellingCompleted(userId);
-
-  if (booking.status !== "CONFIRMED") return null;
-
-  return (
-    <div className="mt-6 pt-6 border-t border-white/6">
-      {!booking.counsellingCompleted ? (
-        <button
-          onClick={() => markCompletedMutation.mutate()}
-          disabled={markCompletedMutation.isPending}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold
-                     bg-brand-500 text-ink-950 hover:bg-brand-400 active:scale-98 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-        >
-          {markCompletedMutation.isPending ? (
-            <Loader2 size={13} className="animate-spin" />
-          ) : (
-            <CheckCircle2 size={13} />
-          )}
-          Mark Counselling Completed
-        </button>
-      ) : (
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 w-fit">
-          <CheckCircle2 size={13} />
-          Counselling Completed
-          {booking.selectedCourse && ` · Selected: ${booking.selectedCourse.title}`}
-        </span>
-      )}
-    </div>
-  );
-}
-
 const INTERNSHIP_STATUS_STYLE: Record<
   string,
   string
@@ -925,13 +888,24 @@ export default function AdminDirect2HireStudentPage() {
 
       <div className="bg-ink-800 border border-white/6 rounded-2xl p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-white">{fullName}</h1>
-            <p className="text-sm text-white/40 mt-0.5">
-              {lead?.email ?? user.email}
-              {(lead?.phoneNumber ?? user.phoneNo) &&
-                ` · ${lead?.phoneNumber ?? user.phoneNo}`}
-            </p>
+          <div className="flex items-start gap-4 min-w-0">
+            <UserAvatar
+              profileImage={user.profileImage}
+              firstName={user.firstName}
+              lastName={user.lastName}
+              email={user.email}
+              size="lg"
+              rounded="2xl"
+              showSkeleton
+            />
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-white">{fullName}</h1>
+              <p className="text-sm text-white/40 mt-0.5">
+                {lead?.email ?? user.email}
+                {(lead?.phoneNumber ?? user.phoneNo) &&
+                  ` · ${lead?.phoneNumber ?? user.phoneNo}`}
+              </p>
+            </div>
           </div>
           <p className="text-xs text-white/30 mt-3">
             Joined {formatDate(lead?.createdAt ?? user.createdAt)}
@@ -1002,7 +976,11 @@ export default function AdminDirect2HireStudentPage() {
         ) : (
           <>
             <BookingSection userId={userId} booking={data.booking} />
-            <CompletionSection userId={userId} booking={data.booking} />
+            <CounsellingFeedbackSection
+              userId={userId}
+              booking={data.booking}
+              feedback={data.feedback ?? null}
+            />
           </>
         )}
       </Card>

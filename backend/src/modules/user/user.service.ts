@@ -5,7 +5,7 @@ import { hashPassword } from "@/utils/auth.js";
 import { userSelectFields, CreateUserBody, UpdateUserBody, Role, ROLE_LEVEL } from "./user.types.js";
 import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
 import { buildPrismaQuery } from "prisma-qb";
-import { deleteFromCloudinary, RESUME_FOLDER } from "@/utils/cloudinary.js";
+import { deleteFromCloudinary, RESUME_FOLDER, PROFILE_IMAGES_FOLDER, uploadToCloudinary } from "@/utils/cloudinary.js";
 
 const getHighestRole = (userRoleMappings: { role: { name: string } }[]): string => {
     let highest = "USER";
@@ -212,6 +212,80 @@ class UserService {
         const updated = await prisma.user.update({
             where: { id: userId },
             data: { resumeUrl: null, resumePublicId: null },
+            select: userSelectFields,
+        });
+
+        return updated;
+    }
+
+    async uploadProfileImage(userId: string, file: Express.Multer.File) {
+        const user = await prisma.user.findFirst({
+            where: { id: userId, isDeleted: false },
+        });
+        if (!user) throw new ApiError('User not found', STATUS_CODES.NOT_FOUND);
+
+        const previousPublicId = user.profileImagePublicId;
+
+        let uploadResult: { url: string; public_id: string };
+        try {
+            uploadResult = await uploadToCloudinary(
+                file.buffer,
+                PROFILE_IMAGES_FOLDER,
+                'image',
+            );
+        } catch (error) {
+            throw error;
+        }
+
+        if (!uploadResult.url || !uploadResult.public_id) {
+            throw new ApiError('File upload failed', STATUS_CODES.SERVER_ERROR);
+        }
+
+        if (!uploadResult.public_id.startsWith(`${PROFILE_IMAGES_FOLDER}/`)) {
+            await deleteFromCloudinary(uploadResult.public_id, 'image');
+            throw new ApiError('Invalid profile image upload', STATUS_CODES.BAD_REQUEST);
+        }
+
+        try {
+            const updated = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    profileImage: uploadResult.url,
+                    profileImagePublicId: uploadResult.public_id,
+                },
+                select: userSelectFields,
+            });
+
+            if (previousPublicId) {
+                await deleteFromCloudinary(previousPublicId, 'image');
+            }
+
+            return updated;
+        } catch (error) {
+            await deleteFromCloudinary(uploadResult.public_id, 'image');
+            throw error;
+        }
+    }
+
+    async removeProfileImage(userId: string) {
+        const user = await prisma.user.findFirst({
+            where: { id: userId, isDeleted: false },
+        });
+        if (!user) throw new ApiError('User not found', STATUS_CODES.NOT_FOUND);
+        if (!user.profileImage) {
+            throw new ApiError('No profile image found', STATUS_CODES.NOT_FOUND);
+        }
+
+        if (user.profileImagePublicId) {
+            await deleteFromCloudinary(user.profileImagePublicId, 'image');
+        }
+
+        const updated = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                profileImage: null,
+                profileImagePublicId: null,
+            },
             select: userSelectFields,
         });
 

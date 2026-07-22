@@ -10,5 +10,6 @@ router.put("/", auth("USER"), counsellingController.updateProfile);
 
 router.get("/booking", auth("USER"), counsellingController.getBooking);
 router.post("/booking", auth("USER"), counsellingController.createBooking);
+router.get("/feedback", auth("USER"), counsellingController.getMyFeedback);
 
 export default router;

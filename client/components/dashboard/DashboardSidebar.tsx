@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   X,
 } from "lucide-react";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 export const DASHBOARD_NAV = [
   {
@@ -56,7 +57,13 @@ export const DASHBOARD_NAV = [
 ];
 
 interface DashboardSidebarProps {
-  user: { name: string; email: string } | null;
+  user: {
+    name: string;
+    email: string;
+    profileImage?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
   mobileOpen?: boolean;
   onClose?: () => void;
 }
@@ -149,9 +156,14 @@ export function DashboardSidebar({
         <div className="px-3 py-4 border-t border-white/5 space-y-1">
           {user && (
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
-              <div className="w-7 h-7 rounded-full bg-linear-to-br from-brand-400 to-elec-500 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
-                {user.name[0]?.toUpperCase()}
-              </div>
+              <UserAvatar
+                profileImage={user.profileImage}
+                firstName={user.firstName ?? null}
+                lastName={user.lastName ?? null}
+                email={user.email}
+                size="xs"
+                showSkeleton
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-white/75 truncate">
                   {user.name}
