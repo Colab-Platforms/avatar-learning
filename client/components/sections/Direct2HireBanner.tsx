@@ -21,6 +21,7 @@ import {
   Pause,
 } from "lucide-react";
 import PretextAnimatedHeight from "@/components/counselling/PretextAnimatedHeight";
+import { ShinyText } from "@/components/ui";
 
 /* ─────────────────────────────────────────
    DATA DEFINITIONS
@@ -183,7 +184,12 @@ export function Direct2HireBanner() {
                 <div className="flex items-center gap-3 mb-5">
                   <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-blue-700 backdrop-blur-md shadow-xs">
                     <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
-                    Direct2Hire Career Accelerator
+                    <ShinyText
+                      text="Direct2Hire Career Accelerator"
+                      color="#1d4ed8"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
                   </span>
                 </div>
 

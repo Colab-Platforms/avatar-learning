@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimateOnScroll } from "@/components/ui";
+import { AnimateOnScroll, ShinyText } from "@/components/ui";
 import {
   FileText,
   CheckCircle,
@@ -209,7 +209,12 @@ export function TimelineSection() {
         {/* Header */}
         <AnimateOnScroll className="text-center mb-10 sm:mb-12 md:mb-16 lg:mb-20">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4">
-            ✓ GUARANTEED INTERNSHIPS
+            <ShinyText
+              text="✓ GUARANTEED INTERNSHIPS"
+              color="#1d4ed8"
+              shineColor="#93c5fd"
+              speed={2.5}
+            />
           </span>
           <h2 className="h-display text-text mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
             Everyone Gets{" "}

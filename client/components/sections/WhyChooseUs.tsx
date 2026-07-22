@@ -1,6 +1,6 @@
 import { WHY_FEATURES } from "@/data/features";
-import { ScrollReveal } from "@/components/ui";
-import { Briefcase, Layers, Clock, Award } from "lucide-react";
+import { ScrollReveal, ShinyText } from "@/components/ui";
+import { Briefcase, Layers, Clock, Award, Sparkles } from "lucide-react";
 
 const CARDS = [
   { icon: Briefcase, tag: "Career", accentClass: "text-brand-600 bg-brand-50 border-brand-200" },
@@ -15,7 +15,15 @@ export function WhyChooseUs() {
       <div className="container-x">
         {/* ── Header ── */}
         <ScrollReveal animation="fade-up">
-          <p className="eyebrow">Why Choose Us</p>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white/80 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-2">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+            <ShinyText
+              text="Why Choose Us"
+              color="#1d4ed8"
+              shineColor="#93c5fd"
+              speed={2.5}
+            />
+          </div>
           <h2 className="h-display mt-4 max-w-2xl text-text">
             Learn Today.{" "}
             <span className="text-gradient-brand">Lead Tomorrow.</span>

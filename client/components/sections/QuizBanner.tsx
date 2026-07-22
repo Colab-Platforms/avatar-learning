@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, ScrollReveal } from "@/components/ui";
+import { Button, ScrollReveal, ShinyText } from "@/components/ui";
 import { QUIZ_BANNER } from "@/data/quiz";
 import { ArrowRight, Sparkles } from "lucide-react";
 
@@ -19,7 +19,12 @@ export function QuizBanner() {
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md">
                     <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
-                    {QUIZ_BANNER.eyebrow}
+                    <ShinyText
+                      text={QUIZ_BANNER.eyebrow}
+                      color="#1d4ed8"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
                   </span>
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">

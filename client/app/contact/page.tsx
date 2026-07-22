@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollReveal, AnimateOnScroll } from "@/components/ui";
+import { ScrollReveal, AnimateOnScroll, ShinyText } from "@/components/ui";
 import { submitContact } from "@/lib/contactApi";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
@@ -98,7 +98,7 @@ const SOCIAL_LINKS = [
   },
   {
     label: "LinkedIn",
-    href: "https://linkedin.com/in/avatar-india-358b39413/",
+    href: "https://www.linkedin.com/company/avatar-india/",
     bg: "bg-[#0077b5] hover:bg-[#005e8f]",
     svg: (
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
@@ -183,16 +183,16 @@ export default function ContactPage() {
           <div className="relative container-x max-w-7xl">
             {/* ── PAGE HEADER ── */}
             <ScrollReveal animation="fade-up">
-              <div className="mb-3 flex items-center gap-3">
-                <span
-                  className="flex h-8 w-8 items-center justify-center rounded-lg
-                             bg-brand-500/10 border border-brand-500/20"
-                >
-                  <MessageSquare className="h-4 w-4 text-brand-400" />
+              <div className="mb-3 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider shadow-sm backdrop-blur-md">
+                  <MessageSquare className="h-3.5 w-3.5 text-blue-400 animate-pulse" />
+                  <ShinyText
+                    text="We'd love to hear from you"
+                    color="#93c5fd"
+                    shineColor="#ffffff"
+                    speed={2.5}
+                  />
                 </span>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400">
-                  We&apos;d love to hear from you
-                </p>
               </div>
               <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white mb-4">
                 Contact Us

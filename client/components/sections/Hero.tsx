@@ -121,7 +121,7 @@ export function Hero() {
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="w-10 h-10 rounded-full border-2 border-black bg-gray-100 overflow-hidden relative shadow-sm"
+                    className="w-10 h-10 rounded-full border-2 border-gray-400 bg-gray-100 overflow-hidden relative shadow-sm"
                   >
                     <Image
                       src={`/landingpage-images/student-${i}.png`}

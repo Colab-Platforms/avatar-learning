@@ -1,4 +1,4 @@
-import { Button, ScrollReveal } from "@/components/ui";
+import { Button, ScrollReveal, ShinyText } from "@/components/ui";
 import { AdvisorIllustration } from "@/components/illustrations/AdvisorIllustration";
 import { ADVISOR_CTA } from "@/data/advisor";
 import { ArrowUpRight, Users, CheckCircle2, Star } from "lucide-react";
@@ -20,7 +20,12 @@ export function AdvisorCTA() {
             <ScrollReveal animation="fade-up">
               <div className="pill-tag border-brand-200 bg-brand-50 text-brand-700 mb-7">
                 <Users className="h-3.5 w-3.5 text-brand-600" />
-                {ADVISOR_CTA.eyebrow}
+                <ShinyText
+                  text={ADVISOR_CTA.eyebrow}
+                  color="#1d4ed8"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
               </div>
             </ScrollReveal>
 

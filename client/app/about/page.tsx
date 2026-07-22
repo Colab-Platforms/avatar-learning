@@ -29,7 +29,7 @@ import {
 } from "react-icons/si";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollReveal, AnimateOnScroll } from "@/components/ui";
+import { ScrollReveal, AnimateOnScroll, ShinyText } from "@/components/ui";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
@@ -140,8 +140,14 @@ export default function AboutPage() {
               {/* left */}
               <div>
                 <ScrollReveal animation="fade-up" delay={0}>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-4 cursor-default">
-                    <Zap className="h-3 w-3" /> Who We Are
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4 cursor-default">
+                    <Zap className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    <ShinyText
+                      text="Who We Are"
+                      color="#1d4ed8"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
                   </div>
                   <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight text-slate-900 mb-6">
                     Powering the AI Revolution —{" "}
@@ -299,8 +305,14 @@ export default function AboutPage() {
 
           <div className="relative container-x max-w-3xl text-center">
             <ScrollReveal animation="fade-up">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-4 cursor-default">
-                <Globe className="h-3 w-3" /> Our Story
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4 cursor-default">
+                <Globe className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                <ShinyText
+                  text="Our Story"
+                  color="#1d4ed8"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mb-6">
                 From a Simple Idea to a{" "}
@@ -357,8 +369,14 @@ export default function AboutPage() {
 
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-4 cursor-default">
-                <Zap className="h-3 w-3" /> What Drives Us
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4 cursor-default">
+                <Zap className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                <ShinyText
+                  text="What Drives Us"
+                  color="#1d4ed8"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
                 Vision &amp; Mission
@@ -467,8 +485,14 @@ export default function AboutPage() {
 
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-4 cursor-default">
-                <Users className="h-3 w-3" /> Our Ecosystem
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4 cursor-default">
+                <Users className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                <ShinyText
+                  text="Our Ecosystem"
+                  color="#1d4ed8"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
                 Four Divisions, One Platform
@@ -528,8 +552,14 @@ export default function AboutPage() {
 
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-4 cursor-default">
-                <Globe className="h-3 w-3" /> Our Partners
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4 cursor-default">
+                <Globe className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                <ShinyText
+                  text="Our Partners"
+                  color="#1d4ed8"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
                 Trusted by Industry Leaders
@@ -578,7 +608,7 @@ export default function AboutPage() {
                 Interested in partnering with Avatar?
               </p>
               <Link
-                href="/contact"
+                href="/partners"
                 className="inline-flex items-center gap-2 rounded-full border border-blue-200
                            px-6 py-2.5 text-[13px] font-medium text-blue-700
                            hover:bg-blue-50 hover:border-blue-300 transition-all duration-250"
@@ -617,8 +647,14 @@ export default function AboutPage() {
                   }}
                 />
 
-                <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3 cursor-default">
-                  <Zap className="h-3 w-3" /> Join Us
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 cursor-default">
+                  <Zap className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                  <ShinyText
+                    text="Join Us"
+                    color="#1d4ed8"
+                    shineColor="#93c5fd"
+                    speed={2.5}
+                  />
                 </div>
                 <h2 className="relative text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
                   Ready to Build Your AI Future?

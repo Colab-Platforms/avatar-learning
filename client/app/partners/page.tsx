@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollReveal, AnimateOnScroll } from "@/components/ui";
+import { ScrollReveal, AnimateOnScroll, ShinyText } from "@/components/ui";
 import { useAppSelector } from "@/store/hooks";
 import {
   applyAsPartner,
@@ -112,9 +112,27 @@ const FAQS = [
   },
   {
     q: "What is your Referral Reward Policy?",
-    a: `Referral rewards become eligible for withdrawal 15 days after the referred learner successfully enrolls. This verification period helps ensure that the enrollment is genuine and active.
-If the referred learner cancels their enrollment, requests a refund, or leaves the program within the first 15 days, the referral will be considered cancelled, and the corresponding reward will not be eligible for withdrawal.
-Note : Avatar India reserves the right to review and reject referral rewards in cases of fraudulent, duplicate, or invalid referrals, or if the referral does not comply with our Partner Program Terms & Conditions.`,
+    a: (
+      <div className="space-y-2">
+        <p>
+          Referral rewards become eligible for withdrawal 15 days after the
+          referred learner successfully enrolls. This verification period helps
+          ensure that the enrollment is genuine and active.
+        </p>
+        <p>
+          If the referred learner cancels their enrollment, requests a refund,
+          or leaves the program within the first 15 days, the referral will be
+          considered cancelled, and the corresponding reward will not be
+          eligible for withdrawal.
+        </p>
+        <div className="mt-3 p-3 rounded-lg  border border-gray-300 text-[12.5px] text-amber-800">
+          <strong className="font-semibold text-amber-900">Note: </strong>
+          Avatar India reserves the right to review and reject referral rewards
+          in cases of fraudulent, duplicate, or invalid referrals, or if the
+          referral does not comply with our Partner Program Terms & Conditions.
+        </div>
+      </div>
+    ),
   },
 ];
 
@@ -874,9 +892,15 @@ export default function PartnersPage() {
         <section className="container-x max-w-7xl py-6">
           <ScrollReveal animation="fade-up">
             <div className="rounded-3xl bg-blue-50/70 border border-blue-100 px-8 py-14 text-center">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600 mb-3">
-                Partner With Us
-              </p>
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3">
+                <Building2 className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                <ShinyText
+                  text="Partner With Us"
+                  color="#1d4ed8"
+                  shineColor="#93c5fd"
+                  speed={2.5}
+                />
+              </div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 max-w-2xl mx-auto mb-4">
                 Ready to empower future talent while creating a new{" "}
                 <span className="text-blue-600">revenue opportunity</span>?
@@ -915,9 +939,15 @@ export default function PartnersPage() {
         <div className="h-px w-full bg-slate-200" />
         <section className="container-x max-w-7xl py-16">
           <ScrollReveal animation="fade-up">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600 mb-2">
-              Frequently Asked Questions
-            </p>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-2">
+              <MessageCircle className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+              <ShinyText
+                text="Frequently Asked Questions"
+                color="#1d4ed8"
+                shineColor="#93c5fd"
+                speed={2.5}
+              />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-10 max-w-lg">
               Got Questions? We&apos;ve Got You Covered.
             </h2>

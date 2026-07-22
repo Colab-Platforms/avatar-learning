@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CourseCard } from "./CourseCard";
 import { COURSES } from "@/data/courses";
-import { ScrollReveal } from "@/components/ui";
+import { ScrollReveal, ShinyText } from "@/components/ui";
 import { Layers, ArrowRight } from "lucide-react";
 
 export function CoursesSection() {
@@ -16,7 +16,12 @@ export function CoursesSection() {
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md">
               <Layers className="h-3.5 w-3.5 text-blue-600" />
-              AI Learning Division
+              <ShinyText
+                text="AI Learning Division"
+                color="#1d4ed8"
+                shineColor="#93c5fd"
+                speed={2.5}
+              />
             </span>
           </div>
           <h2 className="h-display text-text max-w-3xl">

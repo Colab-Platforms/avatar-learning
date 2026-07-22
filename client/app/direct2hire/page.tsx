@@ -232,13 +232,28 @@ const FAQS = [
   },
   {
     q: "What is your refund policy?",
-    a: `We offer a simple and transparent refund policy to ensure a fair experience for all learners:
-
-• Within 48 hours of purchase: Eligible for a 100% refund.
-• Between Day 3 and Day 7: Eligible for a 50% refund.
-• After 7 days from the date of purchase: No refund will be applicable.
-
-Note: Avatar India reserves the right to verify refund requests and may decline refunds in cases of policy misuse, fraudulent activity, or violation of our Terms & Conditions.`,
+    a: (
+      <div className="space-y-2 text-text-muted">
+        <p>
+          We offer a simple and transparent refund policy to ensure a fair
+          experience for all learners:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 my-2">
+          <li>Within 48 hours of purchase: Eligible for a 100% refund.</li>
+          <li>Between Day 3 and Day 7: Eligible for a 50% refund.</li>
+          <li>
+            After 7 days from the date of purchase: No refund will be
+            applicable.
+          </li>
+        </ul>
+        <div className="mt-3 p-3 rounded-lg  border border-gray-200 text-[12.5px] text-amber-800">
+          <strong className="font-semibold text-amber-900">Note: </strong>
+          Avatar India reserves the right to verify refund requests and may
+          decline refunds in cases of policy misuse, fraudulent activity, or
+          violation of our Terms & Conditions.
+        </div>
+      </div>
+    ),
   },
 ];
 
@@ -490,12 +505,11 @@ export default function Direct2HirePage() {
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-5 sm:mb-12">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                     <ShinyText
                       text="THE COST OF CONFUSION"
-                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                      color="#2563eb"
+                      color="#1d4ed8"
                       shineColor="#93c5fd"
                       speed={2.5}
                     />
@@ -580,12 +594,11 @@ export default function Direct2HirePage() {
               animation="fade-up"
               className="mb-5 sm:mb-12 text-center"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                 <ShinyText
                   text="WHO IS THIS FOR ?"
-                  className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                  color="#2563eb"
+                  color="#1d4ed8"
                   shineColor="#93c5fd"
                   speed={2.5}
                 />
@@ -706,12 +719,11 @@ export default function Direct2HirePage() {
         >
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="mb-6 sm:mb-14">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                 <ShinyText
                   text="THE COMPLETE PROGRAM"
-                  className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                  color="#2563eb"
+                  color="#1d4ed8"
                   shineColor="#93c5fd"
                   speed={2.5}
                 />
@@ -832,12 +844,11 @@ export default function Direct2HirePage() {
             <div className="grid lg:grid-cols-5 gap-6 lg:gap-10 items-center">
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                     <ShinyText
                       text="THE OUTCOME"
-                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                      color="#2563eb"
+                      color="#1d4ed8"
                       shineColor="#93c5fd"
                       speed={2.5}
                     />
@@ -901,12 +912,11 @@ export default function Direct2HirePage() {
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-5 sm:mb-12">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                     <ShinyText
                       text="COMPLETE BREAKDOWN"
-                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                      color="#2563eb"
+                      color="#1d4ed8"
                       shineColor="#93c5fd"
                       speed={2.5}
                     />
@@ -994,12 +1004,11 @@ export default function Direct2HirePage() {
               animation="fade-up"
               className="text-center mb-6 sm:mb-14"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                 <ShinyText
                   text="WHAT MAKES US DIFFERENT"
-                  className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                  color="#2563eb"
+                  color="#1d4ed8"
                   shineColor="#93c5fd"
                   speed={2.5}
                 />
@@ -1092,12 +1101,11 @@ export default function Direct2HirePage() {
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-6 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-                <div className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-2 sm:mb-3">
-                  <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                <div className="relative inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-2 sm:mb-3 cursor-default">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                   <ShinyText
                     text="YOUR FUTURE STARTS HERE"
-                    className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                    color="#2563eb"
+                    color="#1d4ed8"
                     shineColor="#93c5fd"
                     speed={2.5}
                   />
@@ -1144,12 +1152,11 @@ export default function Direct2HirePage() {
               {/* left */}
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-200 bg-brand-50/80 mb-3 sm:mb-4">
-                    <Sparkles className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
                     <ShinyText
                       text="FREQUENTLY ASKED QUESTIONS"
-                      className="text-[11px] font-bold tracking-[0.2em] uppercase"
-                      color="#2563eb"
+                      color="#1d4ed8"
                       shineColor="#93c5fd"
                       speed={2.5}
                     />
