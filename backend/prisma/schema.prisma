@@ -108,11 +108,10 @@ enum MockInterviewStatus {
   CANCELLED
 }
 
-enum MockInterviewRecommendation {
-  READY_FOR_PLACEMENT
-  NEEDS_IMPROVEMENT
-  EXCELLENT_CANDIDATE
-  NEEDS_ANOTHER_MOCK
+enum MockInterviewPerformanceGrade {
+  GRADE_A
+  GRADE_B
+  GRADE_C
 }
 
 enum SubmissionAttachmentKind {
@@ -1350,15 +1349,9 @@ model MockInterview {
   durationMinutes Int?      @map("duration_minutes")
   adminNotes      String?   @map("admin_notes") @db.Text
 
-  communicationRating Int? @map("communication_rating")
-  technicalRating     Int? @map("technical_rating")
-  confidenceRating    Int? @map("confidence_rating")
-  resumeRating        Int? @map("resume_rating")
-  overallRating       Int? @map("overall_rating")
-
-  recommendation      MockInterviewRecommendation? @map("recommendation")
-  feedback            String?                      @db.Text
-  feedbackPublishedAt DateTime?                    @map("feedback_published_at")
+  performanceGrade MockInterviewPerformanceGrade? @map("performance_grade")
+  feedback         String?                        @db.Text
+  feedbackPublishedAt DateTime?                   @map("feedback_published_at")
 
   completedAt DateTime? @map("completed_at")
   cancelledAt DateTime? @map("cancelled_at")

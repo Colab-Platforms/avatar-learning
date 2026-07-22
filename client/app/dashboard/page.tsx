@@ -114,7 +114,7 @@ export default function DashboardOverviewPage() {
   const mockInterview = mockInterviewBundle?.interview ?? null;
   const hasGoodMockFeedback =
     mockInterview?.status === "FEEDBACK_PUBLISHED" &&
-    isGoodMockInterviewFeedback(mockInterview.recommendation);
+    isGoodMockInterviewFeedback(mockInterview.performanceGrade);
   const hasPlacement = hasPlacementAssessment && hasGoodMockFeedback;
 
   const placementProgress = hasPlacement

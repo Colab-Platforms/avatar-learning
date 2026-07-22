@@ -19,12 +19,14 @@ import { usePublishMockInterviewFeedback } from "@/hooks/mutations/usePublishMoc
 import { useCancelMockInterview } from "@/hooks/mutations/useCancelMockInterview";
 import {
   MockInterviewStatusBadge,
-  RatingBar,
 } from "@/components/mock-interview/MockInterviewShared";
 import {
-  RECOMMENDATION_LABELS,
+  PERFORMANCE_GRADE_LABELS,
+  PERFORMANCE_GRADE_OPTIONS,
+  countFeedbackWords,
+  getPerformanceGradeShortLabel,
   type MockInterview,
-  type MockInterviewRecommendation,
+  type MockInterviewPerformanceGrade,
   type PublishMockInterviewFeedbackPayload,
 } from "@/lib/direct2hire/mockInterviewApi";
 
@@ -77,13 +79,6 @@ function Field({ label, value }: { label: string; value?: string | null }) {
     </div>
   );
 }
-
-const RECOMMENDATION_OPTIONS: MockInterviewRecommendation[] = [
-  "READY_FOR_PLACEMENT",
-  "NEEDS_IMPROVEMENT",
-  "EXCELLENT_CANDIDATE",
-  "NEEDS_ANOTHER_MOCK",
-];
 
 function ScheduleForm({
   userId,
@@ -225,11 +220,16 @@ function ScheduleForm({
         ) : (
           <CheckCircle2 size={13} />
         )}
-        {interview?.status === "SCHEDULED" ? "Update Schedule" : "Schedule Interview"}
+        {interview?.status === "SCHEDULED"
+          ? "Update Schedule"
+          : "Schedule Interview"}
       </button>
     </form>
   );
 }
+
+const FEEDBACK_MIN_WORDS = 20;
+const FEEDBACK_MAX_CHARS = 1000;
 
 function FeedbackForm({
   userId,
@@ -238,107 +238,110 @@ function FeedbackForm({
   userId: string;
   interview: MockInterview;
 }) {
-  const [form, setForm] = useState<PublishMockInterviewFeedbackPayload>({
-    communicationRating: interview.communicationRating ?? 3,
-    technicalRating: interview.technicalRating ?? 3,
-    confidenceRating: interview.confidenceRating ?? 3,
-    resumeRating: interview.resumeRating ?? 3,
-    overallRating: interview.overallRating ?? 3,
-    recommendation:
-      interview.recommendation ?? "READY_FOR_PLACEMENT",
-    feedback: interview.feedback ?? "",
-  });
+  const [performanceGrade, setPerformanceGrade] =
+    useState<MockInterviewPerformanceGrade | "">(
+      interview.performanceGrade ?? "",
+    );
+  const [feedback, setFeedback] = useState(interview.feedback ?? "");
+  const [touched, setTouched] = useState(false);
 
   const publishMutation = usePublishMockInterviewFeedback(userId);
 
-  const setRating = (
-    key: keyof PublishMockInterviewFeedbackPayload,
-    value: number,
-  ) => setForm((prev) => ({ ...prev, [key]: value }));
+  const wordCount = countFeedbackWords(feedback);
+  const trimmedFeedback = feedback.trim();
+  const feedbackError =
+    touched && trimmedFeedback.length === 0
+      ? "Overall feedback is required"
+      : touched && wordCount < FEEDBACK_MIN_WORDS
+        ? "Please provide at least 20 words of meaningful feedback."
+        : trimmedFeedback.length > FEEDBACK_MAX_CHARS
+          ? "Feedback cannot exceed 1000 characters"
+          : null;
 
-  const ratingFields: {
-    key: keyof PublishMockInterviewFeedbackPayload;
-    label: string;
-  }[] = [
-    { key: "communicationRating", label: "Communication" },
-    { key: "technicalRating", label: "Technical" },
-    { key: "confidenceRating", label: "Confidence" },
-    { key: "resumeRating", label: "Resume" },
-    { key: "overallRating", label: "Overall" },
-  ];
+  const canSubmit =
+    !!performanceGrade &&
+    wordCount >= FEEDBACK_MIN_WORDS &&
+    trimmedFeedback.length <= FEEDBACK_MAX_CHARS &&
+    !publishMutation.isPending;
+
+  const handleSubmit = () => {
+    setTouched(true);
+    if (!performanceGrade || wordCount < FEEDBACK_MIN_WORDS) return;
+    if (trimmedFeedback.length > FEEDBACK_MAX_CHARS) return;
+
+    const payload: PublishMockInterviewFeedbackPayload = {
+      performanceGrade,
+      feedback: trimmedFeedback,
+    };
+    publishMutation.mutate(payload);
+  };
 
   return (
-    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-5 space-y-4">
+    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-5 space-y-5">
       <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
         Interview Evaluation
       </span>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {ratingFields.map(({ key, label }) => (
-          <div key={key}>
-            <label className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5 block">
-              {label} Rating (1–5)
-            </label>
-            <select
-              value={form[key] as number}
-              onChange={(e) => setRating(key, Number(e.target.value))}
-              className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 outline-none focus:border-brand-500/60"
+      <fieldset className="space-y-3">
+        <legend className="text-[10px] font-semibold text-white/25 uppercase tracking-widest">
+          Student Performance Grade <span className="text-red-400">*</span>
+        </legend>
+        <div className="flex flex-col gap-2.5">
+          {PERFORMANCE_GRADE_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className="flex items-center gap-3 cursor-pointer group"
             >
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
-
-        <div className="sm:col-span-2">
-          <label className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5 block">
-            Recommendation
-          </label>
-          <select
-            value={form.recommendation}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                recommendation: e.target.value as MockInterviewRecommendation,
-              }))
-            }
-            className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 outline-none focus:border-brand-500/60"
-          >
-            {RECOMMENDATION_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {RECOMMENDATION_LABELS[opt]}
-              </option>
-            ))}
-          </select>
+              <input
+                type="radio"
+                name="performanceGrade"
+                value={opt.value}
+                checked={performanceGrade === opt.value}
+                onChange={() => setPerformanceGrade(opt.value)}
+                className="h-4 w-4 accent-brand-500"
+              />
+              <span className="text-sm text-white/80 group-hover:text-white transition-colors">
+                {opt.label}
+              </span>
+            </label>
+          ))}
         </div>
+        {touched && !performanceGrade && (
+          <p className="text-xs text-red-400">
+            Student performance grade is required
+          </p>
+        )}
+      </fieldset>
 
-        <div className="sm:col-span-2">
-          <label className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5 block">
-            Overall Feedback
-          </label>
-          <textarea
-            value={form.feedback}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, feedback: e.target.value }))
-            }
-            rows={4}
-            required
-            minLength={20}
-            placeholder="Write detailed feedback for the student…"
-            className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none focus:border-brand-500/60 resize-none"
-          />
+      <div>
+        <label className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5 block">
+          Overall Feedback <span className="text-red-400">*</span>
+        </label>
+        <textarea
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          onBlur={() => setTouched(true)}
+          rows={5}
+          maxLength={FEEDBACK_MAX_CHARS}
+          placeholder="Write at least 20 words of meaningful feedback for the student…"
+          className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none focus:border-brand-500/60 resize-none"
+        />
+        <div className="mt-1.5 flex items-center justify-between gap-3">
+          <p
+            className={`text-xs ${
+              feedbackError ? "text-red-400" : "text-white/30"
+            }`}
+          >
+            {feedbackError ??
+              `${wordCount} / ${FEEDBACK_MIN_WORDS} words min · ${trimmedFeedback.length} / ${FEEDBACK_MAX_CHARS} chars`}
+          </p>
         </div>
       </div>
 
       <button
         type="button"
-        onClick={() => publishMutation.mutate(form)}
-        disabled={
-          publishMutation.isPending || form.feedback.trim().length < 20
-        }
+        onClick={handleSubmit}
+        disabled={!canSubmit}
         className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold bg-brand-500 text-ink-950 hover:bg-brand-400 disabled:opacity-60"
       >
         {publishMutation.isPending ? (
@@ -505,10 +508,35 @@ export function AdminMockInterviewSection({ userId }: { userId: string }) {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <Field label="Interviewer" value={interview.interviewerName} />
+                    <Field label="Interviewer Name" value={interview.interviewerName} />
                     <Field
-                      label="Scheduled Date"
-                      value={formatDateTime(interview.scheduledAt)}
+                      label="Interview Date"
+                      value={
+                        interview.scheduledAt
+                          ? new Date(interview.scheduledAt).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
+                          : null
+                      }
+                    />
+                    <Field
+                      label="Interview Time"
+                      value={
+                        interview.scheduledAt
+                          ? new Date(interview.scheduledAt).toLocaleTimeString(
+                              "en-IN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
+                          : null
+                      }
                     />
                     <Field
                       label="Duration"
@@ -516,6 +544,16 @@ export function AdminMockInterviewSection({ userId }: { userId: string }) {
                         interview.durationMinutes
                           ? `${interview.durationMinutes} min`
                           : null
+                      }
+                    />
+                    <Field
+                      label="Completion Status"
+                      value={
+                        status === "FEEDBACK_PUBLISHED"
+                          ? "Completed with feedback"
+                          : status === "COMPLETED"
+                            ? "Completed — feedback pending"
+                            : "Scheduled"
                       }
                     />
                     <div className="md:col-span-2">
@@ -536,6 +574,26 @@ export function AdminMockInterviewSection({ userId }: { userId: string }) {
                       )}
                     </div>
                     <Field label="Admin Notes" value={interview.adminNotes} />
+                    {status === "FEEDBACK_PUBLISHED" && (
+                      <>
+                        <Field
+                          label="Grade"
+                          value={
+                            interview.performanceGrade
+                              ? PERFORMANCE_GRADE_LABELS[
+                                  interview.performanceGrade
+                                ]
+                              : null
+                          }
+                        />
+                        <div className="md:col-span-2 lg:col-span-3">
+                          <Field
+                            label="Feedback"
+                            value={interview.feedback}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -580,47 +638,41 @@ export function AdminMockInterviewSection({ userId }: { userId: string }) {
                 <FeedbackForm userId={userId} interview={interview} />
               )}
 
-              {status === "FEEDBACK_PUBLISHED" && interview.recommendation && (
-                <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 space-y-3">
-                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
-                    Published Feedback Summary
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm text-white/80">
-                      Overall:{" "}
-                      <strong>{interview.overallRating}/5</strong>
-                    </span>
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">
-                      {RECOMMENDATION_LABELS[interview.recommendation]}
-                    </span>
-                    <span className="text-xs text-white/40">
-                      Published {formatDateTime(interview.feedbackPublishedAt)}
-                    </span>
+              {status === "FEEDBACK_PUBLISHED" &&
+                interview.performanceGrade && (
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 space-y-3">
+                    <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
+                      Published Feedback Summary
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-sm text-white/80">
+                        Grade:{" "}
+                        <strong>
+                          {getPerformanceGradeShortLabel(
+                            interview.performanceGrade,
+                          )}
+                        </strong>
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">
+                        {PERFORMANCE_GRADE_LABELS[interview.performanceGrade]}
+                      </span>
+                      <span className="text-xs text-white/40">
+                        Published{" "}
+                        {formatDateTime(interview.feedbackPublishedAt)}
+                      </span>
+                    </div>
+                    {interview.feedback && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+                          Interviewer Feedback
+                        </p>
+                        <p className="text-sm text-white/75 leading-relaxed whitespace-pre-wrap">
+                          {interview.feedback}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <RatingBar
-                      label="Communication"
-                      value={interview.communicationRating ?? 0}
-                      variant="dark"
-                    />
-                    <RatingBar
-                      label="Technical"
-                      value={interview.technicalRating ?? 0}
-                      variant="dark"
-                    />
-                    <RatingBar
-                      label="Confidence"
-                      value={interview.confidenceRating ?? 0}
-                      variant="dark"
-                    />
-                    <RatingBar
-                      label="Resume"
-                      value={interview.resumeRating ?? 0}
-                      variant="dark"
-                    />
-                  </div>
-                </div>
-              )}
+                )}
             </motion.div>
           )}
       </AnimatePresence>

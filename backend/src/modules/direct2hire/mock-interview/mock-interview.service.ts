@@ -2,7 +2,9 @@ import prisma from "@root/prisma.js";
 import type { MockInterview, PlacementAttemptStatus } from "@prisma/client";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import { logger } from "@/utils/logger.js";
 import { getPlacementAttemptAllowance } from "../../course/placement/placement.attempt-policy.js";
+import { sendMockInterviewScheduleEmail } from "./mock-interview.mail.js";
 import type {
   MockInterviewAssessmentContext,
   MockInterviewBundle,
@@ -32,12 +34,7 @@ function serialize(interview: MockInterview): MockInterviewResponse {
     scheduledAt: toIso(interview.scheduledAt),
     durationMinutes: interview.durationMinutes,
     adminNotes: interview.adminNotes,
-    communicationRating: interview.communicationRating,
-    technicalRating: interview.technicalRating,
-    confidenceRating: interview.confidenceRating,
-    resumeRating: interview.resumeRating,
-    overallRating: interview.overallRating,
-    recommendation: interview.recommendation,
+    performanceGrade: interview.performanceGrade,
     feedback: interview.feedback,
     feedbackPublishedAt: toIso(interview.feedbackPublishedAt),
     completedAt: toIso(interview.completedAt),
@@ -234,6 +231,8 @@ export class MockInterviewService {
       );
     }
 
+    const wasAlreadyScheduled = existing.status === "SCHEDULED";
+
     const interview = await prisma.mockInterview.update({
       where: { userId },
       data: {
@@ -246,6 +245,20 @@ export class MockInterviewService {
         cancelledAt: null,
       },
     });
+
+    // Email is a secondary, non-blocking operation — scheduling has already
+    // succeeded in the database by this point, so a failure here must never
+    // roll back the interview or fail the API response.
+    this.notifyStudentOfSchedule(
+      userId,
+      interview,
+      wasAlreadyScheduled ? "updated" : "scheduled",
+    ).catch((err) =>
+      logger.error(
+        `[MockInterview] Failed to send schedule email to user ${userId}:`,
+        err,
+      ),
+    );
 
     return serialize(interview);
   }
@@ -295,12 +308,7 @@ export class MockInterviewService {
       where: { userId },
       data: {
         status: "FEEDBACK_PUBLISHED",
-        communicationRating: data.communicationRating,
-        technicalRating: data.technicalRating,
-        confidenceRating: data.confidenceRating,
-        resumeRating: data.resumeRating,
-        overallRating: data.overallRating,
-        recommendation: data.recommendation,
+        performanceGrade: data.performanceGrade,
         feedback: data.feedback.trim(),
         feedbackPublishedAt: new Date(),
         completedAt: existing.completedAt ?? new Date(),
@@ -334,5 +342,58 @@ export class MockInterviewService {
     });
 
     return serialize(interview);
+  }
+
+  private async notifyStudentOfSchedule(
+    userId: string,
+    interview: MockInterview,
+    kind: "scheduled" | "updated",
+  ) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        direct2HireLead: { select: { fullName: true, email: true } },
+      },
+    });
+
+    if (!user) return;
+
+    const email = user.direct2HireLead?.email || user.email;
+    if (!email) return;
+
+    const leadFirst =
+      user.direct2HireLead?.fullName?.trim().split(/\s+/)[0] ?? null;
+    const studentName =
+      user.firstName?.trim() || leadFirst || "there";
+
+    if (
+      !interview.scheduledAt ||
+      !interview.interviewerName ||
+      !interview.meetingLink
+    ) {
+      return;
+    }
+
+    await sendMockInterviewScheduleEmail(
+      email,
+      {
+        studentName,
+        interviewerName: interview.interviewerName,
+        date: interview.scheduledAt.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }),
+        time: interview.scheduledAt.toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        meetLink: interview.meetingLink,
+      },
+      kind,
+    );
   }
 }

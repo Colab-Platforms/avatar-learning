@@ -1,5 +1,5 @@
 import type {
-  MockInterviewRecommendation,
+  MockInterviewPerformanceGrade,
   MockInterviewStatus,
 } from "@prisma/client";
 
@@ -12,12 +12,7 @@ export type ScheduleMockInterviewInput = {
 };
 
 export type PublishMockInterviewFeedbackInput = {
-  communicationRating: number;
-  technicalRating: number;
-  confidenceRating: number;
-  resumeRating: number;
-  overallRating: number;
-  recommendation: MockInterviewRecommendation;
+  performanceGrade: MockInterviewPerformanceGrade;
   feedback: string;
 };
 
@@ -45,12 +40,7 @@ export type MockInterviewResponse = {
   scheduledAt: string | null;
   durationMinutes: number | null;
   adminNotes: string | null;
-  communicationRating: number | null;
-  technicalRating: number | null;
-  confidenceRating: number | null;
-  resumeRating: number | null;
-  overallRating: number | null;
-  recommendation: MockInterviewRecommendation | null;
+  performanceGrade: MockInterviewPerformanceGrade | null;
   feedback: string | null;
   feedbackPublishedAt: string | null;
   completedAt: string | null;
@@ -65,9 +55,14 @@ export type MockInterviewBundle = {
   timeline: MockInterviewTimeline;
 };
 
-export const RECOMMENDATION_VALUES = [
-  "READY_FOR_PLACEMENT",
-  "NEEDS_IMPROVEMENT",
-  "EXCELLENT_CANDIDATE",
-  "NEEDS_ANOTHER_MOCK",
+export const PERFORMANCE_GRADE_VALUES = [
+  "GRADE_A",
+  "GRADE_B",
+  "GRADE_C",
 ] as const;
+
+export function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).filter(Boolean).length;
+}

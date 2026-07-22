@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Circle,
   Mic,
-  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MockInterviewTimeline } from "@/lib/direct2hire/mockInterviewApi";
@@ -111,81 +110,6 @@ export function MockInterviewTimelineView({
         );
       })}
     </ol>
-  );
-}
-
-export function RatingStars({
-  value,
-  max = 5,
-  size = 14,
-  className,
-}: {
-  value: number;
-  max?: number;
-  size?: number;
-  className?: string;
-}) {
-  return (
-    <div className={cn("inline-flex items-center gap-0.5", className)}>
-      {Array.from({ length: max }).map((_, i) => (
-        <Star
-          key={i}
-          size={size}
-          className={
-            i < value
-              ? "fill-amber-400 text-amber-400"
-              : "fill-transparent text-slate-300"
-          }
-        />
-      ))}
-    </div>
-  );
-}
-
-export function RatingBar({
-  label,
-  value,
-  variant = "light",
-}: {
-  label: string;
-  value: number;
-  variant?: "light" | "dark";
-}) {
-  const isDark = variant === "dark";
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span
-          className={cn(
-            "text-xs font-medium",
-            isDark ? "text-white/60" : "text-slate-600",
-          )}
-        >
-          {label}
-        </span>
-        <span
-          className={cn(
-            "text-xs font-bold tabular-nums",
-            isDark ? "text-white/80" : "text-slate-800",
-          )}
-        >
-          {value}/5
-        </span>
-      </div>
-      <div
-        className={cn(
-          "h-1.5 rounded-full overflow-hidden",
-          isDark ? "bg-white/8" : "bg-slate-100",
-        )}
-      >
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${(value / 5) * 100}%` }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="h-full rounded-full bg-brand-500"
-        />
-      </div>
-    </div>
   );
 }
 

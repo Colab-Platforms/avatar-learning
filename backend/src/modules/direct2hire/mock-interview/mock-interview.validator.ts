@@ -1,12 +1,8 @@
 import Joi from "joi";
-import { RECOMMENDATION_VALUES } from "./mock-interview.types.js";
-
-const rating = Joi.number().integer().min(1).max(5).required().messages({
-  "any.required": "Rating is required",
-  "number.base": "Rating must be a number",
-  "number.min": "Rating must be between 1 and 5",
-  "number.max": "Rating must be between 1 and 5",
-});
+import {
+  countWords,
+  PERFORMANCE_GRADE_VALUES,
+} from "./mock-interview.types.js";
 
 const scheduleSchema = Joi.object({
   interviewerName: Joi.string().trim().min(1).max(200).required().messages({
@@ -31,33 +27,30 @@ const scheduleSchema = Joi.object({
 });
 
 const feedbackSchema = Joi.object({
-  communicationRating: rating.messages({
-    "any.required": "Communication rating is required",
-  }),
-  technicalRating: rating.messages({
-    "any.required": "Technical rating is required",
-  }),
-  confidenceRating: rating.messages({
-    "any.required": "Confidence rating is required",
-  }),
-  resumeRating: rating.messages({
-    "any.required": "Resume rating is required",
-  }),
-  overallRating: rating.messages({
-    "any.required": "Overall rating is required",
-  }),
-  recommendation: Joi.string()
-    .valid(...RECOMMENDATION_VALUES)
+  performanceGrade: Joi.string()
+    .valid(...PERFORMANCE_GRADE_VALUES)
     .required()
     .messages({
-      "any.required": "Recommendation is required",
-      "any.only": "Invalid recommendation value",
+      "any.required": "Student performance grade is required",
+      "any.only": "Performance grade must be Grade A, Grade B, or Grade C",
     }),
-  feedback: Joi.string().trim().min(20).max(5000).required().messages({
-    "any.required": "Overall feedback is required",
-    "string.empty": "Overall feedback is required",
-    "string.min": "Feedback must be at least 20 characters",
-  }),
+  feedback: Joi.string()
+    .trim()
+    .required()
+    .max(1000)
+    .custom((value, helpers) => {
+      if (countWords(value) < 20) {
+        return helpers.error("feedback.wordCount");
+      }
+      return value;
+    })
+    .messages({
+      "any.required": "Overall feedback is required",
+      "string.empty": "Overall feedback is required",
+      "string.max": "Feedback cannot exceed 1000 characters",
+      "feedback.wordCount":
+        "Please provide at least 20 words of meaningful feedback.",
+    }),
 });
 
 export const validateScheduleMockInterview = (data: unknown) =>

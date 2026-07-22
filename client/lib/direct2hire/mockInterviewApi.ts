@@ -7,11 +7,7 @@ export type MockInterviewStatus =
   | "FEEDBACK_PUBLISHED"
   | "CANCELLED";
 
-export type MockInterviewRecommendation =
-  | "READY_FOR_PLACEMENT"
-  | "NEEDS_IMPROVEMENT"
-  | "EXCELLENT_CANDIDATE"
-  | "NEEDS_ANOTHER_MOCK";
+export type MockInterviewPerformanceGrade = "GRADE_A" | "GRADE_B" | "GRADE_C";
 
 export interface MockInterview {
   id: string;
@@ -22,12 +18,7 @@ export interface MockInterview {
   scheduledAt: string | null;
   durationMinutes: number | null;
   adminNotes: string | null;
-  communicationRating: number | null;
-  technicalRating: number | null;
-  confidenceRating: number | null;
-  resumeRating: number | null;
-  overallRating: number | null;
-  recommendation: MockInterviewRecommendation | null;
+  performanceGrade: MockInterviewPerformanceGrade | null;
   feedback: string | null;
   feedbackPublishedAt: string | null;
   completedAt: string | null;
@@ -66,34 +57,51 @@ export type ScheduleMockInterviewPayload = {
 };
 
 export type PublishMockInterviewFeedbackPayload = {
-  communicationRating: number;
-  technicalRating: number;
-  confidenceRating: number;
-  resumeRating: number;
-  overallRating: number;
-  recommendation: MockInterviewRecommendation;
+  performanceGrade: MockInterviewPerformanceGrade;
   feedback: string;
 };
 
-export const RECOMMENDATION_LABELS: Record<MockInterviewRecommendation, string> =
-  {
-    READY_FOR_PLACEMENT: "Ready for Placement",
-    NEEDS_IMPROVEMENT: "Needs Improvement",
-    EXCELLENT_CANDIDATE: "Excellent Candidate",
-    NEEDS_ANOTHER_MOCK: "Needs Another Mock",
-  };
-
-export const GOOD_FEEDBACK_RECOMMENDATIONS: MockInterviewRecommendation[] = [
-  "READY_FOR_PLACEMENT",
-  "EXCELLENT_CANDIDATE",
+export const PERFORMANCE_GRADE_OPTIONS: {
+  value: MockInterviewPerformanceGrade;
+  label: string;
+  shortLabel: string;
+}[] = [
+  { value: "GRADE_A", label: "Grade A", shortLabel: "A" },
+  { value: "GRADE_B", label: "Grade B", shortLabel: "B" },
+  { value: "GRADE_C", label: "Grade C", shortLabel: "C" },
 ];
 
-export function isGoodMockInterviewFeedback(
-  recommendation?: MockInterviewRecommendation | null,
+export const PERFORMANCE_GRADE_LABELS: Record<
+  MockInterviewPerformanceGrade,
+  string
+> = {
+  GRADE_A: "Grade A",
+  GRADE_B: "Grade B",
+  GRADE_C: "Grade C",
+};
+
+export const GOOD_PERFORMANCE_GRADES: MockInterviewPerformanceGrade[] = [
+  "GRADE_A",
+  "GRADE_B",
+];
+
+export function getPerformanceGradeShortLabel(
+  grade?: MockInterviewPerformanceGrade | null,
 ) {
-  return (
-    !!recommendation && GOOD_FEEDBACK_RECOMMENDATIONS.includes(recommendation)
-  );
+  if (!grade) return null;
+  return PERFORMANCE_GRADE_OPTIONS.find((o) => o.value === grade)?.shortLabel ?? null;
+}
+
+export function isGoodMockInterviewFeedback(
+  grade?: MockInterviewPerformanceGrade | null,
+) {
+  return !!grade && GOOD_PERFORMANCE_GRADES.includes(grade);
+}
+
+export function countFeedbackWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).filter(Boolean).length;
 }
 
 export const MOCK_INTERVIEW_STATUS_LABELS: Record<MockInterviewStatus, string> =

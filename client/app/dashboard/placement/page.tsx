@@ -22,7 +22,8 @@ import { usePlacementAssessment } from "@/hooks/queries/usePlacementAssessment";
 import { usePlacementAttemptHistory } from "@/hooks/queries/usePlacementAttemptHistory";
 import { useMockInterview } from "@/hooks/queries/useMockInterview";
 import {
-  RECOMMENDATION_LABELS,
+  PERFORMANCE_GRADE_LABELS,
+  getPerformanceGradeShortLabel,
   isGoodMockInterviewFeedback,
   type MockInterviewStatus,
 } from "@/lib/direct2hire/mockInterviewApi";
@@ -108,7 +109,7 @@ function getMockInterviewCardContent(status?: MockInterviewStatus | null) {
         badge: "Feedback Ready",
         badgeClass: "border-emerald-200 bg-emerald-50 text-emerald-700",
         description:
-          "Your interview report is ready — ratings, recommendation, and detailed feedback from your mentor.",
+          "Your interview report is ready — performance grade and detailed feedback from your mentor.",
         cta: "View Feedback",
         icon: Star,
       };
@@ -230,7 +231,7 @@ export default function DashboardPlacementPage() {
     const interview = mockInterviewBundle?.interview;
     if (
       interview?.status === "FEEDBACK_PUBLISHED" &&
-      isGoodMockInterviewFeedback(interview.recommendation)
+      isGoodMockInterviewFeedback(interview.performanceGrade)
     ) {
       count += 1;
     }
@@ -298,7 +299,7 @@ export default function DashboardPlacementPage() {
           {stagesCompleted === 1 &&
             mockInterviewBundle?.interview?.status === "FEEDBACK_PUBLISHED" &&
             !isGoodMockInterviewFeedback(
-              mockInterviewBundle.interview.recommendation,
+              mockInterviewBundle.interview.performanceGrade,
             ) && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                 Feedback published — keep improving based on mentor notes to fully clear placement.
@@ -431,15 +432,17 @@ export default function DashboardPlacementPage() {
                     <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">
-                          Overall Rating
+                          Grade
                         </p>
                         <p className="text-sm font-bold text-slate-800 tabular-nums">
-                          {interview?.overallRating ?? "—"}/5
+                          {getPerformanceGradeShortLabel(
+                            interview?.performanceGrade,
+                          ) ?? "—"}
                         </p>
                       </div>
-                      {interview?.recommendation && (
+                      {interview?.performanceGrade && (
                         <p className="text-xs font-semibold text-emerald-800">
-                          {RECOMMENDATION_LABELS[interview.recommendation]}
+                          {PERFORMANCE_GRADE_LABELS[interview.performanceGrade]}
                         </p>
                       )}
                     </div>

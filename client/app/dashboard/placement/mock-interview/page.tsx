@@ -23,11 +23,10 @@ import { useRequestMockInterview } from "@/hooks/mutations/useRequestMockIntervi
 import {
   MockInterviewStatusBadge,
   MockInterviewTimelineView,
-  RatingBar,
-  RatingStars,
 } from "@/components/mock-interview/MockInterviewShared";
 import {
-  RECOMMENDATION_LABELS,
+  PERFORMANCE_GRADE_LABELS,
+  getPerformanceGradeShortLabel,
   type MockInterview,
   type MockInterviewBundle,
 } from "@/lib/direct2hire/mockInterviewApi";
@@ -393,12 +392,7 @@ function FeedbackReport({
   interview: MockInterview;
   timeline: MockInterviewBundle["timeline"];
 }) {
-  const ratings = [
-    { label: "Communication", value: interview.communicationRating ?? 0 },
-    { label: "Technical", value: interview.technicalRating ?? 0 },
-    { label: "Confidence", value: interview.confidenceRating ?? 0 },
-    { label: "Resume", value: interview.resumeRating ?? 0 },
-  ];
+  const gradeLabel = getPerformanceGradeShortLabel(interview.performanceGrade);
 
   return (
     <motion.div
@@ -413,15 +407,15 @@ function FeedbackReport({
               Interview Report
             </p>
             <h2 className="text-xl font-bold text-slate-900">
-              Your Mock Interview Feedback
+              Mock Interview Feedback
             </h2>
             <p className="text-sm text-slate-500 mt-1">
               Published {formatDateTime(interview.feedbackPublishedAt)}
             </p>
           </div>
-          {interview.recommendation && (
+          {interview.performanceGrade && (
             <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5">
-              {RECOMMENDATION_LABELS[interview.recommendation]}
+              {PERFORMANCE_GRADE_LABELS[interview.performanceGrade]}
             </span>
           )}
         </div>
@@ -429,17 +423,11 @@ function FeedbackReport({
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8 p-5 rounded-xl bg-slate-50 border border-slate-100">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-              Overall Rating
+              Grade
             </p>
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-extrabold text-slate-900 tabular-nums">
-                {interview.overallRating}
-                <span className="text-base font-semibold text-slate-400">
-                  /5
-                </span>
-              </span>
-              <RatingStars value={interview.overallRating ?? 0} size={18} />
-            </div>
+            <span className="text-3xl font-extrabold text-slate-900 tabular-nums">
+              {gradeLabel ?? "—"}
+            </span>
           </div>
           {interview.interviewerName && (
             <div className="sm:ml-auto text-sm text-slate-600">
@@ -451,16 +439,10 @@ function FeedbackReport({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
-          {ratings.map((r) => (
-            <RatingBar key={r.label} label={r.label} value={r.value} />
-          ))}
-        </div>
-
         {interview.feedback && (
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
-              Overall Feedback
+              Interviewer Feedback
             </p>
             <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
               {interview.feedback}

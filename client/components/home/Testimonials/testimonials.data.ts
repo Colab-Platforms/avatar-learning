@@ -34,7 +34,7 @@ export const TESTIMONIALS: Testimonial[] = [
     role: "Second-Year Student",
     quote:
       "Starting early with Avatar India's Direct2Hire Program has helped me build real AI skills and become job-ready from my second year, giving me a strong advantage for my future career.",
-    thumbnail: "/Testimonials/3.jpg",
+    thumbnail: "/Testimonials/3.png",
     videoUrl:
       "https://res.cloudinary.com/w55pkbm8/video/upload/v1784712313/Avatar_Web_03_jtxdeh.mp4",
   },
