@@ -26,7 +26,10 @@ import {
   Award,
   Calculator,
   Flame,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import {
@@ -183,21 +186,44 @@ const DIFFERENTIATORS = [
     icon: Bot,
     title: "AI + Human Expertise",
     desc: "We combine powerful AI assessments with experienced human counselors who deeply understand the education system and job market.",
+    image: "/why-choose-avatar/AI   Human Expertise.png",
+    highlights: [
+      "20+ Personality & Aptitude parameters analyzed by AI",
+      "1-on-1 human counseling to validate and customize recommendations",
+    ],
   },
   {
     icon: BadgePercent,
     title: "Affordable & Transparent",
-    desc: "Most platforms charge ₹2,000–₹15,000 for similar sessions. We deliver real clarity and a complete roadmap at just ₹999 with no hidden costs.",
+    desc: "Most platforms charge ₹30,000–₹60,000 for similar Programs. We deliver real clarity and a complete roadmap at just ₹999 with no hidden costs.",
+    image: "/why-choose-avatar/Affordable & Transparent.png",
+    highlights: [
+      "Flat fee of ₹999 with zero hidden costs or forced upsells",
+      "Same high-quality resources that typically cost up to ₹40,000",
+      "Accessible pricing so every Indian student can get quality guidance",
+    ],
   },
   {
     icon: Map,
-    title: "Actionable Roadmap + Ongoing Support",
-    desc: "You don't just get advice. You walk away with a personalized plan and 7 days of direct WhatsApp mentorship to stay on track.",
+    title: "Complete 5-Step Journey",
+    desc: "Direct2Hire is a complete career accelerator that guides you through assessment, counseling, practical learning, internship, and placement support.",
+    image: "/why-choose-avatar/Actionable Roadmap + Ongoing Support.png",
+    highlights: [
+      "AI assessment & 1-on-1 career counseling recommendation",
+      "Structured mentor-guided AI Learning program",
+      "Guaranteed Internship with placement partners for real experience",
+    ],
   },
   {
     icon: Zap,
     title: "Fast, Focused & Actionable",
     desc: "Get real clarity and a clear plan in just one 30-minute session — no long, confusing processes.",
+    image: "/why-choose-avatar/Fast, Focused & Actionable.png",
+    highlights: [
+      "High-impact 30-minute counseling designed for busy students",
+      "Actionable recommendations focused purely on execution",
+      "Receive your report and assessment key immediately",
+    ],
   },
 ];
 
@@ -262,8 +288,17 @@ const FAQS = [
 export default function Direct2HirePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [whoForSlide, setWhoForSlide] = useState(0);
-  const [diffSlide, setDiffSlide] = useState(0);
   const [statsSlide, setStatsSlide] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (isHovered) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % DIFFERENTIATORS.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [isHovered]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -286,13 +321,6 @@ export default function Direct2HirePage() {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDiffSlide((i) => (i + 1) % DIFFERENTIATORS.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <>
       <Navbar />
@@ -301,7 +329,7 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             HERO
         ══════════════════════════════ */}
-        <section className="relative pt-20 pb-6 sm:pt-32 sm:pb-14 overflow-hidden">
+        <section className="relative pt-20 pb-6 sm:pt-25 sm:pb-14 overflow-hidden">
           <div
             className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] bg-brand-200/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3"
             aria-hidden
@@ -500,13 +528,13 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             THE COST OF CONFUSION
         ══════════════════════════════ */}
-        <section className="py-6 sm:py-10 bg-surface-alt border-t border-border relative overflow-hidden">
+        <section className="py-13 sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden">
           <div className="relative container-x">
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-5 sm:mb-12">
                 <div>
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                     <ShinyText
                       text="THE COST OF CONFUSION"
                       color="#1d4ed8"
@@ -588,14 +616,14 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             WHO IT'S FOR
         ══════════════════════════════ */}
-        <section className="py-6 sm:py-12 bg-white border-t border-border relative overflow-hidden">
+        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
           <div className="relative container-x">
             <ScrollReveal
               animation="fade-up"
               className="mb-5 sm:mb-12 text-center"
             >
               <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                 <ShinyText
                   text="WHO IS THIS FOR ?"
                   color="#1d4ed8"
@@ -715,12 +743,12 @@ export default function Direct2HirePage() {
         ══════════════════════════════ */}
         <section
           id="journey"
-          className="py-7 sm:py-14 bg-surface-alt border-t border-border relative overflow-hidden scroll-mt-20"
+          className="py-13 sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden scroll-mt-20"
         >
           <div className="relative container-x">
             <ScrollReveal animation="fade-up" className="mb-6 sm:mb-14">
               <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                 <ShinyText
                   text="THE COMPLETE PROGRAM"
                   color="#1d4ed8"
@@ -839,13 +867,13 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             THE OUTCOME
         ══════════════════════════════ */}
-        <section className="py-7 sm:py-14 bg-surface-alt border-t border-border relative overflow-hidden">
+        <section className="py-13  sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden">
           <div className="relative container-x">
             <div className="grid lg:grid-cols-5 gap-6 lg:gap-10 items-center">
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                     <ShinyText
                       text="THE OUTCOME"
                       color="#1d4ed8"
@@ -907,13 +935,13 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             COMPLETE BREAKDOWN / PRICING
         ══════════════════════════════ */}
-        <section className="py-7 sm:py-14 bg-white border-t border-border relative overflow-hidden">
+        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
           <div className="relative container-x">
             <ScrollReveal animation="fade-up">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-5 sm:mb-12">
                 <div>
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                     <ShinyText
                       text="COMPLETE BREAKDOWN"
                       color="#1d4ed8"
@@ -996,16 +1024,26 @@ export default function Direct2HirePage() {
         </section>
 
         {/* ══════════════════════════════
-            WHY STUDENTS CHOOSE AVATAR
+            WHY STUDENTS CHOOSE AVATAR (REDESIGNED STORYTELLING LAYOUT)
         ══════════════════════════════ */}
-        <section className="py-7 sm:py-14 bg-surface-alt border-t border-border relative overflow-hidden">
+        <section className="py-13 sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden">
+          {/* Subtle background glow decorative elements */}
+          <div
+            className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] bg-brand-100/10 rounded-full blur-[120px]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-blue-100/10 rounded-full blur-[120px]"
+            aria-hidden
+          />
+
           <div className="relative container-x">
             <ScrollReveal
               animation="fade-up"
-              className="text-center mb-6 sm:mb-14"
+              className="text-center mb-12 sm:mb-16"
             >
               <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                 <ShinyText
                   text="WHAT MAKES US DIFFERENT"
                   color="#1d4ed8"
@@ -1013,83 +1051,152 @@ export default function Direct2HirePage() {
                   speed={2.5}
                 />
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+              <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-text">
                 Why Students{" "}
                 <span className="text-gradient-brand">Choose Avatar</span>
               </h2>
-              <p className="mt-3 text-text-muted max-w-2xl mx-auto">
-                Avatar combines AI-powered insights with human expertise to
-                deliver clarity, affordability, and real results — designed
-                specifically for Indian students.
+              <p className="mt-4 text-text-muted max-w-2xl mx-auto text-[15px] sm:text-base leading-relaxed">
+                Our unique student-first methodology combining state-of-the-art
+                AI technology with human guidance, visual planning, and constant
+                mentoring.
               </p>
             </ScrollReveal>
 
-            {/* mobile — single-card slideshow */}
-            <div className="sm:hidden">
-              <div className="relative rounded-2xl border border-border bg-white p-6 min-h-50 card-lift">
-                {DIFFERENTIATORS.map((d, i) => (
-                  <div
-                    key={d.title}
-                    className={cn(
-                      "transition-opacity duration-500 ease-out",
-                      i === diffSlide
-                        ? "opacity-100 relative"
-                        : "opacity-0 absolute inset-0 p-6 pointer-events-none",
-                    )}
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-4 bg-brand-50 border border-brand-200">
-                      <d.icon className="h-5 w-5 text-brand-600" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text mb-2">
-                      {d.title}
-                    </h3>
-                    <p className="text-[14px] text-text-muted leading-relaxed">
-                      {d.desc}
-                    </p>
+            {/* Interactive Carousel */}
+            <div className="max-w-4xl mx-auto">
+              {/* Main Carousel Frame */}
+              <div
+                className="relative bg-white border border-border/80 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[520px] sm:min-h-[460px] lg:min-h-[370px] flex items-center overflow-hidden"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
+                {/* Slide Content */}
+                <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative">
+                  {/* Image Column */}
+                  <div className="col-span-1 lg:col-span-5 w-full max-w-[360px] mx-auto lg:max-w-none relative">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeSlide}
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.3 }}
+                        className="relative aspect-[16/9] lg:aspect-[4/3] w-full rounded-2xl overflow-hidden bg-surface-alt border border-border/50"
+                      >
+                        <Image
+                          src={DIFFERENTIATORS[activeSlide].image}
+                          alt={DIFFERENTIATORS[activeSlide].title}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 40vw"
+                          className="object-cover"
+                          priority
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-brand-900/5 via-transparent to-transparent pointer-events-none" />
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
-                ))}
-              </div>
 
-              {/* dots */}
-              <div className="flex items-center justify-center gap-2 mt-4">
-                {DIFFERENTIATORS.map((d, i) => (
-                  <button
-                    key={d.title}
-                    onClick={() => setDiffSlide(i)}
-                    aria-label={`Show ${d.title}`}
-                    aria-current={i === diffSlide}
-                    className={cn(
-                      "h-2 rounded-full transition-all duration-300",
-                      i === diffSlide
-                        ? "w-6 bg-brand-600"
-                        : "w-2 bg-border-strong hover:bg-brand-300",
-                    )}
-                  />
-                ))}
-              </div>
-            </div>
+                  {/* Content Column */}
+                  <div className="col-span-1 lg:col-span-7 flex flex-col justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeSlide}
+                        initial={{ opacity: 0, x: 15 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -15 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-5 text-left"
+                      >
+                        {/* Header Row: Icon + Navigation */}
+                        <div className="flex items-center justify-between">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-100 shadow-2xs">
+                            {(() => {
+                              const IconComponent =
+                                DIFFERENTIATORS[activeSlide].icon;
+                              return (
+                                <IconComponent className="h-5 w-5 text-brand-600" />
+                              );
+                            })()}
+                          </span>
 
-            {/* tablet / desktop — grid */}
-            <div className="hidden sm:grid sm:grid-cols-2 gap-5">
-              {DIFFERENTIATORS.map((d, i) => (
-                <AnimateOnScroll key={d.title} delay={i * 80}>
-                  <div className="group h-full rounded-2xl border border-border bg-white p-8 sm:p-9 card-lift cursor-default">
-                    <div
-                      className="flex h-12 w-12 items-center justify-center rounded-xl mb-6
-                                 bg-brand-50 border border-brand-200
-                                 group-hover:bg-brand-100 transition-all duration-350"
-                    >
-                      <d.icon className="h-5 w-5 text-brand-600" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text mb-3 group-hover:text-brand-600 transition-colors duration-300">
-                      {d.title}
-                    </h3>
-                    <p className="text-[14px] text-text-muted leading-relaxed">
-                      {d.desc}
-                    </p>
+                          {/* Navigation controls next to the icon */}
+                          <div className="flex items-center gap-4">
+                            {/* Dot markers */}
+                            <div className="flex items-center gap-1.5">
+                              {DIFFERENTIATORS.map((_, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => setActiveSlide(i)}
+                                  className={cn(
+                                    "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
+                                    i === activeSlide
+                                      ? "w-4 bg-brand-600"
+                                      : "w-1.5 bg-border-strong hover:bg-brand-300",
+                                  )}
+                                  aria-label={`Go to slide ${i + 1}`}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Arrow buttons */}
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => {
+                                  setActiveSlide(
+                                    (prev) =>
+                                      (prev - 1 + DIFFERENTIATORS.length) %
+                                      DIFFERENTIATORS.length,
+                                  );
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:text-brand-600 hover:border-brand-300 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                                aria-label="Previous feature"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setActiveSlide(
+                                    (prev) =>
+                                      (prev + 1) % DIFFERENTIATORS.length,
+                                  );
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:text-brand-600 hover:border-brand-300 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                                aria-label="Next feature"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <h3 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight pt-1">
+                          {DIFFERENTIATORS[activeSlide].title}
+                        </h3>
+
+                        <p className="text-[14px] sm:text-[15.5px] text-text-muted leading-relaxed">
+                          {DIFFERENTIATORS[activeSlide].desc}
+                        </p>
+
+                        <ul className="space-y-2.5 sm:space-y-3.5 pt-2">
+                          {DIFFERENTIATORS[activeSlide].highlights.map(
+                            (highlight, idx) => (
+                              <li
+                                key={idx}
+                                className="flex items-start gap-2.5 text-[13px] sm:text-[14px] text-text-muted leading-relaxed"
+                              >
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 border border-emerald-100 mt-0.5">
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                </span>
+                                <span>{highlight}</span>
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
-                </AnimateOnScroll>
-              ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1097,12 +1204,12 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             CTA
         ══════════════════════════════ */}
-        <section className="py-1 bg-white border-t border-border relative overflow-hidden">
+        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-6 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
                 <div className="relative inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-2 sm:mb-3 cursor-default">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                  {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                   <ShinyText
                     text="YOUR FUTURE STARTS HERE"
                     color="#1d4ed8"
@@ -1153,7 +1260,7 @@ export default function Direct2HirePage() {
               <div className="lg:col-span-2">
                 <ScrollReveal animation="fade-up">
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
                     <ShinyText
                       text="FREQUENTLY ASKED QUESTIONS"
                       color="#1d4ed8"

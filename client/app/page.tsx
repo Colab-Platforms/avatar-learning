@@ -8,6 +8,7 @@ import {
   AdvisorCTA,
   Direct2HireBanner,
 } from "@/components/sections";
+import { Testimonials } from "@/components/home/Testimonials";
 
 export default function Page() {
   return (
@@ -15,6 +16,7 @@ export default function Page() {
       <Navbar />
       <Hero />
       <Direct2HireBanner />
+      <Testimonials />
       <QuizBanner />
       <TimelineSection />
       <CoursesSection />
