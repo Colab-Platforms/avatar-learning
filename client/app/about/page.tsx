@@ -536,7 +536,7 @@ export default function AboutPage() {
         </section>
 
         {/* ══ PARTNERS ══ */}
-        <section
+        {/* <section
           className="py-12 border-t border-slate-100 relative overflow-hidden"
           style={{ background: "#FFFFFF" }}
         >
@@ -617,7 +617,7 @@ export default function AboutPage() {
               </Link>
             </ScrollReveal>
           </div>
-        </section>
+        </section> */}
 
         {/* ══ CTA ══ */}
         <section

@@ -75,8 +75,7 @@ export default function AdminDirect2HirePage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Direct2Hire</h1>
         <p className="text-sm text-white/40 mt-0.5">
-          {pagination?.totalRecords ?? 0} enrollments · manually mark a
-          student paid until the payment gateway is live
+          {pagination?.totalRecords ?? 0} enrollments ·
         </p>
       </div>
 
@@ -147,7 +146,7 @@ export default function AdminDirect2HirePage() {
                   >
                     View Profile
                   </Link>
-                  <button
+                  {/* <button
                     onClick={() => handleMarkPaid(e.id)}
                     disabled={e.status !== "PENDING" || markingId === e.id}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
@@ -161,7 +160,7 @@ export default function AdminDirect2HirePage() {
                     ) : (
                       e.status.charAt(0) + e.status.slice(1).toLowerCase()
                     )}
-                  </button>
+                  </button> */}
                   {e.status === "PAID" && (
                     <button
                       onClick={() => handleMarkRefunded(e.id)}

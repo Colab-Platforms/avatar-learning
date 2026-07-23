@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   GraduationCap,
@@ -18,7 +19,7 @@ import {
 import { useAppSelector } from "@/store/hooks";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { useLearnCourse } from "@/hooks/queries/useLearnCourse";
-import type { DBLesson } from "@/lib/coursesApi";
+import { downloadCourseCertificate, type DBLesson } from "@/lib/coursesApi";
 
 function formatHours(minutes: number) {
   const hours = minutes / 60;
@@ -63,6 +64,18 @@ export default function AILearningPage() {
   const { user } = useAppSelector((s) => s.auth);
   const { data: status, isLoading: statusLoading, isError: statusError } =
     useD2HStatus();
+  const [downloadingCert, setDownloadingCert] = useState(false);
+
+  const handleDownloadCertificate = async (courseId: string, title: string) => {
+    setDownloadingCert(true);
+    try {
+      await downloadCourseCertificate(courseId, `Certificate - ${title}.pdf`);
+    } catch {
+      window.alert("Download failed. Please try again.");
+    } finally {
+      setDownloadingCert(false);
+    }
+  };
 
   const activeCourseSummary =
     status?.courses.find((c) => c.enrolled && !c.isCompleted) ??
@@ -240,12 +253,21 @@ export default function AILearningPage() {
                     <PlayCircle size={13} />
                     {progressPct > 0 ? "Continue Learning" : "Start Learning"}
                   </Link>
-                  {course.enrollment.isCompleted && (
+                  {course.enrollment.isCompleted && course.certificate && (
                     <button
                       type="button"
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                      disabled={downloadingCert}
+                      onClick={() =>
+                        handleDownloadCertificate(course.id, course.title)
+                      }
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      View Certificate
+                      {downloadingCert ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Award size={13} />
+                      )}
+                      {downloadingCert ? "Preparing…" : "Download Certificate"}
                     </button>
                   )}
                 </div>

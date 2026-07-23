@@ -848,4 +848,43 @@ export class PublicCourseService {
       stream: Readable.fromWeb(upstream.body as unknown as NodeReadableStream),
     };
   }
+
+  async getCertificateData(slugOrId: string, userId: string) {
+    const course = await this.resolveCourse(slugOrId);
+
+    const enrollment = await prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId: course.id } },
+    });
+    if (!enrollment)
+      throw new ApiError(
+        "You are not enrolled in this course",
+        STATUS_CODES.FORBIDDEN,
+      );
+    if (!enrollment.isCompleted)
+      throw new ApiError(
+        "Course not completed yet",
+        STATUS_CODES.BAD_REQUEST,
+      );
+    if (!course.certificate)
+      throw new ApiError(
+        "Certificate is not available for this course",
+        STATUS_CODES.BAD_REQUEST,
+      );
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true },
+    });
+    const studentName =
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+      "Student";
+
+    return {
+      studentName,
+      courseTitle: course.title,
+      completedAt: enrollment.completedAt ?? new Date(),
+      certificateId:
+        `AVT-${course.id.slice(-6)}-${userId.slice(-6)}`.toUpperCase(),
+    };
+  }
 }

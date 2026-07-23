@@ -133,7 +133,10 @@ export class Direct2HireService {
     }
 
     async getAllEnrollments(take?: number, skip?: number) {
+        const where = { status: "PAID" as const };
+
         const enrollments = await prisma.direct2HireEnrollment.findMany({
+            where,
             include: {
                 user: {
                     select: {
@@ -150,7 +153,7 @@ export class Direct2HireService {
             ...(skip !== undefined && { skip }),
         });
 
-        const totalRecords = await prisma.direct2HireEnrollment.count();
+        const totalRecords = await prisma.direct2HireEnrollment.count({ where });
         return { enrollments, totalRecords };
     }
 

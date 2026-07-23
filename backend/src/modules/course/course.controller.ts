@@ -4,6 +4,7 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { AdminCourseService, PublicCourseService } from "./course.service.js";
 import { getCourseImageUploadSignature } from "@/utils/cloudinary.js";
+import { buildCertificatePdf } from "@/utils/certificate.js";
 import {
   getPaginationOptions,
   formatPaginationResponse,
@@ -689,6 +690,40 @@ export const checkEnrollment = async (
       err.message,
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
+  }
+};
+
+export const downloadCertificate = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const data = await publicService.getCertificateData(
+      param(req, "courseId"),
+      req.user!.id,
+    );
+
+    const doc = buildCertificatePdf(data);
+    const safeFilename = data.courseTitle.replace(/["\r\n]/g, "").replace(/[^\w\s-]/g, "");
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="Certificate - ${safeFilename}.pdf"`,
+    );
+    res.setHeader("Content-Type", "application/pdf");
+
+    doc.pipe(res);
+    doc.end();
+  } catch (err: any) {
+    if (!res.headersSent) {
+      sendResponse(
+        res,
+        false,
+        null,
+        err.message,
+        err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+      );
+    }
   }
 };
 

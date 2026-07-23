@@ -188,5 +188,30 @@ export const downloadResourceFile = async (
   URL.revokeObjectURL(url);
 };
 
+export const downloadCourseCertificate = async (
+  courseId: string,
+  filename: string,
+): Promise<void> => {
+  const response = await apiClient.get(`/courses/${courseId}/certificate`, {
+    responseType: "blob",
+  });
+
+  const disposition = response.headers["content-disposition"] as
+    | string
+    | undefined;
+  const match = disposition?.match(/filename="([^"]+)"/);
+  const resolvedName = match?.[1] ?? filename;
+
+  const blob = response.data as Blob;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = resolvedName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
 export const fetchHeroCourses = (): Promise<DBCourse[]> =>
   apiClient.get("/courses/hero").then((r) => r.data.data);

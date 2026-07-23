@@ -38,6 +38,11 @@ router.post(
   auth("USER"),
   courseController.markTopicWatched,
 );
+router.get(
+  "/:courseId/certificate",
+  auth("USER"),
+  courseController.downloadCertificate,
+);
 
 // ─── Assessment (must be before /:slug to avoid conflicts) ───────────────────
 router.get(
