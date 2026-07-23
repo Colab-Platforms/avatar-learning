@@ -87,6 +87,11 @@ enum AssessmentAttemptStatus {
   AUTO_SUBMITTED_VIOLATION
 }
 
+enum AssessmentType {
+  WEEKLY
+  FINAL
+}
+
 enum PlacementAttemptStatus {
   IN_PROGRESS
   SUBMITTED
@@ -339,7 +344,7 @@ model Courses {
   lessons               Lessons[]
   enrollments           CourseUserMapper[]
   paymentOrders         PaymentOrder[]
-  assessment            Assessment?
+  assessments           Assessment[]
   placementAssessment   PlacementAssessment?
   counsellingSelections CounsellingBooking[]
   internshipTasks       InternshipTask[]
@@ -408,6 +413,8 @@ model Lessons {
   lessonProgress LessonProgress[]
 
   topics Topics[]
+
+  weeklyAssessment Assessment?
 
   @@unique([courseId, weekNumber])
   @@index([courseId])
@@ -970,15 +977,20 @@ model CounsellingBooking {
 }
 
 model Assessment {
-  id       String @id @default(cuid())
-  courseId String @unique @map("course_id")
+  id       String         @id @default(cuid())
+  courseId String         @map("course_id")
+  lessonId String?        @unique @map("lesson_id")
+  type     AssessmentType @default(FINAL)
 
-  title       String
-  description String?
+  title         String
+  description   String?
+  questionCount Int       @default(30) @map("question_count")
 
   timeLimitMinutes     Int  @map("time_limit_minutes")
   passingScorePercent  Int? @map("passing_score_percent")
   maxTabSwitchWarnings Int  @default(3) @map("max_tab_switch_warnings")
+  /// FINAL only — null means unlimited (WEEKLY always unlimited regardless).
+  maxAttempts          Int? @default(3) @map("max_attempts")
 
   isPublished Boolean @default(false) @map("is_published")
 
@@ -986,9 +998,12 @@ model Assessment {
   updatedAt DateTime? @updatedAt @map("updated_at")
 
   course    Courses              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson    Lessons?             @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions AssessmentQuestion[]
   attempts  AssessmentAttempt[]
 
+  @@index([courseId])
+  @@index([courseId, type])
   @@index([isPublished])
   @@map("assessments")
 }
@@ -1037,7 +1052,8 @@ model AssessmentAttempt {
   userId       String @map("user_id")
   assessmentId String @map("assessment_id")
 
-  status AssessmentAttemptStatus @default(IN_PROGRESS)
+  status        AssessmentAttemptStatus @default(IN_PROGRESS)
+  attemptNumber Int                     @default(1) @map("attempt_number")
 
   startedAt   DateTime  @default(now()) @map("started_at")
   submittedAt DateTime? @map("submitted_at")
@@ -1046,7 +1062,8 @@ model AssessmentAttempt {
   // never changes the deadline of an attempt already in progress.
   timeLimitMinutes Int @map("time_limit_minutes")
 
-  tabSwitchCount Int @default(0) @map("tab_switch_count")
+  tabSwitchCount  Int  @default(0) @map("tab_switch_count")
+  durationSeconds Int? @map("duration_seconds")
 
   score        Int?     @map("score")
   maxScore     Int?     @map("max_score")
@@ -1060,7 +1077,8 @@ model AssessmentAttempt {
   assessment Assessment         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   answers    AssessmentAnswer[]
 
-  @@unique([userId, assessmentId])
+  @@unique([userId, assessmentId, attemptNumber])
+  @@index([userId, assessmentId])
   @@index([userId])
   @@index([assessmentId])
   @@map("assessment_attempts")

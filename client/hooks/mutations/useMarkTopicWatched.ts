@@ -13,6 +13,7 @@ export function useMarkTopicWatched(courseId: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourse(courseId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.myEnrollments });
       queryClient.invalidateQueries({ queryKey: queryKeys.direct2hireStatus });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
     },
   });
 }

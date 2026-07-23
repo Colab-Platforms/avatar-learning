@@ -18,9 +18,27 @@ const param = (req: Request, key: string): string => String(req.params[key]);
 
 // ─── Admin Endpoints ──────────────────────────────────────────────────────────
 
+export const adminListAssessments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const assessments = await adminService.listAssessmentsForAdmin(param(req, "courseId"));
+    sendResponse(res, true, assessments, "Assessments fetched");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
+
 export const adminGetAssessment = async (req: Request, res: Response): Promise<void> => {
   try {
-    const assessment = await adminService.getAssessmentForAdmin(param(req, "courseId"));
+    const assessments = await adminService.listAssessmentsForAdmin(param(req, "courseId"));
+    sendResponse(res, true, assessments, "Assessments fetched");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
+
+export const adminGetAssessmentById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const assessment = await adminService.getAssessmentByIdForAdmin(param(req, "assessmentId"));
     sendResponse(res, true, assessment, "Assessment fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
@@ -139,10 +157,37 @@ export const resetAttempt = async (req: Request, res: Response): Promise<void> =
 
 // ─── User Endpoints ───────────────────────────────────────────────────────────
 
+export const listAssessmentsForUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const assessments = await userService.listAssessmentsForUser(param(req, "courseId"), req.user!.id);
+    sendResponse(res, true, assessments, "Assessments fetched");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
+
 export const getAssessmentForUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const assessment = await userService.getAssessmentForUser(param(req, "courseId"), req.user!.id);
+    const assessmentId = req.params.assessmentId ? param(req, "assessmentId") : undefined;
+    const assessment = await userService.getAssessmentForUser(
+      param(req, "courseId"),
+      req.user!.id,
+      assessmentId,
+    );
     sendResponse(res, true, assessment, "Assessment fetched");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
+
+export const getAttemptHistory = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const history = await userService.getAttemptHistory(
+      param(req, "courseId"),
+      param(req, "assessmentId"),
+      req.user!.id,
+    );
+    sendResponse(res, true, history, "Attempt history fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
   }
@@ -150,7 +195,14 @@ export const getAssessmentForUser = async (req: AuthRequest, res: Response): Pro
 
 export const startAttempt = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const attempt = await userService.startAttempt(param(req, "courseId"), req.user!.id);
+    const assessmentId = req.params.assessmentId
+      ? param(req, "assessmentId")
+      : String(req.body?.assessmentId ?? "");
+    if (!assessmentId) {
+      sendResponse(res, false, null, "assessmentId is required", STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const attempt = await userService.startAttempt(param(req, "courseId"), req.user!.id, assessmentId);
     sendResponse(res, true, attempt, "Attempt started", STATUS_CODES.CREATED);
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);

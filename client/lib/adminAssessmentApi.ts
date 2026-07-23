@@ -1,5 +1,7 @@
 import apiClient from "./apiClient";
 
+export type AssessmentType = "WEEKLY" | "FINAL";
+
 export interface AdminAssessmentOption {
   id: string;
   optionText: string;
@@ -18,12 +20,17 @@ export interface AdminAssessmentQuestion {
 export interface AdminAssessment {
   id: string;
   courseId: string;
+  lessonId: string | null;
+  type: AssessmentType;
   title: string;
   description?: string | null;
+  questionCount: number;
   timeLimitMinutes: number;
   passingScorePercent?: number | null;
   maxTabSwitchWarnings: number;
+  maxAttempts?: number | null;
   isPublished: boolean;
+  lesson?: { id: string; title: string; weekNumber: number } | null;
   questions: AdminAssessmentQuestion[];
   _count: { attempts: number };
 }
@@ -49,22 +56,34 @@ export interface OptionInput {
   optionOrder: number;
 }
 
+export const WEEKLY_QUESTION_COUNT = 10;
+export const FINAL_QUESTION_COUNT = 30;
+
 // ─── Assessment ───────────────────────────────────────────────────────────────
 
-export const fetchAdminAssessment = (courseId: string): Promise<AdminAssessment> =>
-  apiClient.get(`/admin/courses/${courseId}/assessment`).then((r) => r.data.data);
+export const fetchAdminAssessments = (courseId: string): Promise<AdminAssessment[]> =>
+  apiClient.get(`/admin/courses/${courseId}/assessments`).then((r) => {
+    const data = r.data.data;
+    return Array.isArray(data) ? data : data ? [data] : [];
+  });
+
+/** @deprecated Use fetchAdminAssessments */
+export const fetchAdminAssessment = fetchAdminAssessments;
 
 export const createAssessment = (
   courseId: string,
   payload: {
     title: string;
     description?: string;
+    type: AssessmentType;
+    lessonId?: string | null;
     timeLimitMinutes: number;
     passingScorePercent?: number;
     maxTabSwitchWarnings?: number;
+    maxAttempts?: number | null;
   },
 ): Promise<AdminAssessment> =>
-  apiClient.post(`/admin/courses/${courseId}/assessment`, payload).then((r) => r.data.data);
+  apiClient.post(`/admin/courses/${courseId}/assessments`, payload).then((r) => r.data.data);
 
 export const updateAssessment = (
   assessmentId: string,

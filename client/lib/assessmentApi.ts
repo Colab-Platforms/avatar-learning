@@ -1,16 +1,30 @@
 import apiClient from "./apiClient";
 
-export type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED_TIMEOUT" | "AUTO_SUBMITTED_VIOLATION";
+export type AttemptStatus =
+  | "IN_PROGRESS"
+  | "SUBMITTED"
+  | "AUTO_SUBMITTED_TIMEOUT"
+  | "AUTO_SUBMITTED_VIOLATION";
+export type AssessmentType = "WEEKLY" | "FINAL";
+export type AssessmentUnlockStatus = "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED";
+export type AssessmentPerformanceStatus =
+  | "NOT_ATTEMPTED"
+  | "IN_PROGRESS"
+  | "PASSED"
+  | "FAILED"
+  | "EXHAUSTED";
 
 export interface AssessmentAttemptSummary {
   id: string;
-  userId: string;
-  assessmentId: string;
+  userId?: string;
+  assessmentId?: string;
   status: AttemptStatus;
-  startedAt: string;
+  attemptNumber?: number;
+  startedAt?: string;
   submittedAt: string | null;
-  timeLimitMinutes: number;
-  tabSwitchCount: number;
+  timeLimitMinutes?: number;
+  tabSwitchCount?: number;
+  durationSeconds?: number | null;
   score: number | null;
   maxScore: number | null;
   scorePercent: number | null;
@@ -19,12 +33,52 @@ export interface AssessmentAttemptSummary {
 
 export interface AssessmentSummary {
   id: string;
+  courseId?: string;
+  lessonId?: string | null;
+  type: AssessmentType;
   title: string;
   description?: string | null;
   timeLimitMinutes: number;
   passingScorePercent: number | null;
   maxTabSwitchWarnings: number;
+  maxAttempts?: number | null;
   questionCount: number;
+  expectedQuestionCount?: number;
+  weekNumber?: number | null;
+  lessonTitle?: string | null;
+  unlockStatus: AssessmentUnlockStatus;
+  lockReason: string | null;
+  status: AssessmentPerformanceStatus;
+  bestScore: number | null;
+  bestScorePercent: number | null;
+  latestScore: number | null;
+  latestScorePercent: number | null;
+  totalAttempts: number;
+  attemptsUsed: number;
+  remainingAttempts: number | null;
+  lastAttemptAt: string | null;
+  canStartNew: boolean;
+  canRetake: boolean;
+  attempt: AssessmentAttemptSummary | null;
+  inProgressAttempt?: AssessmentAttemptSummary | null;
+  latestAttempt?: AssessmentAttemptSummary | null;
+  bestAttempt?: AssessmentAttemptSummary | null;
+}
+
+export interface LessonAssessmentCard {
+  id: string;
+  type: AssessmentType;
+  title: string;
+  description?: string | null;
+  questionCount: number;
+  expectedQuestionCount?: number;
+  timeLimitMinutes: number;
+  passingScorePercent: number | null;
+  maxTabSwitchWarnings: number;
+  unlockStatus: AssessmentUnlockStatus;
+  lockReason: string | null;
+  totalAttempts?: number;
+  bestScorePercent?: number | null;
   attempt: AssessmentAttemptSummary | null;
 }
 
@@ -46,6 +100,7 @@ export interface AttemptState {
   attempt: {
     id: string;
     status: AttemptStatus;
+    attemptNumber?: number;
     tabSwitchCount: number;
     startedAt: string;
     deadline: string;
@@ -57,6 +112,7 @@ export interface AttemptState {
   assessment: {
     id: string;
     title: string;
+    type?: AssessmentType;
     maxTabSwitchWarnings: number;
     questions: AttemptQuestion[];
   };
@@ -92,21 +148,103 @@ export interface ResultAnswer {
 }
 
 export interface AttemptResult {
-  attempt: AssessmentAttemptSummary;
+  attempt: AssessmentAttemptSummary & {
+    attemptNumber: number;
+    durationSeconds: number | null;
+  };
   assessment: {
     id: string;
+    courseId?: string;
     title: string;
+    type: AssessmentType;
+    weekNumber?: number | null;
     passingScorePercent: number | null;
+    maxAttempts?: number | null;
     questions: ResultQuestion[];
   };
   answers: Record<string, ResultAnswer>;
+  breakdown: {
+    correct: number;
+    wrong: number;
+    skipped: number;
+    total: number;
+  };
+  summary: {
+    status: AssessmentPerformanceStatus;
+    bestScore: number | null;
+    bestScorePercent: number | null;
+    latestScore: number | null;
+    latestScorePercent: number | null;
+    totalAttempts: number;
+    attemptsUsed: number;
+    remainingAttempts: number | null;
+    canRetake: boolean;
+  };
 }
 
-export const fetchAssessment = (courseId: string): Promise<AssessmentSummary> =>
-  apiClient.get(`/courses/${courseId}/assessment`).then((r) => r.data.data);
+export interface AttemptHistoryItem {
+  id: string;
+  attemptNumber: number;
+  status: AttemptStatus;
+  startedAt: string;
+  submittedAt: string | null;
+  durationSeconds: number | null;
+  score: number | null;
+  maxScore: number | null;
+  scorePercent: number | null;
+  isPassed: boolean | null;
+}
 
-export const startAssessmentAttempt = (courseId: string): Promise<AssessmentAttemptSummary> =>
-  apiClient.post(`/courses/${courseId}/assessment/attempts`).then((r) => r.data.data);
+export interface AttemptHistoryResponse {
+  assessment: {
+    id: string;
+    title: string;
+    type: AssessmentType;
+    weekNumber: number | null;
+    passingScorePercent: number | null;
+    maxAttempts: number | null;
+  };
+  summary: {
+    status: AssessmentPerformanceStatus;
+    bestScore: number | null;
+    bestScorePercent: number | null;
+    latestScore: number | null;
+    latestScorePercent: number | null;
+    totalAttempts: number;
+    attemptsUsed: number;
+    remainingAttempts: number | null;
+    lastAttemptAt: string | null;
+  };
+  attempts: AttemptHistoryItem[];
+}
+
+export const fetchAssessments = (courseId: string): Promise<AssessmentSummary[]> =>
+  apiClient.get(`/courses/${courseId}/assessments`).then((r) => {
+    const data = r.data.data;
+    return Array.isArray(data) ? data : data ? [data] : [];
+  });
+
+export const fetchAssessment = (courseId: string): Promise<AssessmentSummary[]> =>
+  fetchAssessments(courseId);
+
+export const fetchAssessmentById = (courseId: string, assessmentId: string): Promise<AssessmentSummary> =>
+  apiClient.get(`/courses/${courseId}/assessments/${assessmentId}`).then((r) => r.data.data);
+
+export const fetchAttemptHistory = (
+  courseId: string,
+  assessmentId: string,
+): Promise<AttemptHistoryResponse> =>
+  apiClient
+    .get(`/courses/${courseId}/assessments/${assessmentId}/attempts`)
+    .then((r) => r.data.data);
+
+export const startAssessmentAttempt = (
+  courseId: string,
+  assessmentId: string,
+): Promise<AssessmentAttemptSummary> =>
+  apiClient
+    .post(`/courses/${courseId}/assessments/${assessmentId}/attempts`)
+    .then((r) => r.data.data);
 
 export const fetchAttemptState = (attemptId: string): Promise<AttemptState> =>
   apiClient.get(`/courses/assessments/attempts/${attemptId}`).then((r) => r.data.data);

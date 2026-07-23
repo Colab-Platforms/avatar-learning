@@ -31,32 +31,45 @@ export interface AssessmentResultViewData {
   answers: Record<string, ResultViewAnswer | undefined>;
 }
 
-export function AssessmentResultView({ result }: { result: AssessmentResultViewData }) {
+export function AssessmentResultView({
+  result,
+  questionsOnly = false,
+}: {
+  result: AssessmentResultViewData;
+  questionsOnly?: boolean;
+}) {
   const { attempt, assessment, answers } = result;
   const passed = attempt.isPassed;
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{assessment.title}</p>
-        <p className="text-4xl font-bold text-slate-900">
-          {attempt.score ?? 0}
-          <span className="text-slate-300">/{attempt.maxScore ?? 0}</span>
-        </p>
-        <p className="text-sm text-slate-500 mt-1">{(attempt.scorePercent ?? 0).toFixed(0)}% score</p>
-        {passed !== null && (
-          <span
-            className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 rounded-full text-sm font-semibold ${
-              passed ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
-            }`}
-          >
-            {passed ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
-            {passed ? "Passed" : "Not passed"}
-          </span>
-        )}
-      </div>
+      {!questionsOnly && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            {assessment.title}
+          </p>
+          <p className="text-4xl font-bold text-slate-900">
+            {attempt.score ?? 0}
+            <span className="text-slate-300">/{attempt.maxScore ?? 0}</span>
+          </p>
+          <p className="text-sm text-slate-500 mt-1">
+            {(attempt.scorePercent ?? 0).toFixed(0)}% score
+          </p>
+          {passed !== null && (
+            <span
+              className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 rounded-full text-sm font-semibold ${
+                passed ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+              }`}
+            >
+              {passed ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+              {passed ? "Passed" : "Not passed"}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="space-y-4">
+        <h2 className="text-sm font-semibold text-slate-800">Question review</h2>
         {[...assessment.questions]
           .sort((a, b) => a.questionOrder - b.questionOrder)
           .map((q) => {

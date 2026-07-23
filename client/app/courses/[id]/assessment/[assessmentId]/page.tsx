@@ -3,18 +3,20 @@
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { LearningRouteProvider } from "@/components/learning/LearningRouteContext";
-import { AssessmentAttemptView } from "@/components/learning/AssessmentAttemptView";
+import { AssessmentIntroView } from "@/components/learning/AssessmentIntroView";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { useAppSelector } from "@/store/hooks";
 import { d2hLearningRoutes } from "@/lib/learningRoutes";
 
 interface PageProps {
-  params: Promise<{ id: string; attemptId: string }>;
+  params: Promise<{ id: string; assessmentId: string }>;
 }
 
-export default function PublicAssessmentAttemptPage({ params }: PageProps) {
-  const { id, attemptId } = use(params);
+export default function PublicAssessmentIntroPage({ params }: PageProps) {
+  const { id, assessmentId } = use(params);
   const router = useRouter();
   const { user: authUser, hasHydrated } = useAppSelector((s) => s.auth);
   const { data: d2hStatus, isLoading: d2hLoading } = useD2HStatus({
@@ -25,9 +27,9 @@ export default function PublicAssessmentAttemptPage({ params }: PageProps) {
   useEffect(() => {
     if (!hasHydrated || d2hLoading) return;
     if (inD2H) {
-      router.replace(d2hLearningRoutes(id).attempt(attemptId));
+      router.replace(d2hLearningRoutes(id).assessment(assessmentId));
     }
-  }, [hasHydrated, d2hLoading, inD2H, id, attemptId, router]);
+  }, [hasHydrated, d2hLoading, inD2H, id, assessmentId, router]);
 
   if (!hasHydrated || (authUser && d2hLoading) || inD2H) {
     return (
@@ -38,8 +40,14 @@ export default function PublicAssessmentAttemptPage({ params }: PageProps) {
   }
 
   return (
-    <LearningRouteProvider courseId={id} scope="public">
-      <AssessmentAttemptView courseId={id} attemptId={attemptId} />
-    </LearningRouteProvider>
+    <>
+      <Navbar />
+      <main className="min-h-screen mt-8 bg-slate-50">
+        <LearningRouteProvider courseId={id} scope="public">
+          <AssessmentIntroView courseId={id} assessmentId={assessmentId} />
+        </LearningRouteProvider>
+      </main>
+      <Footer />
+    </>
   );
 }

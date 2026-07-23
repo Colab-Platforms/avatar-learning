@@ -30,6 +30,11 @@ export const queryKeys = {
   adminInternshipTasks: (courseId: string) =>
     ["admin-internship-tasks", courseId] as const,
   assessment: (courseId: string) => ["assessment", courseId] as const,
+  assessments: (courseId: string) => ["assessments", courseId] as const,
+  assessmentDetail: (courseId: string, assessmentId: string) =>
+    ["assessment", courseId, assessmentId] as const,
+  assessmentHistory: (courseId: string, assessmentId: string) =>
+    ["assessment-history", courseId, assessmentId] as const,
   assessmentAttempt: (attemptId: string) =>
     ["assessment-attempt", attemptId] as const,
   assessmentResult: (attemptId: string) =>

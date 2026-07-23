@@ -36,6 +36,7 @@ import PretextAnimatedHeight, {
   AnimatedHeight,
 } from "@/components/counselling/PretextAnimatedHeight";
 import { cn } from "@/lib/utils";
+import { d2hLearningRoutes } from "@/lib/learningRoutes";
 
 export default function DashboardOverviewPage() {
   const { user } = useAppSelector((s) => s.auth);
@@ -228,7 +229,7 @@ export default function DashboardOverviewPage() {
       return {
         label: "Resume Learning",
         href: activeCourseSummary
-          ? `/courses/${activeCourseSummary.id}/learn`
+          ? d2hLearningRoutes(activeCourseSummary.id).learn
           : "/dashboard/learning",
       };
     }
@@ -719,7 +720,7 @@ export default function DashboardOverviewPage() {
             </h2>
             {activeCourseSummary && (
               <Link
-                href={`/courses/${activeCourseSummary.id}/learn`}
+                href={d2hLearningRoutes(activeCourseSummary.id).learn}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
               >
                 Go to syllabus <ArrowRight size={12} />
@@ -752,7 +753,7 @@ export default function DashboardOverviewPage() {
 
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <Link
-                      href={`/courses/${activeCourseSummary.id}/learn`}
+                      href={d2hLearningRoutes(activeCourseSummary.id).learn}
                       className="w-12 h-12 rounded-full bg-white text-blue-900 flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
                       aria-label="Play lesson"
                     >
@@ -815,7 +816,7 @@ export default function DashboardOverviewPage() {
                     return (
                       <Link
                         key={l.id}
-                        href={`/courses/${activeCourseSummary.id}/learn`}
+                        href={d2hLearningRoutes(activeCourseSummary.id).learn}
                         className={cn(
                           "flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-semibold transition border select-none",
                           isSessionDone

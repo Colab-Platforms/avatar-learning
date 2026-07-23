@@ -46,9 +46,30 @@ router.get(
 
 // ─── Assessment (must be before /:slug to avoid conflicts) ───────────────────
 router.get(
-  "/:courseId/assessment",
+  "/:courseId/assessments",
+  auth("USER"),
+  assessmentController.listAssessmentsForUser,
+);
+router.get(
+  "/:courseId/assessments/:assessmentId",
   auth("USER"),
   assessmentController.getAssessmentForUser,
+);
+router.get(
+  "/:courseId/assessments/:assessmentId/attempts",
+  auth("USER"),
+  assessmentController.getAttemptHistory,
+);
+router.post(
+  "/:courseId/assessments/:assessmentId/attempts",
+  auth("USER"),
+  assessmentController.startAttempt,
+);
+// Legacy aliases — prefer /assessments/:assessmentId routes above
+router.get(
+  "/:courseId/assessment",
+  auth("USER"),
+  assessmentController.listAssessmentsForUser,
 );
 router.post(
   "/:courseId/assessment/attempts",

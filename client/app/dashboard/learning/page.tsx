@@ -15,22 +15,32 @@ import {
   Lightbulb,
   Sparkles,
   Compass,
+  ClipboardList,
+  HelpCircle,
+  Target,
 } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { useLearnCourse } from "@/hooks/queries/useLearnCourse";
 import { downloadCourseCertificate, type DBLesson } from "@/lib/coursesApi";
+import { useAssessments } from "@/hooks/queries/useAssessment";
+// import type { DBLesson } from "@/lib/coursesApi";
+import type {
+  AssessmentSummary,
+  LessonAssessmentCard,
+} from "@/lib/assessmentApi";
+import { d2hLearningRoutes } from "@/lib/learningRoutes";
 
 function formatHours(minutes: number) {
   const hours = minutes / 60;
   return hours % 1 === 0 ? `${hours}` : hours.toFixed(1);
 }
 
-function lessonStatus(lesson: DBLesson): "completed" | "in-progress" | "locked" {
+function lessonStatus(
+  lesson: DBLesson,
+): "completed" | "in-progress" | "locked" {
   if (lesson.isLocked) return "locked";
-  const total = lesson.topics.length;
-  const done = lesson.topics.filter((t) => t.isCompleted).length;
-  if (total > 0 && done === total) return "completed";
+  if (lesson.isCompleted) return "completed";
   return "in-progress";
 }
 
@@ -40,6 +50,104 @@ function lessonDuration(lesson: DBLesson) {
   const h = Math.floor(total / 60);
   const m = total % 60;
   return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
+
+function AssessmentDashboardCard({
+  courseId,
+  assessment,
+  subtitle,
+}: {
+  courseId: string;
+  assessment: LessonAssessmentCard | AssessmentSummary;
+  subtitle: string;
+}) {
+  const routes = d2hLearningRoutes(courseId);
+  const href =
+    assessment.unlockStatus === "COMPLETED" && assessment.attempt
+      ? routes.results(assessment.attempt.id)
+      : assessment.unlockStatus === "IN_PROGRESS" && assessment.attempt
+        ? routes.attempt(assessment.attempt.id)
+        : routes.assessment(assessment.id);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">
+            {assessment.type === "FINAL"
+              ? "Final Assessment"
+              : `${subtitle} · Weekly Assessment`}
+          </p>
+          <h3 className="text-sm font-bold text-slate-800">
+            {assessment.title}
+          </h3>
+        </div>
+        <ClipboardList size={16} className="text-blue-600 shrink-0" />
+      </div>
+
+      <div className="flex flex-wrap gap-3 text-[11px] text-slate-500 mb-3">
+        <span className="inline-flex items-center gap-1">
+          <HelpCircle size={11} /> {assessment.questionCount} Questions
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Clock3 size={11} /> {assessment.timeLimitMinutes} min
+        </span>
+        {assessment.passingScorePercent != null && (
+          <span className="inline-flex items-center gap-1">
+            <Target size={11} /> {assessment.passingScorePercent}% pass
+          </span>
+        )}
+      </div>
+
+      {assessment.unlockStatus === "LOCKED" && (
+        <p className="text-[11px] text-slate-400 mb-3">
+          {assessment.lockReason ?? "Complete this week's topics to unlock."}
+        </p>
+      )}
+
+      {assessment.unlockStatus === "COMPLETED" && assessment.attempt && (
+        <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2 mb-3 text-[11px] text-emerald-800">
+          <p className="font-semibold">Completed</p>
+          {assessment.attempt.scorePercent != null && (
+            <p>Score: {Math.round(assessment.attempt.scorePercent)}%</p>
+          )}
+          {assessment.attempt.submittedAt && (
+            <p>
+              {new Date(assessment.attempt.submittedAt).toLocaleDateString(
+                undefined,
+                {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                },
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
+      {assessment.unlockStatus === "LOCKED" ? (
+        <button
+          type="button"
+          disabled
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 cursor-not-allowed"
+        >
+          <Lock size={12} /> Locked
+        </button>
+      ) : (
+        <Link
+          href={href}
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+        >
+          {assessment.unlockStatus === "COMPLETED"
+            ? "View Results"
+            : assessment.unlockStatus === "IN_PROGRESS"
+              ? "Resume Assessment"
+              : "Start Assessment"}
+        </Link>
+      )}
+    </div>
+  );
 }
 
 const TIPS = [
@@ -62,8 +170,11 @@ const TIPS = [
 
 export default function AILearningPage() {
   const { user } = useAppSelector((s) => s.auth);
-  const { data: status, isLoading: statusLoading, isError: statusError } =
-    useD2HStatus();
+  const {
+    data: status,
+    isLoading: statusLoading,
+    isError: statusError,
+  } = useD2HStatus();
   const [downloadingCert, setDownloadingCert] = useState(false);
 
   const handleDownloadCertificate = async (courseId: string, title: string) => {
@@ -84,7 +195,14 @@ export default function AILearningPage() {
 
   const { data: course, isLoading: courseLoading } = useLearnCourse(
     activeCourseSummary?.id ?? "",
+    { enabled: Boolean(activeCourseSummary?.id) },
   );
+
+  const courseId = activeCourseSummary?.id ?? "";
+  const { data: assessments = [], isLoading: assessmentsLoading } =
+    useAssessments(courseId, {
+      enabled: Boolean(courseId),
+    });
 
   const firstName = user?.firstName || "there";
 
@@ -95,11 +213,35 @@ export default function AILearningPage() {
       )
     : 0;
 
-  const isLoading = statusLoading || (!!activeCourseSummary && courseLoading);
+  const isLoading =
+    statusLoading ||
+    (!!activeCourseSummary && (courseLoading || assessmentsLoading));
 
   const lessons = [...(course?.lessons ?? [])].sort(
     (a, b) => a.weekNumber - b.weekNumber,
   );
+
+  const weeklyAssessments = assessments
+    .filter((a) => a.type === "WEEKLY")
+    .sort((a, b) => (a.weekNumber ?? 0) - (b.weekNumber ?? 0));
+  const finalAssessments = assessments.filter((a) => a.type === "FINAL");
+
+  // Prefer dedicated assessments API; fall back to learn-course embeds
+  const weeklyByLessonId = new Map<
+    string,
+    AssessmentSummary | LessonAssessmentCard
+  >();
+  for (const a of weeklyAssessments) {
+    if (a.lessonId) weeklyByLessonId.set(a.lessonId, a);
+  }
+  for (const lesson of lessons) {
+    if (lesson.weeklyAssessment && !weeklyByLessonId.has(lesson.id)) {
+      weeklyByLessonId.set(lesson.id, lesson.weeklyAssessment);
+    }
+  }
+
+  const finalAssessment =
+    finalAssessments[0] ?? course?.finalAssessment ?? null;
   const totalSessions = lessons.length;
   const completedSessions = lessons.filter(
     (l) => lessonStatus(l) === "completed",
@@ -113,10 +255,7 @@ export default function AILearningPage() {
   const completedMinutes = lessons.reduce(
     (sum, l) =>
       sum +
-      l.topics.reduce(
-        (s, t) => s + (t.isCompleted ? (t.duration ?? 0) : 0),
-        0,
-      ),
+      l.topics.reduce((s, t) => s + (t.isCompleted ? (t.duration ?? 0) : 0), 0),
     0,
   );
 
@@ -174,7 +313,7 @@ export default function AILearningPage() {
               Continue Learning
             </h2>
             <Link
-              href={`/courses/${course.id}/learn`}
+              href={d2hLearningRoutes(course.id).learn}
               className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
             >
               Go to course <ArrowRight size={12} />
@@ -247,7 +386,7 @@ export default function AILearningPage() {
 
                 <div className="flex items-center gap-3">
                   <Link
-                    href={`/courses/${course.id}/learn`}
+                    href={d2hLearningRoutes(course.id).learn}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                   >
                     <PlayCircle size={13} />
@@ -345,10 +484,11 @@ export default function AILearningPage() {
                 2 every weekend
               </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
               {lessons.map((lesson) => {
                 const status = lessonStatus(lesson);
                 const duration = lessonDuration(lesson);
+                const weekly = weeklyByLessonId.get(lesson.id);
                 return (
                   <div
                     key={lesson.id}
@@ -384,7 +524,9 @@ export default function AILearningPage() {
                     </div>
                     <p
                       className={`text-xs font-medium leading-snug mb-1 ${
-                        status === "locked" ? "text-slate-400" : "text-slate-800"
+                        status === "locked"
+                          ? "text-slate-400"
+                          : "text-slate-800"
                       }`}
                     >
                       {lesson.weekNumber}. {lesson.title}
@@ -392,15 +534,101 @@ export default function AILearningPage() {
                     {duration && (
                       <p className="text-[10px] text-slate-400">{duration}</p>
                     )}
-                    {status === "locked" && (
+                    {weekly && (
+                      <p
+                        className={`text-[10px] mt-1.5 font-medium ${
+                          weekly.unlockStatus === "COMPLETED"
+                            ? "text-emerald-600"
+                            : weekly.unlockStatus === "AVAILABLE" ||
+                                weekly.unlockStatus === "IN_PROGRESS"
+                              ? "text-blue-600"
+                              : "text-slate-400"
+                        }`}
+                      >
+                        {weekly.unlockStatus === "COMPLETED"
+                          ? "Assessment done"
+                          : weekly.unlockStatus === "AVAILABLE"
+                            ? "Assessment ready"
+                            : weekly.unlockStatus === "IN_PROGRESS"
+                              ? "Assessment in progress"
+                              : "Assessment locked"}
+                      </p>
+                    )}
+                    {status === "locked" && !weekly && (
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        Unlocks next weekend
+                        Unlocks after previous week assessment
                       </p>
                     )}
                   </div>
                 );
               })}
             </div>
+          </div>
+
+          {/* Assessments — loaded via dedicated assessments API so published weeklies always show */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-800">
+                Assessments
+              </h2>
+              <Link
+                href={d2hLearningRoutes(course.id).assessments}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
+              >
+                View all <ArrowRight size={12} />
+              </Link>
+            </div>
+
+            {weeklyByLessonId.size === 0 && !finalAssessment ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+                <ClipboardList
+                  size={22}
+                  className="mx-auto text-slate-300 mb-2"
+                />
+                <p className="text-sm text-slate-500">
+                  No published assessments yet. Weekly assessments appear here
+                  once your instructor publishes them.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {lessons.map((lesson) => {
+                  const a = weeklyByLessonId.get(lesson.id);
+                  if (!a) return null;
+                  return (
+                    <AssessmentDashboardCard
+                      key={a.id}
+                      courseId={course.id}
+                      assessment={a}
+                      subtitle={`Week ${lesson.weekNumber}`}
+                    />
+                  );
+                })}
+                {/* Weeklies that exist but aren't matched to a loaded lesson (edge case) */}
+                {weeklyAssessments
+                  .filter(
+                    (a) =>
+                      !a.lessonId || !lessons.some((l) => l.id === a.lessonId),
+                  )
+                  .map((a) => (
+                    <AssessmentDashboardCard
+                      key={a.id}
+                      courseId={course.id}
+                      assessment={a}
+                      subtitle={
+                        a.weekNumber != null ? `Week ${a.weekNumber}` : "Weekly"
+                      }
+                    />
+                  ))}
+                {finalAssessment && (
+                  <AssessmentDashboardCard
+                    courseId={course.id}
+                    assessment={finalAssessment}
+                    subtitle="Final"
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           {/* Learning tips */}

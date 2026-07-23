@@ -78,7 +78,9 @@ export interface DBLesson {
   resources: DBResource[];
   topics: DBTopic[];
   isCompleted?: boolean;
+  topicsComplete?: boolean;
   isLocked?: boolean;
+  weeklyAssessment?: import("./assessmentApi").LessonAssessmentCard | null;
 }
 
 export interface DBCourseDetail extends DBCourse {
@@ -97,6 +99,7 @@ export interface Enrollment {
 
 export interface EnrolledCourseDetail extends DBCourseDetail {
   enrollment: Enrollment;
+  finalAssessment?: import("./assessmentApi").LessonAssessmentCard | null;
 }
 
 export interface MyEnrollment {

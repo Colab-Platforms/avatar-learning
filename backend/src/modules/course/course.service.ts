@@ -22,6 +22,10 @@ import {
   UpdateTopicBody,
   CompleteFileUploadBody,
 } from "./course.types.js";
+import {
+  getSubmittedAssessmentIds,
+  isAttemptSubmitted,
+} from "./assessment/assessment.service.js";
 
 const DOCUMENT_EXTENSIONS = new Set([
   "pdf",
@@ -559,6 +563,121 @@ export class PublicCourseService {
         : [];
     const completedTopicIds = new Set(topicProgressRows.map((p) => p.topicId));
 
+    const courseAssessments = await prisma.assessment.findMany({
+      where: { courseId: course.id, isPublished: true },
+      select: {
+        id: true,
+        type: true,
+        lessonId: true,
+        title: true,
+        description: true,
+        questionCount: true,
+        timeLimitMinutes: true,
+        passingScorePercent: true,
+        maxTabSwitchWarnings: true,
+        _count: { select: { questions: true } },
+      },
+    });
+    const weeklyByLessonId = new Map(
+      courseAssessments
+        .filter((a) => a.type === "WEEKLY" && a.lessonId)
+        .map((a) => [a.lessonId!, a]),
+    );
+    const finalAssessmentRow =
+      courseAssessments.find((a) => a.type === "FINAL") ?? null;
+
+    const assessmentIds = courseAssessments.map((a) => a.id);
+    const attempts =
+      assessmentIds.length > 0
+        ? await prisma.assessmentAttempt.findMany({
+            where: { userId, assessmentId: { in: assessmentIds } },
+            orderBy: { attemptNumber: "desc" },
+          })
+        : [];
+
+    const attemptsByAssessment = new Map<string, typeof attempts>();
+    for (const a of attempts) {
+      const list = attemptsByAssessment.get(a.assessmentId) ?? [];
+      list.push(a);
+      attemptsByAssessment.set(a.assessmentId, list);
+    }
+
+    const pickActionableAttempt = (assessmentId: string) => {
+      const list = attemptsByAssessment.get(assessmentId) ?? [];
+      return (
+        list.find((a) => a.status === "IN_PROGRESS") ??
+        list.find((a) => isAttemptSubmitted(a.status)) ??
+        null
+      );
+    };
+
+    const submittedAssessmentIds = new Set(
+      attempts
+        .filter((a) => isAttemptSubmitted(a.status))
+        .map((a) => a.assessmentId),
+    );
+
+    const buildAssessmentCard = (
+      assessment: (typeof courseAssessments)[number] | null,
+      topicsComplete: boolean,
+      allWeekliesSubmitted: boolean,
+    ) => {
+      if (!assessment) return null;
+      const attempt = pickActionableAttempt(assessment.id);
+      const list = attemptsByAssessment.get(assessment.id) ?? [];
+      const terminal = list.filter((a) => isAttemptSubmitted(a.status));
+      const bestPercent =
+        terminal.length > 0
+          ? Math.max(...terminal.map((a) => a.scorePercent ?? 0))
+          : null;
+
+      let unlockStatus: "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED" =
+        "LOCKED";
+      let lockReason: string | null = null;
+
+      if (attempt?.status === "IN_PROGRESS") {
+        unlockStatus = "IN_PROGRESS";
+      } else if (assessment.type === "WEEKLY") {
+        if (topicsComplete) {
+          unlockStatus = "AVAILABLE";
+        } else {
+          lockReason = "Complete this week's topics to unlock.";
+        }
+      } else if (allWeekliesSubmitted) {
+        unlockStatus = "AVAILABLE";
+      } else {
+        lockReason = "Complete all weekly assessments to unlock.";
+      }
+
+      return {
+        id: assessment.id,
+        type: assessment.type,
+        title: assessment.title,
+        description: assessment.description,
+        questionCount: assessment._count.questions || assessment.questionCount,
+        expectedQuestionCount: assessment.questionCount,
+        timeLimitMinutes: assessment.timeLimitMinutes,
+        passingScorePercent: assessment.passingScorePercent,
+        maxTabSwitchWarnings: assessment.maxTabSwitchWarnings,
+        unlockStatus,
+        lockReason,
+        totalAttempts: terminal.length,
+        bestScorePercent: bestPercent,
+        attempt: attempt
+          ? {
+              id: attempt.id,
+              status: attempt.status,
+              attemptNumber: attempt.attemptNumber,
+              score: attempt.score,
+              maxScore: attempt.maxScore,
+              scorePercent: attempt.scorePercent,
+              isPassed: attempt.isPassed,
+              submittedAt: attempt.submittedAt,
+            }
+          : null,
+      };
+    };
+
     const resolveResource = <
       T extends { category: string; bunnyVideoId: string | null; url: string },
     >(
@@ -590,9 +709,17 @@ export class PublicCourseService {
         };
       });
 
-      const lessonCompleted =
+      const topicsComplete =
         topicsWithState.length > 0 &&
         topicsWithState.every((t) => t.isCompleted);
+
+      const weekly = weeklyByLessonId.get(lesson.id) ?? null;
+      const weeklySubmitted = weekly
+        ? submittedAssessmentIds.has(weekly.id)
+        : true;
+
+      // Week complete = all topics done AND weekly assessment submitted (if published)
+      const lessonCompleted = topicsComplete && weeklySubmitted;
       previousLessonCompleted = lessonCompleted;
 
       const resources = lesson.resources.map((r) =>
@@ -602,13 +729,32 @@ export class PublicCourseService {
       return {
         ...lesson,
         isCompleted: lessonCompleted,
+        topicsComplete,
         isLocked: weekLocked,
         resources,
         topics: topicsWithState,
+        weeklyAssessment: buildAssessmentCard(weekly, topicsComplete, false),
       };
     });
 
-    return { ...full, lessons: lessonsWithState, enrollment };
+    const publishedWeeklies = courseAssessments.filter((a) => a.type === "WEEKLY");
+    const allWeekliesSubmitted =
+      publishedWeeklies.length === 0
+        ? lessonsWithState.every((l) => l.topicsComplete)
+        : publishedWeeklies.every((w) => submittedAssessmentIds.has(w.id));
+
+    const finalAssessment = buildAssessmentCard(
+      finalAssessmentRow,
+      false,
+      allWeekliesSubmitted,
+    );
+
+    return {
+      ...full,
+      lessons: lessonsWithState,
+      enrollment,
+      finalAssessment,
+    };
   }
 
   // ─── Topic progress / locking ──────────────────────────────────────────────
@@ -619,6 +765,9 @@ export class PublicCourseService {
       orderBy: { weekNumber: "asc" },
       include: {
         topics: { orderBy: { topicOrder: "asc" }, select: { id: true } },
+        weeklyAssessment: {
+          select: { id: true, isPublished: true, type: true },
+        },
       },
     });
   }
@@ -634,7 +783,28 @@ export class PublicCourseService {
     return new Set(rows.map((r) => r.topicId));
   }
 
-  /** A week is locked until every topic in the previous week (by weekNumber) is completed. */
+  /** Previous week is complete only when all its topics are done and its weekly assessment (if published) is submitted. */
+  private async isPreviousWeekFullyComplete(
+    userId: string,
+    prevLesson: {
+      topics: { id: string }[];
+      weeklyAssessment: { id: string; isPublished: boolean } | null;
+    },
+  ): Promise<boolean> {
+    const prevTopicIds = prevLesson.topics.map((t) => t.id);
+    if (prevTopicIds.length === 0) return false;
+
+    const completed = await this.getCompletedTopicIds(userId, prevTopicIds);
+    if (prevTopicIds.some((id) => !completed.has(id))) return false;
+
+    const weekly = prevLesson.weeklyAssessment;
+    if (!weekly?.isPublished) return true;
+
+    const submitted = await getSubmittedAssessmentIds(userId, [weekly.id]);
+    return submitted.has(weekly.id);
+  }
+
+  /** A week is locked until the previous week is fully complete (topics + weekly assessment). */
   private async isLessonLocked(
     courseId: string,
     lessonId: string,
@@ -644,11 +814,11 @@ export class PublicCourseService {
     const idx = lessons.findIndex((l) => l.id === lessonId);
     if (idx <= 0) return false;
 
-    const prevTopicIds = lessons[idx - 1].topics.map((t) => t.id);
-    if (prevTopicIds.length === 0) return true; // an empty week can never be "completed"
-
-    const completed = await this.getCompletedTopicIds(userId, prevTopicIds);
-    return prevTopicIds.some((id) => !completed.has(id));
+    const prevComplete = await this.isPreviousWeekFullyComplete(
+      userId,
+      lessons[idx - 1],
+    );
+    return !prevComplete;
   }
 
   /** A topic is locked if its week is locked, or the previous topic in the same week isn't done yet. */
@@ -677,15 +847,41 @@ export class PublicCourseService {
   private async recalculateProgress(userId: string, courseId: string) {
     const lessons = await this.getOrderedLessonsWithTopics(courseId);
     const allTopicIds = lessons.flatMap((l) => l.topics.map((t) => t.id));
-    const total = allTopicIds.length;
-    if (total === 0) return;
 
-    const completedCount = await prisma.topicProgress.count({
-      where: { userId, topicId: { in: allTopicIds } },
+    const publishedWeeklies = lessons
+      .map((l) => l.weeklyAssessment)
+      .filter(
+        (a): a is NonNullable<typeof a> & { isPublished: true } =>
+          Boolean(a?.isPublished),
+      );
+    const finalAssessment = await prisma.assessment.findFirst({
+      where: { courseId, type: "FINAL", isPublished: true },
+      select: { id: true },
     });
 
+    const assessmentUnits = [
+      ...publishedWeeklies.map((w) => w.id),
+      ...(finalAssessment ? [finalAssessment.id] : []),
+    ];
+    const total = allTopicIds.length + assessmentUnits.length;
+    if (total === 0) return;
+
+    const completedTopics = await prisma.topicProgress.count({
+      where: { userId, topicId: { in: allTopicIds } },
+    });
+    const submittedAssessments = await getSubmittedAssessmentIds(
+      userId,
+      assessmentUnits,
+    );
+    const completedCount = completedTopics + submittedAssessments.size;
+
     const progress = Math.round((completedCount / total) * 100);
-    const isCompleted = progress === 100;
+    // Course complete when all topics + all published weekly assessments are done
+    const weekUnits = allTopicIds.length + publishedWeeklies.length;
+    const isCompleted =
+      weekUnits > 0 &&
+      completedTopics === allTopicIds.length &&
+      publishedWeeklies.every((w) => submittedAssessments.has(w.id));
 
     const mapper = await prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId } },
@@ -699,6 +895,11 @@ export class PublicCourseService {
         completedAt: isCompleted ? (mapper?.completedAt ?? new Date()) : null,
       },
     });
+  }
+
+  /** Recalculate progress after an assessment attempt is submitted. */
+  async recalculateProgressAfterAssessment(userId: string, courseId: string) {
+    await this.recalculateProgress(userId, courseId);
   }
 
   async markTopicWatched(topicId: string, userId: string) {

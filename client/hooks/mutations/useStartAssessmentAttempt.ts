@@ -8,9 +8,17 @@ export function useStartAssessmentAttempt(courseId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => startAssessmentAttempt(courseId),
-    onSuccess: () => {
+    mutationFn: (assessmentId: string) => startAssessmentAttempt(courseId, assessmentId),
+    onSuccess: (_data, assessmentId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.assessment(courseId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assessmentDetail(courseId, assessmentId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.assessmentHistory(courseId, assessmentId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourse(courseId) });
     },
   });
 }

@@ -34,8 +34,11 @@ router.put("/topics/:topicId", courseController.updateTopic);
 router.delete("/topics/:topicId", courseController.deleteTopic);
 
 // ─── Assessment ───────────────────────────────────────────────────────────────
-router.get("/courses/:courseId/assessment", assessmentController.adminGetAssessment);
+router.get("/courses/:courseId/assessments", assessmentController.adminListAssessments);
+router.get("/courses/:courseId/assessment", assessmentController.adminGetAssessment); // returns list (multi-stage)
+router.post("/courses/:courseId/assessments", assessmentController.createAssessment);
 router.post("/courses/:courseId/assessment", assessmentController.createAssessment);
+router.get("/assessments/:assessmentId", assessmentController.adminGetAssessmentById);
 router.put("/assessments/:assessmentId", assessmentController.updateAssessment);
 router.delete("/assessments/:assessmentId", assessmentController.deleteAssessment);
 router.patch("/assessments/:assessmentId/publish", assessmentController.toggleAssessmentPublish);

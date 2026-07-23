@@ -678,7 +678,16 @@ export default function CourseDetailPage() {
       )}
 
       {/* ── ASSESSMENT TAB ── */}
-      {activeTab === "assessment" && <AssessmentEditor courseId={id} />}
+      {activeTab === "assessment" && (
+        <AssessmentEditor
+          courseId={id}
+          lessons={sortedLessons.map((l) => ({
+            id: l.id,
+            title: l.title,
+            weekNumber: l.weekNumber,
+          }))}
+        />
+      )}
 
       {activeTab === "internship" && course.isDirect2HireCourse && (
         <InternshipTasksEditor courseId={id} />
