@@ -2,7 +2,7 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { hashPassword } from "@/utils/auth.js";
-import { userSelectFields, CreateUserBody, UpdateUserBody, Role, ROLE_LEVEL } from "./user.types.js";
+import { userSelectFields, CreateUserBody, UpdateUserBody, SetUserRoleBody, Role, ROLE_LEVEL } from "./user.types.js";
 import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
 import { buildPrismaQuery } from "prisma-qb";
 import { deleteFromCloudinary, RESUME_FOLDER, PROFILE_IMAGES_FOLDER, uploadToCloudinary } from "@/utils/cloudinary.js";
@@ -290,6 +290,45 @@ class UserService {
         });
 
         return updated;
+    }
+
+    // Only SUPERADMIN may call this (enforced at the route level too). Grants
+    // or revokes ADMIN — SUPERADMIN itself can never be assigned or touched here.
+    async setUserRole(targetId: string, data: SetUserRoleBody, callerRole: Role, callerId: string) {
+        if (callerRole !== "SUPERADMIN") {
+            throw new ApiError("You do not have permission to change user roles", STATUS_CODES.FORBIDDEN);
+        }
+
+        if (targetId === callerId) {
+            throw new ApiError("You cannot change your own role", STATUS_CODES.FORBIDDEN);
+        }
+
+        const user = await prisma.user.findFirst({
+            where: { id: targetId, isDeleted: false },
+            include: { userRoleMappings: { include: { role: true } } },
+        });
+
+        if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
+
+        const targetHighestRole = getHighestRole(user.userRoleMappings);
+        if (targetHighestRole === "SUPERADMIN") {
+            throw new ApiError("SUPERADMIN role cannot be changed", STATUS_CODES.FORBIDDEN);
+        }
+
+        const roleRecord = await prisma.role.findUnique({ where: { name: data.role } });
+        if (!roleRecord) throw new ApiError(`${data.role} role not found`, STATUS_CODES.SERVER_ERROR);
+
+        await prisma.$transaction(async (tx) => {
+            await tx.userRoleMapping.deleteMany({
+                where: { userId: targetId, role: { name: { in: ["USER", "ADMIN"] } } },
+            });
+
+            await tx.userRoleMapping.create({
+                data: { userId: targetId, roleId: roleRecord.id, assignedBy: callerId },
+            });
+        });
+
+        return prisma.user.findUnique({ where: { id: targetId }, select: userSelectFields });
     }
 
     async deleteUser(targetId: string, callerRole: Role, callerId: string) {

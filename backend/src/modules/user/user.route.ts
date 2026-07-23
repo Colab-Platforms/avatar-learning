@@ -20,6 +20,7 @@ router.delete("/profile/image", auth("USER"), userController.removeProfileImage)
 router.get("/:id", auth("USER", "ADMIN", "SUPERADMIN"), userController.getUserById);
 router.post("/", userController.createUser);
 router.put("/:id", auth("USER", "ADMIN", "SUPERADMIN"), userController.updateUser);
+router.patch("/:id/role", auth("SUPERADMIN"), userController.setUserRole);
 router.delete("/:id", auth("USER", "ADMIN", "SUPERADMIN"), userController.deleteUser);
 
 export default router;

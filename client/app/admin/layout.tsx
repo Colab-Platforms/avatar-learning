@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   MessageSquare,
   Handshake,
+  Users,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -63,6 +64,12 @@ const NAV = [
     href: "/admin/partners",
     label: "Partners",
     icon: Handshake,
+    exact: false,
+  },
+  {
+    href: "/admin/users",
+    label: "Users",
+    icon: Users,
     exact: false,
   },
 ];

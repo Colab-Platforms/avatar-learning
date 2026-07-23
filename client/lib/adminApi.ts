@@ -726,3 +726,31 @@ export const markContactRead = (id: string) =>
 
 export const deleteContact = (id: string) =>
   apiClient.delete(`/admin/contacts/${id}`).then((r) => r.data);
+
+// ─── Users (role management) ───────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  phoneNo?: string;
+  isActive: boolean;
+  createdAt: string;
+  userRoleMappings: { role: { id: string; name: string } }[];
+}
+
+export const fetchUsersPaginated = (
+  page: number = 1,
+  pageSize: number = 10,
+  search?: string,
+): Promise<PaginatedResponse<AdminUser>> =>
+  apiClient
+    .get("/users", { params: { page, pageSize, ...(search && { search }) } })
+    .then((r) => r.data.data);
+
+export const setUserRole = (
+  id: string,
+  role: "ADMIN" | "USER",
+): Promise<AdminUser> =>
+  apiClient.patch(`/users/${id}/role`, { role }).then((r) => r.data.data);

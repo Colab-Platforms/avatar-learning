@@ -240,7 +240,10 @@ export default function DashboardOverviewPage() {
       };
     }
     if (!hasPlacementAssessment) {
-      return { label: "Start Placement Assessment", href: "/dashboard/placement" };
+      return {
+        label: "Start Placement Assessment",
+        href: "/dashboard/placement",
+      };
     }
     if (!hasGoodMockFeedback) {
       return {

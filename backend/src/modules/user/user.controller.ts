@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import UserService from "./user.service.js";
-import { validateCreateUserSchema, validateUpdateUserSchema } from "./user.validators.js";
+import { validateCreateUserSchema, validateUpdateUserSchema, validateSetUserRoleSchema } from "./user.validators.js";
 import type { Role } from "./user.types.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { getResumeUploadSignature } from "@/utils/cloudinary.js";
@@ -87,6 +87,32 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
             req.user!.id,
         );
         sendResponse(res, true, result, "User updated successfully", STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const setUserRole = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const targetId = req.params.id as string;
+        if (!targetId) {
+            sendResponse(res, false, null, "Invalid user ID", STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const { error, value } = validateSetUserRoleSchema(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await userService.setUserRole(
+            targetId,
+            value,
+            req.user!.role as Role,
+            req.user!.id,
+        );
+        sendResponse(res, true, result, "User role updated successfully", STATUS_CODES.OK);
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }

@@ -48,3 +48,15 @@ const updateUserSchema = Joi.object({
 export const validateUpdateUserSchema = (data: unknown) => {
     return updateUserSchema.validate(data, { abortEarly: false });
 };
+
+// ── SetUserRole ─────────────────────────────────────────────
+const setUserRoleSchema = Joi.object({
+    role: Joi.string().valid("ADMIN", "USER").required().messages({
+        "any.only": "role must be either ADMIN or USER",
+        "any.required": "role is required",
+    }),
+});
+
+export const validateSetUserRoleSchema = (data: unknown) => {
+    return setUserRoleSchema.validate(data, { abortEarly: false });
+};

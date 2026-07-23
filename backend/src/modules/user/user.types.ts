@@ -39,6 +39,10 @@ export interface CreateUserBody {
     phoneNo?: string;
 }
 
+export interface SetUserRoleBody {
+    role: "ADMIN" | "USER";
+}
+
 export interface UpdateUserBody {
     firstName?: string;
     lastName?: string;
