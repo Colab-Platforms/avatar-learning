@@ -8,6 +8,12 @@ import { Footer } from "@/components/layout/Footer";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateUser, logoutThunk, clearError, uploadResume, deleteResume } from "@/store/authSlice";
 import { fetchMyEnrollments, type MyEnrollment } from "@/lib/coursesApi";
+import {
+  getCountries,
+  getStatesForCountry,
+  getCountryIsoCode,
+  getStateIsoCode,
+} from "@/data/countries";
 import type { UpdateUserBody } from "@/store/authSlice";
 import type { Tab } from "@/components/profile/shared";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
@@ -18,6 +24,7 @@ import { CoursesTab } from "@/components/profile/CoursesTab";
 import { ResumeTab } from "@/components/profile/ResumeTab";
 import { PartnersTab } from "@/components/profile/PartnersTab";
 import { AccountDetails } from "@/components/profile/AccountDetails";
+import { ConfirmationDialog } from "@/components/ui";
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
@@ -25,7 +32,10 @@ export default function ProfilePage() {
   const { user, loading, error, hasHydrated } = useAppSelector((s) => s.auth);
 
   const [activeTab, setActiveTab] = useState<Tab>("personal");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [editing,       setEditing]       = useState(false);
+
   const [saveOk,        setSaveOk]        = useState(false);
   const [form,          setForm]          = useState<UpdateUserBody>({});
   const [enrollments,   setEnrollments]   = useState<MyEnrollment[]>([]);
@@ -44,13 +54,16 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user && editing) {
+      const countryIso = getCountryIsoCode(user.country ?? "");
+      const stateIso = getStateIsoCode(countryIso, user.state ?? "");
       setForm({
         firstName: user.firstName ?? "",
         lastName:  user.lastName  ?? "",
         address:   user.address   ?? "",
         gender:    user.gender    ?? "",
-        state:     user.state     ?? "",
-        country:   user.country   ?? "",
+        state:     stateIso || (user.state ?? ""),
+        country:   countryIso || (user.country ?? ""),
+        city:      user.city      ?? "",
       });
     }
   }, [user, editing]);
@@ -64,7 +77,20 @@ export default function ProfilePage() {
   const handleSave = async () => {
     dispatch(clearError());
     setSaveOk(false);
-    const result = await dispatch(updateUser({ id: user.id, ...form }));
+    
+    // Resolve ISO codes to display names before dispatching updateUser
+    const countriesList = getCountries();
+    const countryName = countriesList.find((c) => c.isoCode === form.country)?.name ?? form.country;
+    const statesList = form.country ? getStatesForCountry(form.country) : [];
+    const stateName = statesList.find((s) => s.isoCode === form.state)?.name ?? form.state;
+
+    const resolvedForm = {
+      ...form,
+      country: countryName,
+      state: stateName,
+    };
+
+    const result = await dispatch(updateUser({ id: user.id, ...resolvedForm }));
     if (updateUser.fulfilled.match(result)) {
       setSaveOk(true);
       setEditing(false);
@@ -101,10 +127,23 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = async () => {
-    await dispatch(logoutThunk());
-    router.push("/");
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
   };
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await dispatch(logoutThunk());
+      setShowLogoutConfirm(false);
+      router.push("/");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
 
   const completedCount = enrollments.filter((e) => e.isCompleted).length;
 
@@ -150,7 +189,7 @@ export default function ProfilePage() {
               onEdit={() => setEditing(true)}
               onSave={handleSave}
               onCancel={handleCancel}
-              onLogout={handleLogout}
+              onLogout={handleLogoutClick}
             />
 
             {/* ─── RIGHT CONTENT ─── */}
@@ -199,6 +238,18 @@ export default function ProfilePage() {
         </div>
       </main>
       <Footer />
+
+      <ConfirmationDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleConfirmLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your account? You will need to log back in to access your profile."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="brand"
+        isLoading={isLoggingOut}
+      />
     </>
   );
 }

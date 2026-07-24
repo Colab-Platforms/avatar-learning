@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { FileText, Check, X, ExternalLink, Trash2, Loader2, Upload } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, ConfirmationDialog } from "@/components/ui";
 import type { AuthUser } from "@/store/authSlice";
 import { TabPanel, PanelHeader } from "./shared";
 
@@ -16,9 +17,20 @@ export function ResumeTab({
   onFileSelect: (file: File | null, error: string | null) => void;
   onUpload: () => void;
   onClear: () => void;
-  onDelete: () => void;
+  onDelete: () => void | Promise<void>;
 }) {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    try {
+      await onDelete();
+    } finally {
+      setShowConfirm(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
     const file = e.target.files?.[0];
     if (!file) {
       onFileSelect(null, null);
@@ -75,7 +87,7 @@ export function ResumeTab({
                   <ExternalLink className="h-3.5 w-3.5" /> Open in New Tab
                 </a>
                 <button
-                  onClick={onDelete}
+                  onClick={() => setShowConfirm(true)}
                   disabled={loading}
                   className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50
                              px-3 py-1.5 text-[12px] font-medium text-red-600
@@ -143,6 +155,19 @@ export function ResumeTab({
           )}
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Resume"
+        message="Are you sure you want to remove your resume? This will permanently delete the uploaded file and remove the preview."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={loading}
+      />
     </TabPanel>
   );
 }
+

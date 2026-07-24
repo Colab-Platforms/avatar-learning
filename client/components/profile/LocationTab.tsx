@@ -1,6 +1,13 @@
 import { MapPin, Globe } from "lucide-react";
 import type { AuthUser, UpdateUserBody } from "@/store/authSlice";
 import { Field, EditActions, TabPanel, PanelHeader, inputCls } from "./shared";
+import {
+  getCountries,
+  getStatesForCountry,
+  getCitiesForState,
+} from "@/data/countries";
+import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 export function LocationTab({
   user, editing, form, loading, onFieldChange, onSave, onCancel, onEditStart,
@@ -14,6 +21,23 @@ export function LocationTab({
   onCancel: () => void;
   onEditStart: () => void;
 }) {
+  const countries = useMemo(() => getCountries(), []);
+  const states = useMemo(() => form.country ? getStatesForCountry(form.country) : [], [form.country]);
+  const cities = useMemo(() => (form.country && form.state) ? getCitiesForState(form.country, form.state) : [], [form.country, form.state]);
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onFieldChange("country")(e);
+    const emptyEvent = { target: { value: "" } } as React.ChangeEvent<HTMLSelectElement>;
+    onFieldChange("state")(emptyEvent);
+    onFieldChange("city")(emptyEvent);
+  };
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onFieldChange("state")(e);
+    const emptyEvent = { target: { value: "" } } as React.ChangeEvent<HTMLSelectElement>;
+    onFieldChange("city")(emptyEvent);
+  };
+
   return (
     <TabPanel>
       <PanelHeader icon={<MapPin className="h-3.5 w-3.5 text-brand-600" />} title="Location" editing={editing} />
@@ -28,18 +52,73 @@ export function LocationTab({
 
         <div className="h-px bg-border" />
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field
-            label="State / Province"
-            value={user.state}
-            editing={editing}
-            inputNode={<input value={form.state ?? ""} onChange={onFieldChange("state")} placeholder="Maharashtra" className={inputCls} />}
-          />
+        <div className="grid sm:grid-cols-3 gap-4">
           <Field
             label="Country"
             value={user.country}
             editing={editing}
-            inputNode={<input value={form.country ?? ""} onChange={onFieldChange("country")} placeholder="India" className={inputCls} />}
+            inputNode={
+              <select
+                value={form.country ?? ""}
+                onChange={handleCountryChange}
+                className={cn(inputCls, "appearance-none cursor-pointer bg-white")}
+              >
+                <option value="">Select country</option>
+                {countries.map((c) => (
+                  <option key={c.isoCode} value={c.isoCode}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            }
+          />
+          <Field
+            label="State / Province"
+            value={user.state}
+            editing={editing}
+            inputNode={
+              <select
+                value={form.state ?? ""}
+                onChange={handleStateChange}
+                disabled={states.length === 0}
+                className={cn(inputCls, "appearance-none cursor-pointer bg-white disabled:opacity-50")}
+              >
+                <option value="">
+                  {states.length === 0 ? "No states available" : "Select state"}
+                </option>
+                {states.map((s) => (
+                  <option key={s.isoCode} value={s.isoCode}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            }
+          />
+          <Field
+            label="City"
+            value={user.city}
+            editing={editing}
+            inputNode={
+              <select
+                value={form.city ?? ""}
+                onChange={onFieldChange("city")}
+                disabled={!form.state || cities.length === 0}
+                className={cn(inputCls, "appearance-none cursor-pointer bg-white disabled:opacity-50")}
+              >
+                <option value="">
+                  {!form.state
+                    ? "Select state first"
+                    : cities.length === 0
+                    ? "No cities available"
+                    : "Select city"}
+                </option>
+                {cities.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            }
           />
         </div>
 

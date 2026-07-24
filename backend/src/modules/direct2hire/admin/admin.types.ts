@@ -41,6 +41,7 @@ export interface AdminD2HStudentProfile {
     address: string | null;
     state: string | null;
     country: string | null;
+    city: string | null;
     currentStudyLevel: string | null;
     createdAt: Date;
   };

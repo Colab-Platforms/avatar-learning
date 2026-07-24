@@ -37,6 +37,10 @@ const registerSchema = Joi.object({
         "string.empty": "Country is required",
         "any.required": "Country is required",
     }),
+    city: Joi.string().trim().required().messages({
+        "string.empty": "City is required",
+        "any.required": "City is required",
+    }),
     referralCode: Joi.string().trim().uppercase().optional().allow(""),
 });
 

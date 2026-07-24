@@ -6,6 +6,7 @@ export interface RegisterBody {
     phoneNo: string;
     state: string;
     country: string;
+    city: string;
     referralCode?: string;
 }
 

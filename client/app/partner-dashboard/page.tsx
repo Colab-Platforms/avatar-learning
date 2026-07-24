@@ -83,7 +83,7 @@ const getNextMilestone = (credited: number) => {
 const FAQS = [
   {
     q: "How are referral bonuses calculated?",
-    a: "Individual partners earn a flat 10% on every referral, credited instantly. Institute partners earn milestone bonuses instead — referrals 1–10 don't pay individually, then hitting referral #11, #26, #51, #101, #201, or #501 each unlocks one lump-sum bonus covering that whole range. Referrals in between pay ₹0 on their own. Past referral #500, it switches to a flat ₹599 per referral.",
+    a: "Individual partners earn a flat 10% on every referral, credited instantly. Institute partners earn milestone bonuses instead — referrals 1–10 don't pay individually, then hitting referral #11, #26, #51, #101, #201, or #501 each unlocks one lump-sum milestone bonus covering that whole range. Referrals in between pay ₹0 on their own. Past referral #500, it switches to a flat ₹599 per referral.",
   },
   {
     q: "When can I request a withdrawal?",
@@ -96,6 +96,30 @@ const FAQS = [
   {
     q: "How will I know when my referral converts?",
     a: "A referral only appears in your list once the student's payment is confirmed and credited — you'll see the commission amount and your wallet updates immediately.",
+  },
+  {
+    q: "What is your Referral Reward Policy?",
+    a: (
+      <div className="space-y-2">
+        <p>
+          Referral rewards become eligible for withdrawal 15 days after the
+          referred learner successfully enrolls. This verification period helps
+          ensure that the enrollment is genuine and active.
+        </p>
+        <p>
+          If the referred learner cancels their enrollment, requests a refund,
+          or leaves the program within the first 15 days, the referral will be
+          considered cancelled, and the corresponding reward will not be
+          eligible for withdrawal.
+        </p>
+        <div className="mt-3 p-3 rounded-lg border border-slate-200 bg-amber-50/50 text-[12.5px] text-amber-800">
+          <strong className="font-semibold text-amber-900">Note: </strong>
+          Avatar India reserves the right to review and reject referral rewards
+          in cases of fraudulent, duplicate, or invalid referrals, or if the
+          referral does not comply with our Partner Program Terms & Conditions.
+        </div>
+      </div>
+    ),
   },
 ];
 
@@ -149,14 +173,21 @@ function StatCard({
   );
 }
 
-function FaqItem({ q, a }: { q: string; a: string }) {
+function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => setOpen((v) => !v)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setOpen((v) => !v);
+        }
+      }}
       className="w-full text-left rounded-xl border border-border bg-white px-5 py-4
-                 hover:border-brand-200 hover:bg-brand-50/40 transition-all duration-200"
+                 hover:border-brand-200 hover:bg-brand-50/40 transition-all duration-200 cursor-pointer select-none"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-[14px] font-medium text-text">{q}</span>
@@ -167,11 +198,11 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         )}
       </div>
       {open && (
-        <p className="mt-3 text-[13px] text-text-muted leading-relaxed border-t border-border pt-3">
+        <div className="mt-3 text-[13px] text-text-muted leading-relaxed border-t border-border pt-3">
           {a}
-        </p>
+        </div>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -424,10 +455,12 @@ export default function PartnerDashboardPage() {
                   <span className="text-text-subtle">Phone</span>
                   <span className="text-text font-medium">{partner.phone}</span>
                 </div>
-                {user.state && (
+                {(user.city || user.state) && (
                   <div className="flex justify-between py-2.5">
                     <span className="text-text-subtle">Location</span>
-                    <span className="text-text font-medium">{user.state}</span>
+                    <span className="text-text font-medium truncate max-w-[160px]">
+                      {[user.city, user.state].filter(Boolean).join(", ")}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between py-2.5">
@@ -567,9 +600,16 @@ export default function PartnerDashboardPage() {
           <div className="space-y-4">
             <h2 className="text-[18px] font-semibold text-text">Frequently Asked Questions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-              {FAQS.map((f) => (
-                <FaqItem key={f.q} q={f.q} a={f.a} />
-              ))}
+              <div className="flex flex-col gap-3">
+                {FAQS.slice(0, Math.ceil(FAQS.length / 2)).map((f) => (
+                  <FaqItem key={f.q} q={f.q} a={f.a} />
+                ))}
+              </div>
+              <div className="flex flex-col gap-3">
+                {FAQS.slice(Math.ceil(FAQS.length / 2)).map((f) => (
+                  <FaqItem key={f.q} q={f.q} a={f.a} />
+                ))}
+              </div>
             </div>
           </div>
 

@@ -134,6 +134,7 @@ class AuthService {
           phoneNo: data.phoneNo,
           state: data.state,
           country: data.country,
+          city: data.city,
           isPhoneVerified: false,
         },
       });
@@ -151,6 +152,7 @@ class AuthService {
             phoneNo: data.phoneNo,
             state: data.state,
             country: data.country,
+            city: data.city,
             isEmailVerified: false,
             isPhoneVerified: false,
           },

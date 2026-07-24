@@ -133,6 +133,7 @@ model User {
   gender         String?
   state          String?
   country        String?
+  city           String?
   profileImage           String? @map("profile_image")
   profileImagePublicId   String? @map("profile_image_public_id")
   resumeUrl              String? @map("resume_url")

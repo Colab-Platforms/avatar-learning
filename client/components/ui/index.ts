@@ -9,3 +9,6 @@ export { CyclingText } from "./CyclingText";
 export { HelpWidget } from "./HelpWidget";
 export { ShinyText } from "./ShinyText";
 export { UserAvatar } from "./UserAvatar";
+export { ConfirmationDialog } from "./ConfirmationDialog";
+export type { ConfirmationDialogProps } from "./ConfirmationDialog";
+

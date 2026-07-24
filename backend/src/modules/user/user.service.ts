@@ -154,6 +154,7 @@ class UserService {
                 gender: data.gender,
                 state: data.state,
                 country: data.country,
+                city: data.city,
                 ...(data.isActive !== undefined && { isActive: data.isActive }),
             },
             select: userSelectFields,

@@ -8,6 +8,7 @@ export const userSelectFields = {
     gender: true,
     state: true,
     country: true,
+    city: true,
     profileImage: true,
     profileImagePublicId: true,
     resumeUrl: true,
@@ -51,6 +52,7 @@ export interface UpdateUserBody {
     gender?: string;
     state?: string;
     country?: string;
+    city?: string;
     isActive?: boolean;
     isPhoneVerified?: boolean;
 }

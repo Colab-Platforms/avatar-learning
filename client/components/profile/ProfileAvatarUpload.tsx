@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { ConfirmationDialog } from "@/components/ui";
 import { useUploadProfileImage } from "@/hooks/mutations/useUploadProfileImage";
 import { useRemoveProfileImage } from "@/hooks/mutations/useRemoveProfileImage";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import type { AuthUser } from "@/store/authSlice";
 
 export function ProfileAvatarUpload({ user }: { user: AuthUser }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const uploadMutation = useUploadProfileImage();
   const removeMutation = useRemoveProfileImage();
   const isBusy = uploadMutation.isPending || removeMutation.isPending;
@@ -27,12 +29,18 @@ export function ProfileAvatarUpload({ user }: { user: AuthUser }) {
     uploadMutation.mutate(file);
   };
 
-  const handleRemove = () => {
+  const handleRemoveClick = () => {
     if (isBusy || !user.profileImage) return;
+    setShowConfirm(true);
+  };
+
+  const handleConfirmRemove = () => {
     removeMutation.mutate(undefined, {
-      onError: () => undefined,
+      onSuccess: () => setShowConfirm(false),
+      onError: () => setShowConfirm(false),
     });
   };
+
 
   return (
     <div className="flex flex-col items-start gap-3">
@@ -46,7 +54,9 @@ export function ProfileAvatarUpload({ user }: { user: AuthUser }) {
             !isBusy && "hover:scale-[1.02] active:scale-[0.98]",
             isBusy && "opacity-80 cursor-wait",
           )}
-          aria-label={user.profileImage ? "Change profile photo" : "Upload profile photo"}
+          aria-label={
+            user.profileImage ? "Change profile photo" : "Upload profile photo"
+          }
         >
           <UserAvatar
             profileImage={user.profileImage}
@@ -83,12 +93,12 @@ export function ProfileAvatarUpload({ user }: { user: AuthUser }) {
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 mt-1">
         <button
           type="button"
           onClick={openPicker}
           disabled={isBusy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-100 disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-[12px] font-semibold text-brand-700 transition-all duration-200 hover:bg-brand-100 active:scale-[0.97] disabled:opacity-60 cursor-pointer"
         >
           {uploadMutation.isPending ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -101,9 +111,9 @@ export function ProfileAvatarUpload({ user }: { user: AuthUser }) {
         {user.profileImage && (
           <button
             type="button"
-            onClick={handleRemove}
+            onClick={handleRemoveClick}
             disabled={isBusy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-[12px] font-semibold text-red-600 transition-all duration-200 hover:bg-red-100 active:scale-[0.97] disabled:opacity-60 cursor-pointer"
           >
             {removeMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -114,6 +124,19 @@ export function ProfileAvatarUpload({ user }: { user: AuthUser }) {
           </button>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmRemove}
+        title="Remove Profile Photo"
+        message="Are you sure you want to remove your profile photo? This will delete your current photo and restore the default avatar."
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={removeMutation.isPending}
+      />
     </div>
   );
 }
+

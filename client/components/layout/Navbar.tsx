@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { LogOut, User, ChevronDown, Menu, X, Handshake, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
-import { buttonVariants } from "@/components/ui";
+import { buttonVariants, ConfirmationDialog } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutThunk } from "@/store/authSlice";
 import { getMyPartner } from "@/lib/partnersApi";
@@ -18,6 +18,8 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -38,11 +40,24 @@ export function Navbar() {
       .catch(() => setIsApprovedPartner(false));
   }, [user?.id]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
     setUserMenuOpen(false);
-    await dispatch(logoutThunk());
-    router.push("/");
+    setShowLogoutConfirm(true);
   };
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await dispatch(logoutThunk());
+      setShowLogoutConfirm(false);
+      router.push("/");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
 
   const isActiveRoute = (href: string) => {
     if (!pathname) return false;
@@ -194,7 +209,7 @@ export function Navbar() {
                       </Link>
                     )}
                     <button
-                      onClick={handleLogout}
+                      onClick={handleLogoutClick}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px]
                                  text-red-600 hover:bg-red-50
                                  transition-all duration-150"
@@ -312,10 +327,10 @@ export function Navbar() {
                     Partner Dashboard
                   </Link>
                 )}
-                <button
+                 <button
                   onClick={() => {
                     setMobileOpen(false);
-                    handleLogout();
+                    handleLogoutClick();
                   }}
                   className="px-4 py-2.5 text-[14px] text-left text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2"
                 >
@@ -348,6 +363,18 @@ export function Navbar() {
           </div>
         </nav>
       </div>
+
+      <ConfirmationDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleConfirmLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your account? You will need to log back in to access your profile."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="brand"
+        isLoading={isLoggingOut}
+      />
     </>
   );
 }

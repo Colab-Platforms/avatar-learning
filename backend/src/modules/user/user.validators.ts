@@ -42,6 +42,7 @@ const updateUserSchema = Joi.object({
     gender: Joi.string().trim().allow(null, "").optional(),
     state: Joi.string().trim().allow(null, "").optional(),
     country: Joi.string().trim().allow(null, "").optional(),
+    city: Joi.string().trim().allow(null, "").optional(),
     isActive: Joi.boolean().optional(),
 });
 

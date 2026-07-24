@@ -16,6 +16,7 @@ export interface AuthUser {
   currentStudyLevel: string | null;
   state: string | null;
   country: string | null;
+  city: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   isActive: boolean;
@@ -31,6 +32,7 @@ export interface UpdateUserBody {
   gender?: string;
   state?: string;
   country?: string;
+  city?: string;
 }
 
 export interface AuthState {
@@ -91,6 +93,7 @@ export const register = createAsyncThunk(
       password: string;
       phoneNo: string;
       state: string;
+      city: string;
       country: string;
       referralCode?: string;
     },

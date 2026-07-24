@@ -118,6 +118,7 @@ export class Direct2HireAdminService {
         address: true,
         state: true,
         country: true,
+        city: true,
         currentStudyLevel: true,
         createdAt: true,
         direct2HireLead: {
@@ -239,6 +240,7 @@ export class Direct2HireAdminService {
         address: user.address,
         state: user.state,
         country: user.country,
+        city: user.city,
         currentStudyLevel: user.currentStudyLevel,
         createdAt: user.createdAt,
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect, Suspense } from "react";
+import { useCallback, useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowRight, Loader2, Check, X as XIcon } from "lucide-react";
@@ -10,6 +10,12 @@ import { Msg91PhoneWidget } from "../Msg91PhoneWidget";
 import { GoogleAuthButton } from "../GoogleAuthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { register, verifyOtp, verifyPhone, resendOtp, clearError } from "@/store/authSlice";
+import {
+  getCountries,
+  getStatesForCountry,
+  getCitiesForState,
+  DEFAULT_COUNTRY_CODE,
+} from "@/data/countries";
 
 const primaryBtn = [
   "w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl",
@@ -65,7 +71,7 @@ function RegisterForm() {
   const [localPhone,     setLocalPhone]     = useState("");
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "",
-    phoneNo: "", state: "", country: "", password: "", referralCode: "",
+    phoneNo: "", state: "", country: DEFAULT_COUNTRY_CODE, city: "", password: "", referralCode: "",
   });
   const [showPassword,   setShowPassword]   = useState(false);
   const [agreed,         setAgreed]         = useState(false);
@@ -73,6 +79,10 @@ function RegisterForm() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess,  setResendSuccess]  = useState(false);
   const [phoneError,     setPhoneError]     = useState<string | null>(null);
+
+  const countries = useMemo(() => getCountries(), []);
+  const states = useMemo(() => getStatesForCountry(form.country), [form.country]);
+  const cities = useMemo(() => getCitiesForState(form.country, form.state), [form.country, form.state]);
 
   useEffect(() => { if (user) router.push("/onboarded"); }, [user, router]);
 
@@ -88,8 +98,16 @@ function RegisterForm() {
   }, [resendCooldown]);
 
   const set = (field: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setForm((prev) => ({ ...prev, country: e.target.value, state: "", city: "" }));
+  };
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setForm((prev) => ({ ...prev, state: e.target.value, city: "" }));
+  };
 
   const isPasswordValid = RULES.every((r) => r.test(form.password));
 
@@ -97,7 +115,12 @@ function RegisterForm() {
     e.preventDefault();
     if (!isPasswordValid || !agreed) return;
     dispatch(clearError());
-    const result = await dispatch(register(form));
+    const resolvedPayload = {
+      ...form,
+      country: countries.find((c) => c.isoCode === form.country)?.name ?? form.country,
+      state: states.find((s) => s.isoCode === form.state)?.name ?? form.state,
+    };
+    const result = await dispatch(register(resolvedPayload));
     if (register.fulfilled.match(result)) {
       setLocalEmail(form.email);
       setLocalPhone(form.phoneNo);
@@ -364,16 +387,66 @@ function RegisterForm() {
             value={form.phoneNo} onChange={set("phoneNo")} placeholder="+91 98765 43210" className={inputCls} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label htmlFor="state" className="text-[12px] font-semibold tracking-wide uppercase text-slate-400">State</label>
-            <input id="state" type="text" required
-              value={form.state} onChange={set("state")} placeholder="Maharashtra" className={inputCls} />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <label htmlFor="country" className="text-[12px] font-semibold tracking-wide uppercase text-slate-400">Country</label>
-            <input id="country" type="text" required
-              value={form.country} onChange={set("country")} placeholder="India" className={inputCls} />
+            <select
+              id="country"
+              required
+              value={form.country}
+              onChange={handleCountryChange}
+              className={cn(inputCls, "appearance-none cursor-pointer bg-white")}
+            >
+              {countries.map((c) => (
+                <option key={c.isoCode} value={c.isoCode}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="state" className="text-[12px] font-semibold tracking-wide uppercase text-slate-400">State</label>
+            <select
+              id="state"
+              required
+              value={form.state}
+              onChange={handleStateChange}
+              disabled={states.length === 0}
+              className={cn(inputCls, "appearance-none cursor-pointer bg-white disabled:opacity-50")}
+            >
+              <option value="">
+                {states.length === 0 ? "No states" : "Select state"}
+              </option>
+              {states.map((s) => (
+                <option key={s.isoCode} value={s.isoCode}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="city" className="text-[12px] font-semibold tracking-wide uppercase text-slate-400">City</label>
+            <select
+              id="city"
+              required
+              value={form.city}
+              onChange={set("city")}
+              disabled={!form.state || cities.length === 0}
+              className={cn(inputCls, "appearance-none cursor-pointer bg-white disabled:opacity-50")}
+            >
+              <option value="">
+                {!form.state
+                  ? "Select state"
+                  : cities.length === 0
+                  ? "No cities"
+                  : "Select city"}
+              </option>
+              {cities.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

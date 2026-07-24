@@ -33,6 +33,7 @@ import {
 import {
   getCountries,
   getStatesForCountry,
+  getCitiesForState,
   DEFAULT_COUNTRY_CODE,
 } from "@/data/countries";
 
@@ -180,9 +181,16 @@ export default function PartnersPage() {
     () => getStatesForCountry(form.country),
     [form.country],
   );
+  const cities = useMemo(
+    () => getCitiesForState(form.country, form.state),
+    [form.country, form.state],
+  );
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-    setForm((p) => ({ ...p, country: e.target.value, state: "" }));
+    setForm((p) => ({ ...p, country: e.target.value, state: "", city: "" }));
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    setForm((p) => ({ ...p, state: e.target.value, city: "" }));
 
   useEffect(() => {
     if (!user) {
@@ -524,7 +532,7 @@ export default function PartnersPage() {
                               </label>
                               <select
                                 value={form.state}
-                                onChange={set("state")}
+                                onChange={handleStateChange}
                                 disabled={states.length === 0}
                                 className={cn(
                                   inputCls,
@@ -549,13 +557,28 @@ export default function PartnersPage() {
                             <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
                               City
                             </label>
-                            <input
-                              type="text"
+                            <select
                               value={form.city}
                               onChange={set("city")}
-                              placeholder="City"
-                              className={inputCls}
-                            />
+                              disabled={!form.state || cities.length === 0}
+                              className={cn(
+                                inputCls,
+                                "appearance-none cursor-pointer disabled:opacity-50",
+                              )}
+                            >
+                              <option value="">
+                                {!form.state
+                                  ? "Select state first"
+                                  : cities.length === 0
+                                  ? "No cities available"
+                                  : "Select city"}
+                              </option>
+                              {cities.map((c) => (
+                                <option key={c.name} value={c.name}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           <div className="space-y-1.5">
@@ -731,7 +754,7 @@ export default function PartnersPage() {
                                   </label>
                                   <select
                                     value={form.state}
-                                    onChange={set("state")}
+                                    onChange={handleStateChange}
                                     disabled={states.length === 0}
                                     className={cn(
                                       inputCls,
@@ -756,13 +779,28 @@ export default function PartnersPage() {
                                 <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
                                   City
                                 </label>
-                                <input
-                                  type="text"
+                                <select
                                   value={form.city}
                                   onChange={set("city")}
-                                  placeholder="City"
-                                  className={inputCls}
-                                />
+                                  disabled={!form.state || cities.length === 0}
+                                  className={cn(
+                                    inputCls,
+                                    "appearance-none cursor-pointer disabled:opacity-50",
+                                  )}
+                                >
+                                  <option value="">
+                                    {!form.state
+                                      ? "Select state first"
+                                      : cities.length === 0
+                                      ? "No cities available"
+                                      : "Select city"}
+                                  </option>
+                                  {cities.map((c) => (
+                                    <option key={c.name} value={c.name}>
+                                      {c.name}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                             </>
                           ) : (
