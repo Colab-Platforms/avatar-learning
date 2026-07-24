@@ -20,6 +20,7 @@ export interface AuthUser {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   isActive: boolean;
+  isIntroVideoWatched: boolean;
   createdAt: string;
   updatedAt?: string;
 }

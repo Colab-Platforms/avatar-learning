@@ -15,6 +15,8 @@ import contactRoutes from "./modules/contact/contact.route.js";
 import adminContactRoutes from "./modules/contact/admin.route.js";
 import partnerRoutes from "./modules/partners/partner.route.js";
 import adminPartnerRoutes from "./modules/partners/admin.route.js";
+import introVideoRoutes from "./modules/introVideo/introVideo.route.js";
+import adminIntroVideoRoutes from "./modules/introVideo/introVideo.admin.route.js";
 
 const router = Router();
 
@@ -38,5 +40,7 @@ router.use("/contact", contactRoutes);
 router.use("/admin", adminContactRoutes);
 router.use("/partners", partnerRoutes);
 router.use("/admin", adminPartnerRoutes);
+router.use("/intro-video", introVideoRoutes);
+router.use("/admin", adminIntroVideoRoutes);
 
 export default router;

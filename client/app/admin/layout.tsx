@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Handshake,
   Users,
+  Clapperboard,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -36,6 +37,12 @@ const NAV = [
     exact: false,
   },
   { href: "/admin/courses", label: "Courses", icon: BookOpen, exact: false },
+  {
+    href: "/admin/intro-video",
+    label: "Intro Video",
+    icon: Clapperboard,
+    exact: false,
+  },
   {
     href: "/admin/internships",
     label: "Internships",

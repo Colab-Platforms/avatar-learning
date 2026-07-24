@@ -754,3 +754,41 @@ export const setUserRole = (
   role: "ADMIN" | "USER",
 ): Promise<AdminUser> =>
   apiClient.patch(`/users/${id}/role`, { role }).then((r) => r.data.data);
+
+// ─── Intro Video (singleton, two-step direct upload) ──────────────────────────
+
+export interface AdminIntroVideo {
+  id: string;
+  title: string;
+  bunnyVideoId: string | null;
+  url: string | null;
+  thumbnailUrl: string | null;
+  sizeBytes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const fetchAdminIntroVideo = (): Promise<AdminIntroVideo | null> =>
+  apiClient.get("/admin/intro-video").then((r) => r.data.data);
+
+const initIntroVideoUpload = (title: string): Promise<InitUploadResult> =>
+  apiClient.post("/admin/intro-video/init", { title }).then((r) => r.data.data);
+
+const completeIntroVideoUpload = (
+  videoGuid: string,
+  title: string,
+  fileSize: number,
+) =>
+  apiClient
+    .post("/admin/intro-video/complete", { videoGuid, title, fileSize })
+    .then((r) => r.data.data);
+
+export const uploadIntroVideo = async (
+  file: File,
+  title: string,
+  onProgress?: (pct: number) => void,
+) => {
+  const { videoGuid, uploadUrl, accessKey } = await initIntroVideoUpload(title);
+  await uploadDirectToBunny(uploadUrl, accessKey, file, onProgress);
+  return completeIntroVideoUpload(videoGuid, title, file.size);
+};
