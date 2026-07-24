@@ -150,6 +150,13 @@ export const markTopicWatched = (topicId: string): Promise<Enrollment> =>
     .post(`/courses/topics/${topicId}/watch`)
     .then((r) => r.data.data);
 
+export const fetchVideoPlaybackUrl = (
+  resourceId: string,
+): Promise<{ embedUrl: string; expiresInSeconds: number }> =>
+  apiClient
+    .get(`/courses/resources/${resourceId}/playback`)
+    .then((r) => r.data.data);
+
 export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
   apiClient
     .get("/courses/me/enrollments")

@@ -5,6 +5,7 @@ import {
   createBunnyVideo,
   deleteBunnyVideo,
   getBunnyEmbedUrl,
+  getBunnySignedEmbedUrl,
   getBunnyThumbnailUrl,
   getBunnyDirectUploadUrl,
   getBunnyMp4Url,
@@ -684,12 +685,18 @@ export class PublicCourseService {
       r: T,
       locked: boolean,
     ) => {
-      if (locked) return { ...r, url: null, downloadUrl: null };
-      const downloadUrl =
-        r.category === "VIDEO" && r.bunnyVideoId
-          ? getBunnyMp4Url(r.bunnyVideoId) || null
-          : r.url;
-      return { ...r, downloadUrl };
+      const { bunnyVideoId, ...safe } = r;
+
+      if (locked) {
+        return { ...safe, url: null, downloadUrl: null };
+      }
+
+      // Never expose Bunny embed/MP4 URLs in the learn payload — fetch on play.
+      if (r.category === "VIDEO" && bunnyVideoId) {
+        return { ...safe, url: null, downloadUrl: null };
+      }
+
+      return { ...safe, downloadUrl: r.url };
     };
 
     let previousLessonCompleted = true; // week 1 is always unlocked
@@ -737,7 +744,9 @@ export class PublicCourseService {
       };
     });
 
-    const publishedWeeklies = courseAssessments.filter((a) => a.type === "WEEKLY");
+    const publishedWeeklies = courseAssessments.filter(
+      (a) => a.type === "WEEKLY",
+    );
     const allWeekliesSubmitted =
       publishedWeeklies.length === 0
         ? lessonsWithState.every((l) => l.topicsComplete)
@@ -850,9 +859,8 @@ export class PublicCourseService {
 
     const publishedWeeklies = lessons
       .map((l) => l.weeklyAssessment)
-      .filter(
-        (a): a is NonNullable<typeof a> & { isPublished: true } =>
-          Boolean(a?.isPublished),
+      .filter((a): a is NonNullable<typeof a> & { isPublished: true } =>
+        Boolean(a?.isPublished),
       );
     const finalAssessment = await prisma.assessment.findFirst({
       where: { courseId, type: "FINAL", isPublished: true },
@@ -954,6 +962,57 @@ export class PublicCourseService {
       where: { userId_courseId: { userId, courseId: course.id } },
     });
     return { enrolled: !!enrollment, enrollment: enrollment ?? null };
+  }
+
+  async getVideoPlaybackUrl(resourceId: string, userId: string) {
+    const resource = await prisma.resource.findUnique({
+      where: { id: resourceId },
+      include: { lesson: { select: { id: true, courseId: true } } },
+    });
+    if (!resource)
+      throw new ApiError("Resource not found", STATUS_CODES.NOT_FOUND);
+
+    if (resource.category !== "VIDEO" || !resource.bunnyVideoId) {
+      throw new ApiError("Video not found", STATUS_CODES.NOT_FOUND);
+    }
+
+    const enrollment = await prisma.courseUserMapper.findUnique({
+      where: {
+        userId_courseId: { userId, courseId: resource.lesson.courseId },
+      },
+    });
+    if (!enrollment) {
+      throw new ApiError(
+        "You are not enrolled in this course",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+
+    const locked = resource.topicId
+      ? await this.isTopicLocked(
+          resource.lesson.courseId,
+          resource.lesson.id,
+          resource.topicId,
+          userId,
+        )
+      : await this.isLessonLocked(
+          resource.lesson.courseId,
+          resource.lesson.id,
+          userId,
+        );
+    if (locked) {
+      throw new ApiError(
+        "Complete the previous session first",
+        STATUS_CODES.FORBIDDEN,
+      );
+    }
+
+    const expiresInSeconds = 2 * 60 ; //expire link in 2 hours of video playback
+    return {
+      embedUrl: getBunnySignedEmbedUrl(resource.bunnyVideoId, expiresInSeconds),
+      expiresInSeconds,
+      embedTokenAuth: process.env.BUNNY_EMBED_TOKEN_AUTH === "true",
+    };
   }
 
   async prepareResourceDownload(resourceId: string, userId: string) {
@@ -1062,10 +1121,7 @@ export class PublicCourseService {
         STATUS_CODES.FORBIDDEN,
       );
     if (!enrollment.isCompleted)
-      throw new ApiError(
-        "Course not completed yet",
-        STATUS_CODES.BAD_REQUEST,
-      );
+      throw new ApiError("Course not completed yet", STATUS_CODES.BAD_REQUEST);
     if (!course.certificate)
       throw new ApiError(
         "Certificate is not available for this course",
@@ -1077,8 +1133,7 @@ export class PublicCourseService {
       select: { firstName: true, lastName: true },
     });
     const studentName =
-      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-      "Student";
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Student";
 
     return {
       studentName,

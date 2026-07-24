@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import {
   downloadResourceFile,
+  fetchVideoPlaybackUrl,
   type DBLesson,
   type DBTopic,
   type DBResource,
@@ -210,6 +211,9 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
     new Set(),
   );
   const [playing, setPlaying] = useState(false);
+  const [videoEmbedUrl, setVideoEmbedUrl] = useState<string | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   const { data: course, isLoading, error, isError } = useLearnCourse(id, {
     enabled: hasHydrated && Boolean(authUser),
@@ -251,6 +255,9 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
 
   useEffect(() => {
     setPlaying(false);
+    setVideoEmbedUrl(null);
+    setVideoLoading(false);
+    setVideoError(null);
   }, [activeTopicId]);
 
   if (!hasHydrated) {
@@ -352,6 +359,7 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
   const mainVideo = currentTopic?.resources.find(
     (r) => r.category === "VIDEO",
   );
+  const hasMainVideo = Boolean(mainVideo);
   const fileResources =
     currentTopic?.resources.filter((r) => r.category !== "VIDEO") ?? [];
 
@@ -413,10 +421,10 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
             <div className="min-w-0 flex flex-col gap-5 xl:overflow-y-auto xl:overscroll-contain xl:max-h-[calc(100vh-32px)] xl:sticky xl:top-4 xl:pr-1">
               {/* Video player */}
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 aspect-video shadow-lg ring-1 ring-slate-900/5 shrink-0">
-                {mainVideo?.url ? (
-                  playing ? (
+                {hasMainVideo ? (
+                  playing && videoEmbedUrl ? (
                     <iframe
-                      src={mainVideo.url}
+                      src={videoEmbedUrl}
                       className="w-full h-full"
                       allow="autoplay; fullscreen"
                       allowFullScreen
@@ -424,19 +432,40 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setPlaying(true);
-                        if (!currentTopic.isCompleted) {
-                          markWatched.mutate(currentTopic.id);
+                      disabled={videoLoading}
+                      onClick={async () => {
+                        if (!mainVideo || videoLoading) return;
+                        setVideoError(null);
+                        setVideoLoading(true);
+                        try {
+                          const { embedUrl } = await fetchVideoPlaybackUrl(
+                            mainVideo.id,
+                          );
+                          setVideoEmbedUrl(embedUrl);
+                          setPlaying(true);
+                          if (!currentTopic.isCompleted) {
+                            markWatched.mutate(currentTopic.id);
+                          }
+                        } catch (err: any) {
+                          setVideoError(
+                            err?.response?.data?.message ??
+                              "Unable to load video. Please try again.",
+                          );
+                        } finally {
+                          setVideoLoading(false);
                         }
                       }}
-                      className="group absolute inset-0 flex flex-col items-center justify-center gap-4 text-white cursor-pointer bg-black/20"
+                      className="group absolute inset-0 flex flex-col items-center justify-center gap-4 text-white cursor-pointer bg-black/20 disabled:cursor-wait"
                     >
                       <span className="w-[72px] h-[72px] rounded-full bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center group-hover:scale-105 group-hover:bg-white/25 transition-all duration-300 shadow-xl">
-                        <PlayCircle size={36} className="ml-0.5" />
+                        {videoLoading ? (
+                          <Loader2 size={32} className="animate-spin" />
+                        ) : (
+                          <PlayCircle size={36} className="ml-0.5" />
+                        )}
                       </span>
                       <span className="text-sm font-medium px-6 text-center max-w-md leading-relaxed text-white/90">
-                        {currentTopic.title}
+                        {videoError ?? currentTopic.title}
                       </span>
                     </button>
                   )

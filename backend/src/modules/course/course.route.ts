@@ -17,6 +17,11 @@ router.get(
   auth("USER"),
   courseController.downloadResource,
 );
+router.get(
+  "/resources/:resourceId/playback",
+  auth("USER"),
+  courseController.getVideoPlayback,
+);
 router.post("/:courseId/enroll", auth("USER"), courseController.enrollCourse);
 router.delete(
   "/:courseId/enroll",

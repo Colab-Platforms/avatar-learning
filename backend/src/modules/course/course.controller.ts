@@ -727,6 +727,27 @@ export const downloadCertificate = async (
   }
 };
 
+export const getVideoPlayback = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const playback = await publicService.getVideoPlaybackUrl(
+      param(req, "resourceId"),
+      req.user!.id,
+    );
+    sendResponse(res, true, playback, "Playback URL generated");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
 export const downloadResource = async (
   req: AuthRequest,
   res: Response,
