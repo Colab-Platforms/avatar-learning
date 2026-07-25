@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard,
-  UserCircle,
   MessageCircleHeart,
   ClipboardCheck,
   GraduationCap,
@@ -64,13 +63,6 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
   const learningRoutes = courseId ? d2hLearningRoutes(courseId) : null;
 
   return [
-    {
-      kind: "link",
-      href: "/profile",
-      label: "Personal Details",
-      icon: UserCircle,
-      exact: false,
-    },
     {
       kind: "link",
       href: "/dashboard",
@@ -132,7 +124,6 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
 
 /** Flat list kept for any consumers that still import DASHBOARD_NAV. */
 export const DASHBOARD_NAV = [
-  { href: "/profile", label: "Personal Details", icon: UserCircle, exact: false },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/assessment", label: "AI Assessment", icon: ClipboardCheck, exact: false },
   { href: "/dashboard/counselling", label: "Counselling", icon: MessageCircleHeart, exact: false },
@@ -332,7 +323,15 @@ export function DashboardSidebar({
 
         <div className="px-3 py-4 border-t border-white/5 space-y-1">
           {user && (
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+            <Link
+              href="/profile"
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-300 ${
+                isLinkActive("/profile", false)
+                  ? "bg-brand-500/8 text-brand-400 border-brand-500/18"
+                  : "border-transparent text-white/45 hover:text-white/80 hover:bg-white/4 hover:scale-[1.01] active:scale-[0.99]"
+              }`}
+            >
               <UserAvatar
                 profileImage={user.profileImage}
                 firstName={user.firstName ?? null}
@@ -342,14 +341,18 @@ export function DashboardSidebar({
                 showSkeleton
               />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-white/75 truncate">
+                <p className={`text-xs font-semibold truncate transition-colors duration-300 ${
+                  isLinkActive("/profile", false) ? "text-brand-400" : "text-white/75"
+                }`}>
                   {user.name}
                 </p>
-                <p className="text-[10px] text-white/30 truncate">
+                <p className={`text-[10px] truncate transition-colors duration-300 ${
+                  isLinkActive("/profile", false) ? "text-brand-400/70" : "text-white/30"
+                }`}>
                   {user.email}
                 </p>
               </div>
-            </div>
+            </Link>
           )}
           <Link
             href="/"

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import type {
   CourseRecommendation,
@@ -12,7 +14,15 @@ import {
   Target,
   FileText,
   X,
+  Check,
+  Award,
+  Calendar,
+  ArrowRight,
+  Compass,
+  AlertCircle,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 interface CounsellingRecommendationProps {
   profile: CounsellingProfile;
@@ -31,6 +41,29 @@ function formatDate(value: string | null) {
   });
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
 export default function CounsellingRecommendation({
   profile,
   recommendation,
@@ -42,182 +75,308 @@ export default function CounsellingRecommendation({
   const generatedAt = formatDate(recommendation?.generatedAt ?? null);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-emerald-800">
-            Your responses have been saved successfully.
-          </p>
-          {submittedAt && (
-            <p className="mt-1 text-xs text-emerald-700">
-              Submitted on {submittedAt}
+    <div className="space-y-6 text-slate-700">
+      {/* Success Notification Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex flex-col gap-4 rounded-2xl border border-emerald-500/10 bg-gradient-to-r from-emerald-500/5 to-emerald-500/0 px-6 py-5 sm:flex-row sm:items-center sm:justify-between shadow-xs backdrop-blur-xs"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 shadow-inner">
+            <Check className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">
+              Assessment Completed Successfully
             </p>
-          )}
+            {submittedAt && (
+              <p className="mt-0.5 text-xs text-emerald-700/80">
+                Submitted on {submittedAt}
+              </p>
+            )}
+          </div>
         </div>
         <button
           type="button"
           onClick={() => setShowResponses(true)}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-600/20 bg-white/80 hover:bg-emerald-50 px-5 py-2.5 text-xs font-semibold text-emerald-700 shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-3.5 w-3.5" />
           View Your Responses
         </button>
-      </div>
+      </motion.div>
 
-      {showResponses && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          onClick={() => setShowResponses(false)}
-        >
-          <section
-            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">
-                  Your Responses
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Everything you shared in your AI assessment questionnaire.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowResponses(false)}
-                className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="mt-6 space-y-6">
-              {sections.map((section) => (
-                <div key={section.id}>
-                  <h3 className="text-sm font-semibold text-slate-700">
-                    {section.title}
-                  </h3>
-                  <dl className="mt-3 space-y-3">
-                    {section.items.map((item) => (
-                      <div
-                        key={`${section.id}-${item.label}`}
-                        className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                      >
-                        <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                          {item.label}
-                        </dt>
-                        <dd className="mt-1 text-sm text-slate-700">
-                          {item.value}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
+      {/* Responses Modal */}
+      <AnimatePresence>
+        {showResponses && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowResponses(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+            />
+            <motion.section
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xl"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                    Your Responses
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Everything you shared in your AI assessment questionnaire.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+                <button
+                  type="button"
+                  onClick={() => setShowResponses(false)}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-800">AI Recommendation</h2>
-        </div>
+              <div className="mt-6 space-y-6">
+                {sections.map((section) => (
+                  <div key={section.id} className="space-y-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1">
+                      {section.title}
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {section.items.map((item) => (
+                        <div
+                          key={`${section.id}-${item.label}`}
+                          className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50"
+                        >
+                          <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            {item.label}
+                          </dt>
+                          <dd className="mt-1.5 text-sm font-medium text-slate-700">
+                            {item.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Main AI Recommendation Card */}
+      <motion.section
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs space-y-6 sm:space-y-8"
+      >
+        <motion.div
+          variants={itemVariants}
+          className="flex items-center justify-between border-b border-slate-100 pb-5"
+        >
+          <div className="flex items-center gap-2.5">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                AI Analysis & Match
+              </h2>
+              <p className="text-xs text-slate-500">
+                Personalized educational recommendation & assessment summary
+              </p>
+            </div>
+          </div>
+          {recommendation?.confidenceScore && (
+            <div className="hidden sm:flex items-center gap-2 rounded-full bg-blue-50/70 border border-blue-100/50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-2xs">
+              <Award className="h-3.5 w-3.5" />
+              <span>
+                {(() => {
+                  const score = recommendation.confidenceScore;
+                  const pct =
+                    score <= 1 ? Math.round(score * 100) : Math.round(score);
+                  return `${pct}% Match Rate`;
+                })()}
+              </span>
+            </div>
+          )}
+        </motion.div>
 
         {recommendationStatus === "pending" && !recommendation && (
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
-            <p className="text-sm font-medium text-amber-800">
-              Your responses have been saved successfully. Our AI recommendation
-              is being generated. Please refresh after a few moments.
-            </p>
-          </div>
+          <motion.div
+            variants={itemVariants}
+            className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3"
+          >
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                AI Recommendation In Progress
+              </p>
+              <p className="mt-1 text-xs text-amber-700 leading-normal">
+                Your responses have been saved successfully. Our AI
+                recommendation is being generated. Please refresh this page
+                after a few moments.
+              </p>
+            </div>
+          </motion.div>
         )}
 
         {recommendation && (
-          <div className="mt-6 space-y-5">
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-5">
-              <div className="flex items-start gap-3">
-                <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-                    Recommended Course
-                  </p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-900">
-                    {recommendation.recommendedCourseTitle}
-                  </h3>
+          <div className="space-y-6 sm:space-y-8">
+            {/* Recommended Course Card */}
+            <motion.div
+              variants={itemVariants}
+              className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-gradient-to-br from-blue-500/5 via-blue-500/0 to-indigo-500/5 p-6 sm:p-8"
+            >
+              {/* Decorative background gradient orb */}
+              <div className="absolute -right-16 -top-16 h-36 w-36 rounded-full bg-blue-400/10 blur-xl pointer-events-none" />
+
+              <div className="flex flex-col sm:flex-row sm:items-start gap-5 relative z-10">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/20">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                        Recommended Path
+                      </span>
+                      {recommendation.confidenceScore && (
+                        <span className="sm:hidden text-[9px] font-bold uppercase tracking-wider bg-blue-50 border border-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                          {(() => {
+                            const score = recommendation.confidenceScore;
+                            const pct =
+                              score <= 1
+                                ? Math.round(score * 100)
+                                : Math.round(score);
+                            return `${pct}% Match`;
+                          })()}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="mt-1 text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                      {recommendation.recommendedCourseTitle}
+                    </h3>
+                  </div>
+
                   {recommendation.summary && (
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <p className="text-sm leading-relaxed text-slate-600 font-medium">
                       {recommendation.summary}
                     </p>
                   )}
+
+                  {/* <div className="pt-1 flex flex-wrap gap-3">
+                    <Link
+                      href="/dashboard/learning"
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                      Start Learning Path
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div> */}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Generated Date
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-700">
-                {generatedAt ?? "—"}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-100 px-4 py-4">
+            {/* AI Reasoning Section */}
+            <motion.div
+              variants={itemVariants}
+              className="rounded-xl border border-slate-100 bg-slate-50/50 p-5 sm:p-6"
+            >
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-slate-500" />
-                <p className="text-sm font-semibold text-slate-800">Reasoning</p>
+                <Target className="h-4.5 w-4.5 text-slate-500" />
+                <h4 className="text-sm font-bold text-slate-800 tracking-tight">
+                  AI Reasoning
+                </h4>
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-relaxed text-slate-600 font-normal">
                 {recommendation.reasoning}
               </p>
+            </motion.div>
+
+            {/* Strengths & Growth Areas Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {recommendation.studentStrengths &&
+                recommendation.studentStrengths.length > 0 && (
+                  <motion.div
+                    variants={itemVariants}
+                    className="rounded-xl border border-emerald-500/10 bg-white p-5 sm:p-6 space-y-4 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                        <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-800 tracking-tight">
+                        Identified Strengths
+                      </h4>
+                    </div>
+                    <ul className="space-y-2.5">
+                      {recommendation.studentStrengths.map((item) => (
+                        <li
+                          key={item}
+                          className="flex items-start gap-2.5 rounded-xl border border-emerald-100/50 bg-emerald-50/30 px-3.5 py-3 text-xs font-medium text-emerald-800"
+                        >
+                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+
+              {recommendation.growthAreas &&
+                recommendation.growthAreas.length > 0 && (
+                  <motion.div
+                    variants={itemVariants}
+                    className="rounded-xl border border-amber-500/10 bg-white p-5 sm:p-6 space-y-4 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                        <Compass className="h-4 w-4" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-800 tracking-tight">
+                        Growth Areas
+                      </h4>
+                    </div>
+                    <ul className="space-y-2.5">
+                      {recommendation.growthAreas.map((item) => (
+                        <li
+                          key={item}
+                          className="flex items-start gap-2.5 rounded-xl border border-amber-100/50 bg-amber-50/30 px-3.5 py-3 text-xs font-medium text-amber-900"
+                        >
+                          <ArrowRight className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
             </div>
 
-            {recommendation.studentStrengths &&
-              recommendation.studentStrengths.length > 0 && (
-                <div className="rounded-xl border border-slate-100 px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
-                    <p className="text-sm font-semibold text-slate-800">
-                      Strengths
-                    </p>
-                  </div>
-                  <ul className="mt-3 space-y-2">
-                    {recommendation.studentStrengths.map((item) => (
-                      <li
-                        key={item}
-                        className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
-                      >
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-            {recommendation.growthAreas &&
-              recommendation.growthAreas.length > 0 && (
-                <div className="rounded-xl border border-slate-100 px-4 py-4">
-                  <p className="text-sm font-semibold text-slate-800">
-                    Growth Areas
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {recommendation.growthAreas.map((item) => (
-                      <li
-                        key={item}
-                        className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"
-                      >
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            {/* Generated Date / Footer */}
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 pt-5 text-[10px] text-slate-400 gap-2"
+            >
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Generated: {generatedAt ?? "—"}</span>
+              </div>
+              <span className="font-medium">
+                Direct2Hire AI Assessment Suite
+              </span>
+            </motion.div>
           </div>
         )}
-      </section>
+      </motion.section>
     </div>
   );
 }

@@ -35,15 +35,16 @@ export function AssessmentCard({
   const ctxRoutes = useLearningRoutesOptional();
   const routes = ctxRoutes ?? createLearningRoutes(courseId, "public");
   const locked = assessment.unlockStatus === "LOCKED";
-  const inProgress = assessment.unlockStatus === "IN_PROGRESS" || assessment.status === "IN_PROGRESS";
+  const inProgress =
+    assessment.unlockStatus === "IN_PROGRESS" ||
+    assessment.status === "IN_PROGRESS";
   const isWeekly = assessment.type === "WEEKLY";
   const exhausted = assessment.status === "EXHAUSTED";
 
   const historyHref = routes.assessmentHistory(assessment.id);
-  const resumeHref =
-    assessment.inProgressAttempt?.id
-      ? routes.attempt(assessment.inProgressAttempt.id)
-      : null;
+  const resumeHref = assessment.inProgressAttempt?.id
+    ? routes.attempt(assessment.inProgressAttempt.id)
+    : null;
 
   const subtitle = isWeekly
     ? `Week ${assessment.weekNumber ?? "—"} · Practice`
@@ -61,10 +62,14 @@ export function AssessmentCard({
               {assessment.title}
             </h3>
             {assessment.description && (
-              <p className="text-sm text-slate-500 mt-1.5 line-clamp-2">{assessment.description}</p>
+              <p className="text-sm text-slate-500 mt-1.5 line-clamp-2">
+                {assessment.description}
+              </p>
             )}
           </div>
-          <AssessmentStatusBadge status={assessment.status ?? "NOT_ATTEMPTED"} />
+          <AssessmentStatusBadge
+            status={assessment.status ?? "NOT_ATTEMPTED"}
+          />
         </div>
 
         <div className="flex flex-wrap gap-3 text-xs text-slate-500 mb-5">
@@ -108,7 +113,10 @@ export function AssessmentCard({
                   : "—"
               }
             />
-            <ScoreStat label="Attempts" value={String(assessment.totalAttempts)} />
+            <ScoreStat
+              label="Attempts"
+              value={String(assessment.totalAttempts)}
+            />
             <ScoreStat
               label="Last attempt"
               value={formatRelativeAttemptDate(assessment.lastAttemptAt)}
@@ -125,13 +133,16 @@ export function AssessmentCard({
 
         {!isWeekly && exhausted && (
           <p className="text-xs text-slate-600 mb-4 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
-            Maximum attempts reached. You can still review your attempt history and results.
+            Maximum attempts reached. You can still review your attempt history
+            and results.
           </p>
         )}
 
         {!isWeekly && !exhausted && assessment.remainingAttempts != null && (
           <p className="text-xs text-slate-500 mb-4">
-            <span className="font-semibold text-slate-700">{assessment.remainingAttempts}</span>{" "}
+            <span className="font-semibold text-slate-700">
+              {assessment.remainingAttempts}
+            </span>{" "}
             attempt{assessment.remainingAttempts === 1 ? "" : "s"} remaining
           </p>
         )}

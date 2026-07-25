@@ -21,7 +21,12 @@ export function AssessmentHubView({ courseId }: { courseId: string }) {
   const { user: authUser } = useAppSelector((s) => s.auth);
   const [startingId, setStartingId] = useState<string | null>(null);
 
-  const { data: assessments, isLoading, isError, error } = useAssessments(courseId);
+  const {
+    data: assessments,
+    isLoading,
+    isError,
+    error,
+  } = useAssessments(courseId);
   const startAttempt = useStartAssessmentAttempt(courseId);
 
   if (!authUser) {
@@ -51,9 +56,9 @@ export function AssessmentHubView({ courseId }: { courseId: string }) {
       <LearningBreadcrumbs current="assessments" className="mb-6" />
 
       <header className="mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+        {/* <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
           <ClipboardList size={22} />
-        </div>
+        </div> */}
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
           Assessments
         </h1>
@@ -62,7 +67,7 @@ export function AssessmentHubView({ courseId }: { courseId: string }) {
           improvement, then take the final assessment when you&apos;re ready.
         </p>
 
-        {weeklies.length > 0 && (
+        {/* {weeklies.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-3">
             <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-600 shadow-sm">
               <Sparkles size={13} className="text-brand-500" />
@@ -73,13 +78,16 @@ export function AssessmentHubView({ courseId }: { courseId: string }) {
               {passedWeeklies} passed at least once
             </div>
           </div>
-        )}
+        )} */}
       </header>
 
       {isLoading && (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-2xl bg-slate-200/70 animate-pulse h-44" />
+            <div
+              key={i}
+              className="rounded-2xl bg-slate-200/70 animate-pulse h-44"
+            />
           ))}
         </div>
       )}

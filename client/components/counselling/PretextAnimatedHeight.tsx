@@ -92,8 +92,16 @@ export function AnimatedHeight({
     const node = innerRef.current;
     if (!node) return;
 
+    // const updateHeight = () => {
+    //   setHeight(node.getBoundingClientRect().height);
+    // };
+
     const updateHeight = () => {
-      setHeight(node.getBoundingClientRect().height);
+      requestAnimationFrame(() => {
+        if (innerRef.current) {
+          setHeight(innerRef.current.scrollHeight + 2);
+        }
+      });
     };
 
     updateHeight();

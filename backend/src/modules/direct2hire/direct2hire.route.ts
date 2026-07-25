@@ -8,6 +8,7 @@ import recommendationRoutes from "./recommendation/recommendation.route.js";
 import courseSelectionRoutes from "./course-selection/course-selection.route.js";
 import internshipRoutes from "./internship/internship.route.js";
 import mockInterviewRoutes from "./mock-interview/mock-interview.route.js";
+import introVideoRoutes from "./intro-video/intro-video.route.js";
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.get("/status", auth("USER"), getStatus);
 router.post("/create-order", auth("USER"), createOrder);
 
 router.get("/me", auth("USER"), direct2hireController.getMyStatus);
+router.use("/intro-video", introVideoRoutes);
 router.use("/counselling", counsellingRoutes);
 router.use("/lead", leadRoutes);
 router.use("/recommendation", recommendationRoutes);

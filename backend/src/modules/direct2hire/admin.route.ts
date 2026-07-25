@@ -5,10 +5,22 @@ import * as direct2hireAdminController from "./admin/admin.controller.js";
 import * as placementController from "../course/placement/placement.controller.js";
 import * as mockInterviewController from "./mock-interview/mock-interview.controller.js";
 import internshipAdminRoutes from "./internship/internship.admin.route.js";
+import * as introVideoController from "./intro-video/intro-video.controller.js";
 
 const router = Router();
 
 router.use(auth("ADMIN"));
+
+router.get("/direct2hire/intro-video", introVideoController.getAdminIntro);
+router.post(
+  "/direct2hire/intro-video/init",
+  introVideoController.initUpload,
+);
+router.post(
+  "/direct2hire/intro-video/complete",
+  introVideoController.completeUpload,
+);
+router.delete("/direct2hire/intro-video", introVideoController.deleteIntro);
 
 router.get("/direct2hire", direct2hireController.getAllEnrollments);
 router.patch(

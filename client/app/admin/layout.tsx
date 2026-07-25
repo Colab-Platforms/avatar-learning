@@ -14,6 +14,8 @@ import {
   MessageSquare,
   Handshake,
   Users,
+  ChevronDown,
+  Video,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -27,46 +29,88 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-const NAV = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+type NavLink = {
+  kind: "link";
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact: boolean;
+};
+
+type NavGroup = {
+  kind: "group";
+  id: string;
+  label: string;
+  icon: typeof GraduationCap;
+  href: string;
+  children: {
+    href: string;
+    label: string;
+    icon: typeof Users;
+  }[];
+};
+
+type NavItem = NavLink | NavGroup;
+
+const NAV: NavItem[] = [
+  { kind: "link", href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   {
+    kind: "link",
     href: "/admin/categories",
     label: "Categories",
     icon: FolderOpen,
     exact: false,
   },
-  { href: "/admin/courses", label: "Courses", icon: BookOpen, exact: false },
+  { kind: "link", href: "/admin/courses", label: "Courses", icon: BookOpen, exact: false },
   {
+    kind: "link",
     href: "/admin/internships",
     label: "Internships",
     icon: Briefcase,
     exact: false,
   },
   {
-    href: "/admin/direct2hire",
+    kind: "group",
+    id: "direct2hire",
     label: "Direct2Hire",
     icon: GraduationCap,
-    exact: false,
+    href: "/admin/direct2hire/enrollments",
+    children: [
+      {
+        href: "/admin/direct2hire/enrollments",
+        label: "Enrollments",
+        icon: Users,
+      },
+      {
+        href: "/admin/direct2hire/intro-video",
+        label: "Intro Video",
+        icon: Video,
+      },
+    ],
   },
   {
+    kind: "link",
     href: "/admin/investors",
     label: "Investors",
     icon: Landmark,
     exact: false,
   },
   {
+    kind: "link",
     href: "/admin/contacts",
     label: "Contacts",
     icon: MessageSquare,
     exact: false,
   },
   {
+    kind: "link",
     href: "/admin/partners",
     label: "Partners",
     icon: Handshake,
     exact: false,
   },
   {
+    kind: "link",
     href: "/admin/users",
     label: "Users",
     icon: Users,
@@ -86,6 +130,15 @@ export default function AdminLayout({
     null,
   );
   const [contactUnread, setContactUnread] = useState(0);
+
+  const d2hActive =
+    pathname === "/admin/direct2hire" ||
+    pathname.startsWith("/admin/direct2hire/");
+  const [d2hOpen, setD2hOpen] = useState(d2hActive);
+
+  useEffect(() => {
+    if (d2hActive) setD2hOpen(true);
+  }, [d2hActive]);
 
   useEffect(() => {
     try {
@@ -134,6 +187,9 @@ export default function AdminLayout({
       ? pathname === href
       : pathname === href || pathname.startsWith(href + "/");
 
+  const isChildActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
   return (
     <div className="min-h-screen bg-ink-950 flex">
       {/* ── Sidebar ─────────────────────────────────── */}
@@ -163,33 +219,108 @@ export default function AdminLayout({
           <p className="px-3 pb-2 text-[10px] font-semibold text-white/25 uppercase tracking-widest">
             Menu
           </p>
-          {NAV.map(({ href, label, icon: Icon, exact }) => {
-            const active = isActive(href, exact);
-            const isContacts = href === "/admin/contacts";
-            const badge = isContacts && contactUnread > 0 ? contactUnread : 0;
+          {NAV.map((item) => {
+            if (item.kind === "link") {
+              const active = isActive(item.href, item.exact);
+              const Icon = item.icon;
+              const isContacts = item.href === "/admin/contacts";
+              const badge = isContacts && contactUnread > 0 ? contactUnread : 0;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                    active
+                      ? "bg-brand-500/8 text-brand-400 border border-brand-500/18"
+                      : "text-white/45 hover:text-white/80 hover:bg-white/4 border border-transparent"
+                  }`}
+                >
+                  <Icon
+                    size={16}
+                    className={active ? "text-brand-400" : "text-white/35"}
+                  />
+                  {item.label}
+                  {badge > 0 ? (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-brand-500 text-ink-950">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  ) : active ? (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
+                  ) : null}
+                </Link>
+              );
+            }
+
+            const Icon = item.icon;
+            const childActive = item.children.some((c) => isChildActive(c.href));
+            const groupActive = d2hActive || childActive;
+
             return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                  active
-                    ? "bg-brand-500/8 text-brand-400 border border-brand-500/18"
-                    : "text-white/45 hover:text-white/80 hover:bg-white/4 border border-transparent"
-                }`}
-              >
-                <Icon
-                  size={16}
-                  className={active ? "text-brand-400" : "text-white/35"}
-                />
-                {label}
-                {badge > 0 ? (
-                  <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-brand-500 text-ink-950">
-                    {badge > 99 ? "99+" : badge}
-                  </span>
-                ) : active ? (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
-                ) : null}
-              </Link>
+              <div key={item.id} className="pt-0.5">
+                <div
+                  className={`flex items-center rounded-xl border transition-all duration-150 ${
+                    groupActive
+                      ? "border-transparent text-brand-400"
+                      : "border-transparent text-white/45"
+                  }`}
+                >
+                  <Link
+                    href={item.href}
+                    className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-l-xl transition-colors ${
+                      groupActive
+                        ? "text-brand-400"
+                        : "hover:text-white/80 hover:bg-white/4"
+                    }`}
+                  >
+                    <Icon
+                      size={16}
+                      className={groupActive ? "text-brand-400" : "text-white/35"}
+                    />
+                    {item.label}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setD2hOpen((o) => !o)}
+                    className="px-2.5 py-2.5 text-white/35 hover:text-white/70 rounded-r-xl"
+                    aria-label={d2hOpen ? "Collapse Direct2Hire" : "Expand Direct2Hire"}
+                    aria-expanded={d2hOpen}
+                  >
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform duration-200 ${d2hOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                </div>
+
+                {d2hOpen && (
+                  <div className="mt-0.5 ml-3 pl-3 border-l border-white/8 space-y-0.5">
+                    {item.children.map((child) => {
+                      const active = isChildActive(child.href);
+                      const ChildIcon = child.icon;
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                            active
+                              ? "bg-brand-500/8 text-brand-400"
+                              : "text-white/40 hover:text-white/75 hover:bg-white/4"
+                          }`}
+                        >
+                          <ChildIcon
+                            size={14}
+                            className={active ? "text-brand-400" : "text-white/30"}
+                          />
+                          {child.label}
+                          {active && (
+                            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>

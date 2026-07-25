@@ -855,7 +855,7 @@ export default function AdminDirect2HireStudentPage() {
     return (
       <div className="p-8 space-y-4">
         <Link
-          href="/admin/direct2hire"
+          href="/admin/direct2hire/enrollments"
           className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80"
         >
           <ChevronLeft size={16} />
@@ -879,7 +879,7 @@ export default function AdminDirect2HireStudentPage() {
   return (
     <div className="p-8 space-y-6">
       <Link
-        href="/admin/direct2hire"
+        href="/admin/direct2hire/enrollments"
         className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
       >
         <ChevronLeft size={16} />

@@ -197,79 +197,128 @@ function TaskModal({
       <button
         type="button"
         aria-label="Close"
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-slate-950/30 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white shadow-xl border border-slate-200">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
+      <div className="relative w-full max-w-2xl max-h-[92vh] md:max-h-[88vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-slate-50 shadow-2xl border border-slate-200/50 flex flex-col transition-all duration-300">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-200/65 bg-white/80 px-6 py-5 backdrop-blur-md">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200/50">
               Week {task.weekNumber}
-            </p>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">
+            </span>
+            <h2 className="text-xl font-bold text-slate-900 mt-2.5 leading-tight tracking-tight">
               {task.title}
             </h2>
+            <div className="flex flex-wrap items-center gap-2.5 mt-3">
+              {task.estimatedHours != null && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200/60 px-2.5 py-1 text-xs text-slate-500 font-medium shadow-sm">
+                  <Clock3 size={13} className="text-slate-400" />
+                  Estimated {task.estimatedHours} hr
+                  {task.estimatedHours !== 1 ? "s" : ""}
+                </span>
+              )}
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold shadow-sm",
+                  STATUS_STYLES[task.derivedStatus]?.badge,
+                )}
+              >
+                {STATUS_STYLES[task.derivedStatus]?.label}
+              </span>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-650"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors border border-transparent hover:border-slate-200/60 shadow-sm hover:shadow-none"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        <div className="px-5 py-5 space-y-6">
-          <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-              Overview
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
+        {/* Scrollable Content Container */}
+        <div className="px-6 py-6 space-y-6">
+          {/* Overview Section */}
+          <section className="bg-white rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                <Briefcase size={15} />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Task Overview
+              </h3>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed font-normal">
               {task.shortDescription}
             </p>
           </section>
 
-          <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-              Detailed Instructions
-            </h3>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-              {task.detailedInstructions}
-            </p>
-          </section>
-
-          <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-              Expected Deliverables
-            </h3>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-              {task.expectedDeliverables}
-            </p>
-          </section>
-
-          {task.estimatedHours != null && (
-            <p className="text-sm text-slate-500 flex items-center gap-1.5">
-              <Clock3 size={14} />
-              Estimated {task.estimatedHours} hour
-              {task.estimatedHours !== 1 ? "s" : ""}
-            </p>
-          )}
-
-          {task.attachments.length > 0 && (
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Task Resources
+          {/* Detailed Instructions Section */}
+          <section className="bg-white rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                <FileText size={15} />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Detailed Instructions
               </h3>
-              <ul className="space-y-2">
+            </div>
+            <div className="text-sm text-slate-650 whitespace-pre-wrap leading-relaxed font-normal bg-slate-50/60 rounded-xl p-4 border border-slate-100/80">
+              {task.detailedInstructions}
+            </div>
+          </section>
+
+          {/* Expected Deliverables Section */}
+          <section className="bg-white rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                <CheckCircle2 size={15} />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Expected Deliverables
+              </h3>
+            </div>
+            <div className="text-sm text-slate-650 whitespace-pre-wrap leading-relaxed font-normal bg-slate-50/60 rounded-xl p-4 border border-slate-100/80">
+              {task.expectedDeliverables}
+            </div>
+          </section>
+
+          {/* Task Resources Section */}
+          {task.attachments.length > 0 && (
+            <section className="bg-white rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-violet-50 text-violet-600">
+                  <Paperclip size={15} />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Task Resources
+                </h3>
+              </div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {task.attachments.map((a) => (
                   <li key={a.id}>
                     <a
                       href={a.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-3 hover:border-blue-500/30 hover:bg-blue-50/10 hover:shadow-sm transition-all duration-200 group"
                     >
-                      <Download size={14} />
-                      <span className="truncate">{a.originalFilename}</span>
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-55 group-hover:text-blue-600 group-hover:border-blue-100 transition-colors">
+                          <FileText size={16} />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-xs font-semibold text-slate-700 truncate group-hover:text-slate-900 transition-colors">
+                            {a.originalFilename}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Resource File
+                          </p>
+                        </div>
+                      </div>
+                      <div className="h-7 w-7 rounded-md bg-slate-50 group-hover:bg-blue-50 group-hover:text-blue-650 flex items-center justify-center text-slate-500 transition-colors">
+                        <Download size={13} />
+                      </div>
                     </a>
                   </li>
                 ))}
@@ -277,68 +326,100 @@ function TaskModal({
             </section>
           )}
 
+          {/* Admin Feedback Section */}
           {task.submission?.adminFeedback && (
-            <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-600 mb-1">
-                Admin Feedback
+            <div className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4 border-l-4 border-l-orange-500 shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-orange-700 mb-1 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                Reviewer Feedback
               </p>
-              <p className="text-sm text-orange-900 whitespace-pre-wrap">
+              <p className="text-sm text-orange-955 whitespace-pre-wrap leading-relaxed pl-3 font-semibold">
                 {task.submission.adminFeedback}
               </p>
             </div>
           )}
 
+          {/* Past Submission Section */}
           {task.submission && !canEdit && (
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Your Submission
-              </h3>
-              <ul className="space-y-2">
+            <section className="bg-white rounded-2xl p-5 border border-slate-200/60 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                  <CheckCircle2 size={15} />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Your Submission
+                </h3>
+              </div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {task.submission.attachments.map((a) => (
                   <li key={a.id}>
                     <a
                       href={a.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-blue-600"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-3 hover:border-emerald-500/30 hover:bg-emerald-50/10 hover:shadow-sm transition-all duration-200 group"
                     >
-                      {a.kind === "LINK" ? (
-                        <LinkIcon size={14} />
-                      ) : (
-                        <FileText size={14} />
-                      )}
-                      {a.label || a.originalFilename || a.url}
-                      <ExternalLink size={12} className="text-slate-300" />
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-650 group-hover:border-emerald-100 transition-colors">
+                          {a.kind === "LINK" ? (
+                            <LinkIcon size={15} />
+                          ) : (
+                            <FileText size={15} />
+                          )}
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-xs font-semibold text-slate-700 truncate group-hover:text-slate-900 transition-colors">
+                            {a.label || a.originalFilename || a.url}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Submitted {a.kind === "LINK" ? "Link" : "File"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="h-7 w-7 rounded-md bg-slate-50 group-hover:bg-emerald-50 group-hover:text-emerald-600 flex items-center justify-center text-slate-500 transition-colors">
+                        <ExternalLink size={12} />
+                      </div>
                     </a>
                   </li>
                 ))}
               </ul>
               {task.submission.studentNotes && (
-                <p className="mt-3 text-sm text-slate-500 whitespace-pre-wrap">
-                  {task.submission.studentNotes}
-                </p>
+                <div className="mt-4 bg-slate-55 bg-opacity-35 rounded-xl p-4 border border-slate-200/40">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    My Notes
+                  </p>
+                  <p className="text-sm text-slate-650 whitespace-pre-wrap leading-relaxed">
+                    {task.submission.studentNotes}
+                  </p>
+                </div>
               )}
             </section>
           )}
 
+          {/* Submission Area Section */}
           {canEdit && (
             <form
               onSubmit={handleSubmit}
-              className="space-y-4 border-t border-slate-100 pt-5"
+              className="space-y-5 border-t border-slate-200/70 pt-6 mt-2"
             >
-              <h3 className="text-sm font-semibold text-slate-800">
-                Submission Area
-              </h3>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-blue-50 text-blue-600">
+                  <Upload size={14} />
+                </div>
+                <h3 className="text-sm font-bold text-slate-800">
+                  Submit Deliverables
+                </h3>
+              </div>
 
               <div>
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  Files
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                  Upload Files
                 </label>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   disabled={uploading}
-                  className="mt-1.5 w-full rounded-xl border-2 border-dashed border-slate-200 px-4 py-6 text-center hover:border-blue-300 hover:bg-blue-50/50 transition-colors disabled:opacity-50"
+                  className="w-full rounded-2xl border-2 border-dashed border-slate-200 px-4 py-8 text-center hover:border-blue-400 hover:bg-blue-50/20 transition-all duration-200 disabled:opacity-50 group focus:outline-none"
                 >
                   <input
                     ref={fileRef}
@@ -350,26 +431,34 @@ function TaskModal({
                   />
                   {uploading ? (
                     <Loader2
-                      size={20}
-                      className="mx-auto animate-spin text-blue-500 mb-2"
+                      size={24}
+                      className="mx-auto animate-spin text-blue-500 mb-2.5"
                     />
                   ) : (
-                    <Upload size={20} className="mx-auto text-slate-300 mb-2" />
+                    <Upload
+                      size={24}
+                      className="mx-auto text-slate-400 group-hover:text-blue-500 transition-colors mb-2.5"
+                    />
                   )}
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">
+                    Drag & drop files or click to browse
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">
                     PDF, DOC, DOCX, ZIP, RAR, PNG, JPG · max 25 MB each
                   </p>
                 </button>
                 {files.length > 0 && (
-                  <ul className="mt-2 space-y-1">
+                  <ul className="mt-3 space-y-1.5">
                     {files.map((f) => (
                       <li
                         key={f.publicId}
-                        className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 shadow-sm"
                       >
-                        <span className="truncate flex items-center gap-1.5">
-                          <Paperclip size={12} />
-                          {f.originalFilename}
+                        <span className="truncate flex items-center gap-2">
+                          <Paperclip size={13} className="text-slate-400" />
+                          <span className="font-medium">
+                            {f.originalFilename}
+                          </span>
                         </span>
                         <button
                           type="button"
@@ -378,9 +467,9 @@ function TaskModal({
                               prev.filter((x) => x.publicId !== f.publicId),
                             )
                           }
-                          className="text-slate-400 hover:text-red-500"
+                          className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition-colors"
                         >
-                          <X size={12} />
+                          <X size={14} />
                         </button>
                       </li>
                     ))}
@@ -390,20 +479,20 @@ function TaskModal({
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Links
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Submit Links
                   </label>
                   <button
                     type="button"
                     onClick={() =>
                       setLinks((prev) => [...prev, { url: "", label: "" }])
                     }
-                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
                   >
-                    <Plus size={12} /> Add link
+                    <Plus size={13} /> Add link
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {links.map((link, i) => (
                     <div key={i} className="flex gap-2">
                       <input
@@ -416,7 +505,7 @@ function TaskModal({
                           )
                         }
                         placeholder="Label (GitHub, Figma…)"
-                        className="w-36 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
+                        className="w-36 md:w-44 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all bg-white hover:border-slate-350"
                       />
                       <input
                         value={link.url}
@@ -429,7 +518,7 @@ function TaskModal({
                         }
                         placeholder="https://…"
                         type="url"
-                        className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
+                        className="flex-1 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all bg-white hover:border-slate-350"
                       />
                       {links.length > 1 && (
                         <button
@@ -439,9 +528,9 @@ function TaskModal({
                               prev.filter((_, idx) => idx !== i),
                             )
                           }
-                          className="text-slate-300 hover:text-red-500 px-1"
+                          className="text-slate-350 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition-colors self-center"
                         >
-                          <X size={14} />
+                          <X size={15} />
                         </button>
                       )}
                     </div>
@@ -450,20 +539,20 @@ function TaskModal({
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                   Student Notes (optional)
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400 resize-none"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all resize-none bg-white hover:border-slate-350"
                   placeholder="Anything your reviewer should know…"
                 />
               </div>
 
               {error && (
-                <p className="text-sm text-red-650 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                <p className="text-sm text-red-650 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5 font-medium">
                   {error}
                 </p>
               )}
@@ -471,7 +560,7 @@ function TaskModal({
               <button
                 type="submit"
                 disabled={submitMutation.isPending || uploading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 text-white text-sm font-semibold py-3 hover:bg-blue-500 disabled:opacity-60 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-650 text-white text-sm font-semibold py-3 hover:shadow-md transition-all duration-150 active:scale-[0.99] disabled:opacity-60 shadow-sm"
               >
                 {submitMutation.isPending ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -604,14 +693,13 @@ export default function DashboardInternshipsPage() {
             Select your Direct2Hire course first
           </p>
           <p className="text-sm text-slate-400 mb-5 max-w-md mx-auto">
-            Internship tasks unlock after counselling is complete and you choose
-            a course.
+            Internship tasks unlock after you choose a course and complete it.
           </p>
           <Link
-            href="/dashboard/counselling"
+            href="/dashboard/learning"
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 hover:bg-blue-500"
           >
-            Go to Counselling
+            Go to Learning
           </Link>
         </div>
       </div>
