@@ -6,7 +6,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Direct2Hire", href: "/direct2hire" },
   // { label: "Internships", href: "/internships" },
   // { label: "Marketplace", href: "/marketplace" },
-  { label: "Investors", href: "/investors" },
+  // { label: "Investors", href: "/investors" },
   { label: "Partners", href: "/partners" },
   { label: "Contact", href: "/contact" },
   { label: "About", href: "/about" },
@@ -37,6 +37,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     items: [
       { label: "Terms & Conditions", href: "/terms-and-conditions" },
       { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Investors", href: "/investors" },
     ],
   },
 ];
