@@ -28,6 +28,8 @@ export interface Partner {
   aadharFileUrl: string | null;
   panNumber: string | null;
   panFileUrl: string | null;
+  udyamOrGstNumber: string | null;
+  udyamOrGstFileUrl: string | null;
   bankAccountNumber: string | null;
   bankIfsc: string | null;
   bankProofFileUrl: string | null;
@@ -73,6 +75,8 @@ export interface ApplyPartnerPayload {
   aadharFileUrl?: string;
   panNumber?: string;
   panFileUrl?: string;
+  udyamOrGstNumber?: string;
+  udyamOrGstFileUrl?: string;
   bankAccountNumber?: string;
   bankIfsc?: string;
   bankProofFileUrl?: string;

@@ -16,6 +16,9 @@ export interface ApplyPartnerBody {
   aadharFileUrl?: string;
   panNumber?: string;
   panFileUrl?: string;
+  // Institute only — Udyam Aadhar or GST registration number
+  udyamOrGstNumber?: string;
+  udyamOrGstFileUrl?: string;
   bankAccountNumber?: string;
   bankIfsc?: string;
   bankProofFileUrl?: string;

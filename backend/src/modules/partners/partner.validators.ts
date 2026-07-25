@@ -138,6 +138,29 @@ const applySchema = Joi.object({
       otherwise: Joi.optional().allow(""),
     }),
 
+  // Udyam Aadhar / GST Number — institute only
+  udyamOrGstNumber: Joi.string()
+    .trim()
+    .uppercase()
+    .max(20)
+    .when("type", {
+      is: "INSTITUTE",
+      then: Joi.required().messages({
+        "any.required": "Udyam Aadhar / GST number is required",
+      }),
+      otherwise: Joi.optional().allow(""),
+    }),
+  udyamOrGstFileUrl: Joi.string()
+    .trim()
+    .uri()
+    .when("type", {
+      is: "INSTITUTE",
+      then: Joi.required().messages({
+        "any.required": "Udyam Aadhar / GST file is required",
+      }),
+      otherwise: Joi.optional().allow(""),
+    }),
+
   bankAccountNumber: Joi.string()
     .trim()
     .pattern(/^\d{9,18}$/)

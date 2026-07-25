@@ -47,16 +47,19 @@ export default function PartnerOnboardingPage() {
   const [kyc, setKyc] = useState({
     aadharNumber: "",
     panNumber: "",
+    udyamOrGstNumber: "",
     bankAccountNumber: "",
     bankIfsc: "",
   });
   const [aadharFile, setAadharFile] = useState<File | null>(null);
   const [panFile, setPanFile] = useState<File | null>(null);
+  const [udyamOrGstFile, setUdyamOrGstFile] = useState<File | null>(null);
   const [bankProofFile, setBankProofFile] = useState<File | null>(null);
   const [aadharFileUrl, setAadharFileUrl] = useState("");
   const [panFileUrl, setPanFileUrl] = useState("");
+  const [udyamOrGstFileUrl, setUdyamOrGstFileUrl] = useState("");
   const [bankProofFileUrl, setBankProofFileUrl] = useState("");
-  const [uploadingField, setUploadingField] = useState<"aadhar" | "pan" | "bank" | null>(null);
+  const [uploadingField, setUploadingField] = useState<"aadhar" | "pan" | "udyamGst" | "bank" | null>(null);
   const [uploadErr, setUploadErr] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -93,7 +96,7 @@ export default function PartnerOnboardingPage() {
       setKyc((p) => ({ ...p, [field]: e.target.value }));
 
   const handleKycFileChange =
-    (kind: "aadhar" | "pan" | "bank") =>
+    (kind: "aadhar" | "pan" | "udyamGst" | "bank") =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -107,6 +110,9 @@ export default function PartnerOnboardingPage() {
         } else if (kind === "pan") {
           setPanFile(file);
           setPanFileUrl(url);
+        } else if (kind === "udyamGst") {
+          setUdyamOrGstFile(file);
+          setUdyamOrGstFileUrl(url);
         } else {
           setBankProofFile(file);
           setBankProofFileUrl(url);
@@ -123,8 +129,14 @@ export default function PartnerOnboardingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!draft) return;
-    if (!aadharFileUrl || !panFileUrl || !bankProofFileUrl) {
-      setErrorMsg("Please upload all three KYC documents before submitting.");
+    const needsUdyamOrGst = draft.type === "INSTITUTE";
+    if (
+      !aadharFileUrl ||
+      !panFileUrl ||
+      !bankProofFileUrl ||
+      (needsUdyamOrGst && !udyamOrGstFileUrl)
+    ) {
+      setErrorMsg("Please upload all required KYC documents before submitting.");
       return;
     }
     setErrorMsg("");
@@ -148,6 +160,8 @@ export default function PartnerOnboardingPage() {
         aadharFileUrl,
         panNumber: kyc.panNumber,
         panFileUrl,
+        udyamOrGstNumber: needsUdyamOrGst ? kyc.udyamOrGstNumber : undefined,
+        udyamOrGstFileUrl: needsUdyamOrGst ? udyamOrGstFileUrl : undefined,
         bankAccountNumber: kyc.bankAccountNumber,
         bankIfsc: kyc.bankIfsc,
         bankProofFileUrl,
@@ -178,7 +192,7 @@ export default function PartnerOnboardingPage() {
   if (!draft) return null; // redirect already in-flight
 
   const docFields: {
-    kind: "aadhar" | "pan" | "bank";
+    kind: "aadhar" | "pan" | "udyamGst" | "bank";
     label: string;
     file: File | null;
     url: string;
@@ -186,6 +200,16 @@ export default function PartnerOnboardingPage() {
     { kind: "aadhar", label: "Aadhar Card", file: aadharFile, url: aadharFileUrl },
     { kind: "pan", label: "PAN Card", file: panFile, url: panFileUrl },
     { kind: "bank", label: "Passbook / Cancelled Cheque", file: bankProofFile, url: bankProofFileUrl },
+    ...(draft.type === "INSTITUTE"
+      ? ([
+          {
+            kind: "udyamGst",
+            label: "Udyam Aadhar / GST Certificate",
+            file: udyamOrGstFile,
+            url: udyamOrGstFileUrl,
+          },
+        ] as const)
+      : []),
   ];
 
   return (
@@ -249,6 +273,23 @@ export default function PartnerOnboardingPage() {
                   className={cn(inputCls, "uppercase")}
                 />
               </div>
+
+              {draft.type === "INSTITUTE" && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                    Udyam Aadhar / GST Number *
+                  </label>
+                  <input
+                    type="text"
+                    value={kyc.udyamOrGstNumber}
+                    onChange={setKycField("udyamOrGstNumber")}
+                    required
+                    maxLength={20}
+                    placeholder="e.g. UDYAM-XX-00-0000000 or GSTIN"
+                    className={cn(inputCls, "uppercase")}
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">

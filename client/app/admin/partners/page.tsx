@@ -28,13 +28,18 @@ const DETAIL_FIELDS: { key: keyof AdminPartnerDetail; label: string }[] = [
   { key: "purpose", label: "Purpose of Partnership" },
   { key: "aadharNumber", label: "Aadhar Number" },
   { key: "panNumber", label: "PAN Number" },
+  { key: "udyamOrGstNumber", label: "Udyam Aadhar / GST Number" },
   { key: "bankAccountNumber", label: "Bank Account Number" },
   { key: "bankIfsc", label: "IFSC Code" },
 ];
 
-const KYC_DOCS: { key: "aadharFileUrl" | "panFileUrl" | "bankProofFileUrl"; label: string }[] = [
+const KYC_DOCS: {
+  key: "aadharFileUrl" | "panFileUrl" | "udyamOrGstFileUrl" | "bankProofFileUrl";
+  label: string;
+}[] = [
   { key: "aadharFileUrl", label: "Aadhar Card" },
   { key: "panFileUrl", label: "PAN Card" },
+  { key: "udyamOrGstFileUrl", label: "Udyam Aadhar / GST Certificate" },
   { key: "bankProofFileUrl", label: "Passbook / Cancelled Cheque" },
 ];
 

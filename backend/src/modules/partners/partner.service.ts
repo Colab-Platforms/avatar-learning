@@ -153,6 +153,8 @@ export class PartnerService {
       aadharFileUrl: body.aadharFileUrl || null,
       panNumber: body.panNumber || null,
       panFileUrl: body.panFileUrl || null,
+      udyamOrGstNumber: body.udyamOrGstNumber || null,
+      udyamOrGstFileUrl: body.udyamOrGstFileUrl || null,
       bankAccountNumber: body.bankAccountNumber || null,
       bankIfsc: body.bankIfsc || null,
       bankProofFileUrl: body.bankProofFileUrl || null,

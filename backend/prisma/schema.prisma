@@ -710,6 +710,8 @@ model Partner {
   aadharFileUrl     String? @map("aadhar_file_url")
   panNumber         String? @map("pan_number")
   panFileUrl        String? @map("pan_file_url")
+  udyamOrGstNumber  String? @map("udyam_or_gst_number") // institute only — Udyam Aadhar or GST number
+  udyamOrGstFileUrl String? @map("udyam_or_gst_file_url")
   bankAccountNumber String? @map("bank_account_number")
   bankIfsc          String? @map("bank_ifsc")
   bankProofFileUrl  String? @map("bank_proof_file_url") // passbook or cancelled cheque

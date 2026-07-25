@@ -21,7 +21,7 @@ import type {
   Direct2HireLeadInput,
 } from "./payment.types.js";
 
-const DIRECT2HIRE_PRICE_RUPEES = 999;
+const DIRECT2HIRE_PRICE_RUPEES = 1;
 
 interface OrderContext {
   productType: "COURSE" | "DIRECT2HIRE";
@@ -195,7 +195,10 @@ export class PaymentService {
     if (!course.isPublished)
       throw new ApiError("Course is not available", STATUS_CODES.BAD_REQUEST);
     if (course.isComingSoon)
-      throw new ApiError("This course is coming soon", STATUS_CODES.BAD_REQUEST);
+      throw new ApiError(
+        "This course is coming soon",
+        STATUS_CODES.BAD_REQUEST,
+      );
     if (course.price <= 0)
       throw new ApiError(
         "This course is free — use the enroll endpoint",
@@ -639,7 +642,10 @@ export class PaymentService {
         // Marks the enrollment refunded so the partner-commission maturity
         // sweep (partnerService.processMaturedReferrals) permanently skips
         // it instead of crediting the referring partner.
-        if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
+        if (
+          order.productType === "DIRECT2HIRE" &&
+          order.direct2hireEnrollmentId
+        ) {
           await db.direct2HireEnrollment.update({
             where: { id: order.direct2hireEnrollmentId },
             data: { status: "REFUNDED" },

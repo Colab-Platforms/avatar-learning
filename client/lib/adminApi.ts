@@ -394,6 +394,8 @@ export interface AdminPartner {
   aadharFileUrl: string | null;
   panNumber: string | null;
   panFileUrl: string | null;
+  udyamOrGstNumber: string | null;
+  udyamOrGstFileUrl: string | null;
   bankAccountNumber: string | null;
   bankIfsc: string | null;
   bankProofFileUrl: string | null;
