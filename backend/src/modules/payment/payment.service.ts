@@ -21,7 +21,9 @@ import type {
   Direct2HireLeadInput,
 } from "./payment.types.js";
 
-const DIRECT2HIRE_PRICE_RUPEES = 1;
+const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
+  process.env.DIRECT2HIRE_PRICE_RUPEES!,
+);
 
 interface OrderContext {
   productType: "COURSE" | "DIRECT2HIRE";
