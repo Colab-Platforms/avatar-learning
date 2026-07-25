@@ -37,7 +37,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     items: [
       { label: "Terms & Conditions", href: "/terms-and-conditions" },
       { label: "Privacy Policy", href: "/privacy-policy" },
-      { label: "Investors", href: "/investors" },
+      // { label: "Investors", href: "/investors" },
     ],
   },
 ];
