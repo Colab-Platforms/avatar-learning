@@ -42,7 +42,11 @@ function LoginForm() {
   const [resendSuccess,  setResendSuccess]  = useState(false);
   const [referralCode,   setReferralCode]   = useState<string | undefined>(undefined);
 
-  useEffect(() => { if (user) router.push("/"); }, [user, router]);
+  useEffect(() => {
+    if (!user) return;
+    const redirect = searchParams.get("redirect");
+    router.push(redirect || "/");
+  }, [user, router, searchParams]);
 
   useEffect(() => {
     const ref = searchParams.get("ref");

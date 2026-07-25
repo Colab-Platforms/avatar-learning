@@ -87,6 +87,7 @@ interface Course {
   sessions?: string;
   certificate: boolean;
   isDirect2HireCourse: boolean;
+  isComingSoon: boolean;
   rating?: number;
   reviews?: string;
   startDate?: string;

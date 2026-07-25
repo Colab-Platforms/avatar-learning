@@ -86,9 +86,11 @@ function CourseCard({ course }: { course: DBCourse }) {
   const router = useRouter();
   const { user } = useAppSelector((s) => s.auth);
   const isFree = course.price === 0;
+  const isComingSoon = course.isComingSoon;
 
   const handleEnroll = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (isComingSoon) return;
     if (!user) router.push("/login");
   };
 
@@ -128,7 +130,15 @@ function CourseCard({ course }: { course: DBCourse }) {
 
         {/* price badge */}
         <div className="absolute top-3 right-3 z-10">
-          {isFree ? (
+          {isComingSoon ? (
+            <span
+              className="inline-flex items-center rounded-full border border-amber-200
+                             bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[11px]
+                             font-bold text-amber-700 shadow-sm"
+            >
+              COMING SOON
+            </span>
+          ) : isFree ? (
             <span
               className="inline-flex items-center rounded-full border border-emerald-200
                              bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[11px]
@@ -221,13 +231,20 @@ function CourseCard({ course }: { course: DBCourse }) {
         <div className="flex items-center gap-3">
           <button
             onClick={handleEnroll}
-            className="flex-1 rounded-xl py-2 text-[13px] font-bold transition-all duration-250 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
-            style={{
-              background:
-                "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
-            }}
+            disabled={isComingSoon}
+            className={cn(
+              "flex-1 rounded-xl py-2 text-[13px] font-bold transition-all duration-250 shadow-sm",
+              isComingSoon
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "text-white hover:brightness-110 active:scale-95 cursor-pointer",
+            )}
+            style={
+              isComingSoon
+                ? undefined
+                : { background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }
+            }
           >
-            Enroll Now
+            {isComingSoon ? "Coming Soon" : "Enroll Now"}
           </button>
           <span
             className="flex items-center gap-0.5 text-[12px] font-semibold text-slate-450

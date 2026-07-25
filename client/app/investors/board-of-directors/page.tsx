@@ -1,21 +1,65 @@
+"use client";
+
+import { Fragment, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Landmark } from "lucide-react";
+import { ArrowLeft, ChevronDown, Landmark } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollReveal } from "@/components/ui";
+
+interface OtherDirectorship {
+  name: string;
+  designation: string;
+}
 
 interface MemberRow {
   name: string;
   designation: string;
   date: string;
+  bio?: string;
+  otherDirectorships?: OtherDirectorship[];
 }
 
 const BOARD_AND_KMP: MemberRow[] = [
-  { name: "Mr. Yatish Poojary", designation: "Non - Executive Independent Director", date: "14/08/2025" },
-  { name: "Mr. Kiran Dilip Thakore", designation: "Non - Executive Director", date: "27/08/2024" },
-  { name: "Mrs. Karina Jadhav", designation: "Non- Executive Independent Director", date: "12/02/2026" },
+  {
+    name: "Ms. Richa Rathod",
+    designation: "Managing Director & CFO",
+    date: "23/04/2026",
+    bio: "Mrs. Richa Rathod is a finance professional with practical experience in corporate finance, financial planning & analysis, regulatory compliance, and overall financial operations. She has been actively involved in the finance function, gaining hands-on exposure to accounting processes, financial reporting, budgeting, and internal controls. With her sound understanding of financial management and operational processes, she has consistently contributed to strengthening financial discipline and improving organizational efficiency. Considering her experience, leadership capabilities, and familiarity with the Company's operations, she is well-suited for the role of Managing Director and is expected to effectively lead the Company towards its strategic and operational objectives.",
+    otherDirectorships: [{ name: "G 9 HORECA LLP", designation: "Designated Partner" }],
+  },
+  {
+    name: "Mr. Kiran Dilip Thakore",
+    designation: "Non - Executive Director",
+    date: "27/08/2024",
+    bio: "Mr. Kiran Thakore possesses over two decades of extensive experience in business administration, logistics, human resources, and operations management. Throughout his professional career, he has demonstrated strong leadership, managerial, and strategic planning skills across various business functions. He has also provided consultancy services to numerous businesses, leveraging his expertise to support operational efficiency, organizational growth, and business development. His rich experience and professional insight are expected to contribute significantly to the growth and governance of the Company.",
+    otherDirectorships: [
+      { name: "Shreekrishna Biotech Limited", designation: "Add. Director" },
+      { name: "Skybridge Incap Advisory LLP", designation: "Designated Partner" },
+      { name: "Skybridge Interactive LLP", designation: "Designated Partner" },
+      { name: "Skybridge Lifespaces LLP", designation: "Designated Partner" },
+      { name: "Aadhaar Ventures India Limited", designation: "Director" },
+      { name: "ASL E-Ventures Private Limited", designation: "Director" },
+    ],
+  },
+  {
+    name: "Mr. Yatish Poojary",
+    designation: "Non - Executive Independent Director",
+    date: "14/08/2025",
+    bio: "Mr. Yatish Poojary possesses experience in handling corporate programs and has demonstrated strong organizational and interpersonal skills throughout his professional career. His expertise in coordination, communication, and corporate management is expected to contribute effectively to the Company's operations and governance. As an Independent Director, he is expected to provide objective oversight and strategic guidance, leveraging his experience and professional skills for the overall growth and development of the Company.",
+    otherDirectorships: [
+      { name: "ASL E-Ventures Private Limited", designation: "Director" },
+      { name: "ASL Infineon Ventures Private Limited", designation: "Director" },
+    ],
+  },
+  {
+    name: "Mrs. Karina Jadhav",
+    designation: "Non- Executive Independent Director",
+    date: "12/02/2026",
+    bio: "Mrs. Karina Jadhav possesses experience in handling corporate programs and has demonstrated strong organizational and interpersonal skills throughout her professional career. Her expertise in coordination, communication, and corporate management is expected to contribute positively to the Company. As an Independent Director, she will provide objective oversight and valuable guidance to support the Company's strategic growth and governance practices.",
+    otherDirectorships: [],
+  },
   { name: "Ms. Mansi Vora", designation: "Company Secretary and Compliance Officer", date: "3/12/2025" },
-  { name: "Ms. Richa Rathod", designation: "Managing Director & CFO", date: "23/04/2026" },
 ];
 
 const AUDIT_COMMITTEE: MemberRow[] = [
@@ -44,6 +88,8 @@ const GRIEVANCE_REDRESSAL = {
 };
 
 function MemberTable({ rows }: { rows: MemberRow[] }) {
+  const [openRow, setOpenRow] = useState<string | null>(null);
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200">
       <table className="w-full text-sm">
@@ -56,16 +102,76 @@ function MemberTable({ rows }: { rows: MemberRow[] }) {
             <th className="px-4 sm:px-5 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">
               Date of Appointment
             </th>
+            <th className="w-10" />
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {rows.map((row) => (
-            <tr key={`${row.name}-${row.designation}`} className="hover:bg-slate-50/60 transition-colors">
-              <td className="px-4 sm:px-5 py-3 text-slate-800 font-medium whitespace-nowrap">{row.name}</td>
-              <td className="px-4 sm:px-5 py-3 text-slate-600">{row.designation}</td>
-              <td className="px-4 sm:px-5 py-3 text-slate-600 whitespace-nowrap">{row.date}</td>
-            </tr>
-          ))}
+          {rows.map((row) => {
+            const key = `${row.name}-${row.designation}`;
+            const expandable = Boolean(row.bio);
+            const isOpen = expandable && openRow === key;
+            return (
+              <Fragment key={key}>
+                <tr
+                  onClick={() => expandable && setOpenRow(isOpen ? null : key)}
+                  className={`transition-colors ${expandable ? "cursor-pointer hover:bg-slate-50/60" : ""}`}
+                  aria-expanded={expandable ? isOpen : undefined}
+                >
+                  <td className="px-4 sm:px-5 py-3 text-slate-800 font-medium whitespace-nowrap">{row.name}</td>
+                  <td className="px-4 sm:px-5 py-3 text-slate-600">{row.designation}</td>
+                  <td className="px-4 sm:px-5 py-3 text-slate-600 whitespace-nowrap">{row.date}</td>
+                  <td className="px-2 py-3 text-slate-400">
+                    {expandable && (
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      />
+                    )}
+                  </td>
+                </tr>
+                {isOpen && (
+                  <tr className="bg-slate-50/60">
+                    <td colSpan={4} className="px-4 sm:px-5 py-4">
+                      <p className="text-slate-600 leading-relaxed">{row.bio}</p>
+                      {row.otherDirectorships && row.otherDirectorships.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                            Other Directorship Details
+                          </h4>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200">
+                            <table className="w-full text-sm">
+                              <thead className="bg-white border-b border-slate-200">
+                                <tr>
+                                  <th className="px-3 py-2 text-left font-semibold text-slate-700">
+                                    Names of the Companies / bodies corporate / firms / association of individuals
+                                  </th>
+                                  <th className="px-3 py-2 text-left font-semibold text-slate-700 whitespace-nowrap">
+                                    Designation
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100 bg-white">
+                                {row.otherDirectorships.map((d) => (
+                                  <tr key={d.name}>
+                                    <td className="px-3 py-2 text-slate-600">{d.name}</td>
+                                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{d.designation}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      {row.otherDirectorships && row.otherDirectorships.length === 0 && (
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Other Directorship Details: NIL
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

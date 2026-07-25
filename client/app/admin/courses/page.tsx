@@ -24,6 +24,7 @@ interface Course {
     totalWeeks: number;
     isPublished: boolean;
     isDirect2HireCourse: boolean;
+    isComingSoon: boolean;
     category: { id: string; name: string };
     _count: { lessons: number; enrollments: number };
 }
@@ -276,6 +277,11 @@ export default function AdminCoursesPage() {
                                             {course.isDirect2HireCourse && (
                                                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-elec-500/10 text-elec-400">
                                                     D2H
+                                                </span>
+                                            )}
+                                            {course.isComingSoon && (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
+                                                    COMING SOON
                                                 </span>
                                             )}
                                         </div>

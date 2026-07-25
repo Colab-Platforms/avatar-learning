@@ -463,6 +463,10 @@ export class PublicCourseService {
   async enrollUser(slugOrId: string, userId: string) {
     const course = await this.resolveCourse(slugOrId);
 
+    if (course.isComingSoon) {
+      throw new ApiError("This course is coming soon", STATUS_CODES.BAD_REQUEST);
+    }
+
     if (course.price > 0) {
       throw new ApiError(
         "Paid course enrollment is not yet supported",

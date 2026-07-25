@@ -6,13 +6,18 @@ import { Navbar } from "@/components/layout/Navbar";
 import { QuizQuestion } from "./QuizQuestion";
 import { QuizResult } from "./QuizResult";
 import { QuizPanel } from "./QuizPanel";
+import { QuizLoginModal } from "./QuizLoginModal";
 import { Brain } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 // answers stores string[] per question (single-select = 1-item array)
 export function QuizShell() {
+  const { user, hasHydrated } = useAppSelector((s) => s.auth);
+
   const [answers, setAnswers] = useState<Record<number, string[]>>({});
   const [current, setCurrent] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const total    = QUIZ_QUESTIONS.length;
   const question = QUIZ_QUESTIONS[current];
@@ -35,9 +40,17 @@ export function QuizShell() {
   function handleNext() {
     if (current < total - 1) {
       setCurrent((c) => c + 1);
-    } else {
-      setSubmitted(true);
+      return;
     }
+
+    if (!hasHydrated) return;
+
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    setSubmitted(true);
   }
 
   function handleBack() {
@@ -48,6 +61,12 @@ export function QuizShell() {
     setAnswers({});
     setCurrent(0);
     setSubmitted(false);
+  }
+
+  function handleLoginModalClose() {
+    setShowLoginModal(false);
+    // If they logged in successfully, reveal the result now.
+    if (user) setSubmitted(true);
   }
 
   if (submitted) {
@@ -84,6 +103,8 @@ export function QuizShell() {
           </QuizPanel>
         </div>
       </main>
+
+      <QuizLoginModal isOpen={showLoginModal} onClose={handleLoginModalClose} />
     </div>
   );
 }

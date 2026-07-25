@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, Phone, X } from "lucide-react";
 
-const WHATSAPP_NUMBER = "919136774304";
-const PHONE_NUMBER = "+919136774304";
-const WHATSAPP_MESSAGE = "Hi! I'd like to know more about the Direct2Hire program.";
+const WHATSAPP_NUMBER = "918976830780";
+const PHONE_NUMBER = "+918976830780";
+const WHATSAPP_MESSAGE =
+  "Hi! I'd like to know more about the Direct2Hire program.";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -24,7 +25,10 @@ export function HelpWidget() {
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -57,8 +61,12 @@ export function HelpWidget() {
                 <WhatsAppIcon className="h-5 w-5" />
               </span>
               <div className="text-left">
-                <p className="text-[14px] font-semibold text-text">Chat on WhatsApp</p>
-                <p className="text-[12px] text-text-subtle">For instant help &amp; updates</p>
+                <p className="text-[14px] font-semibold text-text">
+                  Chat on WhatsApp
+                </p>
+                <p className="text-[12px] text-text-subtle">
+                  For instant help &amp; updates
+                </p>
               </div>
             </a>
 
@@ -72,8 +80,12 @@ export function HelpWidget() {
                 <Phone className="h-4.5 w-4.5" />
               </span>
               <div className="text-left">
-                <p className="text-[14px] font-semibold text-text">Talk to an Advisor</p>
-                <p className="text-[12px] text-text-subtle">Available Mon–Sat, 10am–6pm</p>
+                <p className="text-[14px] font-semibold text-text">
+                  Talk to an Advisor
+                </p>
+                <p className="text-[12px] text-text-subtle">
+                  Available Mon–Sat, 10am–6pm
+                </p>
               </div>
             </a>
           </motion.div>

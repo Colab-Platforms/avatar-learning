@@ -194,6 +194,8 @@ export class PaymentService {
     if (!course) throw new ApiError("Course not found", STATUS_CODES.NOT_FOUND);
     if (!course.isPublished)
       throw new ApiError("Course is not available", STATUS_CODES.BAD_REQUEST);
+    if (course.isComingSoon)
+      throw new ApiError("This course is coming soon", STATUS_CODES.BAD_REQUEST);
     if (course.price <= 0)
       throw new ApiError(
         "This course is free — use the enroll endpoint",

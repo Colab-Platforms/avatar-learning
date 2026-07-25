@@ -335,6 +335,7 @@ model Courses {
   audience            Json?
   isDirect2HireCourse Boolean @default(false) @map("is_direct2hire_course")
   isPublished         Boolean @default(false) @map("is_published")
+  isComingSoon        Boolean @default(false) @map("is_coming_soon")
 
   createdBy String? @map("created_by")
 

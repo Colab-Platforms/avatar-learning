@@ -40,6 +40,7 @@ export interface DBCourse {
   whatYouLearn?: CourseLearnItem[];
   audience?: AudienceItem[];
   isPublished: boolean;
+  isComingSoon: boolean;
   category: { id: string; name: string; slug: string };
   _count: { lessons: number; enrollments: number };
 }

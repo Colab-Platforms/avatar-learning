@@ -11,6 +11,7 @@ interface Course {
     heroImage?: string; bannerImage?: string;
     tools: string[]; sessions?: string; certificate: boolean;
     isDirect2HireCourse: boolean;
+    isComingSoon: boolean;
     rating?: number; reviews?: string; startDate?: string; seats?: string;
     whatYouLearn?: unknown; audience?: unknown;
     category: { id: string; name: string };
@@ -225,6 +226,7 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
         sessions: course.sessions ?? "",
         certificate: course.certificate,
         isDirect2HireCourse: course.isDirect2HireCourse,
+        isComingSoon: course.isComingSoon,
         rating: course.rating?.toString() ?? "",
         reviews: course.reviews ?? "",
         startDate: course.startDate ?? "",
@@ -264,6 +266,7 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
                 sessions: form.sessions || undefined,
                 certificate: form.certificate,
                 isDirect2HireCourse: form.isDirect2HireCourse,
+                isComingSoon: form.isComingSoon,
                 rating: form.rating ? parseFloat(form.rating) : undefined,
                 reviews: form.reviews || undefined,
                 startDate: form.startDate || undefined,
@@ -379,6 +382,12 @@ export function CourseMetaForm({ course, onSaved }: { course: Course; onSaved: (
                         checked={form.isDirect2HireCourse}
                         onChange={(e) => setForm((f) => ({ ...f, isDirect2HireCourse: e.target.checked }))} />
                     Part of the Direct2Hire course bundle (auto-enrolled on payment)
+                </label>
+                <label className="flex items-center gap-2.5 text-sm text-white/55 cursor-pointer select-none">
+                    <input type="checkbox" className="accent-brand-500 w-4 h-4 rounded"
+                        checked={form.isComingSoon}
+                        onChange={(e) => setForm((f) => ({ ...f, isComingSoon: e.target.checked }))} />
+                    Coming soon (hides payment/enroll, shows a Coming Soon badge)
                 </label>
             </div>
 

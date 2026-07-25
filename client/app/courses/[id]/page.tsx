@@ -54,6 +54,7 @@ export default function CoursePage({ params }: PageProps) {
   );
   const enrolled = enrollmentData?.enrolled ?? false;
   const isFree = course?.price === 0;
+  const isComingSoon = course?.isComingSoon ?? false;
 
   const showMsg = (msg: string, type: "success" | "error" = "success") => {
     setEnrollMsg(msg);
@@ -70,7 +71,8 @@ export default function CoursePage({ params }: PageProps) {
       await refetchEnrollment();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      const msg = e?.response?.data?.message ?? "Enrollment failed. Please try again.";
+      const msg =
+        e?.response?.data?.message ?? "Enrollment failed. Please try again.";
       if (msg.toLowerCase().includes("already enrolled")) {
         await refetchEnrollment();
       } else {
@@ -113,12 +115,21 @@ export default function CoursePage({ params }: PageProps) {
                 razorpay_signature: response.razorpay_signature,
               });
               await refetchEnrollment();
-              showMsg("Payment successful! Redirecting to your course…", "success");
+              showMsg(
+                "Payment successful! Redirecting to your course…",
+                "success",
+              );
               setTimeout(() => router.push(`/courses/${id}/learn`), 1500);
               resolve();
             } catch (verifyErr: unknown) {
-              const e = verifyErr as { response?: { data?: { message?: string } } };
-              reject(new Error(e?.response?.data?.message ?? "Payment verification failed"));
+              const e = verifyErr as {
+                response?: { data?: { message?: string } };
+              };
+              reject(
+                new Error(
+                  e?.response?.data?.message ?? "Payment verification failed",
+                ),
+              );
             }
           },
           modal: {
@@ -207,12 +218,13 @@ export default function CoursePage({ params }: PageProps) {
   ]);
 
   const handleEnroll = useCallback(async () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
     if (enrolled) {
       router.push(`/courses/${id}/learn`);
+      return;
+    }
+    if (isComingSoon) return;
+    if (!user) {
+      router.push("/login");
       return;
     }
     if (!course) return;
@@ -221,7 +233,17 @@ export default function CoursePage({ params }: PageProps) {
     } else {
       await handlePaidEnroll();
     }
-  }, [user, enrolled, course, id, router, isFree, handleFreeEnroll, handlePaidEnroll]);
+  }, [
+    user,
+    enrolled,
+    course,
+    id,
+    router,
+    isFree,
+    isComingSoon,
+    handleFreeEnroll,
+    handlePaidEnroll,
+  ]);
 
   if (isLoading)
     return (
@@ -254,9 +276,13 @@ export default function CoursePage({ params }: PageProps) {
     ? "Processing Payment…"
     : enrolled
       ? "Go to Course →"
-      : isFree
-        ? "Enroll Free"
-        : `Enroll Now — ₹${(course.price).toLocaleString("en-IN")}`;
+      : isComingSoon
+        ? "Coming Soon"
+        : isFree
+          ? "Enroll Free"
+          : `Enroll Now — ₹${course.price.toLocaleString("en-IN")}`;
+
+  const enrollDisabled = enrolling || (isComingSoon && !enrolled);
 
   return (
     <>
@@ -340,6 +366,11 @@ export default function CoursePage({ params }: PageProps) {
 
                 <ScrollReveal animation="fade-up" delay={60} duration={700}>
                   <div className="flex flex-wrap items-center gap-2 mb-4">
+                    {isComingSoon && (
+                      <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700 shadow-sm">
+                        COMING SOON
+                      </span>
+                    )}
                     {isFree && (
                       <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 shadow-sm">
                         FREE
@@ -426,19 +457,26 @@ export default function CoursePage({ params }: PageProps) {
                   )}
                   <button
                     onClick={handleEnroll}
-                    disabled={enrolling}
+                    disabled={enrollDisabled}
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold
                                transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
-                    style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                    }}
                   >
                     {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {!enrolling && enrolled && <CheckCircle className="h-4 w-4" />}
+                    {!enrolling && enrolled && (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
                     {enrollBtnLabel}
-                    {!enrolling && !enrolled && <ArrowRight className="h-4 w-4" />}
+                    {!enrolling && !enrolled && !isComingSoon && (
+                      <ArrowRight className="h-4 w-4" />
+                    )}
                   </button>
-                  <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all duration-200 shadow-sm cursor-pointer">
+                  {/* <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all duration-200 shadow-sm cursor-pointer">
                     <Download className="h-4 w-4" /> Download Syllabus
-                  </button>
+                  </button> */}
                 </div>
               </div>
 
@@ -499,7 +537,10 @@ export default function CoursePage({ params }: PageProps) {
                   {/* Info card below image */}
                   <div
                     className="rounded-2xl border border-slate-200 p-5 mt-6 space-y-4"
-                    style={{ background: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)" }}
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                    }}
                   >
                     {/* Rating row */}
                     {(course.rating || course.sessions || course.seats) && (
@@ -542,16 +583,22 @@ export default function CoursePage({ params }: PageProps) {
                       {course.startDate && (
                         <span>
                           <span className="text-slate-400 mr-1">Starts:</span>
-                          <span className="text-slate-700 font-medium">{course.startDate}</span>
+                          <span className="text-slate-700 font-medium">
+                            {course.startDate}
+                          </span>
                         </span>
                       )}
                       <span>
                         <span className="text-slate-400 mr-1">Duration:</span>
-                        <span className="text-slate-700 font-medium">{course.totalWeeks} Weeks</span>
+                        <span className="text-slate-700 font-medium">
+                          {course.totalWeeks} Weeks
+                        </span>
                       </span>
                       <span>
                         <span className="text-slate-400 mr-1">Mode:</span>
-                        <span className="text-slate-700 font-medium">Live + Recorded</span>
+                        <span className="text-slate-700 font-medium">
+                          Live + Recorded
+                        </span>
                       </span>
                     </div>
 
@@ -575,7 +622,7 @@ export default function CoursePage({ params }: PageProps) {
                     <div className="flex flex-col gap-2.5 pt-1">
                       <button
                         onClick={handleEnroll}
-                        disabled={enrolling}
+                        disabled={enrollDisabled}
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
                                    transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
                         style={{
@@ -583,14 +630,20 @@ export default function CoursePage({ params }: PageProps) {
                             "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
                         }}
                       >
-                        {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
-                        {!enrolling && enrolled && <CheckCircle className="h-4 w-4" />}
+                        {enrolling && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {!enrolling && enrolled && (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
                         {enrollBtnLabel}
-                        {!enrolling && !enrolled && <ArrowRight className="h-4 w-4" />}
+                        {!enrolling && !enrolled && !isComingSoon && (
+                          <ArrowRight className="h-4 w-4" />
+                        )}
                       </button>
-                      <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 active:scale-98 shadow-sm cursor-pointer">
+                      {/* <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 active:scale-98 shadow-sm cursor-pointer">
                         <Download className="h-4 w-4" /> Download Syllabus
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -601,7 +654,10 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── WHAT YOU'LL LEARN ── */}
         {whatYouLearn.length > 0 && (
-          <section className="py-10 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+          <section
+            className="py-10 border-t border-slate-100 relative overflow-hidden"
+            style={{ background: "#FFFFFF" }}
+          >
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -651,7 +707,10 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── PROGRAM STRUCTURE ── */}
         {weekData.length > 0 && (
-          <section className="py-10 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FAFAFA" }}>
+          <section
+            className="py-10 border-t border-slate-100 relative overflow-hidden"
+            style={{ background: "#FAFAFA" }}
+          >
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -746,7 +805,10 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── WHO THIS IS FOR ── */}
         {audience.length > 0 && (
-          <section className="py-10 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+          <section
+            className="py-10 border-t border-slate-100 relative overflow-hidden"
+            style={{ background: "#FFFFFF" }}
+          >
             <div
               className="pointer-events-none absolute inset-0 line-grid opacity-5"
               aria-hidden
@@ -790,7 +852,10 @@ export default function CoursePage({ params }: PageProps) {
         )}
 
         {/* ── ENROLL CTA ── */}
-        <section className="py-10 border-t border-slate-100 relative overflow-hidden" style={{ background: "#FAFAFA" }}>
+        <section
+          className="py-10 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FAFAFA" }}
+        >
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
               <div
@@ -819,24 +884,30 @@ export default function CoursePage({ params }: PageProps) {
                 <p className="relative text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
                   {enrolled
                     ? "Continue Learning"
-                    : isFree
-                      ? "100% Free"
-                      : "Enroll Now"}
+                    : isComingSoon
+                      ? "Coming Soon"
+                      : isFree
+                        ? "100% Free"
+                        : "Enroll Now"}
                 </p>
                 <h2 className="relative text-3xl sm:text-4xl font-bold mb-4 text-slate-900">
                   {enrolled
                     ? "You're enrolled — let's go!"
-                    : "Ready to start your AI journey?"}
+                    : isComingSoon
+                      ? "This program is launching soon"
+                      : "Ready to start your AI journey?"}
                 </h2>
                 <p className="relative text-slate-500 max-w-md mx-auto mb-8 text-[15px]">
                   {enrolled
                     ? "Access all your course materials, videos and resources below."
-                    : "Join learners who are already building real skills with Avatar India."}
+                    : isComingSoon
+                      ? "We're putting the finishing touches on this course. Check back soon to enroll."
+                      : "Join learners who are already building real skills with Avatar India."}
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
                   <button
                     onClick={handleEnroll}
-                    disabled={enrolling}
+                    disabled={enrollDisabled}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold
                                transition-colors disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
                     style={{
@@ -847,10 +918,14 @@ export default function CoursePage({ params }: PageProps) {
                     {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
                     {enrolled
                       ? "Go to Course"
-                      : isFree
-                        ? "Enroll for Free"
-                        : `Enroll Now — ₹${course.price.toLocaleString("en-IN")}`}
-                    {!enrolling && <ArrowRight className="h-4 w-4" />}
+                      : isComingSoon
+                        ? "Coming Soon"
+                        : isFree
+                          ? "Enroll for Free"
+                          : `Enroll Now — ₹${course.price.toLocaleString("en-IN")}`}
+                    {!enrolling && !isComingSoon && (
+                      <ArrowRight className="h-4 w-4" />
+                    )}
                   </button>
                   <Link href="/courses">
                     <button className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors duration-200 shadow-sm cursor-pointer">
@@ -868,15 +943,19 @@ export default function CoursePage({ params }: PageProps) {
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 flex gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <button
           onClick={handleEnroll}
-          disabled={enrolling}
+          disabled={enrollDisabled}
           className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
                      transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
-          style={{ background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }}
+          style={{
+            background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+          }}
         >
           {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
           {!enrolling && enrolled && <CheckCircle className="h-4 w-4" />}
           {enrollBtnLabel}
-          {!enrolling && !enrolled && <ArrowRight className="h-4 w-4" />}
+          {!enrolling && !enrolled && !isComingSoon && (
+            <ArrowRight className="h-4 w-4" />
+          )}
         </button>
         <button className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all duration-200 shadow-sm cursor-pointer shrink-0">
           <Download className="h-4 w-4" />

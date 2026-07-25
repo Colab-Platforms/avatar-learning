@@ -37,6 +37,7 @@ export interface CreateCourseBody {
     whatYouLearn?: WhatYouLearnItem[];
     audience?: AudienceItem[];
     isDirect2HireCourse?: boolean;
+    isComingSoon?: boolean;
 }
 
 export interface UpdateCourseBody {
@@ -60,6 +61,7 @@ export interface UpdateCourseBody {
     whatYouLearn?: WhatYouLearnItem[];
     audience?: AudienceItem[];
     isDirect2HireCourse?: boolean;
+    isComingSoon?: boolean;
 }
 
 export interface CreateLessonBody {
