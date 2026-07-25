@@ -138,7 +138,7 @@ export function useDirect2HireCheckout() {
           await handleRazorpayCheckout(order, lead);
         }
 
-        router.push("/dashboard");
+        router.push("/direct2hire/success");
       } catch (err: unknown) {
         const e = err as { response?: { data?: { message?: string } } };
         const msg =

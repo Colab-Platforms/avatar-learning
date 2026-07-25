@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -35,8 +35,12 @@ export default function Direct2HireEnrollPage() {
 
   const authorized = hasHydrated && Boolean(user);
 
+  // Guards against landing on this page while already enrolled (e.g. a stale
+  // bookmark). The checkout flow itself navigates to /direct2hire/success on
+  // completion, so it flips `checkoutStarted` first to skip this redirect.
+  const checkoutStarted = useRef(false);
   useEffect(() => {
-    if (enrolled) {
+    if (enrolled && !checkoutStarted.current) {
       router.replace("/dashboard");
     }
   }, [enrolled, router]);
@@ -69,6 +73,7 @@ export default function Direct2HireEnrollPage() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    checkoutStarted.current = true;
     await enroll(values);
   });
 
