@@ -67,6 +67,7 @@ export interface AdminD2HStudentProfile {
     status: string;
     counsellorName: string | null;
     meetingLink: string | null;
+    phoneNumber: string | null;
     scheduledAt: Date | null;
     createdAt: Date;
     counsellingCompleted: boolean;

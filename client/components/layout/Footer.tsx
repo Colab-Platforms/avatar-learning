@@ -193,11 +193,11 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 text-[12px] text-white/20">
+        {/* <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 text-[12px] text-white/20">
           <span>
             © {new Date().getFullYear()} {SITE.name}. All rights reserved.
           </span>
-        </div>
+        </div> */}
       </div>
     </footer>
   );

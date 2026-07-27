@@ -618,6 +618,7 @@ export interface AdminD2HStudentProfile {
     status: string;
     counsellorName: string | null;
     meetingLink: string | null;
+    phoneNumber: string | null;
     scheduledAt: string | null;
     createdAt: string;
     counsellingCompleted: boolean;
@@ -662,7 +663,12 @@ export const fetchD2HStudentProfile = (
 
 export const confirmD2HBooking = (
   userId: string,
-  payload: { counsellorName: string; meetingLink: string; scheduledAt: string },
+  payload: {
+    counsellorName: string;
+    scheduledAt: string;
+    meetingLink?: string;
+    phoneNumber?: string;
+  },
 ) =>
   apiClient
     .patch(`/admin/direct2hire/students/${userId}/booking/confirm`, payload)

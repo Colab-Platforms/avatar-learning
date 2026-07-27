@@ -948,6 +948,7 @@ model CounsellingBooking {
 
   counsellorName String?   @map("counsellor_name")
   meetingLink    String?   @map("meeting_link") @db.Text
+  phoneNumber    String?   @map("phone_number")
   scheduledAt    DateTime? @map("scheduled_at")
 
   counsellingCompleted   Boolean   @default(false) @map("counselling_completed")

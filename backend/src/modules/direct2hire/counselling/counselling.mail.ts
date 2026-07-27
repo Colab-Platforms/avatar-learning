@@ -5,7 +5,9 @@ export interface CounsellingScheduleEmailData {
   counsellorName: string;
   date: string;
   time: string;
-  meetLink: string;
+  preferredMode: "VOICE" | "VIDEO";
+  meetLink?: string | null;
+  phoneNumber?: string | null;
 }
 
 interface BuiltEmail {
@@ -22,22 +24,63 @@ function infoCardHtml(data: CounsellingScheduleEmailData): string {
             </td>
         </tr>`;
 
-  return `
-        <table role="presentation" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 28px; width: 100%; table-layout: fixed;">
-            ${row("Counsellor", data.counsellorName)}
-            ${row("Date", data.date)}
-            ${row("Time", data.time)}
-            ${row("Meeting Platform", "Google Meet")}
+  const isVoice = data.preferredMode === "VOICE";
+  const contactRow = isVoice
+    ? `
+            <tr>
+                <td style="padding: 12px 0 0; vertical-align: top; word-break: break-all; word-wrap: break-word; overflow-wrap: break-word;">
+                    <span style="display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Phone Number</span>
+                    <a href="tel:${data.phoneNumber}" style="display: block; color: #4f46e5; font-size: 13px; font-weight: 600; text-decoration: none; word-break: break-all; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4;">${data.phoneNumber}</a>
+                </td>
+            </tr>`
+    : `
             <tr>
                 <td style="padding: 12px 0 0; vertical-align: top; word-break: break-all; word-wrap: break-word; overflow-wrap: break-word;">
                     <span style="display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Meeting Link</span>
                     <a href="${data.meetLink}" style="display: block; color: #4f46e5; font-size: 13px; font-weight: 600; text-decoration: none; word-break: break-all; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4;">${data.meetLink}</a>
                 </td>
-            </tr>
+            </tr>`;
+
+  return `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 28px; width: 100%; table-layout: fixed;">
+            ${row("Counsellor", data.counsellorName)}
+            ${row("Date", data.date)}
+            ${row("Time", data.time)}
+            ${row("Meeting Platform", isVoice ? "Voice Call" : "Google Meet")}
+            ${contactRow}
         </table>`;
 }
 
 function wrapEmailHtml(heading: string, intro: string, data: CounsellingScheduleEmailData): string {
+  const isVoice = data.preferredMode === "VOICE";
+  const guidelines = isVoice
+    ? `
+                                <ul style="color: #475569; font-size: 13.5px; line-height: 1.7; margin: 0; padding-left: 20px;">
+                                    <li style="margin-bottom: 6px;">Please be available on the phone number below at the scheduled time.</li>
+                                    <li style="margin-bottom: 6px;">Keep your phone charged and nearby a few minutes early.</li>
+                                    <li style="margin-bottom: 0;">Bring any questions related to your career, AI learning path, or Direct2Hire.</li>
+                                </ul>`
+    : `
+                                <ul style="color: #475569; font-size: 13.5px; line-height: 1.7; margin: 0; padding-left: 20px;">
+                                    <li style="margin-bottom: 6px;">Please join the meeting 5-10 minutes before the scheduled time.</li>
+                                    <li style="margin-bottom: 6px;">Keep your internet connection stable.</li>
+                                    <li style="margin-bottom: 0;">Bring any questions related to your career, AI learning path, or Direct2Hire.</li>
+                                </ul>`;
+
+  const cta = isVoice
+    ? `
+                            <div style="text-align: center; margin-bottom: 28px;">
+                                <a href="tel:${data.phoneNumber}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-align: center; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);">
+                                    Call Counsellor →
+                                </a>
+                            </div>`
+    : `
+                            <div style="text-align: center; margin-bottom: 28px;">
+                                <a href="${data.meetLink}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-align: center; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);">
+                                    Join Google Meet →
+                                </a>
+                            </div>`;
+
   return `
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; width: 100%; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
             <tr>
@@ -65,19 +108,11 @@ function wrapEmailHtml(heading: string, intro: string, data: CounsellingSchedule
                             <!-- Guidelines -->
                             <div style="margin-bottom: 28px;">
                                 <p style="font-size: 13px; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Preparation Guidelines:</p>
-                                <ul style="color: #475569; font-size: 13.5px; line-height: 1.7; margin: 0; padding-left: 20px;">
-                                    <li style="margin-bottom: 6px;">Please join the meeting 5-10 minutes before the scheduled time.</li>
-                                    <li style="margin-bottom: 6px;">Keep your internet connection stable.</li>
-                                    <li style="margin-bottom: 0;">Bring any questions related to your career, AI learning path, or Direct2Hire.</li>
-                                </ul>
+                                ${guidelines}
                             </div>
 
                             <!-- CTA Button -->
-                            <div style="text-align: center; margin-bottom: 28px;">
-                                <a href="${data.meetLink}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-align: center; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1), 0 2px 4px -1px rgba(79, 70, 229, 0.06);">
-                                    Join Google Meet →
-                                </a>
-                            </div>
+                            ${cta}
 
                             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
 

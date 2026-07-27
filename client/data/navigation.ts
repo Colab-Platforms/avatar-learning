@@ -7,9 +7,15 @@ export const NAV_ITEMS: NavItem[] = [
   // { label: "Internships", href: "/internships" },
   // { label: "Marketplace", href: "/marketplace" },
   // { label: "Investors", href: "/investors" },
+  // { label: "Contact", href: "/contact" },
+  {
+    label: "Corporate",
+    children: [
+      { label: "Investors", href: "/investors" },
+      { label: "About", href: "/about" },
+    ],
+  },
   { label: "Partners", href: "/partners" },
-  { label: "Contact", href: "/contact" },
-  { label: "About", href: "/about" },
 ];
 
 export const FOOTER_COLUMNS: FooterColumn[] = [

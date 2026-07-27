@@ -99,7 +99,22 @@ export const confirmBooking = async (
             return;
         }
 
-        const { error, value } = validateConfirmCounsellingBooking(req.body);
+        const existing = await counsellingService.getBooking(params.userId);
+        if (!existing) {
+            sendResponse(
+                res,
+                false,
+                null,
+                "Counselling booking not found",
+                STATUS_CODES.NOT_FOUND,
+            );
+            return;
+        }
+
+        const { error, value } = validateConfirmCounsellingBooking(
+            req.body,
+            existing.preferredMode,
+        );
         if (error) {
             sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
             return;
@@ -108,6 +123,7 @@ export const confirmBooking = async (
         const booking = await counsellingService.confirmBooking(
             params.userId,
             value,
+            existing,
         );
         sendResponse(res, true, booking, "Counselling session confirmed");
     } catch (err: unknown) {

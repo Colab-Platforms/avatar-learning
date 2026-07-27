@@ -321,6 +321,16 @@ function toDatetimeLocalValue(value?: string | null) {
   )}:${pad(d.getMinutes())}`;
 }
 
+const PHONE_MIN_DIGITS = 10;
+const PHONE_MAX_DIGITS = 15;
+
+function isValidCounsellingPhoneNumber(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return (
+    digits.length >= PHONE_MIN_DIGITS && digits.length <= PHONE_MAX_DIGITS
+  );
+}
+
 function BookingSection({
   userId,
   booking,
@@ -328,21 +338,53 @@ function BookingSection({
   userId: string;
   booking: NonNullable<AdminD2HStudentProfile["booking"]>;
 }) {
+  const isVoice = booking.preferredMode === "VOICE";
   const [isEditing, setIsEditing] = useState(false);
   const [counsellorName, setCounsellorName] = useState(
     booking.counsellorName ?? "",
   );
   const [meetingLink, setMeetingLink] = useState(booking.meetingLink ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(booking.phoneNumber ?? "");
   const [scheduledAt, setScheduledAt] = useState(
     toDatetimeLocalValue(booking.scheduledAt),
   );
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const confirmMutation = useConfirmCounsellingBooking(userId);
   const isConfirmed = booking.status === "CONFIRMED";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!counsellorName.trim() || !meetingLink.trim() || !scheduledAt) return;
+    if (!counsellorName.trim() || !scheduledAt) return;
+
+    if (isVoice) {
+      const trimmedPhone = phoneNumber.trim();
+      if (!trimmedPhone) {
+        setPhoneError("Phone number is required");
+        return;
+      }
+      if (!isValidCounsellingPhoneNumber(trimmedPhone)) {
+        setPhoneError(
+          `Please provide a valid phone number (${PHONE_MIN_DIGITS}–${PHONE_MAX_DIGITS} digits)`,
+        );
+        return;
+      }
+      setPhoneError(null);
+
+      confirmMutation.mutate(
+        {
+          counsellorName: counsellorName.trim(),
+          phoneNumber: trimmedPhone,
+          scheduledAt: new Date(scheduledAt).toISOString(),
+        },
+        {
+          onSuccess: () => setIsEditing(false),
+        },
+      );
+      return;
+    }
+
+    if (!meetingLink.trim()) return;
 
     confirmMutation.mutate(
       {
@@ -356,8 +398,8 @@ function BookingSection({
     );
   };
 
-  const PreferredModeIcon = booking.preferredMode === "VOICE" ? Phone : Video;
-  const preferredModeLabel = booking.preferredMode === "VOICE" ? "Voice Call" : "Video Call";
+  const PreferredModeIcon = isVoice ? Phone : Video;
+  const preferredModeLabel = isVoice ? "Voice Call" : "Video Call";
 
   return (
     <div className="space-y-6">
@@ -440,17 +482,33 @@ function BookingSection({
                 </div>
 
                 <div className="space-y-1.5 min-w-0">
-                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block">Meeting Link</span>
+                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block">
+                    {isVoice ? "Phone Number" : "Meeting Link"}
+                  </span>
                   <div className="flex items-center gap-2 text-sm min-w-0">
-                    <Video size={14} className="text-brand-400 shrink-0" />
-                    <a
-                      href={booking.meetingLink ?? "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-400 hover:text-brand-300 underline underline-offset-2 truncate"
-                    >
-                      {booking.meetingLink}
-                    </a>
+                    {isVoice ? (
+                      <>
+                        <Phone size={14} className="text-brand-400 shrink-0" />
+                        <a
+                          href={`tel:${booking.phoneNumber ?? ""}`}
+                          className="text-brand-400 hover:text-brand-300 underline underline-offset-2 truncate"
+                        >
+                          {booking.phoneNumber}
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <Video size={14} className="text-brand-400 shrink-0" />
+                        <a
+                          href={booking.meetingLink ?? "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-400 hover:text-brand-300 underline underline-offset-2 truncate"
+                        >
+                          {booking.meetingLink}
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -512,20 +570,43 @@ function BookingSection({
                   />
                 </div>
               </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
-                  <LinkIcon size={11} />
-                  Google Meet URL
-                </label>
-                <input
-                  type="url"
-                  value={meetingLink}
-                  onChange={(e) => setMeetingLink(e.target.value)}
-                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                  required
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
-                />
-              </div>
+              {isVoice ? (
+                <div>
+                  <label className="flex items-center gap-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+                    <Phone size={11} />
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value);
+                      if (phoneError) setPhoneError(null);
+                    }}
+                    placeholder="e.g. +91 98765 43210"
+                    required
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
+                  />
+                  {phoneError && (
+                    <p className="mt-1.5 text-xs text-red-400">{phoneError}</p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="flex items-center gap-1.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-1.5">
+                    <LinkIcon size={11} />
+                    Google Meet URL
+                  </label>
+                  <input
+                    type="url"
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    required
+                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white/90 placeholder-white/25 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-2">
                 <button
                   type="submit"

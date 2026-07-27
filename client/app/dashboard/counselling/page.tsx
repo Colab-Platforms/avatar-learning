@@ -15,12 +15,38 @@ import {
   CalendarClock,
   User2,
   ExternalLink,
+  ChevronDown,
 } from "lucide-react";
 import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
 import { useCounsellingFeedback } from "@/hooks/queries/useCounsellingFeedback";
 import { useCreateCounsellingBooking } from "@/hooks/mutations/useCreateCounsellingBooking";
 import { CourseSelectionPanel } from "@/components/counselling/CourseSelectionPanel";
 import { CounsellorFeedbackCard } from "@/components/counselling/CounsellorFeedbackCard";
+import { cn } from "@/lib/utils";
+import { AnimateOnScroll } from "@/components/ui";
+
+const FAQS = [
+  {
+    q: "What will we discuss?",
+    a: "Your background, goals, strengths, and which AI path (Fundamentals or Social Media) makes most sense. You'll get a simple action plan.",
+  },
+  {
+    q: "Is this a sales call?",
+    a: "No. This is a genuine counseling session focused on giving you clarity, not selling you anything.",
+  },
+  {
+    q: "Voice call or Video call?",
+    a: "You can choose either when you request the session. Both options are available.",
+  },
+  {
+    q: "How long is the session?",
+    a: "Around 30 minutes. We keep it focused and practical.",
+  },
+  {
+    q: "Can I reschedule?",
+    a: "Yes, once free of charge if you inform us at least 12 hours in advance.",
+  },
+];
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -43,6 +69,7 @@ export default function CounsellingPage() {
 
   const [preferredMode, setPreferredMode] = useState<"VOICE" | "VIDEO">("VOICE");
   const [notes, setNotes] = useState("");
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,56 +197,59 @@ export default function CounsellingPage() {
               FAQs
             </h2>
             
-            <div className="space-y-4">
-              {/* FAQ 1 */}
-              <div className="rounded-xl border border-slate-100 p-4 bg-slate-50/50">
-                <h3 className="text-sm font-bold text-slate-900">
-                  What will we discuss?
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  Your background, goals, strengths, and which AI path (Fundamentals or Social Media) makes most sense. You'll get a simple action plan.
-                </p>
-              </div>
-
-              {/* FAQ 2 */}
-              <div className="rounded-xl border border-slate-100 p-4 bg-slate-50/50">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Is this a sales call?
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  No. This is a genuine counseling session focused on giving you clarity, not selling you anything.
-                </p>
-              </div>
-
-              {/* FAQ 3 */}
-              <div className="rounded-xl border border-slate-100 p-4 bg-slate-50/50">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Voice call or Video call?
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  You can choose either when you request the session. Both options are available.
-                </p>
-              </div>
-
-              {/* FAQ 4 */}
-              <div className="rounded-xl border border-slate-100 p-4 bg-slate-50/50">
-                <h3 className="text-sm font-bold text-slate-900">
-                  How long is the session?
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  Around 30 minutes. We keep it focused and practical.
-                </p>
-              </div>
-
-              {/* FAQ 5 */}
-              <div className="rounded-xl border border-slate-100 p-4 bg-slate-50/50">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Can I reschedule?
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  Yes, once free of charge if you inform us at least 12 hours in advance.
-                </p>
-              </div>
+            <div className="flex flex-col gap-2.5 sm:gap-3">
+              {FAQS.map((faq, i) => {
+                const open = openFaq === i;
+                return (
+                  <AnimateOnScroll key={faq.q} delay={i * 60}>
+                    <div
+                      className={cn(
+                        "rounded-2xl border bg-white transition-all duration-300",
+                        open
+                          ? "border-brand-300 shadow-sm"
+                          : "border-border hover:border-border-strong",
+                      )}
+                    >
+                      <button
+                        onClick={() => setOpenFaq(open ? null : i)}
+                        className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 sm:py-5 text-left cursor-pointer"
+                        aria-expanded={open}
+                      >
+                        <span
+                          className={cn(
+                            "text-[15px] font-medium transition-colors duration-250",
+                            open ? "text-brand-600" : "text-text",
+                          )}
+                        >
+                          {faq.q}
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 shrink-0 transition-transform duration-300",
+                            open
+                              ? "rotate-180 text-brand-600"
+                              : "text-text-subtle",
+                          )}
+                        />
+                      </button>
+                      <div
+                        className={cn(
+                          "grid transition-all duration-300 ease-out",
+                          open
+                            ? "grid-rows-[1fr] opacity-100"
+                            : "grid-rows-[0fr] opacity-0",
+                        )}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="px-6 pb-5 text-[13.5px] text-text-muted leading-relaxed whitespace-pre-line">
+                            {faq.a}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </AnimateOnScroll>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -280,17 +310,29 @@ export default function CounsellingPage() {
                         <CalendarClock size={14} className="shrink-0 text-slate-400" />
                         <span>{formatDateTime(booking.scheduledAt)}</span>
                       </div>
-                      {booking.meetingLink && (
-                        <a
-                          href={booking.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
-                        >
-                          <Video size={14} className="shrink-0" />
-                          <span className="truncate">Join Google Meet</span>
-                          <ExternalLink size={12} className="shrink-0" />
-                        </a>
+                      {booking.preferredMode === "VOICE" ? (
+                        booking.phoneNumber && (
+                          <a
+                            href={`tel:${booking.phoneNumber}`}
+                            className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                          >
+                            <Phone size={14} className="shrink-0" />
+                            <span className="truncate">{booking.phoneNumber}</span>
+                          </a>
+                        )
+                      ) : (
+                        booking.meetingLink && (
+                          <a
+                            href={booking.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                          >
+                            <Video size={14} className="shrink-0" />
+                            <span className="truncate">Join Google Meet</span>
+                            <ExternalLink size={12} className="shrink-0" />
+                          </a>
+                        )
                       )}
                     </div>
                   </div>

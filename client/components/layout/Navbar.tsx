@@ -13,6 +13,7 @@ import { logoutThunk } from "@/store/authSlice";
 import { getMyPartner } from "@/lib/partnersApi";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -20,6 +21,8 @@ export function Navbar() {
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [corporateOpen, setCorporateOpen] = useState(false);
+  const [mobileCorporateOpen, setMobileCorporateOpen] = useState(false);
   
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -65,6 +68,14 @@ export function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
+  const isItemActive = (item: (typeof NAV_ITEMS)[0]) => {
+    if (item.href) return isActiveRoute(item.href);
+    if (item.children) {
+      return item.children.some((child) => isActiveRoute(child.href));
+    }
+    return false;
+  };
+
   return (
     <>
       <header className="fixed top-0 inset-x-0 z-50 anim-slide-down bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
@@ -87,11 +98,81 @@ export function Navbar() {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 sm:gap-1.5">
             {NAV_ITEMS.map((item) => {
-              const active = isActiveRoute(item.href);
+              const active = isItemActive(item);
+              if (item.children) {
+                return (
+                  <div
+                    key={item.label}
+                    className="relative group"
+                    onMouseEnter={() => setCorporateOpen(true)}
+                    onMouseLeave={() => setCorporateOpen(false)}
+                  >
+                    <button
+                      className={cn(
+                        "relative inline-flex items-center gap-1 px-3 py-2 text-[13.5px] rounded-lg transition-all duration-200 cursor-pointer group font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50",
+                        active && "text-brand-600 font-bold bg-brand-50/50"
+                      )}
+                    >
+                      {active && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-600 animate-pulse shrink-0" />
+                      )}
+                      <span>{item.label}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 text-slate-400 transition-transform duration-200",
+                          corporateOpen && "rotate-180"
+                        )}
+                      />
+
+                      {/* Bottom underline accent */}
+                      <span
+                        className={cn(
+                          "absolute bottom-0 left-2.5 right-2.5 h-[2.5px] rounded-full transition-all duration-300 origin-left",
+                          active
+                            ? "bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-500 scale-x-100 opacity-100"
+                            : "bg-brand-500 scale-x-0 group-hover:scale-x-100 opacity-0 group-hover:opacity-100"
+                        )}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {corporateOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          className="absolute left-0 top-full mt-1.5 w-44 rounded-xl border border-border bg-white p-1.5 shadow-lg z-50"
+                        >
+                          {item.children.map((child) => {
+                            const childActive = isActiveRoute(child.href);
+                            return (
+                              <Link
+                                key={child.label}
+                                href={child.href}
+                                onClick={() => setCorporateOpen(false)}
+                                className={cn(
+                                  "flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-colors duration-150",
+                                  childActive
+                                    ? "text-brand-600 bg-brand-50/70"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                )}
+                              >
+                                {child.label}
+                              </Link>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.label}
-                  href={item.href}
+                  href={item.href || "#"}
                   className={cn(
                     "relative inline-flex items-center gap-1.5 px-3 py-2 text-[13.5px] rounded-lg transition-all duration-200 group",
                     active
@@ -276,11 +357,66 @@ export function Navbar() {
       >
         <nav className="container-x py-4 flex flex-col gap-1.5">
           {NAV_ITEMS.map((item) => {
-            const active = isActiveRoute(item.href);
+            const active = isItemActive(item);
+            if (item.children) {
+              return (
+                <div key={item.label} className="flex flex-col">
+                  <button
+                    onClick={() => setMobileCorporateOpen(!mobileCorporateOpen)}
+                    className={cn(
+                      "flex items-center justify-between px-4 py-2.5 text-[14px] rounded-xl transition-all duration-150 font-medium text-text-muted hover:text-text hover:bg-surface-alt w-full cursor-pointer",
+                      active && "text-brand-600 font-bold bg-brand-50/60 pl-3.5 border-l-3 border-brand-600"
+                    )}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 text-slate-400 transition-transform duration-200",
+                        mobileCorporateOpen && "rotate-180"
+                      )}
+                    />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {mobileCorporateOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden pl-4 flex flex-col gap-1 mt-1 border-l border-slate-100 ml-4"
+                      >
+                        {item.children.map((child) => {
+                          const childActive = isActiveRoute(child.href);
+                          return (
+                            <Link
+                              key={child.label}
+                              href={child.href}
+                              onClick={() => {
+                                setMobileOpen(false);
+                                setMobileCorporateOpen(false);
+                              }}
+                              className={cn(
+                                "flex items-center px-4 py-2.5 text-[13.5px] rounded-lg transition-all duration-150 font-medium",
+                                childActive
+                                  ? "text-brand-600 bg-brand-50/40"
+                                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                              )}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.label}
-                href={item.href}
+                href={item.href || "#"}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center justify-between px-4 py-2.5 text-[14px] rounded-xl transition-all duration-150",

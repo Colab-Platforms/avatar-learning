@@ -11,6 +11,7 @@ import {
   counsellingFormSections,
   emptyCounsellingFormValues,
   type CounsellingFormValues,
+  type FormFieldConfig,
 } from "@/lib/counselling/formConfig";
 import {
   counsellingSchema,
@@ -27,7 +28,13 @@ interface CounsellingFormProps {
 export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
   const submitMutation = useSubmitCounselling();
   const [activeStep, setActiveStep] = useState(0);
-  const isLastStep = activeStep === counsellingFormSections.length - 1;
+  const [activeFieldIndex, setActiveFieldIndex] = useState(0);
+  const activeSection = counsellingFormSections[activeStep];
+
+  const isLastStep =
+    activeStep === counsellingFormSections.length - 1 &&
+    activeFieldIndex === activeSection.fields.length - 1;
+
   const formTopRef = useRef<HTMLDivElement>(null);
   const isInitialMount = useRef(true);
 
@@ -48,7 +55,6 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
     shouldFocusError: true,
   });
 
-  const activeSection = counsellingFormSections[activeStep];
   const stepLabels = ["Goals", "Personality", "Notes"];
 
   useEffect(() => {
@@ -61,35 +67,44 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
       behavior: "smooth",
       block: "start",
     });
-  }, [activeStep]);
+  }, [activeStep, activeFieldIndex]);
 
-  const getSectionFieldNames = (stepIndex: number) => {
-    const section = counsellingFormSections[stepIndex];
-    const fieldNames = section.fields.map((field) => field.name);
-    const otherFieldNames = section.fields
-      .map((field) => field.otherField)
-      .filter(Boolean) as string[];
-    return [...fieldNames, ...otherFieldNames] as Array<
-      keyof CounsellingFormValues
-    >;
+  const getFieldNames = (field: FormFieldConfig) => {
+    const names = [field.name];
+    if (field.otherField) {
+      names.push(field.otherField);
+    }
+    return names as Array<keyof CounsellingFormValues>;
   };
 
   const handleNext = async () => {
-    const fieldNames = getSectionFieldNames(activeStep);
+    const currentField = activeSection.fields[activeFieldIndex];
+    const fieldNames = getFieldNames(currentField);
     const valid = await trigger(fieldNames, { shouldFocus: true });
     if (valid) {
-      setActiveStep((prev) =>
-        Math.min(prev + 1, counsellingFormSections.length - 1),
-      );
+      if (activeFieldIndex < activeSection.fields.length - 1) {
+        setActiveFieldIndex((prev) => prev + 1);
+      } else if (activeStep < counsellingFormSections.length - 1) {
+        setActiveStep((prev) => prev + 1);
+        setActiveFieldIndex(0);
+      }
     }
   };
 
   const handleBack = () => {
-    if (activeStep === 0 && onCancel) {
-      onCancel();
+    if (activeStep === 0 && activeFieldIndex === 0) {
+      if (onCancel) {
+        onCancel();
+      }
       return;
     }
-    setActiveStep((prev) => Math.max(prev - 1, 0));
+    if (activeFieldIndex > 0) {
+      setActiveFieldIndex((prev) => prev - 1);
+    } else {
+      const prevStep = activeStep - 1;
+      setActiveStep(prevStep);
+      setActiveFieldIndex(counsellingFormSections[prevStep].fields.length - 1);
+    }
   };
 
   const submitForm = handleSubmit(
@@ -101,20 +116,24 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
       }
     },
     async () => {
+      // Find first invalid question and navigate to it
       for (let i = 0; i < counsellingFormSections.length; i++) {
-        const fieldNames = getSectionFieldNames(i);
-        const valid = await trigger(fieldNames, { shouldFocus: true });
-        if (!valid) {
-          setActiveStep(i);
-          break;
+        const section = counsellingFormSections[i];
+        for (let j = 0; j < section.fields.length; j++) {
+          const field = section.fields[j];
+          const fieldNames = getFieldNames(field);
+          const valid = await trigger(fieldNames, { shouldFocus: true });
+          if (!valid) {
+            setActiveStep(i);
+            setActiveFieldIndex(j);
+            return;
+          }
         }
       }
     },
   );
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    // The form has no type="submit" button anymore, so this only fires
-    // via native fallback (e.g. Enter key) — block it unconditionally.
     event.preventDefault();
   };
 
@@ -133,10 +152,28 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
     if (tagName === "TEXTAREA") return;
 
     event.preventDefault();
+
+    // Trigger next or submit when Enter is pressed
+    if (isLastStep) {
+      void submitForm();
+    } else {
+      void handleNext();
+    }
   };
 
-  const progressPercent =
-    ((activeStep + 1) / counsellingFormSections.length) * 100;
+  const totalQuestions = useMemo(() => {
+    return counsellingFormSections.reduce((sum, sec) => sum + sec.fields.length, 0);
+  }, []);
+
+  const currentQuestionIndex = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < activeStep; i++) {
+      count += counsellingFormSections[i].fields.length;
+    }
+    return count + activeFieldIndex;
+  }, [activeStep, activeFieldIndex]);
+
+  const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
   return (
     <div
@@ -154,7 +191,7 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-              Step {activeStep + 1} of {counsellingFormSections.length}
+              Question {currentQuestionIndex + 1} of {totalQuestions}
             </span>
             <span className="text-xs font-semibold text-slate-400">
               {Math.round(progressPercent)}% complete
@@ -253,21 +290,18 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
           <AnimatedHeight durationMs={360}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                key={activeStep}
+                key={`${activeStep}-${activeFieldIndex}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="space-y-4 sm:space-y-5">
-                  {activeSection.fields.map((field) => (
-                    <FormFieldRenderer
-                      key={field.name}
-                      config={field}
-                      control={control}
-                      errors={errors}
-                    />
-                  ))}
+                  <FormFieldRenderer
+                    config={activeSection.fields[activeFieldIndex]}
+                    control={control}
+                    errors={errors}
+                  />
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -275,14 +309,14 @@ export default function CounsellingForm({ onCancel }: CounsellingFormProps) {
 
           <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
             <div className="min-w-[88px]">
-              {(activeStep > 0 || onCancel) && (
+              {(activeStep > 0 || activeFieldIndex > 0 || onCancel) && (
                 <button
                   type="button"
                   onClick={handleBack}
                   className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  {activeStep === 0 ? "Cancel" : "Back"}
+                  {activeStep === 0 && activeFieldIndex === 0 ? "Cancel" : "Back"}
                 </button>
               )}
             </div>

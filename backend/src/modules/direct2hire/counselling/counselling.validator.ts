@@ -360,24 +360,118 @@ const bookingSchema = Joi.object({
 export const validateCounsellingBooking = (data: unknown) =>
   bookingSchema.validate(data, { abortEarly: false });
 
-const confirmBookingSchema = Joi.object({
-  counsellorName: Joi.string().trim().min(1).max(200).required().messages({
+const PHONE_MIN_DIGITS = 10;
+const PHONE_MAX_DIGITS = 15;
+
+/** Digits only after stripping formatting; enforces E.164-ish length. */
+function isValidCounsellingPhoneNumber(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return (
+    digits.length >= PHONE_MIN_DIGITS && digits.length <= PHONE_MAX_DIGITS
+  );
+}
+
+const counsellorNameSchema = Joi.string()
+  .trim()
+  .min(1)
+  .max(200)
+  .required()
+  .messages({
     "any.required": "Counsellor name is required",
     "string.empty": "Counsellor name is required",
-  }),
-  meetingLink: Joi.string().trim().uri().required().messages({
+  });
+
+const scheduledAtSchema = Joi.date().iso().required().messages({
+  "any.required": "Date and time are required",
+  "date.base": "Please provide a valid date and time",
+});
+
+const meetingLinkRequiredSchema = Joi.string()
+  .trim()
+  .uri()
+  .required()
+  .messages({
     "any.required": "Google Meet URL is required",
     "string.empty": "Google Meet URL is required",
     "string.uri": "Please provide a valid URL",
-  }),
-  scheduledAt: Joi.date().iso().required().messages({
-    "any.required": "Date and time are required",
-    "date.base": "Please provide a valid date and time",
-  }),
+  });
+
+const phoneNumberRequiredSchema = Joi.string()
+  .trim()
+  .required()
+  .custom((value, helpers) => {
+    if (!isValidCounsellingPhoneNumber(value)) {
+      return helpers.error("phone.invalid");
+    }
+    return value;
+  })
+  .messages({
+    "any.required": "Phone number is required",
+    "string.empty": "Phone number is required",
+    "phone.invalid": `Please provide a valid phone number (${PHONE_MIN_DIGITS}–${PHONE_MAX_DIGITS} digits)`,
+  });
+
+/** VIDEO: meeting link required; phone number ignored / stripped. */
+const confirmVideoBookingSchema = Joi.object({
+  counsellorName: counsellorNameSchema,
+  meetingLink: meetingLinkRequiredSchema,
+  phoneNumber: Joi.any().strip(),
+  scheduledAt: scheduledAtSchema,
 });
 
-export const validateConfirmCounsellingBooking = (data: unknown) =>
-  confirmBookingSchema.validate(data, { abortEarly: false });
+/** VOICE: phone number required; meeting link ignored / stripped. */
+const confirmVoiceBookingSchema = Joi.object({
+  counsellorName: counsellorNameSchema,
+  phoneNumber: phoneNumberRequiredSchema,
+  meetingLink: Joi.any().strip(),
+  scheduledAt: scheduledAtSchema,
+});
+
+export type ConfirmCounsellingBookingInput = {
+  counsellorName: string;
+  scheduledAt: Date;
+  meetingLink?: string;
+  phoneNumber?: string;
+};
+
+/**
+ * Mode-aware confirm payload validation.
+ * preferredMode must come from the stored booking (never from the client body).
+ */
+export const validateConfirmCounsellingBooking = (
+  data: unknown,
+  preferredMode: string,
+): Joi.ValidationResult<ConfirmCounsellingBookingInput> => {
+  if (preferredMode === "VOICE") {
+    return confirmVoiceBookingSchema.validate(data, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+  }
+
+  if (preferredMode === "VIDEO") {
+    return confirmVideoBookingSchema.validate(data, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+  }
+
+  return {
+    error: new Joi.ValidationError(
+      "Invalid counselling mode on booking",
+      [
+        {
+          message: "Invalid counselling mode on booking",
+          path: ["preferredMode"],
+          type: "any.invalid",
+          context: { label: "preferredMode", key: "preferredMode" },
+        },
+      ],
+      data,
+    ),
+    value: undefined as unknown as ConfirmCounsellingBookingInput,
+  };
+};
 
 export {
   careerFieldOptions,

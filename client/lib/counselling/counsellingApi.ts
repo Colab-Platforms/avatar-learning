@@ -111,6 +111,7 @@ export interface CounsellingBooking {
   status: string;
   counsellorName: string | null;
   meetingLink: string | null;
+  phoneNumber: string | null;
   scheduledAt: string | null;
   counsellingCompleted: boolean;
   counsellingCompletedAt: string | null;

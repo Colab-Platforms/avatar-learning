@@ -7,7 +7,8 @@ export interface ApiResponse<T> {
 }
 export interface NavItem {
   label: string;
-  href: string;
+  href?: string;
+  children?: Array<{ label: string; href: string }>;
 }
 
 export interface CourseModule {

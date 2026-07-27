@@ -195,7 +195,7 @@ export default function CounsellingRecommendation({
               </p>
             </div>
           </div>
-          {recommendation?.confidenceScore && (
+          {/* {recommendation?.confidenceScore && (
             <div className="hidden sm:flex items-center gap-2 rounded-full bg-blue-50/70 border border-blue-100/50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-2xs">
               <Award className="h-3.5 w-3.5" />
               <span>
@@ -207,7 +207,7 @@ export default function CounsellingRecommendation({
                 })()}
               </span>
             </div>
-          )}
+          )} */}
         </motion.div>
 
         {recommendationStatus === "pending" && !recommendation && (
@@ -267,11 +267,11 @@ export default function CounsellingRecommendation({
                     </h3>
                   </div>
 
-                  {recommendation.summary && (
+                  {/* {recommendation.summary && (
                     <p className="text-sm leading-relaxed text-slate-600 font-medium">
                       {recommendation.summary}
                     </p>
-                  )}
+                  )} */}
 
                   {/* <div className="pt-1 flex flex-wrap gap-3">
                     <Link

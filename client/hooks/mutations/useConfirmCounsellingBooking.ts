@@ -21,8 +21,9 @@ export function useConfirmCounsellingBooking(userId: string) {
   return useMutation({
     mutationFn: (payload: {
       counsellorName: string;
-      meetingLink: string;
       scheduledAt: string;
+      meetingLink?: string;
+      phoneNumber?: string;
     }) => confirmD2HBooking(userId, payload),
     onSuccess: async () => {
       toast.success("Counselling session confirmed");

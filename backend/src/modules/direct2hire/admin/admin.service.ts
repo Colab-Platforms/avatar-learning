@@ -181,6 +181,7 @@ export class Direct2HireAdminService {
             status: true,
             counsellorName: true,
             meetingLink: true,
+            phoneNumber: true,
             scheduledAt: true,
             createdAt: true,
             counsellingCompleted: true,

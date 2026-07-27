@@ -70,12 +70,37 @@ const WHO_FOR = [
   },
 ];
 
-const OUTCOMES = [
-  "Complete clarity on the right career path for you — no more second-guessing",
-  "A personalized, step-by-step roadmap mapped to your goals and timeline",
-  "Practical, in-demand AI skills that employers are actively hiring for",
-  "Real, hands-on experience through a guided internship, not just theory",
-  "Active placement support until you land an offer, not just a certificate",
+const OUTCOME_ITEMS = [
+  {
+    highlight: "Complete clarity",
+    rest: " on the right career path for you — no more second-guessing.",
+    icon: Target,
+    bg: "bg-blue-50/80 text-blue-600 border-blue-100",
+  },
+  {
+    highlight: "Personalized roadmap",
+    rest: " mapped step-by-step to your goals and timeline.",
+    icon: Route,
+    bg: "bg-emerald-50/80 text-emerald-600 border-emerald-100",
+  },
+  {
+    highlight: "Practical AI skills",
+    rest: " that top employers are actively hiring for.",
+    icon: Bot,
+    bg: "bg-purple-50/80 text-purple-600 border-purple-100",
+  },
+  {
+    highlight: "Hands-on experience",
+    rest: " through a guided internship, not just theory.",
+    icon: Briefcase,
+    bg: "bg-amber-50/80 text-amber-600 border-amber-100",
+  },
+  {
+    highlight: "Active placement support",
+    rest: " until you land an offer, not just a certificate.",
+    icon: FileCheck2,
+    bg: "bg-rose-50/80 text-rose-600 border-rose-100",
+  },
 ];
 
 const JOURNEY_STEPS = [
@@ -908,23 +933,30 @@ export default function Direct2HirePage() {
 
               <div className="lg:col-span-3">
                 <AnimateOnScroll delay={100}>
-                  <div className="rounded-2xl border border-border bg-white p-2 sm:p-3">
-                    {OUTCOMES.map((outcome, i) => (
-                      <div
-                        key={outcome}
-                        className={cn(
-                          "flex items-start gap-3.5 px-4 sm:px-5 py-3 sm:py-4",
-                          i !== OUTCOMES.length - 1 && "border-b border-border",
-                        )}
-                      >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200 mt-0.5">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        </span>
-                        <p className="text-[14px] sm:text-[15px] text-text leading-relaxed">
-                          {outcome}
-                        </p>
-                      </div>
-                    ))}
+                  <div className="rounded-2xl border border-border bg-white p-2.5 sm:p-3.5 shadow-sm hover:border-brand-200/80 transition-all duration-300">
+                    {OUTCOME_ITEMS.map((item, i) => {
+                      const Icon = item.icon;
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            "flex items-start gap-4 px-4 sm:px-5 py-3.5 sm:py-4.5 hover:bg-slate-50/40 rounded-xl transition-colors duration-200",
+                            i !== OUTCOME_ITEMS.length - 1 && "border-b border-border",
+                          )}
+                        >
+                          <span className={cn(
+                            "flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg border shadow-xs transition-transform duration-300 hover:scale-105",
+                            item.bg
+                          )}>
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <p className="text-[14px] sm:text-[15px] text-text-muted leading-relaxed">
+                            <strong className="font-semibold text-text">{item.highlight}</strong>
+                            {item.rest}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </AnimateOnScroll>
               </div>

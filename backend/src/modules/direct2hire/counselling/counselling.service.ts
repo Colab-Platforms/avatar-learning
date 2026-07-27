@@ -294,9 +294,15 @@ export class CounsellingService {
 
   async confirmBooking(
     userId: string,
-    data: { counsellorName: string; meetingLink: string; scheduledAt: string },
+    data: {
+      counsellorName: string;
+      scheduledAt: Date | string;
+      meetingLink?: string;
+      phoneNumber?: string;
+    },
+    existingBooking?: Awaited<ReturnType<CounsellingService["getBooking"]>>,
   ) {
-    const existing = await this.getBooking(userId);
+    const existing = existingBooking ?? (await this.getBooking(userId));
     if (!existing) {
       throw new ApiError(
         "Counselling booking not found",
@@ -305,14 +311,25 @@ export class CounsellingService {
     }
 
     const wasAlreadyScheduled = existing.status === "CONFIRMED";
+    const isVoice = existing.preferredMode === "VOICE";
 
     const booking = await prisma.counsellingBooking.update({
       where: { userId },
       data: {
         counsellorName: data.counsellorName,
-        meetingLink: data.meetingLink,
         scheduledAt: new Date(data.scheduledAt),
         status: "CONFIRMED",
+        // Persist only the contact channel for this mode; clear the other
+        // so edits / mode mismatches never leave stale VIDEO+VOICE fields.
+        ...(isVoice
+          ? {
+              phoneNumber: data.phoneNumber!.trim(),
+              meetingLink: null,
+            }
+          : {
+              meetingLink: data.meetingLink!.trim(),
+              phoneNumber: null,
+            }),
       },
     });
 
@@ -540,7 +557,12 @@ export class CounsellingService {
     const studentName =
       nameFromUser || user.direct2HireLead?.fullName || "Student";
 
-    if (!booking.scheduledAt || !booking.counsellorName || !booking.meetingLink) {
+    const isVoice = booking.preferredMode === "VOICE";
+    const hasContact = isVoice
+      ? Boolean(booking.phoneNumber)
+      : Boolean(booking.meetingLink);
+
+    if (!booking.scheduledAt || !booking.counsellorName || !hasContact) {
       return;
     }
 
@@ -558,7 +580,9 @@ export class CounsellingService {
           hour: "2-digit",
           minute: "2-digit",
         }),
+        preferredMode: isVoice ? "VOICE" : "VIDEO",
         meetLink: booking.meetingLink,
+        phoneNumber: booking.phoneNumber,
       },
       kind,
     );
