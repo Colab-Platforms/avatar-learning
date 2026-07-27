@@ -37,6 +37,11 @@ function StatusBadge({ status }: { status: string }) {
       className: "bg-red-500/10 text-red-400 border-red-500/25",
       icon: <XCircle size={12} />,
     },
+    COOLDOWN: {
+      label: "Cooldown",
+      className: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+      icon: <AlertCircle size={12} />,
+    },
     EXHAUSTED: {
       label: "Attempts Exhausted",
       className: "bg-orange-500/10 text-orange-400 border-orange-500/25",

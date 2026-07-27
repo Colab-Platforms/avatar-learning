@@ -12,6 +12,7 @@ export type AssessmentPerformanceStatus =
   | "IN_PROGRESS"
   | "PASSED"
   | "FAILED"
+  | "COOLDOWN"
   | "EXHAUSTED";
 
 export interface AssessmentAttemptSummary {
@@ -59,6 +60,8 @@ export interface AssessmentSummary {
   lastAttemptAt: string | null;
   canStartNew: boolean;
   canRetake: boolean;
+  nextAttemptAvailableAt?: string | null;
+  cooldownActive?: boolean;
   attempt: AssessmentAttemptSummary | null;
   inProgressAttempt?: AssessmentAttemptSummary | null;
   latestAttempt?: AssessmentAttemptSummary | null;
@@ -179,6 +182,8 @@ export interface AttemptResult {
     attemptsUsed: number;
     remainingAttempts: number | null;
     canRetake: boolean;
+    nextAttemptAvailableAt?: string | null;
+    cooldownActive?: boolean;
   };
 }
 
@@ -214,6 +219,9 @@ export interface AttemptHistoryResponse {
     attemptsUsed: number;
     remainingAttempts: number | null;
     lastAttemptAt: string | null;
+    nextAttemptAvailableAt?: string | null;
+    cooldownActive?: boolean;
+    canRetake?: boolean;
   };
   attempts: AttemptHistoryItem[];
 }

@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight,
   ClipboardList,
@@ -12,10 +14,12 @@ import {
   Target,
 } from "lucide-react";
 import { AssessmentStatusBadge } from "@/components/assessment/AssessmentStatusBadge";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { LearningBreadcrumbs } from "@/components/learning/LearningBreadcrumbs";
 import { useLearningRoutes } from "@/components/learning/LearningRouteContext";
 import { useAssessmentDetail } from "@/hooks/queries/useAssessment";
 import { useStartAssessmentAttempt } from "@/hooks/mutations/useStartAssessmentAttempt";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { useAppSelector } from "@/store/hooks";
 
 export function AssessmentIntroView({
@@ -27,6 +31,7 @@ export function AssessmentIntroView({
 }) {
   const routes = useLearningRoutes();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
 
   const { data: assessment, isLoading, isError, error } = useAssessmentDetail(
@@ -34,6 +39,13 @@ export function AssessmentIntroView({
     assessmentId,
   );
   const startAttempt = useStartAssessmentAttempt(courseId);
+
+  const handleCooldownExpire = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.assessmentDetail(courseId, assessmentId),
+    });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+  }, [assessmentId, courseId, queryClient]);
 
   if (!authUser) {
     router.replace("/login");
@@ -57,6 +69,14 @@ export function AssessmentIntroView({
         : "Weekly Assessment";
 
   const inProgress = assessment?.inProgressAttempt ?? null;
+  const exhausted =
+    assessment?.status === "EXHAUSTED" ||
+    (assessment?.type === "FINAL" && assessment.remainingAttempts === 0);
+  const inCooldown =
+    assessment?.type === "FINAL" &&
+    !exhausted &&
+    !!assessment.cooldownActive &&
+    !!assessment.nextAttemptAvailableAt;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-2xl mx-auto">
@@ -151,12 +171,23 @@ export function AssessmentIntroView({
           <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-6 text-xs text-amber-800 leading-relaxed">
             Once started, stay on this tab — switching away is tracked and repeated
             switches will auto-submit your attempt. The timer cannot be paused.
+            {assessment.type === "FINAL" && (
+              <> A 12-hour cooldown applies after a failed attempt before you can retake.</>
+            )}
           </div>
 
           {assessment.unlockStatus === "LOCKED" && (
             <p className="text-sm text-slate-500 mb-4">
               {assessment.lockReason ?? "This assessment is locked."}
             </p>
+          )}
+
+          {inCooldown && assessment.nextAttemptAvailableAt && (
+            <AttemptCooldownCountdown
+              availableAt={assessment.nextAttemptAvailableAt}
+              onExpire={handleCooldownExpire}
+              className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-4 text-sm text-amber-900"
+            />
           )}
 
           {startAttempt.isError && (
@@ -175,7 +206,7 @@ export function AssessmentIntroView({
                 Resume Attempt
                 <ChevronRight size={16} />
               </Link>
-            ) : assessment.canStartNew || assessment.canRetake ? (
+            ) : inCooldown ? null : assessment.canStartNew || assessment.canRetake ? (
               <button
                 type="button"
                 onClick={handleStart}
@@ -193,7 +224,7 @@ export function AssessmentIntroView({
                     : "Start Assessment"}
                 {!startAttempt.isPending && <ChevronRight size={16} />}
               </button>
-            ) : (
+            ) : exhausted ? (
               <button
                 type="button"
                 disabled
@@ -201,7 +232,7 @@ export function AssessmentIntroView({
               >
                 Maximum Attempts Reached
               </button>
-            )}
+            ) : null}
 
             {assessment.totalAttempts > 0 && (
               <Link

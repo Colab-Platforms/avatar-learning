@@ -119,6 +119,33 @@ function ResourceRow({ res }: { res: DBResource }) {
   );
 }
 
+function formatCompactCooldown(availableAt: string, nowMs: number): string {
+  const remaining = new Date(availableAt).getTime() - nowMs;
+  if (remaining <= 0) return "Cooldown ended · retake available";
+  const totalSec = Math.max(0, Math.ceil(remaining / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `Next attempt in ${h}h ${m}m ${s.toString().padStart(2, "0")}s`;
+  if (m > 0) return `Next attempt in ${m}m ${s.toString().padStart(2, "0")}s`;
+  return `Next attempt in ${s}s`;
+}
+
+function getBestScorePercent(
+  assessment: LessonAssessmentCard | AssessmentSummary,
+): number | null {
+  if ("bestScorePercent" in assessment && assessment.bestScorePercent != null) {
+    return assessment.bestScorePercent;
+  }
+  return assessment.attempt?.scorePercent ?? null;
+}
+
+function isAssessmentSummary(
+  assessment: LessonAssessmentCard | AssessmentSummary | null | undefined,
+): assessment is AssessmentSummary {
+  return assessment != null && "canStartNew" in assessment;
+}
+
 function SidebarAssessmentRow({
   assessment,
   label,
@@ -127,47 +154,100 @@ function SidebarAssessmentRow({
   label: string;
 }) {
   const routes = useLearningRoutes();
+  const isFinal = assessment.type === "FINAL";
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  const cooldownAt =
+    isFinal &&
+    isAssessmentSummary(assessment) &&
+    assessment.cooldownActive &&
+    assessment.nextAttemptAvailableAt
+      ? assessment.nextAttemptAvailableAt
+      : null;
+
+  useEffect(() => {
+    if (!cooldownAt) return;
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [cooldownAt]);
+
   const locked = assessment.unlockStatus === "LOCKED";
-  // With unlimited weekly retakes, treat a prior completion as still actionable
+  const inProgress = assessment.unlockStatus === "IN_PROGRESS";
   const completed =
     assessment.unlockStatus !== "IN_PROGRESS" &&
     assessment.unlockStatus !== "LOCKED" &&
     Boolean(assessment.attempt && assessment.attempt.status !== "IN_PROGRESS");
-  const inProgress = assessment.unlockStatus === "IN_PROGRESS";
+
+  const remainingAttempts =
+    isAssessmentSummary(assessment) ? assessment.remainingAttempts : null;
+  const status =
+    isAssessmentSummary(assessment) ? assessment.status : undefined;
+  const exhausted =
+    isFinal &&
+    (status === "EXHAUSTED" ||
+      remainingAttempts === 0 ||
+      assessment.unlockStatus === "COMPLETED");
+  const inCooldown = Boolean(cooldownAt) && !exhausted;
 
   const href =
     inProgress && assessment.attempt
       ? routes.attempt(assessment.attempt.id)
       : routes.assessment(assessment.id);
 
-  const statusText = completed
-    ? assessment.attempt?.scorePercent != null
-      ? `Best ${Math.round(
-          ("bestScorePercent" in assessment &&
-          assessment.bestScorePercent != null
-            ? assessment.bestScorePercent
-            : assessment.attempt.scorePercent) ?? 0,
-        )}% · Retake anytime`
-      : "Completed · Retake anytime"
-    : inProgress
-      ? "In progress — resume"
-      : locked
-        ? "Complete topics to unlock"
-        : `${assessment.questionCount} questions · Start`;
+  const bestPct = getBestScorePercent(assessment);
+  const scorePrefix =
+    bestPct != null ? `Best ${Math.round(bestPct)}%` : "Completed";
+
+  let statusText: string;
+  if (inProgress) {
+    statusText = "In progress — resume";
+  } else if (locked) {
+    statusText = isFinal
+      ? "Complete weekly assessments to unlock"
+      : "Complete topics to unlock";
+  } else if (isFinal && inCooldown && cooldownAt) {
+    statusText = formatCompactCooldown(cooldownAt, nowMs);
+  } else if (isFinal && exhausted) {
+    statusText =
+      bestPct != null
+        ? `Best ${Math.round(bestPct)}% · Max attempts reached`
+        : "Max attempts reached";
+  } else if (isFinal && completed) {
+    statusText =
+      remainingAttempts != null
+        ? `${scorePrefix} · ${remainingAttempts} attempt${remainingAttempts === 1 ? "" : "s"} left`
+        : `${scorePrefix} · Limited attempts`;
+  } else if (completed) {
+    // Weekly — unlimited retakes
+    statusText =
+      bestPct != null
+        ? `Best ${Math.round(bestPct)}% · Retake anytime`
+        : "Completed · Retake anytime";
+  } else {
+    statusText = `${assessment.questionCount} questions · Start`;
+  }
 
   const content = (
     <>
       <span
         className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-          completed
-            ? "bg-emerald-100 text-emerald-600"
-            : locked
-              ? "bg-slate-100 text-slate-400"
-              : "bg-brand-50 text-brand-600"
+          exhausted
+            ? "bg-slate-100 text-slate-500"
+            : completed && !inCooldown
+              ? "bg-emerald-100 text-emerald-600"
+              : locked
+                ? "bg-slate-100 text-slate-400"
+                : inCooldown
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-brand-50 text-brand-600"
         }`}
       >
         {locked ? (
           <Lock size={10} />
+        ) : exhausted ? (
+          <Target size={10} />
+        ) : inCooldown ? (
+          <Clock size={10} />
         ) : completed ? (
           <CheckCircle size={11} />
         ) : (
@@ -193,7 +273,10 @@ function SidebarAssessmentRow({
       <div
         className="w-full flex items-center gap-2.5 pl-14 pr-4 py-2.5 border-l-2 border-transparent opacity-55"
         title={
-          assessment.lockReason ?? "Complete this week's topics to unlock."
+          assessment.lockReason ??
+          (isFinal
+            ? "Complete all weekly assessments to unlock."
+            : "Complete this week's topics to unlock.")
         }
       >
         {content}
@@ -1196,22 +1279,64 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
                     if (
                       finalAssessment &&
                       (finalAssessment.unlockStatus === "AVAILABLE" ||
-                        finalAssessment.unlockStatus === "IN_PROGRESS")
+                        finalAssessment.unlockStatus === "IN_PROGRESS" ||
+                        finalAssessment.unlockStatus === "COMPLETED")
                     ) {
-                      const href =
-                        finalAssessment.unlockStatus === "IN_PROGRESS" &&
-                        finalAssessment.attempt
-                          ? routes.attempt(finalAssessment.attempt.id)
-                          : routes.assessment(finalAssessment.id);
+                      const finalSummary = isAssessmentSummary(finalAssessment)
+                        ? finalAssessment
+                        : null;
+                      const finalExhausted =
+                        finalSummary?.status === "EXHAUSTED" ||
+                        finalSummary?.remainingAttempts === 0 ||
+                        finalAssessment.unlockStatus === "COMPLETED";
+                      const finalCooldown =
+                        !!finalSummary?.cooldownActive &&
+                        !!finalSummary?.nextAttemptAvailableAt &&
+                        !finalExhausted;
+
+                      if (finalAssessment.unlockStatus === "IN_PROGRESS" && finalAssessment.attempt) {
+                        return (
+                          <Link
+                            href={routes.attempt(finalAssessment.attempt.id)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors cursor-pointer shadow-sm"
+                          >
+                            <ClipboardList size={14} />
+                            Resume Final Assessment
+                          </Link>
+                        );
+                      }
+
+                      if (finalExhausted) {
+                        return (
+                          <Link
+                            href={routes.assessment(finalAssessment.id)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-sm"
+                          >
+                            <ClipboardList size={14} />
+                            View Final Assessment
+                          </Link>
+                        );
+                      }
+
+                      if (finalCooldown && finalSummary?.nextAttemptAvailableAt) {
+                        return (
+                          <Link
+                            href={routes.assessment(finalAssessment.id)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 transition-colors cursor-pointer shadow-sm"
+                          >
+                            <Clock size={14} />
+                            Final Assessment · Cooldown Active
+                          </Link>
+                        );
+                      }
+
                       return (
                         <Link
-                          href={href}
+                          href={routes.assessment(finalAssessment.id)}
                           className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors cursor-pointer shadow-sm"
                         >
                           <ClipboardList size={14} />
-                          {finalAssessment.unlockStatus === "IN_PROGRESS"
-                            ? "Resume Final Assessment"
-                            : "Take Final Assessment"}
+                          Take Final Assessment
                         </Link>
                       );
                     }

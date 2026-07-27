@@ -1,14 +1,17 @@
 "use client";
 
-import { use } from "react";
+import { use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, RotateCcw } from "lucide-react";
 import { AssessmentResultView } from "@/components/assessment/AssessmentResultView";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { usePlacementResult } from "@/hooks/queries/usePlacementResult";
 import { usePlacementAssessment } from "@/hooks/queries/usePlacementAssessment";
 import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { useStartPlacementAttempt } from "@/hooks/mutations/useStartPlacementAttempt";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { useAppSelector } from "@/store/hooks";
 
 interface PageProps {
@@ -18,6 +21,7 @@ interface PageProps {
 export default function PlacementResultPage({ params }: PageProps) {
   const { attemptId } = use(params);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
   const { data: selection } = useCourseSelection();
   const courseId = selection?.selectedCourse?.id ?? "";
@@ -25,6 +29,11 @@ export default function PlacementResultPage({ params }: PageProps) {
   const { data: result, isLoading, isError, error } = usePlacementResult(attemptId);
   const { data: placement } = usePlacementAssessment(courseId);
   const startAttempt = useStartPlacementAttempt(courseId);
+
+  const handleCooldownExpire = useCallback(() => {
+    if (!courseId) return;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.placementAssessment(courseId) });
+  }, [courseId, queryClient]);
 
   if (!authUser) {
     router.replace("/login");
@@ -41,12 +50,12 @@ export default function PlacementResultPage({ params }: PageProps) {
   };
 
   const passed = result?.attempt.isPassed;
-  // Prefer remainingAttempts over canStartNewAttempt — the latter is false while an
-  // in-progress attempt is still in the cache (common right after submit before refetch).
-  const canRetake =
+  const canRetake = !!placement && placement.canStartNewAttempt;
+  const inCooldown =
     !!placement &&
     !placement.hasPassed &&
-    placement.remainingAttempts > 0;
+    placement.cooldownActive &&
+    !!placement.nextAttemptAvailableAt;
   const attemptsExhausted =
     !!placement &&
     !placement.hasPassed &&
@@ -84,6 +93,14 @@ export default function PlacementResultPage({ params }: PageProps) {
         {result && (
           <div className="space-y-5">
             <AssessmentResultView result={result} />
+
+            {passed === false && inCooldown && placement?.nextAttemptAvailableAt && (
+              <AttemptCooldownCountdown
+                availableAt={placement.nextAttemptAvailableAt}
+                onExpire={handleCooldownExpire}
+                className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-900"
+              />
+            )}
 
             {passed === false && canRetake && (
               <>

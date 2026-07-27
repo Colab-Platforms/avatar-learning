@@ -35,8 +35,9 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
     description: "",
     timeLimitMinutes: 30,
     passingScorePercent: 60,
-    questionsPerAttempt: 20,
+    questionsPerAttempt: 30,
     maxTabSwitchWarnings: 3,
+    maxAttempts: 2,
   });
 
   const [showAddQuestion, setShowAddQuestion] = useState(false);
@@ -76,8 +77,9 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
     description: "",
     timeLimitMinutes: 30,
     passingScorePercent: 60,
-    questionsPerAttempt: 20,
+    questionsPerAttempt: 30,
     maxTabSwitchWarnings: 3,
+    maxAttempts: 2,
   });
   const [creating, setCreating] = useState(false);
 
@@ -93,6 +95,7 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
         passingScorePercent: createForm.passingScorePercent,
         questionsPerAttempt: createForm.questionsPerAttempt,
         maxTabSwitchWarnings: createForm.maxTabSwitchWarnings,
+        maxAttempts: createForm.maxAttempts,
       });
       await load();
     } catch (err: unknown) {
@@ -112,6 +115,7 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
       passingScorePercent: assessment.passingScorePercent,
       questionsPerAttempt: assessment.questionsPerAttempt,
       maxTabSwitchWarnings: assessment.maxTabSwitchWarnings,
+      maxAttempts: assessment.maxAttempts,
     });
     setEditingMeta(true);
   };
@@ -129,6 +133,7 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
         passingScorePercent: metaForm.passingScorePercent,
         questionsPerAttempt: metaForm.questionsPerAttempt,
         maxTabSwitchWarnings: metaForm.maxTabSwitchWarnings,
+        maxAttempts: metaForm.maxAttempts,
       });
       setEditingMeta(false);
       await load();
@@ -257,6 +262,16 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
               required
             />
           </Field>
+          <Field label="Max Attempts" required>
+            <input
+              type="number"
+              min={1}
+              value={createForm.maxAttempts}
+              onChange={(e) => setCreateForm((f) => ({ ...f, maxAttempts: Number(e.target.value) }))}
+              className={inputCls}
+              required
+            />
+          </Field>
           <Field label="Max Tab-Switch Warnings" required>
             <input
               type="number"
@@ -339,6 +354,16 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
                 required
               />
             </Field>
+            <Field label="Max Attempts" required>
+              <input
+                type="number"
+                min={1}
+                value={metaForm.maxAttempts}
+                onChange={(e) => setMetaForm((f) => ({ ...f, maxAttempts: Number(e.target.value) }))}
+                className={inputCls}
+                required
+              />
+            </Field>
             <Field label="Max Tab-Switch Warnings" required>
               <input
                 type="number"
@@ -383,16 +408,24 @@ export function PlacementEditor({ courseId }: { courseId: string }) {
                   {assessment.questions.length} question{assessment.questions.length !== 1 ? "s" : ""} in bank
                 </span>
                 <span>{assessment.questionsPerAttempt} per attempt</span>
+                <span>{assessment.maxAttempts} max attempts</span>
                 <span>{assessment.passingScorePercent}% to pass</span>
                 <span>{assessment.maxTabSwitchWarnings} tab-switch warnings allowed</span>
                 <span className="flex items-center gap-1.5">
                   <Users size={12} /> {assessment._count.attempts} attempt{assessment._count.attempts !== 1 ? "s" : ""}
                 </span>
               </div>
+              {assessment.questions.length < assessment.questionsPerAttempt * Math.min(2, assessment.maxAttempts) && (
+                <p className="mt-3 text-xs text-amber-400">
+                  Recommended bank size is at least {assessment.questionsPerAttempt * Math.min(2, assessment.maxAttempts)}{" "}
+                  questions ({assessment.questionsPerAttempt} per attempt × complementary attempts) so students get a
+                  full non-overlapping pool across attempts.
+                </p>
+              )}
               {assessment.questions.length < assessment.questionsPerAttempt && (
                 <p className="mt-3 text-xs text-amber-400">
                   Add at least {assessment.questionsPerAttempt} questions before publishing — students need a full
-                  random pool to start an attempt.
+                  pool to start an attempt.
                 </p>
               )}
             </div>

@@ -25,6 +25,11 @@ const STATUS_META: Record<
     className: "bg-red-50 text-red-700",
     icon: XCircle,
   },
+  COOLDOWN: {
+    label: "Cooldown",
+    className: "bg-amber-50 text-amber-800",
+    icon: Clock3,
+  },
   EXHAUSTED: {
     label: "Max Attempts Reached",
     className: "bg-slate-800 text-white",

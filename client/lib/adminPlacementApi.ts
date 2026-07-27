@@ -24,6 +24,7 @@ export interface AdminPlacementAssessment {
   passingScorePercent: number;
   questionsPerAttempt: number;
   maxTabSwitchWarnings: number;
+  maxAttempts: number;
   isPublished: boolean;
   questions: AdminPlacementQuestion[];
   _count: { attempts: number };
@@ -64,6 +65,7 @@ export const createPlacementAssessment = (
     passingScorePercent?: number;
     questionsPerAttempt?: number;
     maxTabSwitchWarnings?: number;
+    maxAttempts?: number;
   },
 ): Promise<AdminPlacementAssessment> =>
   apiClient.post(`/admin/courses/${courseId}/placement-assessment`, payload).then((r) => r.data.data);
@@ -117,6 +119,7 @@ export type AdminPlacementStatus =
   | "IN_PROGRESS"
   | "PASSED"
   | "FAILED"
+  | "COOLDOWN"
   | "EXHAUSTED";
 
 export interface AdminStudentPlacementSummary {
@@ -132,6 +135,8 @@ export interface AdminStudentPlacementSummary {
     canStartNewAttempt: boolean;
     assessmentCompleted: boolean;
     assessmentCompletionDate: string | null;
+    nextAttemptAvailableAt: string | null;
+    cooldownActive: boolean;
     highestScore: number | null;
     latestScore: number | null;
     currentStatus: AdminPlacementStatus;

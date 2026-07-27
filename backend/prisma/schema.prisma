@@ -1244,9 +1244,10 @@ model PlacementAssessment {
 
   timeLimitMinutes     Int @map("time_limit_minutes")
   passingScorePercent  Int @default(60) @map("passing_score_percent")
-  questionsPerAttempt  Int @default(20) @map("questions_per_attempt")
+  // Default 30: attempt 1 draws 30 from a 60-question bank; attempt 2 uses the complementary 30.
+  questionsPerAttempt  Int @default(30) @map("questions_per_attempt")
   maxTabSwitchWarnings Int @default(3) @map("max_tab_switch_warnings")
-  maxAttempts          Int @default(3) @map("max_attempts")
+  maxAttempts          Int @default(2) @map("max_attempts")
 
   isPublished Boolean @default(false) @map("is_published")
 
@@ -1310,8 +1311,8 @@ model PlacementAttempt {
 
   attemptNumber Int @default(1) @map("attempt_number")
 
-  // Randomized subset of question IDs chosen at attempt-start, order-preserved.
-  // Guarantees refreshes never reshuffle, while a fresh attempt (retake) re-randomizes.
+  // Assigned question IDs for this attempt (order = display order). Persisted at start so
+  // refreshes never reshuffle. Attempt 1 picks a random half; attempt 2 uses the remainder.
   questionIds String[] @map("question_ids")
 
   startedAt       DateTime  @default(now()) @map("started_at")

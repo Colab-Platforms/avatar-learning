@@ -1,21 +1,31 @@
 "use client";
 
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ClipboardList, Clock, HelpCircle, ShieldAlert, Target } from "lucide-react";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { usePlacementAssessment } from "@/hooks/queries/usePlacementAssessment";
 import { useStartPlacementAttempt } from "@/hooks/mutations/useStartPlacementAttempt";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { useAppSelector } from "@/store/hooks";
 
 export default function PlacementAssessmentIntroPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
   const { data: selection, isLoading: selectionLoading } = useCourseSelection();
   const courseId = selection?.selectedCourse?.id ?? "";
 
   const { data: assessment, isLoading, isError, error } = usePlacementAssessment(courseId);
   const startAttempt = useStartPlacementAttempt(courseId);
+
+  const handleCooldownExpire = useCallback(() => {
+    if (!courseId) return;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.placementAssessment(courseId) });
+  }, [courseId, queryClient]);
 
   if (!authUser) {
     router.replace("/login");
@@ -111,12 +121,13 @@ export default function PlacementAssessmentIntroPage() {
 
             <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 mb-4 text-xs text-slate-600 leading-relaxed space-y-1">
               <p>
-                &bull; {assessment.questionsPerAttempt} questions are randomly selected from a larger question bank
-                for every attempt.
+                &bull; Each attempt includes {assessment.questionsPerAttempt} questions. Your first attempt draws a
+                random set; a second attempt uses the remaining questions (no repeats).
               </p>
               <p>&bull; All questions are multiple choice.</p>
               <p>&bull; The timer auto-submits your attempt when it reaches zero.</p>
               <p>&bull; Refreshing the page will not change your selected questions or reset the timer.</p>
+              <p>&bull; After a failed first attempt, a 12-hour cooldown applies before attempt 2.</p>
               <p>&bull; Results are shown immediately after submission.</p>
             </div>
 
@@ -141,6 +152,14 @@ export default function PlacementAssessmentIntroPage() {
               </div>
             )}
 
+            {assessment.cooldownActive && assessment.nextAttemptAvailableAt && (
+              <AttemptCooldownCountdown
+                availableAt={assessment.nextAttemptAvailableAt}
+                onExpire={handleCooldownExpire}
+                className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-4 text-sm text-amber-900"
+              />
+            )}
+
             {assessment.hasPassed && (
               <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-4 text-sm text-emerald-800">
                 <p className="font-semibold">Assessment passed — no further attempts allowed.</p>
@@ -153,7 +172,7 @@ export default function PlacementAssessmentIntroPage() {
               </div>
             )}
 
-            {!assessment.attempt && assessment.remainingAttempts > 0 && !assessment.hasPassed && (
+            {!assessment.attempt && assessment.canStartNewAttempt && (
               <button
                 type="button"
                 onClick={handleStart}

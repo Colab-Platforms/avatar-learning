@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback } from "react";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Award,
@@ -16,6 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { PlacementAttemptCard } from "@/components/placement/PlacementAttemptCard";
 import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { usePlacementAssessment } from "@/hooks/queries/usePlacementAssessment";
@@ -28,6 +31,7 @@ import {
   type MockInterviewStatus,
 } from "@/lib/direct2hire/mockInterviewApi";
 import { formatDateTime } from "@/lib/formatters";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { cn } from "@/lib/utils";
 
 function StatusBadge({
@@ -50,6 +54,14 @@ function StatusBadge({
       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide bg-orange-50 text-orange-700 border-orange-200">
         <AlertCircle size={12} />
         Attempts Exhausted
+      </span>
+    );
+  }
+  if (status === "COOLDOWN") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide bg-amber-50 text-amber-800 border-amber-200">
+        <Clock size={12} />
+        Cooldown
       </span>
     );
   }
@@ -126,6 +138,7 @@ function getMockInterviewCardContent(status?: MockInterviewStatus | null) {
 }
 
 export default function DashboardPlacementPage() {
+  const queryClient = useQueryClient();
   const { data: selection, isLoading: selectionLoading } = useCourseSelection();
   const courseId = selection?.selectedCourse?.id ?? "";
 
@@ -138,6 +151,11 @@ export default function DashboardPlacementPage() {
 
   const { data: attemptHistory, isLoading: historyLoading } = usePlacementAttemptHistory(courseId);
   const { data: mockInterviewBundle } = useMockInterview();
+
+  const handleCooldownExpire = useCallback(() => {
+    if (!courseId) return;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.placementAssessment(courseId) });
+  }, [courseId, queryClient]);
 
   const isLoading = selectionLoading || (!!courseId && placementLoading);
 
@@ -201,11 +219,12 @@ export default function DashboardPlacementPage() {
 
   if (!placement) return null;
 
-  const attempt = placement.attempt;
+  const attempt = placement.attempt?.status === "IN_PROGRESS" ? placement.attempt : null;
   const latestAttempt = placement.latestAttempt;
   const assessmentPassed = placement.hasPassed;
   const exhausted = placement.currentStatus === "EXHAUSTED";
-  const canStart = !assessmentPassed && placement.remainingAttempts > 0 && !attempt;
+  const inCooldown = placement.cooldownActive && !!placement.nextAttemptAvailableAt;
+  const canStart = placement.canStartNewAttempt && !attempt;
 
   const assessmentAction = attempt
     ? { label: "Resume Assessment", href: `/dashboard/placement/assessment/attempt/${attempt.id}`, show: true }
@@ -221,7 +240,7 @@ export default function DashboardPlacementPage() {
           ? {
               label: "View Last Results",
               href: `/dashboard/placement/assessment/results/${latestAttempt.id}`,
-              show: !exhausted,
+              show: !exhausted || inCooldown,
             }
           : { label: "Start Assessment", href: `/dashboard/placement/assessment`, show: false };
 
@@ -358,6 +377,14 @@ export default function DashboardPlacementPage() {
                     Contact your administrator if you experienced a technical issue.
                   </p>
                 </div>
+              )}
+
+              {inCooldown && placement.nextAttemptAvailableAt && (
+                <AttemptCooldownCountdown
+                  availableAt={placement.nextAttemptAvailableAt}
+                  onExpire={handleCooldownExpire}
+                  className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-900"
+                />
               )}
             </div>
 

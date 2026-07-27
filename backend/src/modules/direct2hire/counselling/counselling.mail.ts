@@ -1,5 +1,7 @@
 import { resend, FROM_EMAIL, APP_NAME } from "@/utils/mailer.js";
 
+const LOGO_URL = `${process.env.FRONTEND_URL || "http://localhost:3000"}/favicon.png`;
+
 export interface CounsellingScheduleEmailData {
   studentName: string;
   counsellorName: string;
@@ -94,7 +96,8 @@ function wrapEmailHtml(heading: string, intro: string, data: CounsellingSchedule
                         
                         <!-- Header Logo -->
                         <div style="padding: 24px 24px; text-align: center; border-bottom: 1px solid #f1f5f9;">
-                            <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">${APP_NAME}</span>
+                            <img src="${LOGO_URL}" alt="${APP_NAME}" width="32" height="32" style="display: inline-block; vertical-align: middle; margin-right: 8px; border-radius: 6px;" />
+                            <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; vertical-align: middle;">${APP_NAME}</span>
                         </div>
 
                         <!-- Body Content -->

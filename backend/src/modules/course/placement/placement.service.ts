@@ -14,16 +14,10 @@ import {
   getNextAttemptNumber,
   getPlacementAttemptAllowance,
   getPlacementAttemptHistory,
+  getPreviouslyAssignedQuestionIds,
+  resolvePlacementCurrentStatus,
+  selectQuestionIdsForAttempt,
 } from "./placement.attempt-policy.js";
-
-function shuffle<T>(items: T[]): T[] {
-  const arr = [...items];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
 
 // ─── Admin Service ────────────────────────────────────────────────────────────
 
@@ -204,15 +198,13 @@ export class AdminPlacementService {
         ...allowance,
         highestScore,
         latestScore: latestAttempt?.scorePercent ?? null,
-        currentStatus: allowance.hasPassed
-          ? "PASSED"
-          : activeAttempt
-            ? "IN_PROGRESS"
-            : allowance.attemptsUsed > 0 && allowance.remainingAttempts === 0
-              ? "EXHAUSTED"
-              : allowance.attemptsUsed > 0
-                ? "FAILED"
-                : "NOT_STARTED",
+        currentStatus: resolvePlacementCurrentStatus({
+          hasPassed: allowance.hasPassed,
+          hasActiveAttempt: !!activeAttempt,
+          attemptsUsed: allowance.attemptsUsed,
+          remainingAttempts: allowance.remainingAttempts,
+          cooldownActive: allowance.cooldownActive,
+        }),
       },
     };
   }
@@ -409,15 +401,14 @@ export class UserPlacementService {
       return best == null ? attempt.scorePercent : Math.max(best, attempt.scorePercent);
     }, null);
 
-    const currentStatus = allowance.hasPassed
-      ? "PASSED"
-      : activeAttempt
-        ? "IN_PROGRESS"
-        : allowance.attemptsUsed > 0 && allowance.remainingAttempts === 0
-          ? "EXHAUSTED"
-          : allowance.attemptsUsed > 0
-            ? "FAILED"
-            : "NOT_STARTED";
+    const hasActiveAttempt = !!activeAttempt && activeAttempt.status === "IN_PROGRESS";
+    const currentStatus = resolvePlacementCurrentStatus({
+      hasPassed: allowance.hasPassed,
+      hasActiveAttempt,
+      attemptsUsed: allowance.attemptsUsed,
+      remainingAttempts: allowance.remainingAttempts,
+      cooldownActive: allowance.cooldownActive,
+    });
 
     return {
       id: assessment.id,
@@ -428,7 +419,7 @@ export class UserPlacementService {
       questionsPerAttempt: assessment.questionsPerAttempt,
       maxTabSwitchWarnings: assessment.maxTabSwitchWarnings,
       totalQuestionCount: assessment.questions.length,
-      attempt: activeAttempt,
+      attempt: hasActiveAttempt ? activeAttempt : null,
       latestAttempt,
       mockInterviewUnlocked: allowance.hasPassed,
       defaultMaxAttempts: allowance.defaultMaxAttempts,
@@ -437,9 +428,11 @@ export class UserPlacementService {
       attemptsUsed: allowance.attemptsUsed,
       remainingAttempts: allowance.remainingAttempts,
       hasPassed: allowance.hasPassed,
-      canStartNewAttempt: allowance.canStartNewAttempt && !activeAttempt,
+      canStartNewAttempt: allowance.canStartNewAttempt && !hasActiveAttempt,
       assessmentCompleted: allowance.assessmentCompleted,
       assessmentCompletionDate: allowance.assessmentCompletionDate,
+      nextAttemptAvailableAt: allowance.nextAttemptAvailableAt,
+      cooldownActive: allowance.cooldownActive,
       highestScore,
       latestScore: latestAttempt?.scorePercent ?? null,
       currentStatus,
@@ -487,11 +480,32 @@ export class UserPlacementService {
         STATUS_CODES.CONFLICT,
       );
     }
-    if (!allowance.canStartNewAttempt) {
+    if (allowance.remainingAttempts <= 0) {
       throw new ApiError("Maximum assessment attempts reached.", STATUS_CODES.CONFLICT);
     }
+    if (allowance.cooldownActive && allowance.nextAttemptAvailableAt) {
+      throw new ApiError(
+        `Next attempt available after ${allowance.nextAttemptAvailableAt.toISOString()}. A 12-hour cooldown applies after a failed first attempt.`,
+        STATUS_CODES.CONFLICT,
+      );
+    }
+    if (!allowance.canStartNewAttempt) {
+      throw new ApiError("You cannot start a new attempt right now.", STATUS_CODES.CONFLICT);
+    }
 
-    const questionIds = shuffle(assessment.questions.map((q) => q.id)).slice(0, assessment.questionsPerAttempt);
+    const previouslyAssigned = await getPreviouslyAssignedQuestionIds(userId, assessment.id);
+    const questionIds = selectQuestionIdsForAttempt(
+      assessment.questions.map((q) => q.id),
+      previouslyAssigned,
+      assessment.questionsPerAttempt,
+    );
+    if (questionIds.length < assessment.questionsPerAttempt) {
+      throw new ApiError(
+        `This assessment needs at least ${assessment.questionsPerAttempt} questions to start`,
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+
     const attemptNumber = await getNextAttemptNumber(userId, assessment.id);
 
     return prisma.placementAttempt.create({

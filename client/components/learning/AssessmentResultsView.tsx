@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Clock,
@@ -20,8 +21,10 @@ import {
   formatDurationSeconds,
   ScoreStat,
 } from "@/components/assessment/AssessmentStatusBadge";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { useAssessmentResult } from "@/hooks/queries/useAssessmentResult";
 import { useStartAssessmentAttempt } from "@/hooks/mutations/useStartAssessmentAttempt";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { useAppSelector } from "@/store/hooks";
 
 export function AssessmentResultsView({
@@ -34,11 +37,21 @@ export function AssessmentResultsView({
   const id = courseId;
   const routes = useLearningRoutes();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
   const [starting, setStarting] = useState(false);
 
   const { data: result, isLoading, isError, error } = useAssessmentResult(attemptId);
   const startAttempt = useStartAssessmentAttempt(id);
+
+  const handleCooldownExpire = useCallback(() => {
+    if (!result) return;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessmentResult(attemptId) });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.assessmentDetail(courseId, result.assessment.id),
+    });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+  }, [attemptId, courseId, queryClient, result]);
 
   if (!authUser) {
     router.replace("/login");
@@ -59,6 +72,16 @@ export function AssessmentResultsView({
   };
 
   const isWeekly = result?.assessment.type === "WEEKLY";
+  const inCooldown =
+    !isWeekly &&
+    !!result?.summary.cooldownActive &&
+    !!result.summary.nextAttemptAvailableAt;
+  const canRetake = !!result?.summary.canRetake && !inCooldown;
+  const exhausted =
+    !isWeekly &&
+    result?.summary.remainingAttempts != null &&
+    result.summary.remainingAttempts <= 0;
+
   const typeLabel =
     result?.assessment.type === "FINAL"
       ? "Final Assessment"
@@ -98,11 +121,13 @@ export function AssessmentResultsView({
                   </h1>
                   <AssessmentStatusBadge
                     status={
-                      result.attempt.isPassed
-                        ? "PASSED"
-                        : result.attempt.isPassed === false
-                          ? "FAILED"
-                          : result.summary.status
+                      result.summary.status === "COOLDOWN"
+                        ? "COOLDOWN"
+                        : result.attempt.isPassed
+                          ? "PASSED"
+                          : result.attempt.isPassed === false
+                            ? "FAILED"
+                            : result.summary.status
                     }
                   />
                 </div>
@@ -203,6 +228,21 @@ export function AssessmentResultsView({
                   </div>
                 )}
 
+                {inCooldown && result.summary.nextAttemptAvailableAt && (
+                  <AttemptCooldownCountdown
+                    availableAt={result.summary.nextAttemptAvailableAt}
+                    onExpire={handleCooldownExpire}
+                    className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-4 text-sm text-amber-900"
+                  />
+                )}
+
+                {exhausted && (
+                  <p className="text-xs text-slate-600 mb-4 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
+                    Maximum attempts reached. You can still review your attempt history
+                    and results.
+                  </p>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-2.5">
                   <Link
                     href={routes.assessments}
@@ -210,7 +250,7 @@ export function AssessmentResultsView({
                   >
                     Back to Assessments
                   </Link>
-                  {isWeekly && result.summary.canRetake && (
+                  {canRetake && (
                     <button
                       type="button"
                       onClick={handleRetake}
@@ -218,7 +258,11 @@ export function AssessmentResultsView({
                       className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
                     >
                       <RefreshCw size={14} />
-                      {starting ? "Starting…" : "Attempt Again"}
+                      {starting
+                        ? "Starting…"
+                        : isWeekly
+                          ? "Attempt Again"
+                          : "Retake Assessment"}
                     </button>
                   )}
                   <Link

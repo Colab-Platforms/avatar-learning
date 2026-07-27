@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight,
   Clock,
@@ -18,8 +19,10 @@ import {
   formatRelativeAttemptDate,
   ScoreStat,
 } from "@/components/assessment/AssessmentStatusBadge";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { useAssessmentHistory } from "@/hooks/queries/useAssessment";
 import { useStartAssessmentAttempt } from "@/hooks/mutations/useStartAssessmentAttempt";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { useAppSelector } from "@/store/hooks";
 
 export function AssessmentHistoryView({
@@ -32,11 +35,21 @@ export function AssessmentHistoryView({
   const id = courseId;
   const routes = useLearningRoutes();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
   const [starting, setStarting] = useState(false);
 
   const { data, isLoading, isError, error } = useAssessmentHistory(id, assessmentId);
   const startAttempt = useStartAssessmentAttempt(id);
+
+  const handleCooldownExpire = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.assessmentHistory(courseId, assessmentId),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.assessmentDetail(courseId, assessmentId),
+    });
+  }, [assessmentId, courseId, queryClient]);
 
   if (!authUser) {
     router.replace("/login");
@@ -56,9 +69,16 @@ export function AssessmentHistoryView({
   };
 
   const isWeekly = data?.assessment.type === "WEEKLY";
-  const canRetake =
-    isWeekly ||
-    (data?.summary.remainingAttempts != null && data.summary.remainingAttempts > 0);
+  const exhausted =
+    !isWeekly &&
+    data?.summary.remainingAttempts != null &&
+    data.summary.remainingAttempts <= 0;
+  const inCooldown =
+    !isWeekly &&
+    !exhausted &&
+    !!data?.summary.cooldownActive &&
+    !!data.summary.nextAttemptAvailableAt;
+  const canRetake = isWeekly ? true : !!data?.summary.canRetake;
 
   return (
         <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-3xl mx-auto">
@@ -120,7 +140,15 @@ export function AssessmentHistoryView({
                   />
                 </div>
 
-                {canRetake && (
+                {inCooldown && data.summary.nextAttemptAvailableAt && (
+                  <AttemptCooldownCountdown
+                    availableAt={data.summary.nextAttemptAvailableAt}
+                    onExpire={handleCooldownExpire}
+                    className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-4 text-sm text-amber-900"
+                  />
+                )}
+
+                {canRetake && !inCooldown && (
                   <button
                     type="button"
                     onClick={handleRetake}

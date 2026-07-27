@@ -1,6 +1,8 @@
 "use client";
 
+import { useCallback } from "react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ClipboardList,
   Clock,
@@ -15,6 +17,8 @@ import {
 import type { AssessmentSummary } from "@/lib/assessmentApi";
 import { createLearningRoutes } from "@/lib/learningRoutes";
 import { useLearningRoutesOptional } from "@/components/learning/LearningRouteContext";
+import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import {
   AssessmentStatusBadge,
   formatRelativeAttemptDate,
@@ -32,6 +36,7 @@ export function AssessmentCard({
   onStart: (assessmentId: string) => void;
   starting: boolean;
 }) {
+  const queryClient = useQueryClient();
   const ctxRoutes = useLearningRoutesOptional();
   const routes = ctxRoutes ?? createLearningRoutes(courseId, "public");
   const locked = assessment.unlockStatus === "LOCKED";
@@ -39,7 +44,21 @@ export function AssessmentCard({
     assessment.unlockStatus === "IN_PROGRESS" ||
     assessment.status === "IN_PROGRESS";
   const isWeekly = assessment.type === "WEEKLY";
-  const exhausted = assessment.status === "EXHAUSTED";
+  const exhausted =
+    assessment.status === "EXHAUSTED" ||
+    (!isWeekly && assessment.remainingAttempts === 0);
+  const inCooldown =
+    !isWeekly &&
+    !exhausted &&
+    !!assessment.cooldownActive &&
+    !!assessment.nextAttemptAvailableAt;
+
+  const handleCooldownExpire = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.assessmentDetail(courseId, assessment.id),
+    });
+  }, [assessment.id, courseId, queryClient]);
 
   const historyHref = routes.assessmentHistory(assessment.id);
   const resumeHref = assessment.inProgressAttempt?.id
@@ -147,6 +166,14 @@ export function AssessmentCard({
           </p>
         )}
 
+        {inCooldown && assessment.nextAttemptAvailableAt && (
+          <AttemptCooldownCountdown
+            availableAt={assessment.nextAttemptAvailableAt}
+            onExpire={handleCooldownExpire}
+            className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-4 text-sm text-amber-900"
+          />
+        )}
+
         <div className="flex flex-col sm:flex-row gap-2.5">
           {locked ? (
             <button
@@ -163,7 +190,7 @@ export function AssessmentCard({
             >
               <PlayCircle size={14} /> Resume Attempt
             </Link>
-          ) : assessment.totalAttempts === 0 ? (
+          ) : inCooldown ? null : assessment.totalAttempts === 0 ? (
             <button
               type="button"
               disabled={starting || !assessment.canStartNew}
@@ -193,7 +220,7 @@ export function AssessmentCard({
               <RefreshCw size={14} />
               {starting ? "Starting…" : "Retake Assessment"}
             </button>
-          ) : (
+          ) : exhausted ? (
             <button
               type="button"
               disabled
@@ -201,7 +228,7 @@ export function AssessmentCard({
             >
               Maximum Attempts Reached
             </button>
-          )}
+          ) : null}
 
           {assessment.totalAttempts > 0 && (
             <Link

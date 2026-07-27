@@ -10,6 +10,7 @@ import {
   WEEKLY_QUESTION_COUNT,
   FINAL_QUESTION_COUNT,
   DEFAULT_FINAL_MAX_ATTEMPTS,
+  FINAL_ATTEMPT_COOLDOWN_MS,
 } from "./assessment.types.js";
 
 const TERMINAL_STATUSES: AssessmentAttemptStatus[] = [
@@ -303,6 +304,7 @@ type PerformanceStatus =
   | "IN_PROGRESS"
   | "PASSED"
   | "FAILED"
+  | "COOLDOWN"
   | "EXHAUSTED";
 
 type UnlockStatus = "LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED";
@@ -480,10 +482,27 @@ export class UserAssessmentService {
       maxAttempts == null ? null : Math.max(0, maxAttempts - attemptsUsed);
     const exhausted = maxAttempts != null && remainingAttempts === 0 && !inProgress;
 
+    // 12h cooldown applies only to FINAL retakes after a failed attempt.
+    let nextAttemptAvailableAt: Date | null = null;
+    let cooldownActive = false;
+    if (
+      assessment.type === "FINAL" &&
+      !inProgress &&
+      !exhausted &&
+      remainingAttempts != null &&
+      remainingAttempts > 0 &&
+      latest?.submittedAt &&
+      latest.isPassed === false
+    ) {
+      nextAttemptAvailableAt = new Date(latest.submittedAt.getTime() + FINAL_ATTEMPT_COOLDOWN_MS);
+      cooldownActive = Date.now() < nextAttemptAvailableAt.getTime();
+    }
+
     let status: PerformanceStatus = "NOT_ATTEMPTED";
     if (inProgress) status = "IN_PROGRESS";
     else if (exhausted) status = "EXHAUSTED";
     else if (terminal.some((a) => a.isPassed === true)) status = "PASSED";
+    else if (cooldownActive) status = "COOLDOWN";
     else if (terminal.length > 0) status = "FAILED";
 
     return {
@@ -500,8 +519,13 @@ export class UserAssessmentService {
       maxAttempts,
       attemptsUsed,
       remainingAttempts,
-      canStartNew: !inProgress && (maxAttempts == null || attemptsUsed < maxAttempts),
+      canStartNew:
+        !inProgress &&
+        !cooldownActive &&
+        (maxAttempts == null || attemptsUsed < maxAttempts),
       exhausted,
+      nextAttemptAvailableAt,
+      cooldownActive,
     };
   }
 
@@ -584,6 +608,8 @@ export class UserAssessmentService {
       canRetake: assessment.type === "WEEKLY"
         ? unlockStatus !== "LOCKED"
         : stats.canStartNew && unlockStatus !== "LOCKED",
+      nextAttemptAvailableAt: stats.nextAttemptAvailableAt,
+      cooldownActive: stats.cooldownActive,
       // Keep `attempt` as the actionable one (in-progress preferred, else latest)
       attempt: stats.inProgressAttempt ?? stats.latestAttempt,
       inProgressAttempt: stats.inProgressAttempt,
@@ -700,6 +726,12 @@ export class UserAssessmentService {
         attemptsUsed: stats.attemptsUsed,
         remainingAttempts: stats.remainingAttempts,
         lastAttemptAt: stats.lastAttemptAt,
+        nextAttemptAvailableAt: stats.nextAttemptAvailableAt,
+        cooldownActive: stats.cooldownActive,
+        canRetake:
+          assessment.type === "WEEKLY"
+            ? true
+            : stats.canStartNew,
       },
       attempts: attempts.map((a) => ({
         id: a.id,
@@ -748,6 +780,18 @@ export class UserAssessmentService {
       });
       if (used >= maxAttempts) {
         throw new ApiError("Maximum assessment attempts reached", STATUS_CODES.CONFLICT);
+      }
+    }
+
+    // FINAL-only 12h cooldown after a failed attempt
+    if (assessment.type === "FINAL") {
+      const allAttempts = await this.loadAttemptsForAssessments(userId, [assessment.id]);
+      const stats = this.computeStats(allAttempts, assessment);
+      if (stats.cooldownActive && stats.nextAttemptAvailableAt) {
+        throw new ApiError(
+          `Next attempt available after ${stats.nextAttemptAvailableAt.toISOString()}. A 12-hour cooldown applies after a failed final assessment attempt.`,
+          STATUS_CODES.CONFLICT,
+        );
       }
     }
 
@@ -979,6 +1023,8 @@ export class UserAssessmentService {
         totalAttempts: stats.totalAttempts,
         attemptsUsed: stats.attemptsUsed,
         remainingAttempts: stats.remainingAttempts,
+        nextAttemptAvailableAt: stats.nextAttemptAvailableAt,
+        cooldownActive: stats.cooldownActive,
         canRetake:
           assessment.type === "WEEKLY"
             ? unlockStatus !== "LOCKED"

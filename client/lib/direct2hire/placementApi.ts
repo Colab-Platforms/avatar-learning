@@ -7,6 +7,7 @@ export type PlacementAssessmentStatus =
   | "IN_PROGRESS"
   | "PASSED"
   | "FAILED"
+  | "COOLDOWN"
   | "EXHAUSTED";
 
 export interface PlacementAttemptSummary {
@@ -61,6 +62,8 @@ export interface PlacementSummary {
   canStartNewAttempt: boolean;
   assessmentCompleted: boolean;
   assessmentCompletionDate: string | null;
+  nextAttemptAvailableAt: string | null;
+  cooldownActive: boolean;
   highestScore: number | null;
   latestScore: number | null;
   currentStatus: PlacementAssessmentStatus;
