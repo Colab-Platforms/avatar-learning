@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -13,6 +13,7 @@ import {
   type LeadFormValues,
 } from "@/lib/counselling/counsellingSchema";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
+import { upsertDirect2HireLead } from "@/lib/direct2hire/leadApi";
 import type { RootState } from "@/store";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,8 @@ export default function Direct2HireEnrollPage() {
   const router = useRouter();
   const { user, hasHydrated } = useSelector((state: RootState) => state.auth);
   const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
+  const [savingLead, setSavingLead] = useState(false);
+  const [leadError, setLeadError] = useState("");
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -73,6 +76,20 @@ export default function Direct2HireEnrollPage() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    setLeadError("");
+    setSavingLead(true);
+    try {
+      // Persist details before touching the payment gateway, so we still have
+      // a lead on file even if the user abandons or the payment fails.
+      await upsertDirect2HireLead(values);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setSavingLead(false);
+      setLeadError(e?.response?.data?.message ?? "Couldn't save your details. Please try again.");
+      return;
+    }
+    setSavingLead(false);
+
     checkoutStarted.current = true;
     await enroll(values);
   });
@@ -253,10 +270,15 @@ export default function Direct2HireEnrollPage() {
 
             <button
               type="submit"
-              disabled={processing}
+              disabled={processing || savingLead}
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
-              {processing ? (
+              {savingLead ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving Details…
+                </>
+              ) : processing ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Processing Payment…
@@ -268,9 +290,15 @@ export default function Direct2HireEnrollPage() {
 
             <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Payments are secured and verified server-side. Your details are
-              only saved after a successful payment.
+              Your details are saved as soon as you submit, before payment —
+              payments themselves are secured and verified server-side.
             </p>
+
+            {leadError && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {leadError}
+              </div>
+            )}
 
             {message && (
               <div
