@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CreditCard, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, ShieldCheck, Tag, X } from "lucide-react";
 import { useSelector } from "react-redux";
 import {
   emptyLeadFormValues,
@@ -14,6 +14,7 @@ import {
 } from "@/lib/counselling/counsellingSchema";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 import { upsertDirect2HireLead } from "@/lib/direct2hire/leadApi";
+import { applyCoupon, type ApplyCouponResponse } from "@/lib/paymentApi";
 import type { RootState } from "@/store";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,10 @@ export default function Direct2HireEnrollPage() {
   const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
   const [savingLead, setSavingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [couponApplying, setCouponApplying] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<ApplyCouponResponse | null>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -75,6 +80,29 @@ export default function Direct2HireEnrollPage() {
     values: defaultValues,
   });
 
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponError("");
+    setCouponApplying(true);
+    try {
+      const result = await applyCoupon(code);
+      setAppliedCoupon(result);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setAppliedCoupon(null);
+      setCouponError(e?.response?.data?.message ?? "Invalid coupon code");
+    } finally {
+      setCouponApplying(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     setLeadError("");
     setSavingLead(true);
@@ -91,7 +119,7 @@ export default function Direct2HireEnrollPage() {
     setSavingLead(false);
 
     checkoutStarted.current = true;
-    await enroll(values);
+    await enroll(values, appliedCoupon?.code);
   });
 
   if (!authorized) {
@@ -268,6 +296,70 @@ export default function Direct2HireEnrollPage() {
               </div>
             </div>
 
+            {/* coupon code */}
+            <div className="mt-6">
+              <label htmlFor="couponCode" className={labelCls}>
+                Coupon Code
+              </label>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-emerald-800">
+                    <Tag className="h-4 w-4" />
+                    <span className="font-semibold">{appliedCoupon.code}</span>
+                    <span>applied — {appliedCoupon.discountPercent}% off</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="rounded-lg p-1 text-emerald-700 hover:bg-emerald-100"
+                    aria-label="Remove coupon"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    id="couponCode"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    placeholder="Enter coupon code"
+                    className={cn(inputCls, "flex-1")}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={couponApplying || !couponInput.trim()}
+                    className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {couponApplying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                  </button>
+                </div>
+              )}
+              {couponError && (
+                <p className="mt-1.5 text-xs text-red-600">{couponError}</p>
+              )}
+            </div>
+
+            {appliedCoupon && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Original amount</span>
+                  <span className="line-through">
+                    ₹{appliedCoupon.originalAmount.toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-emerald-700">
+                  <span>Discount ({appliedCoupon.discountPercent}%)</span>
+                  <span>-₹{appliedCoupon.discountAmount.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 font-bold text-slate-800">
+                  <span>You pay</span>
+                  <span>₹{appliedCoupon.finalAmount.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={processing || savingLead}
@@ -284,7 +376,9 @@ export default function Direct2HireEnrollPage() {
                   Processing Payment…
                 </>
               ) : (
-                <>Pay ₹999 &amp; Continue</>
+                <>
+                  Pay ₹{(appliedCoupon?.finalAmount ?? 999).toLocaleString("en-IN")} &amp; Continue
+                </>
               )}
             </button>
 

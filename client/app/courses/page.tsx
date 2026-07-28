@@ -1,35 +1,32 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
   X,
   BookOpen,
   Clock,
-  Users,
   ArrowRight,
   Layers,
   ChevronDown,
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge, Button, ScrollReveal } from "@/components/ui";
+import { ScrollReveal } from "@/components/ui";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { type DBCourse, type PaginatedResponse } from "@/lib/coursesApi";
 import { useCourses } from "@/hooks/queries/useCourses";
-import { useAppSelector } from "@/store/hooks";
 
 /* ─────────────────────────── types / constants ─────────────────────────── */
 
 type Level = "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-type PriceFilter = "ALL" | "FREE" | "PAID";
 type SortBy = "NEWEST" | "PRICE_ASC" | "PRICE_DESC";
 
 const LEVELS: { value: Level; label: string }[] = [
@@ -39,10 +36,14 @@ const LEVELS: { value: Level; label: string }[] = [
   { value: "ADVANCED", label: "Advanced" },
 ];
 
-const PRICE_OPTIONS: { value: PriceFilter; label: string }[] = [
-  { value: "ALL", label: "Any Price" },
-  { value: "FREE", label: "Free" },
-  { value: "PAID", label: "Paid" },
+// quick-pick presets, both bounds inclusive. "" = no bound. Clicking fills the min/max inputs.
+const PRICE_PRESETS: { label: string; min: string; max: string }[] = [
+  { label: "Price", min: "", max: "" },
+  { label: "Free", min: "0", max: "0" },
+  { label: "Under ₹2,500", min: "", max: "2499" },
+  { label: "₹2,500 - ₹5,000", min: "2500", max: "5000" },
+  { label: "₹5,000 - ₹10,000", min: "5001", max: "10000" },
+  { label: "Above ₹10,000", min: "10001", max: "" },
 ];
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -83,16 +84,8 @@ function SkeletonCard() {
 /* ─────────────────────────── course card ───────────────────────────────── */
 
 function CourseCard({ course }: { course: DBCourse }) {
-  const router = useRouter();
-  const { user } = useAppSelector((s) => s.auth);
   const isFree = course.price === 0;
   const isComingSoon = course.isComingSoon;
-
-  const handleEnroll = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (isComingSoon) return;
-    if (!user) router.push("/login");
-  };
 
   return (
     <Link
@@ -119,18 +112,16 @@ function CourseCard({ course }: { course: DBCourse }) {
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-slate-50"
-          >
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
             <BookOpen className="h-10 w-10 text-slate-300" />
           </div>
         )}
         {/* gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
 
-        {/* price badge */}
-        <div className="absolute top-3 right-3 z-10">
-          {isComingSoon ? (
+        {/* coming soon badge */}
+        {isComingSoon && (
+          <div className="absolute top-3 right-3 z-10">
             <span
               className="inline-flex items-center rounded-full border border-amber-200
                              bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[11px]
@@ -138,24 +129,8 @@ function CourseCard({ course }: { course: DBCourse }) {
             >
               COMING SOON
             </span>
-          ) : isFree ? (
-            <span
-              className="inline-flex items-center rounded-full border border-emerald-200
-                             bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[11px]
-                             font-bold text-emerald-700 shadow-sm"
-            >
-              FREE
-            </span>
-          ) : (
-            <span
-              className="inline-flex items-center rounded-full border border-slate-200
-                             bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[11px]
-                             font-bold text-slate-800 shadow-sm"
-            >
-              ₹{course.price.toLocaleString("en-IN")}
-            </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* category pill */}
         {course.category && (
@@ -179,7 +154,7 @@ function CourseCard({ course }: { course: DBCourse }) {
             className={cn(
               "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
               LEVEL_COLOR[course.level] ??
-              "bg-slate-100 text-slate-650 border-slate-200",
+                "bg-slate-100 text-slate-650 border-slate-200",
             )}
           >
             {course.level.charAt(0) + course.level.slice(1).toLowerCase()}
@@ -194,15 +169,8 @@ function CourseCard({ course }: { course: DBCourse }) {
           {course.title}
         </h3>
 
-        {/* description */}
-        {course.description && (
-          <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-2 mb-4">
-            {course.description}
-          </p>
-        )}
-
         {/* meta row */}
-        <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-400 mb-4">
+        <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-400 mb-3">
           {course.totalWeeks > 0 && (
             <span className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-blue-500/65" />
@@ -216,9 +184,30 @@ function CourseCard({ course }: { course: DBCourse }) {
               {course._count.lessons === 1 ? "lesson" : "lessons"}
             </span>
           )}
+        </div>
+
+        {/* badges row */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span
+            className="inline-flex items-center rounded-lg border border-slate-200
+                       bg-slate-50 px-2 py-1 text-[12px] font-medium text-slate-500"
+          >
+            Course
+          </span>
+          {typeof course.rating === "number" && (
+            <span
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200
+                         bg-slate-50 px-2 py-1 text-[12px] font-semibold text-slate-700"
+            >
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              {course.rating.toFixed(1)}
+            </span>
+          )}
           {course._count.enrollments > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-blue-500/65" />
+            <span
+              className="inline-flex items-center rounded-lg border border-slate-200
+                         bg-slate-50 px-2 py-1 text-[12px] font-medium text-slate-500"
+            >
               {course._count.enrollments.toLocaleString("en-IN")} enrolled
             </span>
           )}
@@ -227,30 +216,29 @@ function CourseCard({ course }: { course: DBCourse }) {
         {/* divider */}
         <div className="h-px bg-slate-100 mb-4" />
 
-        {/* actions */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleEnroll}
-            disabled={isComingSoon}
+        {/* price */}
+        <div className="flex items-center justify-between">
+          <span
             className={cn(
-              "flex-1 rounded-xl py-2 text-[13px] font-bold transition-all duration-250 shadow-sm",
+              "text-[16px] font-black",
               isComingSoon
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "text-white hover:brightness-110 active:scale-95 cursor-pointer",
+                ? "text-slate-400"
+                : isFree
+                  ? "text-emerald-600"
+                  : "text-slate-800",
             )}
-            style={
-              isComingSoon
-                ? undefined
-                : { background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)" }
-            }
           >
-            {isComingSoon ? "Coming Soon" : "Enroll Now"}
-          </button>
+            {isComingSoon
+              ? "Coming Soon"
+              : isFree
+                ? "Free"
+                : `₹${course.price.toLocaleString("en-IN")}`}
+          </span>
           <span
             className="flex items-center gap-0.5 text-[12px] font-semibold text-slate-450
-                           group-hover:text-blue-600 transition-colors duration-250 cursor-pointer"
+                           group-hover:text-blue-600 transition-colors duration-250"
           >
-            Details
+            View Course
             <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform duration-250" />
           </span>
         </div>
@@ -282,6 +270,134 @@ function FilterPill({
     >
       {children}
     </button>
+  );
+}
+
+/* ─────────────────────────── price dropdown ────────────────────────────── */
+
+function PriceDropdown({
+  minPrice,
+  maxPrice,
+  setMinPrice,
+  setMaxPrice,
+}: {
+  minPrice: string;
+  maxPrice: string;
+  setMinPrice: (v: string) => void;
+  setMaxPrice: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isActive = minPrice.trim() !== "" || maxPrice.trim() !== "";
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [open]);
+
+  const activePreset = PRICE_PRESETS.find(
+    (p) => p.min === minPrice && p.max === maxPrice,
+  );
+  const label = activePreset
+    ? activePreset.label
+    : isActive
+      ? `₹${minPrice || "0"} - ${maxPrice ? `₹${maxPrice}` : "Any"}`
+      : "Any Budget";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold border transition-all duration-250 cursor-pointer",
+          isActive
+            ? "bg-blue-50 border-blue-200 text-blue-700"
+            : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:text-slate-700",
+        )}
+      >
+        {label}
+        <ChevronDown className="h-3.5 w-3.5" />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-[calc(100%+8px)] z-20 w-72 rounded-xl border border-slate-200
+                     bg-white p-3 shadow-lg"
+        >
+          <div className="flex flex-col gap-1 mb-3">
+            {PRICE_PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => {
+                  setMinPrice(p.min);
+                  setMaxPrice(p.max);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-left text-[13px] font-medium transition-colors duration-150 cursor-pointer",
+                  minPrice === p.min && maxPrice === p.max
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-slate-600 hover:bg-slate-50",
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-px bg-slate-100 mb-3" />
+
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
+            Custom range
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">
+                ₹
+              </span>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder="Min"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-6 pr-2 py-1.5
+                           text-[13px] text-slate-800 placeholder-slate-400
+                           focus:outline-none focus:border-blue-500/40 focus:bg-white
+                           focus:ring-2 focus:ring-blue-500/10 transition-all duration-200"
+              />
+            </div>
+            <span className="text-slate-400 text-[13px]">–</span>
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">
+                ₹
+              </span>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                placeholder="Max"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-6 pr-2 py-1.5
+                           text-[13px] text-slate-800 placeholder-slate-400
+                           focus:outline-none focus:border-blue-500/40 focus:bg-white
+                           focus:ring-2 focus:ring-blue-500/10 transition-all duration-200"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -320,7 +436,8 @@ export default function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState<Level>("ALL");
-  const [priceFilter, setPriceFilter] = useState<PriceFilter>("ALL");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("NEWEST");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -330,13 +447,13 @@ export default function CoursesPage() {
   const courses = data?.data ?? [];
   const pagination = data
     ? {
-      currentPage: data.currentPage,
-      pageSize: data.pageSize,
-      totalRecords: data.totalRecords,
-      totalPages: data.totalPages,
-      hasNextPage: data.hasNextPage,
-      hasPreviousPage: data.hasPreviousPage,
-    }
+        currentPage: data.currentPage,
+        pageSize: data.pageSize,
+        totalRecords: data.totalRecords,
+        totalPages: data.totalPages,
+        hasNextPage: data.hasNextPage,
+        hasPreviousPage: data.hasPreviousPage,
+      }
     : null;
 
   /* derived filtered + sorted list */
@@ -357,23 +474,33 @@ export default function CoursesPage() {
       list = list.filter((c) => c.level === level);
     }
 
-    if (priceFilter === "FREE") list = list.filter((c) => c.price === 0);
-    if (priceFilter === "PAID") list = list.filter((c) => c.price > 0);
+    const min = minPrice.trim() === "" ? null : Number(minPrice);
+    const max = maxPrice.trim() === "" ? null : Number(maxPrice);
+    if (min !== null && !Number.isNaN(min)) {
+      list = list.filter((c) => c.price >= min);
+    }
+    if (max !== null && !Number.isNaN(max)) {
+      list = list.filter((c) => c.price <= max);
+    }
 
     if (sortBy === "PRICE_ASC") list.sort((a, b) => a.price - b.price);
     if (sortBy === "PRICE_DESC") list.sort((a, b) => b.price - a.price);
     // NEWEST: server already orders by createdAt desc
 
     return list;
-  }, [courses, search, level, priceFilter, sortBy]);
+  }, [courses, search, level, minPrice, maxPrice, sortBy]);
 
   const hasActiveFilters =
-    level !== "ALL" || priceFilter !== "ALL" || search.trim().length > 0;
+    level !== "ALL" ||
+    minPrice.trim() !== "" ||
+    maxPrice.trim() !== "" ||
+    search.trim().length > 0;
 
   const resetFilters = () => {
     setSearch("");
     setLevel("ALL");
-    setPriceFilter("ALL");
+    setMinPrice("");
+    setMaxPrice("");
     setSortBy("NEWEST");
     setCurrentPage(1);
   };
@@ -389,7 +516,7 @@ export default function CoursesPage() {
 
       <main className="min-h-screen overflow-x-hidden bg-white text-slate-800">
         {/* HERO SECTION - Light Brand Background */}
-        <div className="relative pt-28 pb-14 bg-slate-50 border-b border-slate-100">
+        <div className="relative pt-28 pb-8 bg-slate-50 border-b border-slate-100">
           <div className="relative container-x max-w-7xl">
             {/* ── PAGE HEADER ── */}
             <ScrollReveal animation="fade-up" duration={700}>
@@ -408,17 +535,17 @@ export default function CoursesPage() {
               <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight text-slate-800 mb-4">
                 Our Programs
               </h1>
-              <p className="text-slate-500 text-[14px] leading-relaxed max-w-xl">
-                Explore our comprehensive curriculum designed for the next era of
-                technological mastery. Filter by level, duration, and investment
-                to find your optimal path.
+              <p className="text-slate-500 text-[16px] leading-relaxed max-w-xl">
+                Explore our comprehensive curriculum designed for the next era
+                of technological mastery. Filter by level, duration, and
+                investment to find your optimal path.
               </p>
             </ScrollReveal>
           </div>
         </div>
 
         {/* MAIN CONTENT SECTION - White Background */}
-        <div className="relative container-x py-10 max-w-7xl">
+        <div className="relative container-x pt-6 pb-10 max-w-7xl">
           {/* ── SEARCH + FILTER BAR ── */}
           <ScrollReveal animation="fade-up" delay={100} duration={650}>
             <div className="flex flex-col gap-4">
@@ -511,18 +638,13 @@ export default function CoursesPage() {
 
                 <div className="hidden sm:block w-px bg-slate-200 self-stretch mx-1" />
 
-                {/* PRICE */}
-                <div className="flex flex-wrap gap-2">
-                  {PRICE_OPTIONS.map((p) => (
-                    <FilterPill
-                      key={p.value}
-                      active={priceFilter === p.value}
-                      onClick={() => setPriceFilter(p.value)}
-                    >
-                      {p.label}
-                    </FilterPill>
-                  ))}
-                </div>
+                {/* PRICE dropdown */}
+                <PriceDropdown
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  setMinPrice={setMinPrice}
+                  setMaxPrice={setMaxPrice}
+                />
 
                 {/* reset */}
                 {hasActiveFilters && (
