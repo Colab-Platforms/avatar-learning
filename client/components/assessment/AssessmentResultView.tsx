@@ -58,7 +58,9 @@ export function AssessmentResultView({
           {passed !== null && (
             <span
               className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 rounded-full text-sm font-semibold ${
-                passed ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                passed
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-red-50 text-red-700"
               }`}
             >
               {passed ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
@@ -69,13 +71,18 @@ export function AssessmentResultView({
       )}
 
       <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-slate-800">Question review</h2>
+        <h2 className="text-sm font-semibold text-slate-800">
+          Question review
+        </h2>
         {[...assessment.questions]
           .sort((a, b) => a.questionOrder - b.questionOrder)
           .map((q) => {
             const answer = answers[q.id];
             return (
-              <div key={q.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div
+                key={q.id}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
                 <p className="font-semibold text-slate-900 mb-3">
                   {q.questionOrder}. {q.questionText}
                 </p>

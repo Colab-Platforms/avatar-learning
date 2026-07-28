@@ -20,6 +20,15 @@ function emptyToNull(value: string | null | undefined): string | null {
   return value.trim();
 }
 
+// Normalizes a phone number to E.164 (e.g. "+919876543210") for WhatsApp/Twilio.
+// Assumes a bare 10-digit number is an Indian mobile number.
+function toE164(phoneNumber: string): string {
+  const cleaned = phoneNumber.replace(/\D/g, "");
+  if (cleaned.length === 10) return `+91${cleaned}`;
+  if (cleaned.startsWith("91") && cleaned.length === 12) return `+${cleaned}`;
+  return cleaned.startsWith("+") ? phoneNumber.trim() : `+${cleaned}`;
+}
+
 function toProfileData(data: CreateCounsellingProfileInput) {
   return {
     careerField: data.careerField,
@@ -347,6 +356,15 @@ export class CounsellingService {
       ),
     );
 
+    // n8n webhook is a fire-and-forget notification — must never block or
+    // fail the booking confirmation, which has already succeeded above.
+    this.triggerN8nWebhook(userId, booking).catch((err) =>
+      logger.error(
+        `[Counselling] Failed to trigger n8n webhook for user ${userId}:`,
+        err,
+      ),
+    );
+
     return booking;
   }
 
@@ -528,6 +546,59 @@ export class CounsellingService {
     });
 
     return { booking: updatedBooking, course };
+  }
+
+  private async triggerN8nWebhook(
+    userId: string,
+    booking: CounsellingBooking,
+  ) {
+    const webhookUrl = process.env.N8N_WEBHOOK_URL;
+    if (!webhookUrl || !booking.scheduledAt) return;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        phoneNo: true,
+        firstName: true,
+        lastName: true,
+        direct2HireLead: { select: { fullName: true, email: true, phoneNumber: true } },
+      },
+    });
+    if (!user) return;
+
+    const nameFromUser = [user.firstName, user.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const studentName =
+      nameFromUser || user.direct2HireLead?.fullName || "Student";
+    const studentEmail = user.direct2HireLead?.email || user.email;
+    const rawPhone =
+      booking.phoneNumber || user.direct2HireLead?.phoneNumber || user.phoneNo || "";
+    const studentPhone = rawPhone ? toE164(rawPhone) : "";
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentName,
+          studentPhone,
+          studentEmail,
+          sessionType: booking.preferredMode,
+          sessionTime: new Date(booking.scheduledAt).toISOString(),
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`n8n webhook responded with status ${response.status}`);
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   private async notifyStudentOfSchedule(
