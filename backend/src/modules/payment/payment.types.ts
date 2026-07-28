@@ -86,4 +86,5 @@ export interface CreateOrderResponse {
   key?: string;
   paymentSessionId?: string;
   mode?: "sandbox" | "production";
+  discountAmount?: number;
 }

@@ -108,7 +108,7 @@ export function useDirect2HireCheckout() {
   );
 
   const enroll = useCallback(
-    async (lead?: Direct2HireLeadInput) => {
+    async (lead?: Direct2HireLeadInput, couponCode?: string) => {
       if (!user) {
         router.push("/login");
         return;
@@ -122,7 +122,7 @@ export function useDirect2HireCheckout() {
       setMessage(null);
 
       try {
-        const order = await createOrder();
+        const order = await createOrder(couponCode);
 
         if (order.provider === "cashfree") {
           if (!cashfreeLoaded) {

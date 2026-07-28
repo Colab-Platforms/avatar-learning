@@ -51,6 +51,55 @@ export const deleteCourse = (id: string) =>
 export const toggleCoursePublish = (id: string) =>
   apiClient.patch(`/admin/courses/${id}/publish`).then((r) => r.data.data);
 
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+
+export interface Coupon {
+  id: string;
+  code: string;
+  discountPercent: number;
+  isActive: boolean;
+  expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  usedCount: number;
+}
+
+export interface CouponRedemption {
+  orderId: string;
+  userName: string;
+  email: string | null;
+  phoneNo: string | null;
+  productType: string;
+  amountPaid: number;
+  discountAmount: number;
+  paidAt: string;
+}
+
+export const fetchCoupons = (): Promise<Coupon[]> =>
+  apiClient.get("/admin/coupons").then((r) => r.data.data);
+
+export const fetchCoupon = (id: string): Promise<Coupon> =>
+  apiClient.get(`/admin/coupons/${id}`).then((r) => r.data.data);
+
+export const createCoupon = (payload: {
+  code: string;
+  discountPercent: number;
+  expiresAt?: string | null;
+}): Promise<Coupon> =>
+  apiClient.post("/admin/coupons", payload).then((r) => r.data.data);
+
+export const updateCoupon = (
+  id: string,
+  payload: { discountPercent?: number; isActive?: boolean; expiresAt?: string | null },
+): Promise<Coupon> =>
+  apiClient.put(`/admin/coupons/${id}`, payload).then((r) => r.data.data);
+
+export const deleteCoupon = (id: string) =>
+  apiClient.delete(`/admin/coupons/${id}`).then((r) => r.data);
+
+export const fetchCouponRedemptions = (id: string): Promise<CouponRedemption[]> =>
+  apiClient.get(`/admin/coupons/${id}/redemptions`).then((r) => r.data.data);
+
 // ─── Lessons ──────────────────────────────────────────────────────────────────
 
 export const createLesson = (

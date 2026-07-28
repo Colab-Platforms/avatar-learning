@@ -10,6 +10,15 @@ export interface CreateOrderResponse {
   key?: string;
   paymentSessionId?: string;
   mode?: "sandbox" | "production";
+  discountAmount?: number;
+}
+
+export interface ApplyCouponResponse {
+  code: string;
+  discountPercent: number;
+  originalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
 }
 
 export interface Direct2HireLeadInput {
@@ -51,5 +60,12 @@ export const createPaymentOrder = (courseId: string): Promise<CreateOrderRespons
 export const verifyPayment = (payload: VerifyPaymentPayload): Promise<void> =>
   apiClient.post("/payment/verify", payload).then((r) => r.data);
 
-export const createDirect2HireOrder = (): Promise<CreateOrderResponse> =>
-  apiClient.post("/direct2hire/create-order", {}).then((r) => r.data.data);
+export const createDirect2HireOrder = (
+  couponCode?: string,
+): Promise<CreateOrderResponse> =>
+  apiClient
+    .post("/direct2hire/create-order", couponCode ? { couponCode } : {})
+    .then((r) => r.data.data);
+
+export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
+  apiClient.post("/coupons/apply", { code }).then((r) => r.data.data);

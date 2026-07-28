@@ -16,6 +16,7 @@ import {
   Users,
   ChevronDown,
   Video,
+  Tag,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -87,6 +88,13 @@ const NAV: NavItem[] = [
         icon: Video,
       },
     ],
+  },
+  {
+    kind: "link",
+    href: "/admin/coupons",
+    label: "Coupons",
+    icon: Tag,
+    exact: false,
   },
   {
     kind: "link",

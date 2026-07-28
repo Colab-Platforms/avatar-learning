@@ -17,7 +17,14 @@ export const createOrder = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const result = await paymentService.createDirect2HireOrder(req.user!.id);
+    const couponCode =
+      typeof req.body?.couponCode === "string" && req.body.couponCode.trim()
+        ? req.body.couponCode.trim()
+        : undefined;
+    const result = await paymentService.createDirect2HireOrder(
+      req.user!.id,
+      couponCode,
+    );
     sendResponse(res, true, result, "Order created", STATUS_CODES.CREATED);
   } catch (err: any) {
     console.log("Order:", err);
