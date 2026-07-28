@@ -4,8 +4,12 @@ export const WEEKLY_QUESTION_COUNT = 10;
 export const FINAL_QUESTION_COUNT = 30;
 export const DEFAULT_FINAL_MAX_ATTEMPTS = 3;
 
-/** Cooldown between a failed FINAL attempt and starting the next one. Weekly assessments are exempt. */
-export const FINAL_ATTEMPT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+/** Cooldown between a failed attempt and starting the next one (weekly + final). */
+// export const ATTEMPT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+export const ATTEMPT_COOLDOWN_MS = 1 * 60 * 1000;
+
+/** @deprecated Use ATTEMPT_COOLDOWN_MS */
+export const FINAL_ATTEMPT_COOLDOWN_MS = ATTEMPT_COOLDOWN_MS;
 
 export interface CreateAssessmentBody {
   title: string;

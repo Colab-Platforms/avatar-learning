@@ -73,7 +73,6 @@ export function AssessmentResultsView({
 
   const isWeekly = result?.assessment.type === "WEEKLY";
   const inCooldown =
-    !isWeekly &&
     !!result?.summary.cooldownActive &&
     !!result.summary.nextAttemptAvailableAt;
   const canRetake = !!result?.summary.canRetake && !inCooldown;
@@ -81,6 +80,7 @@ export function AssessmentResultsView({
     !isWeekly &&
     result?.summary.remainingAttempts != null &&
     result.summary.remainingAttempts <= 0;
+  const answersRevealed = result?.answersRevealed !== false;
 
   const typeLabel =
     result?.assessment.type === "FINAL"
@@ -243,6 +243,13 @@ export function AssessmentResultsView({
                   </p>
                 )}
 
+                {!answersRevealed && (
+                  <p className="text-xs text-slate-600 mb-4 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
+                    Question answers are hidden until you pass this assessment.
+                    Review your score above and retake after the cooldown if needed.
+                  </p>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-2.5">
                   <Link
                     href={routes.assessments}
@@ -274,7 +281,9 @@ export function AssessmentResultsView({
                 </div>
               </div>
 
-              <AssessmentResultView result={result} questionsOnly />
+              {answersRevealed ? (
+                <AssessmentResultView result={result} questionsOnly />
+              ) : null}
             </div>
           )}
         </div>

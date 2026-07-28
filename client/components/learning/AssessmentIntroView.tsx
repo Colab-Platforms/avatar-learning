@@ -73,9 +73,8 @@ export function AssessmentIntroView({
     assessment?.status === "EXHAUSTED" ||
     (assessment?.type === "FINAL" && assessment.remainingAttempts === 0);
   const inCooldown =
-    assessment?.type === "FINAL" &&
     !exhausted &&
-    !!assessment.cooldownActive &&
+    !!assessment?.cooldownActive &&
     !!assessment.nextAttemptAvailableAt;
 
   return (
@@ -171,9 +170,7 @@ export function AssessmentIntroView({
           <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-6 text-xs text-amber-800 leading-relaxed">
             Once started, stay on this tab — switching away is tracked and repeated
             switches will auto-submit your attempt. The timer cannot be paused.
-            {assessment.type === "FINAL" && (
-              <> A 12-hour cooldown applies after a failed attempt before you can retake.</>
-            )}
+            {" "}A 12-hour cooldown applies after a failed attempt before you can retake.
           </div>
 
           {assessment.unlockStatus === "LOCKED" && (

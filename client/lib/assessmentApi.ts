@@ -166,6 +166,7 @@ export interface AttemptResult {
     questions: ResultQuestion[];
   };
   answers: Record<string, ResultAnswer>;
+  answersRevealed?: boolean;
   breakdown: {
     correct: number;
     wrong: number;

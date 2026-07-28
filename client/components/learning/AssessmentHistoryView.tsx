@@ -74,11 +74,10 @@ export function AssessmentHistoryView({
     data?.summary.remainingAttempts != null &&
     data.summary.remainingAttempts <= 0;
   const inCooldown =
-    !isWeekly &&
     !exhausted &&
     !!data?.summary.cooldownActive &&
     !!data.summary.nextAttemptAvailableAt;
-  const canRetake = isWeekly ? true : !!data?.summary.canRetake;
+  const canRetake = !!data?.summary.canRetake;
 
   return (
         <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-3xl mx-auto">

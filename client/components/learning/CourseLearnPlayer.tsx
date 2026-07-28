@@ -158,7 +158,6 @@ function SidebarAssessmentRow({
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const cooldownAt =
-    isFinal &&
     isAssessmentSummary(assessment) &&
     assessment.cooldownActive &&
     assessment.nextAttemptAvailableAt
@@ -205,7 +204,7 @@ function SidebarAssessmentRow({
     statusText = isFinal
       ? "Complete weekly assessments to unlock"
       : "Complete topics to unlock";
-  } else if (isFinal && inCooldown && cooldownAt) {
+  } else if (inCooldown && cooldownAt) {
     statusText = formatCompactCooldown(cooldownAt, nowMs);
   } else if (isFinal && exhausted) {
     statusText =
@@ -218,7 +217,7 @@ function SidebarAssessmentRow({
         ? `${scorePrefix} · ${remainingAttempts} attempt${remainingAttempts === 1 ? "" : "s"} left`
         : `${scorePrefix} · Limited attempts`;
   } else if (completed) {
-    // Weekly — unlimited retakes
+    // Weekly — unlimited retakes (after any cooldown)
     statusText =
       bestPct != null
         ? `Best ${Math.round(bestPct)}% · Retake anytime`

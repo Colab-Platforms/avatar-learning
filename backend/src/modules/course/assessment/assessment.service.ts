@@ -10,7 +10,7 @@ import {
   WEEKLY_QUESTION_COUNT,
   FINAL_QUESTION_COUNT,
   DEFAULT_FINAL_MAX_ATTEMPTS,
-  FINAL_ATTEMPT_COOLDOWN_MS,
+  ATTEMPT_COOLDOWN_MS,
 } from "./assessment.types.js";
 
 const TERMINAL_STATUSES: AssessmentAttemptStatus[] = [
@@ -482,19 +482,18 @@ export class UserAssessmentService {
       maxAttempts == null ? null : Math.max(0, maxAttempts - attemptsUsed);
     const exhausted = maxAttempts != null && remainingAttempts === 0 && !inProgress;
 
-    // 12h cooldown applies only to FINAL retakes after a failed attempt.
+    // 12h cooldown after a failed attempt (weekly + final). Weekly stays unlimited after cooldown.
     let nextAttemptAvailableAt: Date | null = null;
     let cooldownActive = false;
+    const hasRetakeRoom = maxAttempts == null || (remainingAttempts != null && remainingAttempts > 0);
     if (
-      assessment.type === "FINAL" &&
       !inProgress &&
       !exhausted &&
-      remainingAttempts != null &&
-      remainingAttempts > 0 &&
+      hasRetakeRoom &&
       latest?.submittedAt &&
       latest.isPassed === false
     ) {
-      nextAttemptAvailableAt = new Date(latest.submittedAt.getTime() + FINAL_ATTEMPT_COOLDOWN_MS);
+      nextAttemptAvailableAt = new Date(latest.submittedAt.getTime() + ATTEMPT_COOLDOWN_MS);
       cooldownActive = Date.now() < nextAttemptAvailableAt.getTime();
     }
 
@@ -605,9 +604,7 @@ export class UserAssessmentService {
       remainingAttempts: stats.remainingAttempts,
       lastAttemptAt: stats.lastAttemptAt,
       canStartNew: stats.canStartNew && unlockStatus !== "LOCKED",
-      canRetake: assessment.type === "WEEKLY"
-        ? unlockStatus !== "LOCKED"
-        : stats.canStartNew && unlockStatus !== "LOCKED",
+      canRetake: stats.canStartNew && unlockStatus !== "LOCKED",
       nextAttemptAvailableAt: stats.nextAttemptAvailableAt,
       cooldownActive: stats.cooldownActive,
       // Keep `attempt` as the actionable one (in-progress preferred, else latest)
@@ -728,10 +725,7 @@ export class UserAssessmentService {
         lastAttemptAt: stats.lastAttemptAt,
         nextAttemptAvailableAt: stats.nextAttemptAvailableAt,
         cooldownActive: stats.cooldownActive,
-        canRetake:
-          assessment.type === "WEEKLY"
-            ? true
-            : stats.canStartNew,
+        canRetake: stats.canStartNew,
       },
       attempts: attempts.map((a) => ({
         id: a.id,
@@ -783,13 +777,13 @@ export class UserAssessmentService {
       }
     }
 
-    // FINAL-only 12h cooldown after a failed attempt
-    if (assessment.type === "FINAL") {
+    // 12h cooldown after a failed attempt (weekly + final)
+    {
       const allAttempts = await this.loadAttemptsForAssessments(userId, [assessment.id]);
       const stats = this.computeStats(allAttempts, assessment);
       if (stats.cooldownActive && stats.nextAttemptAvailableAt) {
         throw new ApiError(
-          `Next attempt available after ${stats.nextAttemptAvailableAt.toISOString()}. A 12-hour cooldown applies after a failed final assessment attempt.`,
+          `Next attempt available after ${stats.nextAttemptAvailableAt.toISOString()}. A 12-hour cooldown applies after a failed attempt.`,
           STATUS_CODES.CONFLICT,
         );
       }
@@ -982,6 +976,9 @@ export class UserAssessmentService {
     const stats = this.computeStats(allAttempts, assessment);
     const { unlockStatus } = await this.resolveUnlock(assessment, userId, stats);
 
+    // Hide question review / correct answers unless this attempt passed.
+    const revealAnswers = attempt.isPassed === true;
+
     return {
       attempt: {
         id: attempt.id,
@@ -1005,9 +1002,10 @@ export class UserAssessmentService {
         weekNumber: assessment.lesson?.weekNumber ?? null,
         passingScorePercent: assessment.passingScorePercent,
         maxAttempts: stats.maxAttempts,
-        questions: assessment.questions,
+        questions: revealAnswers ? assessment.questions : [],
       },
-      answers: answerMap,
+      answers: revealAnswers ? answerMap : {},
+      answersRevealed: revealAnswers,
       breakdown: {
         correct,
         wrong,
@@ -1025,10 +1023,7 @@ export class UserAssessmentService {
         remainingAttempts: stats.remainingAttempts,
         nextAttemptAvailableAt: stats.nextAttemptAvailableAt,
         cooldownActive: stats.cooldownActive,
-        canRetake:
-          assessment.type === "WEEKLY"
-            ? unlockStatus !== "LOCKED"
-            : stats.canStartNew && unlockStatus !== "LOCKED",
+        canRetake: stats.canStartNew && unlockStatus !== "LOCKED",
       },
     };
   }
