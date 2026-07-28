@@ -8,6 +8,7 @@ export interface Direct2HireLeadResponse {
   currentEducation: string;
   city: string;
   state: string;
+  country: string;
   paymentCompleted: boolean;
   createdAt: string;
   updatedAt: string;
@@ -21,4 +22,5 @@ export interface UpsertDirect2HireLeadInput {
   currentEducation: string;
   city: string;
   state: string;
+  country: string;
 }

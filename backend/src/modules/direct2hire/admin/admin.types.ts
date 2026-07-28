@@ -53,6 +53,7 @@ export interface AdminD2HStudentProfile {
     currentEducation: string;
     city: string;
     state: string;
+    country: string;
     paymentCompleted: boolean;
     createdAt: Date;
   } | null;

@@ -23,6 +23,9 @@ const upsertLeadSchema = Joi.object({
   state: Joi.string().trim().required().messages({
     "any.required": "State is required",
   }),
+  country: Joi.string().trim().required().messages({
+    "any.required": "Country is required",
+  }),
 });
 
 export const validateUpsertLead = (data: unknown) =>

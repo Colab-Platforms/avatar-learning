@@ -10,6 +10,7 @@ export interface Direct2HireLead {
   currentEducation: string;
   city: string;
   state: string;
+  country: string;
   paymentCompleted: boolean;
   createdAt: string;
   updatedAt: string;

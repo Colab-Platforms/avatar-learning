@@ -130,6 +130,7 @@ export class Direct2HireAdminService {
             currentEducation: true,
             city: true,
             state: true,
+            country: true,
             paymentCompleted: true,
             createdAt: true,
           },

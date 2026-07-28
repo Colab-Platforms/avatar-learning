@@ -17,11 +17,75 @@ import { upsertDirect2HireLead } from "@/lib/direct2hire/leadApi";
 import { applyCoupon, type ApplyCouponResponse } from "@/lib/paymentApi";
 import type { RootState } from "@/store";
 import { cn } from "@/lib/utils";
+import { Country, State, City } from "country-state-city";
 
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
 const labelCls = "mb-1.5 block text-sm font-medium text-slate-700";
+
+/* Select-from-list with a manual fallback for values not on the list (e.g. a city we don't carry). */
+function LocationField({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder: string;
+  error?: string;
+}) {
+  if (options.length === 0) {
+    return (
+      <div>
+        <label className={labelCls}>{label}</label>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={inputCls}
+        />
+        {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <select
+        value={options.includes(value) ? value : ""}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputCls}
+      >
+        <option value="" disabled>
+          {placeholder}
+        </option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+/* Fetched-from-profile values are shown read-only instead of asked again. */
+function FetchedField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <div className={cn(inputCls, "bg-slate-50 text-slate-500")}>{value}</div>
+    </div>
+  );
+}
 
 export default function Direct2HireEnrollPage() {
   const router = useRouter();
@@ -65,20 +129,63 @@ export default function Direct2HireEnrollPage() {
       phoneNumber: user?.phoneNo ?? "",
       institutionName: "",
       currentEducation: "",
-      city: user?.state ?? "",
+      city: user?.city ?? "",
       state: user?.state ?? "",
+      country: user?.country ?? "India",
     };
   }, [user]);
+
+  const hasProfileCity = Boolean(user?.city);
+  const hasProfileState = Boolean(user?.state);
+  const hasProfileCountry = Boolean(user?.country);
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
     defaultValues: emptyLeadFormValues,
     values: defaultValues,
   });
+
+  const country = watch("country");
+  const state = watch("state");
+
+  const countryOptions = useMemo(() => Country.getAllCountries(), []);
+  const countryNames = useMemo(
+    () => countryOptions.map((c) => c.name),
+    [countryOptions],
+  );
+
+  const countryIso = useMemo(
+    () => countryOptions.find((c) => c.name === country)?.isoCode,
+    [countryOptions, country],
+  );
+
+  const stateOptions = useMemo(
+    () => (countryIso ? State.getStatesOfCountry(countryIso) : []),
+    [countryIso],
+  );
+  const stateNames = useMemo(
+    () => stateOptions.map((s) => s.name),
+    [stateOptions],
+  );
+
+  const stateIso = useMemo(
+    () => stateOptions.find((s) => s.name === state)?.isoCode,
+    [stateOptions, state],
+  );
+
+  const cityNames = useMemo(
+    () =>
+      countryIso && stateIso
+        ? City.getCitiesOfState(countryIso, stateIso).map((c) => c.name)
+        : [],
+    [countryIso, stateIso],
+  );
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim();
@@ -248,39 +355,51 @@ export default function Direct2HireEnrollPage() {
               )}
             </div>
 
-            <div>
-              <label htmlFor="city" className={labelCls}>
-                City
-              </label>
-              <input
-                id="city"
-                {...register("city")}
-                placeholder="Your city"
-                className={inputCls}
+            {hasProfileCountry ? (
+              <FetchedField label="Country" value={user!.country!} />
+            ) : (
+              <LocationField
+                label="Country"
+                value={country}
+                onChange={(v) => {
+                  setValue("country", v, { shouldValidate: true });
+                  setValue("state", "", { shouldValidate: true });
+                  setValue("city", "", { shouldValidate: true });
+                }}
+                options={countryNames}
+                placeholder="Select country"
+                error={errors.country?.message}
               />
-              {errors.city && (
-                <p className="mt-1.5 text-xs text-red-600">
-                  {errors.city.message}
-                </p>
-              )}
-            </div>
+            )}
 
-            <div>
-              <label htmlFor="state" className={labelCls}>
-                State
-              </label>
-              <input
-                id="state"
-                {...register("state")}
-                placeholder="Your state"
-                className={inputCls}
+            {hasProfileState ? (
+              <FetchedField label="State" value={user!.state!} />
+            ) : (
+              <LocationField
+                label="State"
+                value={state}
+                onChange={(v) => {
+                  setValue("state", v, { shouldValidate: true });
+                  setValue("city", "", { shouldValidate: true });
+                }}
+                options={stateNames}
+                placeholder="Select state"
+                error={errors.state?.message}
               />
-              {errors.state && (
-                <p className="mt-1.5 text-xs text-red-600">
-                  {errors.state.message}
-                </p>
-              )}
-            </div>
+            )}
+
+            {hasProfileCity ? (
+              <FetchedField label="City" value={user!.city!} />
+            ) : (
+              <LocationField
+                label="City"
+                value={watch("city")}
+                onChange={(v) => setValue("city", v, { shouldValidate: true })}
+                options={cityNames}
+                placeholder="Select city"
+                error={errors.city?.message}
+              />
+            )}
           </div>
 
           <div className="mt-8 border-t border-slate-100 pt-6">

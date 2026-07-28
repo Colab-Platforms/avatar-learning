@@ -318,6 +318,7 @@ export const leadSchema = z.object({
   currentEducation: z.string().trim().min(1, "Current education is required"),
   city: z.string().trim().min(1, "City is required"),
   state: z.string().trim().min(1, "State is required"),
+  country: z.string().trim().min(1, "Country is required"),
 });
 
 export type LeadFormValues = z.infer<typeof leadSchema>;
@@ -330,4 +331,5 @@ export const emptyLeadFormValues: LeadFormValues = {
   currentEducation: "",
   city: "",
   state: "",
+  country: "",
 };

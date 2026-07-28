@@ -657,6 +657,7 @@ model Direct2HireLead {
   currentEducation String  @map("current_education")
   city             String
   state            String
+  country          String  @default("India")
   paymentCompleted Boolean @default(false) @map("payment_completed")
 
   createdAt DateTime @default(now()) @map("created_at")
