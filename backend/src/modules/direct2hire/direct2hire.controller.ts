@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
+import { partnerService } from "@/modules/partners/partner.service.js";
 import { Direct2HireService } from "./direct2hire.service.js";
 import {
   getPaginationOptions,
@@ -11,6 +12,51 @@ import {
 } from "@/utils/paginationUtils.js";
 
 const paymentService = new PaymentService();
+
+const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
+  process.env.DIRECT2HIRE_PRICE_RUPEES!,
+);
+
+// Preview-only, mirrors /coupons/apply — lets the enroll page show the
+// auto-applied referral discount before checkout without the user typing
+// anything. Actual application still happens server-side in
+// createDirect2HireOrder; this is display only.
+export const getReferralDiscount = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const discountPercent = await partnerService.getReferralDiscountPercent(
+      req.user!.id,
+    );
+    if (!discountPercent) {
+      sendResponse(res, true, null, "No referral discount");
+      return;
+    }
+    const discountAmount = Math.round(
+      (DIRECT2HIRE_PRICE_RUPEES * discountPercent) / 100,
+    );
+    sendResponse(
+      res,
+      true,
+      {
+        discountPercent,
+        originalAmount: DIRECT2HIRE_PRICE_RUPEES,
+        discountAmount,
+        finalAmount: DIRECT2HIRE_PRICE_RUPEES - discountAmount,
+      },
+      "Referral discount",
+    );
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
 
 export const createOrder = async (
   req: AuthRequest,

@@ -18,7 +18,7 @@ import { ApplyPartnerBody } from "./partner.types.js";
 // Shortened to 5 minutes outside production so the whole schedule → cron →
 // credit pipeline can be verified without waiting half a month.
 // const isProd = process.env.NODE_ENV === "production";
-const isProd = true; // TODO: Remove this line before deploying to production. It is only for testing the cron job in dev mode.
+const isProd = false; // TODO: Remove this line before deploying to production. It is only for testing the cron job in dev mode.
 const getEligibleAt = () =>
   isProd
     ? dayjs().add(COMMISSION_HOLD_DAYS, "day").toDate()
@@ -57,6 +57,14 @@ const INSTITUTE_TIERS: { min: number; max: number; rate: number }[] = [
 const INSTITUTE_UNCAPPED_MIN = 501;
 const INSTITUTE_UNCAPPED_RATE = 60;
 const INSTITUTE_UNCAPPED_PRECEDING_WIDTH = 500 - 201 + 1; // width of the 201–500 band
+
+// Discount the REFERRED USER gets on their D2H purchase (separate from the
+// commission the PARTNER earns, computed below). Auto-applied at checkout
+// when no coupon code is supplied — coupon always takes priority.
+export const REFERRAL_DISCOUNT_PERCENT: Partial<Record<string, number>> = {
+  INDIVIDUAL: 20,
+  INSTITUTE: 25,
+};
 
 interface CommissionResult {
   rate: number | null;
@@ -168,6 +176,16 @@ export class PartnerService {
 
   async getMine(userId: string) {
     return prisma.partner.findUnique({ where: { userId } });
+  }
+
+  // Discount percent the given (referred) user gets on a D2H purchase, or
+  // null if they weren't referred by a partner type that carries one.
+  async getReferralDiscountPercent(userId: string): Promise<number | null> {
+    const referral = await prisma.partnerReferral.findUnique({
+      where: { referredUserId: userId },
+      include: { partner: { select: { type: true } } },
+    });
+    return REFERRAL_DISCOUNT_PERCENT[referral?.partner.type ?? ""] ?? null;
   }
 
   async getMyReferrals(userId: string, take?: number, skip?: number) {

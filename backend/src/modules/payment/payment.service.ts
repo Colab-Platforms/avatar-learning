@@ -366,6 +366,14 @@ export class PaymentService {
       discountRupees = Math.round(
         (DIRECT2HIRE_PRICE_RUPEES * coupon.discountPercent) / 100,
       );
+    } else {
+      const referralDiscountPercent =
+        await partnerService.getReferralDiscountPercent(userId);
+      if (referralDiscountPercent) {
+        discountRupees = Math.round(
+          (DIRECT2HIRE_PRICE_RUPEES * referralDiscountPercent) / 100,
+        );
+      }
     }
     const priceRupees = DIRECT2HIRE_PRICE_RUPEES - discountRupees;
 

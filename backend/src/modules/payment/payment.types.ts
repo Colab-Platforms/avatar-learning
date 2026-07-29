@@ -10,6 +10,7 @@ export interface Direct2HireLeadInput {
   currentEducation: string;
   city: string;
   state: string;
+  country: string;
 }
 
 export interface VerifyRazorpayPaymentBody {

@@ -14,6 +14,11 @@ const router = Router();
 
 router.get("/status", auth("USER"), getStatus);
 router.post("/create-order", auth("USER"), createOrder);
+router.get(
+  "/referral-discount",
+  auth("USER"),
+  direct2hireController.getReferralDiscount,
+);
 
 router.get("/me", auth("USER"), direct2hireController.getMyStatus);
 router.use("/intro-video", introVideoRoutes);

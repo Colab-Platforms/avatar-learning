@@ -21,6 +21,13 @@ export interface ApplyCouponResponse {
   finalAmount: number;
 }
 
+export interface ReferralDiscountResponse {
+  discountPercent: number;
+  originalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+}
+
 export interface Direct2HireLeadInput {
   fullName: string;
   email: string;
@@ -29,6 +36,7 @@ export interface Direct2HireLeadInput {
   currentEducation: string;
   city: string;
   state: string;
+  country: string;
 }
 
 export interface VerifyRazorpayPayload {
@@ -69,3 +77,6 @@ export const createDirect2HireOrder = (
 
 export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
   apiClient.post("/coupons/apply", { code }).then((r) => r.data.data);
+
+export const getReferralDiscount = (): Promise<ReferralDiscountResponse | null> =>
+  apiClient.get("/direct2hire/referral-discount").then((r) => r.data.data);

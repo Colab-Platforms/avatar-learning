@@ -16,6 +16,7 @@ const leadSchema = Joi.object<Direct2HireLeadInput>({
   currentEducation: Joi.string().trim().required(),
   city: Joi.string().trim().required(),
   state: Joi.string().trim().required(),
+  country: Joi.string().trim().required(),
 });
 
 export function validateCreateOrder(data: unknown): {

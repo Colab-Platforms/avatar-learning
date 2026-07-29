@@ -14,68 +14,27 @@ import {
 } from "@/lib/counselling/counsellingSchema";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 import { upsertDirect2HireLead } from "@/lib/direct2hire/leadApi";
-import { applyCoupon, type ApplyCouponResponse } from "@/lib/paymentApi";
+import {
+  applyCoupon,
+  getReferralDiscount,
+  type ApplyCouponResponse,
+  type ReferralDiscountResponse,
+} from "@/lib/paymentApi";
 import type { RootState } from "@/store";
 import { cn } from "@/lib/utils";
-import { Country, State, City } from "country-state-city";
+import {
+  getCountries,
+  getStatesForCountry,
+  getCitiesForState,
+  getCountryIsoCode,
+  getStateIsoCode,
+  DEFAULT_COUNTRY_CODE,
+} from "@/data/countries";
 
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
 const labelCls = "mb-1.5 block text-sm font-medium text-slate-700";
-
-/* Select-from-list with a manual fallback for values not on the list (e.g. a city we don't carry). */
-function LocationField({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder,
-  error,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  placeholder: string;
-  error?: string;
-}) {
-  if (options.length === 0) {
-    return (
-      <div>
-        <label className={labelCls}>{label}</label>
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={inputCls}
-        />
-        {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <label className={labelCls}>{label}</label>
-      <select
-        value={options.includes(value) ? value : ""}
-        onChange={(e) => onChange(e.target.value)}
-        className={inputCls}
-      >
-        <option value="" disabled>
-          {placeholder}
-        </option>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
 
 /* Fetched-from-profile values are shown read-only instead of asked again. */
 function FetchedField({ label, value }: { label: string; value: string }) {
@@ -97,6 +56,8 @@ export default function Direct2HireEnrollPage() {
   const [couponApplying, setCouponApplying] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<ApplyCouponResponse | null>(null);
+  const [referralDiscount, setReferralDiscount] =
+    useState<ReferralDiscountResponse | null>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -106,6 +67,17 @@ export default function Direct2HireEnrollPage() {
   }, [hasHydrated, user, router]);
 
   const authorized = hasHydrated && Boolean(user);
+
+  // Referred users get their discount auto-applied — nothing to type. Only
+  // relevant when no coupon is in play; a manually applied coupon always wins.
+  useEffect(() => {
+    if (!authorized) return;
+    getReferralDiscount()
+      .then(setReferralDiscount)
+      .catch(() => setReferralDiscount(null));
+  }, [authorized]);
+
+  const activeDiscount = appliedCoupon ?? referralDiscount;
 
   // Guards against landing on this page while already enrolled (e.g. a stale
   // bookmark). The checkout flow itself navigates to /direct2hire/success on
@@ -117,6 +89,13 @@ export default function Direct2HireEnrollPage() {
     }
   }, [enrolled, router]);
 
+  const hasProfileCity = Boolean(user?.city);
+  const hasProfileState = Boolean(user?.state);
+  const hasProfileCountry = Boolean(user?.country);
+
+  // Country/state are edited as isoCode (matches the register page); city is
+  // edited as its plain name. Already-known profile values are stored as-is
+  // and shown read-only, so they never need an isoCode round-trip.
   const defaultValues = useMemo<LeadFormValues>(() => {
     const fullName = [user?.firstName, user?.lastName]
       .filter(Boolean)
@@ -129,15 +108,11 @@ export default function Direct2HireEnrollPage() {
       phoneNumber: user?.phoneNo ?? "",
       institutionName: "",
       currentEducation: "",
-      city: user?.city ?? "",
-      state: user?.state ?? "",
-      country: user?.country ?? "India",
+      country: hasProfileCountry ? user!.country! : DEFAULT_COUNTRY_CODE,
+      state: hasProfileState ? user!.state! : "",
+      city: hasProfileCity ? user!.city! : "",
     };
-  }, [user]);
-
-  const hasProfileCity = Boolean(user?.city);
-  const hasProfileState = Boolean(user?.state);
-  const hasProfileCountry = Boolean(user?.country);
+  }, [user, hasProfileCountry, hasProfileState, hasProfileCity]);
 
   const {
     register,
@@ -151,41 +126,36 @@ export default function Direct2HireEnrollPage() {
     values: defaultValues,
   });
 
-  const country = watch("country");
-  const state = watch("state");
+  const countries = useMemo(() => getCountries(), []);
 
-  const countryOptions = useMemo(() => Country.getAllCountries(), []);
-  const countryNames = useMemo(
-    () => countryOptions.map((c) => c.name),
-    [countryOptions],
-  );
+  const countryIso = hasProfileCountry
+    ? getCountryIsoCode(user!.country!) || DEFAULT_COUNTRY_CODE
+    : watch("country");
 
-  const countryIso = useMemo(
-    () => countryOptions.find((c) => c.name === country)?.isoCode,
-    [countryOptions, country],
-  );
-
-  const stateOptions = useMemo(
-    () => (countryIso ? State.getStatesOfCountry(countryIso) : []),
+  const states = useMemo(
+    () => getStatesForCountry(countryIso),
     [countryIso],
   );
-  const stateNames = useMemo(
-    () => stateOptions.map((s) => s.name),
-    [stateOptions],
-  );
 
-  const stateIso = useMemo(
-    () => stateOptions.find((s) => s.name === state)?.isoCode,
-    [stateOptions, state],
-  );
+  const stateIso = hasProfileState
+    ? getStateIsoCode(countryIso, user!.state!)
+    : watch("state");
 
-  const cityNames = useMemo(
-    () =>
-      countryIso && stateIso
-        ? City.getCitiesOfState(countryIso, stateIso).map((c) => c.name)
-        : [],
+  const cities = useMemo(
+    () => getCitiesForState(countryIso, stateIso),
     [countryIso, stateIso],
   );
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setValue("country", e.target.value, { shouldValidate: true });
+    setValue("state", "", { shouldValidate: true });
+    setValue("city", "", { shouldValidate: true });
+  };
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setValue("state", e.target.value, { shouldValidate: true });
+    setValue("city", "", { shouldValidate: true });
+  };
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim();
@@ -213,10 +183,24 @@ export default function Direct2HireEnrollPage() {
   const onSubmit = handleSubmit(async (values) => {
     setLeadError("");
     setSavingLead(true);
+
+    // Country/state are isoCode while editable — resolve to the display name
+    // before persisting, same as the register page. Already-known profile
+    // values are the name already, so they pass through untouched.
+    const resolvedValues: LeadFormValues = {
+      ...values,
+      country: hasProfileCountry
+        ? values.country
+        : (countries.find((c) => c.isoCode === values.country)?.name ?? values.country),
+      state: hasProfileState
+        ? values.state
+        : (states.find((s) => s.isoCode === values.state)?.name ?? values.state),
+    };
+
     try {
       // Persist details before touching the payment gateway, so we still have
       // a lead on file even if the user abandons or the payment fails.
-      await upsertDirect2HireLead(values);
+      await upsertDirect2HireLead(resolvedValues);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setSavingLead(false);
@@ -226,7 +210,7 @@ export default function Direct2HireEnrollPage() {
     setSavingLead(false);
 
     checkoutStarted.current = true;
-    await enroll(values, appliedCoupon?.code);
+    await enroll(resolvedValues, appliedCoupon?.code);
   });
 
   if (!authorized) {
@@ -358,47 +342,96 @@ export default function Direct2HireEnrollPage() {
             {hasProfileCountry ? (
               <FetchedField label="Country" value={user!.country!} />
             ) : (
-              <LocationField
-                label="Country"
-                value={country}
-                onChange={(v) => {
-                  setValue("country", v, { shouldValidate: true });
-                  setValue("state", "", { shouldValidate: true });
-                  setValue("city", "", { shouldValidate: true });
-                }}
-                options={countryNames}
-                placeholder="Select country"
-                error={errors.country?.message}
-              />
+              <div>
+                <label htmlFor="country" className={labelCls}>
+                  Country
+                </label>
+                <select
+                  id="country"
+                  value={watch("country")}
+                  onChange={handleCountryChange}
+                  className={cn(inputCls, "cursor-pointer")}
+                >
+                  {countries.map((c) => (
+                    <option key={c.isoCode} value={c.isoCode}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.country && (
+                  <p className="mt-1.5 text-xs text-red-600">
+                    {errors.country.message}
+                  </p>
+                )}
+              </div>
             )}
 
             {hasProfileState ? (
               <FetchedField label="State" value={user!.state!} />
             ) : (
-              <LocationField
-                label="State"
-                value={state}
-                onChange={(v) => {
-                  setValue("state", v, { shouldValidate: true });
-                  setValue("city", "", { shouldValidate: true });
-                }}
-                options={stateNames}
-                placeholder="Select state"
-                error={errors.state?.message}
-              />
+              <div>
+                <label htmlFor="state" className={labelCls}>
+                  State
+                </label>
+                <select
+                  id="state"
+                  value={watch("state")}
+                  onChange={handleStateChange}
+                  disabled={states.length === 0}
+                  className={cn(inputCls, "cursor-pointer disabled:opacity-50")}
+                >
+                  <option value="">
+                    {states.length === 0 ? "No states" : "Select state"}
+                  </option>
+                  {states.map((s) => (
+                    <option key={s.isoCode} value={s.isoCode}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.state && (
+                  <p className="mt-1.5 text-xs text-red-600">
+                    {errors.state.message}
+                  </p>
+                )}
+              </div>
             )}
 
             {hasProfileCity ? (
               <FetchedField label="City" value={user!.city!} />
             ) : (
-              <LocationField
-                label="City"
-                value={watch("city")}
-                onChange={(v) => setValue("city", v, { shouldValidate: true })}
-                options={cityNames}
-                placeholder="Select city"
-                error={errors.city?.message}
-              />
+              <div>
+                <label htmlFor="city" className={labelCls}>
+                  City
+                </label>
+                <select
+                  id="city"
+                  value={watch("city")}
+                  onChange={(e) =>
+                    setValue("city", e.target.value, { shouldValidate: true })
+                  }
+                  disabled={!watch("state") || cities.length === 0}
+                  className={cn(inputCls, "cursor-pointer disabled:opacity-50")}
+                >
+                  <option value="">
+                    {!watch("state")
+                      ? "Select state"
+                      : cities.length === 0
+                        ? "No cities"
+                        : "Select city"}
+                  </option>
+                  {cities.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.city && (
+                  <p className="mt-1.5 text-xs text-red-600">
+                    {errors.city.message}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -414,6 +447,15 @@ export default function Direct2HireEnrollPage() {
                 </p>
               </div>
             </div>
+
+            {referralDiscount && !appliedCoupon && (
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <Tag className="h-4 w-4" />
+                <span>
+                  Referral discount applied automatically — {referralDiscount.discountPercent}% off
+                </span>
+              </div>
+            )}
 
             {/* coupon code */}
             <div className="mt-6">
@@ -460,21 +502,21 @@ export default function Direct2HireEnrollPage() {
               )}
             </div>
 
-            {appliedCoupon && (
+            {activeDiscount && (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
                 <div className="flex items-center justify-between text-slate-500">
                   <span>Original amount</span>
                   <span className="line-through">
-                    ₹{appliedCoupon.originalAmount.toLocaleString("en-IN")}
+                    ₹{activeDiscount.originalAmount.toLocaleString("en-IN")}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-emerald-700">
-                  <span>Discount ({appliedCoupon.discountPercent}%)</span>
-                  <span>-₹{appliedCoupon.discountAmount.toLocaleString("en-IN")}</span>
+                  <span>Discount ({activeDiscount.discountPercent}%)</span>
+                  <span>-₹{activeDiscount.discountAmount.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 font-bold text-slate-800">
                   <span>You pay</span>
-                  <span>₹{appliedCoupon.finalAmount.toLocaleString("en-IN")}</span>
+                  <span>₹{activeDiscount.finalAmount.toLocaleString("en-IN")}</span>
                 </div>
               </div>
             )}
@@ -496,7 +538,7 @@ export default function Direct2HireEnrollPage() {
                 </>
               ) : (
                 <>
-                  Pay ₹{(appliedCoupon?.finalAmount ?? 999).toLocaleString("en-IN")} &amp; Continue
+                  Pay ₹{(activeDiscount?.finalAmount ?? 999).toLocaleString("en-IN")} &amp; Continue
                 </>
               )}
             </button>
