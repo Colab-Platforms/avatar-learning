@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import {
   fetchD2HEnrollmentsPaginated,
   markD2HPaid,
@@ -10,6 +10,7 @@ import {
   type AdminD2HEnrollment,
 } from "@/lib/adminApi";
 import type { PaginatedResponse } from "@/lib/coursesApi";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 export default function AdminDirect2HirePage() {
   const [enrollments, setEnrollments] = useState<AdminD2HEnrollment[]>([]);
@@ -21,6 +22,8 @@ export default function AdminDirect2HirePage() {
   const [loading, setLoading] = useState(true);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [refundConfirmId, setRefundConfirmId] = useState<string | null>(null);
+  const [refundSuccess, setRefundSuccess] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,8 +66,11 @@ export default function AdminDirect2HirePage() {
     try {
       await markD2HRefunded(id);
       await load();
+      setRefundConfirmId(null);
+      setRefundSuccess(true);
     } catch {
       setError("Failed to mark enrollment as refunded.");
+      setRefundConfirmId(null);
     } finally {
       setMarkingId(null);
     }
@@ -163,7 +169,7 @@ export default function AdminDirect2HirePage() {
                   </button> */}
                   {e.status === "PAID" && (
                     <button
-                      onClick={() => handleMarkRefunded(e.id)}
+                      onClick={() => setRefundConfirmId(e.id)}
                       disabled={markingId === e.id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
                                  border border-red-500/30 text-red-300 hover:bg-red-500/10 transition-colors
@@ -209,6 +215,46 @@ export default function AdminDirect2HirePage() {
             Next
             <ChevronRight size={16} />
           </button>
+        </div>
+      )}
+
+      <ConfirmationDialog
+        isOpen={!!refundConfirmId}
+        onClose={() => setRefundConfirmId(null)}
+        onConfirm={async () => {
+          if (refundConfirmId) await handleMarkRefunded(refundConfirmId);
+        }}
+        title="Mark as Refunded"
+        message="This will mark the enrollment as refunded. This action cannot be undone."
+        confirmText="Mark Refunded"
+        variant="danger"
+        isLoading={markingId === refundConfirmId}
+      />
+
+      {refundSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setRefundSuccess(false)}
+          />
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.15)] z-10 flex flex-col items-center text-center">
+            <div className="mb-4 mt-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 border border-brand-200 text-brand-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <h3 className="text-[17px] font-semibold text-text tracking-tight mb-2 px-1">
+              Enrollment Refunded
+            </h3>
+            <p className="text-[13px] text-text-muted leading-relaxed mb-6 px-2">
+              Enrollment has been marked as refunded successfully.
+            </p>
+            <button
+              type="button"
+              onClick={() => setRefundSuccess(false)}
+              className="w-full inline-flex items-center justify-center rounded-xl bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 text-[13px] font-semibold transition-all duration-150 active:scale-[0.98] select-none cursor-pointer"
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

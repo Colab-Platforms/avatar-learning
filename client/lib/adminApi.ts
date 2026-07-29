@@ -784,6 +784,21 @@ export const markContactRead = (id: string) =>
 export const deleteContact = (id: string) =>
   apiClient.delete(`/admin/contacts/${id}`).then((r) => r.data);
 
+// ─── Dashboard Overview ─────────────────────────────────────────────────────────
+
+export interface AdminDashboardOverview {
+  revenue: { courseInPaise: number; direct2hireInPaise: number; totalInPaise: number };
+  users: { total: number; active: number };
+  d2h: { pending: number; paid: number; refunded: number };
+  partners: { pending: number; approved: number; rejected: number };
+  pendingClaims: { count: number; totalAmountRupees: number };
+  internshipApps: { pending: number; accepted: number; rejected: number };
+  contacts: { unread: number };
+}
+
+export const fetchAdminDashboardOverview = (): Promise<AdminDashboardOverview> =>
+  apiClient.get("/admin/dashboard/overview").then((r) => r.data.data);
+
 // ─── Users (role management) ───────────────────────────────────────────────────
 
 export interface AdminUser {

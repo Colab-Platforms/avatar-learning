@@ -6,6 +6,14 @@ export function formatDuration(seconds: number | null | undefined): string {
   return `${mins}m ${secs}s`;
 }
 
+export function formatPaise(paise: number): string {
+  return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
+}
+
+export function formatRupees(rupees: number): string {
+  return `₹${rupees.toLocaleString("en-IN")}`;
+}
+
 export function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const date = typeof value === "string" ? new Date(value) : value;
