@@ -18,7 +18,7 @@ import { ApplyPartnerBody } from "./partner.types.js";
 // Shortened to 5 minutes outside production so the whole schedule → cron →
 // credit pipeline can be verified without waiting half a month.
 // const isProd = process.env.NODE_ENV === "production";
-const isProd = false; // TODO: Remove this line before deploying to production. It is only for testing the cron job in dev mode.
+const isProd = true; // TODO: Remove this line before deploying to production. It is only for testing the cron job in dev mode.
 const getEligibleAt = () =>
   isProd
     ? dayjs().add(COMMISSION_HOLD_DAYS, "day").toDate()
