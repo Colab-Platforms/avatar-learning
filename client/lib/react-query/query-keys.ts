@@ -63,4 +63,5 @@ export const queryKeys = {
   adminCourses: ["admin-courses"] as const,
   adminCoursesPage: (page: number, pageSize: number, search?: string) =>
     ["admin-courses", page, pageSize, search ?? ""] as const,
+  adminCourse: (id: string) => ["admin-course", id] as const,
 };

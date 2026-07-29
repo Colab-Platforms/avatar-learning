@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/react-query/query-keys";
+import { useAdminCourse } from "@/hooks/queries/useAdminCourse";
 import {
   ChevronRight,
   Eye,
@@ -17,7 +20,6 @@ import {
   Check,
 } from "lucide-react";
 import {
-  fetchAdminCourse,
   createLesson,
   deleteLesson,
   toggleCoursePublish,
@@ -109,8 +111,11 @@ const LEVEL_COLOR: Record<string, string> = {
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [course, setCourse] = useState<Course | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: course, isLoading: loading } = useAdminCourse(id) as {
+    data: Course | undefined;
+    isLoading: boolean;
+  };
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<
     "weeks" | "meta" | "assessment" | "internship" | "placement"
@@ -140,20 +145,8 @@ export default function CourseDetailPage() {
     modules: [] as string[],
   });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setCourse(await fetchAdminCourse(id));
-    } catch {
-      setError("Failed to load course.");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const load = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.adminCourse(id) });
 
   const handlePublish = async () => {
     setTogglingPublish(true);
