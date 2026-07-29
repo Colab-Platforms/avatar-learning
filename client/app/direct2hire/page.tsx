@@ -28,6 +28,7 @@ import {
   Flame,
   ChevronLeft,
   ChevronRight,
+  ArrowUpRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/layout/Navbar";
@@ -36,7 +37,6 @@ import {
   ScrollReveal,
   AnimateOnScroll,
   Button,
-  HelpWidget,
   ShinyText,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -333,11 +333,6 @@ export default function Direct2HirePage() {
   }, []);
 
   const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
-  const heroBtnLabel = processing
-    ? "Processing Payment…"
-    : enrolled
-      ? "Enrolled ✓"
-      : "Enroll Now for ₹999";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -428,9 +423,18 @@ export default function Direct2HirePage() {
                       <Button
                         variant="primary"
                         size="lg"
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto group inline-flex items-center justify-center gap-2"
                       >
-                        {heroBtnLabel}
+                        {processing ? (
+                          "Processing Payment…"
+                        ) : enrolled ? (
+                          <>
+                            Go to Dashboard
+                            <ArrowUpRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                          </>
+                        ) : (
+                          "Enroll Now for ₹999"
+                        )}
                       </Button>
                     </Link>
                     <Link href="#journey" className="w-full sm:w-auto">
@@ -547,6 +551,97 @@ export default function Direct2HirePage() {
                 </div>
               </div>
             </ScrollReveal>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            COMPLETE BREAKDOWN / PRICING
+        ══════════════════════════════ */}
+        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
+          <div className="relative container-x">
+            <ScrollReveal animation="fade-up">
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-5 sm:mb-12">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
+                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
+                    <ShinyText
+                      text="COMPLETE BREAKDOWN"
+                      color="#1d4ed8"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                    The Full Direct2Hire Journey{" "}
+                    <span className="text-gradient-brand">
+                      Starts at ₹999/-
+                    </span>
+                  </h2>
+                  <p className="mt-3 text-text-muted ">
+                    Quiz, Counseling, Learning, Internship, and Placement — Real
+                    value worth{" "}
+                    <span className="line-through text-text-subtle">
+                      ₹24,999
+                    </span>
+                    , now available at a fraction of the cost.
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 items-stretch w-full">
+              {/* value stack */}
+              <AnimateOnScroll delay={0} className="w-full lg:col-span-3">
+                <div className="h-full w-full rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 flex flex-col justify-center divide-y divide-border">
+                  {VALUE_STACK.map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between gap-3 sm:gap-4 px-2 sm:px-4 py-3 sm:py-4
+                                 hover:bg-brand-50 transition-colors duration-250 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                        <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg shrink-0 bg-white border border-brand-200">
+                          <item.icon className="h-4 w-4 text-brand-600" />
+                        </span>
+                        <p className="text-[13px] sm:text-[14px] text-text font-medium truncate">
+                          {item.label}
+                        </p>
+                      </div>
+                      <p className="text-[13px] sm:text-[14px] text-text-subtle font-semibold line-through shrink-0 pl-2">
+                        {item.price}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </AnimateOnScroll>
+
+              {/* you pay only card */}
+              <AnimateOnScroll delay={120} className="w-full lg:col-span-2">
+                <div className="relative w-full h-full rounded-2xl border border-brand-200 p-5 sm:p-10 overflow-hidden flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand-50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+                  <p className="relative text-[11px] sm:text-[12px] text-text-subtle uppercase tracking-[0.16em] mb-3">
+                    You Pay Only
+                  </p>
+                  <p className="relative text-4xl sm:text-6xl font-black text-gradient-brand">
+                    ₹999/-
+                  </p>
+                  <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
+                    <IndianRupee className="h-3 w-3 shrink-0" />
+                    Save ₹24,000 (96% OFF)
+                  </span>
+                  <Link
+                    href="/direct2hire/enroll"
+                    className="relative mt-3 w-full sm:w-fit"
+                  >
+                    <Button variant="primary" size="md" className="w-full">
+                      Book Your Seat <ArrowRight className="h-4 w-4 shrink-0" />
+                    </Button>
+                  </Link>
+                  <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
+                    Instant confirmation on WhatsApp
+                  </p>
+                </div>
+              </AnimateOnScroll>
+            </div>
           </div>
         </section>
 
@@ -786,7 +881,7 @@ export default function Direct2HirePage() {
                 <span className="text-gradient-brand">Five Guided Steps.</span>
               </h2>
               <p className="mt-3 text-text-muted max-w-2xl">
-                Direct2Hire isn&apos;t just a single session — it&apos;s a
+                Direct2Hire isn&apos;t just a single session it&apos;s a
                 structured journey from figuring out your path to actually
                 getting hired.
               </p>
@@ -912,7 +1007,7 @@ export default function Direct2HirePage() {
                   </h2>
                   <p className="text-text-muted leading-relaxed mb-4 sm:mb-6">
                     Most sessions end with a PDF and a goodbye. Direct2Hire is
-                    built to end with an offer letter — here&apos;s exactly what
+                    built to end with an offer letter here&apos;s exactly what
                     changes for you.
                   </p>
                   <Link
@@ -941,17 +1036,22 @@ export default function Direct2HirePage() {
                           key={i}
                           className={cn(
                             "flex items-start gap-4 px-4 sm:px-5 py-3.5 sm:py-4.5 hover:bg-slate-50/40 rounded-xl transition-colors duration-200",
-                            i !== OUTCOME_ITEMS.length - 1 && "border-b border-border",
+                            i !== OUTCOME_ITEMS.length - 1 &&
+                              "border-b border-border",
                           )}
                         >
-                          <span className={cn(
-                            "flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg border shadow-xs transition-transform duration-300 hover:scale-105",
-                            item.bg
-                          )}>
+                          <span
+                            className={cn(
+                              "flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg border shadow-xs transition-transform duration-300 hover:scale-105",
+                              item.bg,
+                            )}
+                          >
                             <Icon className="h-4 w-4" />
                           </span>
                           <p className="text-[14px] sm:text-[15px] text-text-muted leading-relaxed">
-                            <strong className="font-semibold text-text">{item.highlight}</strong>
+                            <strong className="font-semibold text-text">
+                              {item.highlight}
+                            </strong>
                             {item.rest}
                           </p>
                         </div>
@@ -960,97 +1060,6 @@ export default function Direct2HirePage() {
                   </div>
                 </AnimateOnScroll>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            COMPLETE BREAKDOWN / PRICING
-        ══════════════════════════════ */}
-        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up">
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-5 sm:mb-12">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                    <ShinyText
-                      text="COMPLETE BREAKDOWN"
-                      color="#1d4ed8"
-                      shineColor="#93c5fd"
-                      speed={2.5}
-                    />
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                    The Full Direct2Hire Journey{" "}
-                    <span className="text-gradient-brand">
-                      Starts at ₹999/-
-                    </span>
-                  </h2>
-                  <p className="mt-3 text-text-muted ">
-                    Quiz, Counseling, Learning, Internship, and Placement — Real
-                    value worth{" "}
-                    <span className="line-through text-text-subtle">
-                      ₹24,999
-                    </span>
-                    , now available at a fraction of the cost.
-                  </p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 items-stretch w-full">
-              {/* value stack */}
-              <AnimateOnScroll delay={0} className="w-full lg:col-span-3">
-                <div className="h-full w-full rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 flex flex-col justify-center divide-y divide-border">
-                  {VALUE_STACK.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between gap-3 sm:gap-4 px-2 sm:px-4 py-3 sm:py-4
-                                 hover:bg-brand-50 transition-colors duration-250 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                        <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg shrink-0 bg-white border border-brand-200">
-                          <item.icon className="h-4 w-4 text-brand-600" />
-                        </span>
-                        <p className="text-[13px] sm:text-[14px] text-text font-medium truncate">
-                          {item.label}
-                        </p>
-                      </div>
-                      <p className="text-[13px] sm:text-[14px] text-text-subtle font-semibold line-through shrink-0 pl-2">
-                        {item.price}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </AnimateOnScroll>
-
-              {/* you pay only card */}
-              <AnimateOnScroll delay={120} className="w-full lg:col-span-2">
-                <div className="relative w-full h-full rounded-2xl border border-brand-200 p-5 sm:p-10 overflow-hidden flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand-50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-                  <p className="relative text-[11px] sm:text-[12px] text-text-subtle uppercase tracking-[0.16em] mb-3">
-                    You Pay Only
-                  </p>
-                  <p className="relative text-4xl sm:text-6xl font-black text-gradient-brand">
-                    ₹999/-
-                  </p>
-                  <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
-                    <IndianRupee className="h-3 w-3 shrink-0" />
-                    Save ₹24,000 (96% OFF)
-                  </span>
-                  <Link
-                    href="/direct2hire/enroll"
-                    className="relative mt-3 w-full sm:w-fit"
-                  >
-                    <Button variant="primary" size="md" className="w-full">
-                      Book Your Seat <ArrowRight className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </Link>
-                  <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
-                    Instant confirmation on WhatsApp
-                  </p>
-                </div>
-              </AnimateOnScroll>
             </div>
           </div>
         </section>
@@ -1317,7 +1326,7 @@ export default function Direct2HirePage() {
                       Still have questions?
                     </h3>
                     <p className="text-[13px] text-text-muted leading-relaxed mb-5">
-                      We&apos;re here to help — reach out to our team and
+                      We&apos;re here to help reach out to our team and
                       we&apos;ll help you out.
                     </p>
                     <Link href="/contact">
@@ -1392,7 +1401,6 @@ export default function Direct2HirePage() {
       </main>
 
       <Footer />
-      <HelpWidget />
       <StickyBuyBar />
     </>
   );

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Phone, X } from "lucide-react";
+import { Headphones, Phone, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const WHATSAPP_NUMBER = "918976830780";
 const PHONE_NUMBER = "+918976830780";
@@ -19,8 +20,18 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 
 export function HelpWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activeIcon, setActiveIcon] = useState<"whatsapp" | "phone">("whatsapp");
+
+  useEffect(() => {
+    if (isOpen) return;
+    const timer = setInterval(() => {
+      setActiveIcon((prev) => (prev === "whatsapp" ? "phone" : "whatsapp"));
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,10 +47,23 @@ export function HelpWidget() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  if (!pathname) return null;
+
+  const isExcluded =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/partner-dashboard");
+
+  if (isExcluded) return null;
+
+  const isDirect2Hire = pathname === "/direct2hire";
+
   return (
     <div
       ref={containerRef}
-      className="fixed right-4 bottom-44 md:right-19 md:bottom-40  z-50 flex flex-col items-end gap-3"
+      className={`fixed right-6 md:right-8 z-50 flex flex-col items-end gap-3 transition-all duration-300 ${
+        isDirect2Hire ? "bottom-[180px] md:bottom-[196px]" : "bottom-[108px] md:bottom-[132px]"
+      }`}
     >
       {/* Panel */}
       <AnimatePresence>
@@ -49,45 +73,56 @@ export function HelpWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="w-[280px] overflow-hidden rounded-2xl border border-border bg-white shadow-[0_16px_48px_rgba(15,23,42,0.16)]"
+            className="w-[280px] overflow-hidden rounded-2xl border border-border bg-white shadow-[0_16px_48px_rgba(15,23,42,0.12)]"
           >
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-4 transition-colors hover:bg-emerald-50/70"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
-                <WhatsAppIcon className="h-5 w-5" />
-              </span>
-              <div className="text-left">
-                <p className="text-[14px] font-semibold text-text">
-                  Chat on WhatsApp
-                </p>
-                <p className="text-[12px] text-text-subtle">
-                  For instant help &amp; updates
-                </p>
-              </div>
-            </a>
+            {/* Gradient Header */}
+            <div className="bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-3.5 text-white">
+              <h4 className="text-[13.5px] font-bold tracking-wide">Support & Advice</h4>
+              <p className="text-[10.5px] text-brand-100/90 flex items-center gap-1.5 mt-0.5 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Counselors online to assist you
+              </p>
+            </div>
 
-            <div className="mx-4 h-px bg-border" />
+            <div className="py-1">
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-emerald-50/70"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm transition-transform group-hover:scale-105">
+                  <WhatsAppIcon className="h-4.5 w-4.5" />
+                </span>
+                <div className="text-left">
+                  <p className="text-[13px] font-semibold text-text">
+                    Chat on WhatsApp
+                  </p>
+                  <p className="text-[11px] text-text-muted">
+                    Instant help & support
+                  </p>
+                </div>
+              </a>
 
-            <a
-              href={`tel:${PHONE_NUMBER}`}
-              className="flex items-center gap-3 px-4 py-4 transition-colors hover:bg-brand-50/70"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-sm">
-                <Phone className="h-4.5 w-4.5" />
-              </span>
-              <div className="text-left">
-                <p className="text-[14px] font-semibold text-text">
-                  Talk to an Advisor
-                </p>
-                <p className="text-[12px] text-text-subtle">
-                  Available Mon–Sat, 10am–6pm
-                </p>
-              </div>
-            </a>
+              <div className="mx-4 h-px bg-border/50" />
+
+              <a
+                href={`tel:${PHONE_NUMBER}`}
+                className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-brand-50/70"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-sm">
+                  <Phone className="h-4 w-4" />
+                </span>
+                <div className="text-left">
+                  <p className="text-[13px] font-semibold text-text">
+                    Talk to an Advisor
+                  </p>
+                  <p className="text-[11px] text-text-muted">
+                    Mon–Sat, 10am–6pm
+                  </p>
+                </div>
+              </a>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -97,7 +132,7 @@ export function HelpWidget() {
         type="button"
         onClick={() => setIsOpen((open) => !open)}
         aria-label={isOpen ? "Close help menu" : "Need help? Chat or call us"}
-        className="group inline-flex items-center gap-2 rounded-full bg-slate-900 pl-3 pr-4 py-3 text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0"
+        className="group inline-flex items-center gap-2.5 rounded-full border border-brand-200/80 bg-white/90 px-4 py-3 text-brand-600 shadow-[0_8px_30px_rgba(42,120,204,0.12)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-50 hover:border-brand-300 hover:shadow-[0_12px_36px_rgba(42,120,204,0.18)] active:translate-y-0 cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           {isOpen ? (
@@ -107,20 +142,24 @@ export function HelpWidget() {
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className="flex h-6 w-6 items-center justify-center"
+              className="flex h-6 w-6 items-center justify-center text-brand-600"
             >
               <X className="h-4 w-4" />
             </motion.span>
           ) : (
             <motion.span
-              key="open"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="flex h-6 w-6 items-center justify-center"
+              key={activeIcon}
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -12, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="flex h-6 w-6 items-center justify-center shrink-0"
             >
-              <MessageCircle className="h-4 w-4" />
+              {activeIcon === "whatsapp" ? (
+                <WhatsAppIcon className="h-4.5 w-4.5 text-emerald-500 fill-emerald-500" />
+              ) : (
+                <Phone className="h-4 w-4 text-brand-600" />
+              )}
             </motion.span>
           )}
         </AnimatePresence>

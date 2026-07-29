@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Zap, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
@@ -26,11 +26,6 @@ export function StickyBuyBar() {
   }, []);
 
   const { processing, enrolled } = useDirect2HireCheckout();
-  const heroBtnLabel = processing
-    ? "Processing Payment…"
-    : enrolled
-      ? "Enrolled ✓"
-      : "Enroll Now for ₹999";
 
   return (
     <AnimatePresence>
@@ -88,13 +83,25 @@ export function StickyBuyBar() {
               </div>
 
               {/* Right CTA Button */}
-              <Link href="/direct2hire/enroll" className="shrink-0">
+              <Link
+                href={enrolled ? "/dashboard" : "/direct2hire/enroll"}
+                className="shrink-0"
+              >
                 <Button
                   variant="primary"
                   size="md"
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap group inline-flex items-center justify-center gap-1.5"
                 >
-                  <span>{heroBtnLabel}</span>
+                  {processing ? (
+                    "Processing Payment…"
+                  ) : enrolled ? (
+                    <>
+                      <span>Go to Dashboard</span>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </>
+                  ) : (
+                    <span>Enroll Now for ₹999</span>
+                  )}
                 </Button>
               </Link>
             </div>
