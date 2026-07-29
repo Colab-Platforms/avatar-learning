@@ -14,6 +14,7 @@ import { useAdminCourses } from "@/hooks/queries/useAdminCourses";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/react-query/query-keys";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Category { id: string; name: string; slug: string; }
 interface Course {
@@ -43,8 +44,12 @@ export default function AdminCoursesPage() {
 
     const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
     const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const urlSearch = searchParams.get("search")?.trim() ?? "";
 
-    const { data, isLoading, isFetching } = useAdminCourses(currentPage, 10);
+    const [search, setSearch] = useState(urlSearch);
+    const debouncedSearch = useDebounce(search, 400);
+
+    const { data, isLoading, isFetching } = useAdminCourses(currentPage, 10, urlSearch || undefined);
     const courses = (data?.data ?? []) as Course[];
     const allCoursesCount = data?.totalRecords ?? 0;
     const pagination = data
@@ -65,7 +70,6 @@ export default function AdminCoursesPage() {
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [error, setError] = useState("");
-    const [search, setSearch] = useState("");
     const [filterLevel, setFilterLevel] = useState("ALL");
     const [filterStatus, setFilterStatus] = useState("ALL");
     const [form, setForm] = useState({
@@ -84,17 +88,23 @@ export default function AdminCoursesPage() {
     );
 
     const handlePageChange = useCallback(
-        (page: number) => {
+        (page: number, nextSearch?: string) => {
             const params = new URLSearchParams(searchParams.toString());
             if (page <= 1) {
                 params.delete("page");
             } else {
                 params.set("page", String(page));
             }
+            const s = nextSearch !== undefined ? nextSearch : urlSearch;
+            if (s) {
+                params.set("search", s);
+            } else {
+                params.delete("search");
+            }
             const qs = params.toString();
             router.push(qs ? `/admin/courses?${qs}` : "/admin/courses");
         },
-        [router, searchParams],
+        [router, searchParams, urlSearch],
     );
 
     useEffect(() => {
@@ -103,13 +113,19 @@ export default function AdminCoursesPage() {
         }
     }, [data, currentPage, handlePageChange]);
 
+    // Sync debounced search into the URL, resetting to page 1
+    useEffect(() => {
+        if (debouncedSearch !== urlSearch) {
+            handlePageChange(1, debouncedSearch);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSearch]);
+
     const filtered = courses.filter((c) => {
-        const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
-            c.category.name.toLowerCase().includes(search.toLowerCase());
         const matchLevel = filterLevel === "ALL" || c.level === filterLevel;
         const matchStatus = filterStatus === "ALL" ||
             (filterStatus === "PUBLISHED" ? c.isPublished : !c.isPublished);
-        return matchSearch && matchLevel && matchStatus;
+        return matchLevel && matchStatus;
     });
 
     const submit = async (e: React.FormEvent) => {

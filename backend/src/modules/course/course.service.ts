@@ -75,20 +75,44 @@ export class AdminCourseService {
     return prisma.category.create({ data });
   }
 
-  async getCategories(take?: number, skip?: number) {
+  async getCategories(take?: number, skip?: number, search?: string) {
+    const term = search?.trim();
+    const where = term
+      ? {
+          OR: [
+            { name: { contains: term, mode: "insensitive" as const } },
+            { slug: { contains: term, mode: "insensitive" as const } },
+            { description: { contains: term, mode: "insensitive" as const } },
+          ],
+        }
+      : undefined;
+
     const categories = await prisma.category.findMany({
+      where,
       orderBy: { name: "asc" },
       ...(take !== undefined && { take }),
       ...(skip !== undefined && { skip }),
     });
 
-    const totalRecords = await prisma.category.count();
+    const totalRecords = await prisma.category.count({ where });
     return { categories, totalRecords };
   }
 
   // Courses
-  async getAllCourses(take?: number, skip?: number) {
+  async getAllCourses(take?: number, skip?: number, search?: string) {
+    const term = search?.trim();
+    const where = term
+      ? {
+          OR: [
+            { title: { contains: term, mode: "insensitive" as const } },
+            { slug: { contains: term, mode: "insensitive" as const } },
+            { description: { contains: term, mode: "insensitive" as const } },
+          ],
+        }
+      : undefined;
+
     const courses = await prisma.courses.findMany({
+      where,
       include: {
         category: { select: { id: true, name: true, slug: true } },
         creator: {
@@ -101,7 +125,7 @@ export class AdminCourseService {
       ...(skip !== undefined && { skip }),
     });
 
-    const totalRecords = await prisma.courses.count();
+    const totalRecords = await prisma.courses.count({ where });
     return { courses, totalRecords };
   }
 

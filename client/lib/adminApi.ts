@@ -11,9 +11,10 @@ export const fetchCategories = () =>
 export const fetchCategoriesPaginated = (
   page: number = 1,
   pageSize: number = 10,
+  search?: string,
 ): Promise<PaginatedResponse<any>> =>
   apiClient
-    .get("/admin/categories", { params: { page, pageSize } })
+    .get("/admin/categories", { params: { page, pageSize, ...(search && { search }) } })
     .then((r) => r.data.data);
 
 export const createCategory = (payload: {
@@ -31,9 +32,10 @@ export const fetchAdminCourses = () =>
 export const fetchAdminCoursesPaginated = (
   page: number = 1,
   pageSize: number = 10,
+  search?: string,
 ): Promise<PaginatedResponse<any>> =>
   apiClient
-    .get("/admin/courses", { params: { page, pageSize } })
+    .get("/admin/courses", { params: { page, pageSize, ...(search && { search }) } })
     .then((r) => r.data.data);
 
 export const fetchAdminCourse = (id: string) =>

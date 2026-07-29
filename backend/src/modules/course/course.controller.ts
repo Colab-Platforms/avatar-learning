@@ -57,9 +57,11 @@ export const getCategories = async (
 ): Promise<void> => {
   try {
     const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
+    const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const { categories, totalRecords } = await adminService.getCategories(
       take,
       skip,
+      search,
     );
     const response = formatPaginationResponse(
       categories,
@@ -86,9 +88,11 @@ export const adminGetAllCourses = async (
 ): Promise<void> => {
   try {
     const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
+    const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const { courses, totalRecords } = await adminService.getAllCourses(
       take,
       skip,
+      search,
     );
     const response = formatPaginationResponse(
       courses,

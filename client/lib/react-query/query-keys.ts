@@ -58,9 +58,9 @@ export const queryKeys = {
   introVideo: ["direct2hire-intro-video"] as const,
   adminIntroVideo: ["admin-direct2hire-intro-video"] as const,
   adminCategories: ["admin-categories"] as const,
-  adminCategoriesPage: (page: number, pageSize: number) =>
-    ["admin-categories", page, pageSize] as const,
+  adminCategoriesPage: (page: number, pageSize: number, search?: string) =>
+    ["admin-categories", page, pageSize, search ?? ""] as const,
   adminCourses: ["admin-courses"] as const,
-  adminCoursesPage: (page: number, pageSize: number) =>
-    ["admin-courses", page, pageSize] as const,
+  adminCoursesPage: (page: number, pageSize: number, search?: string) =>
+    ["admin-courses", page, pageSize, search ?? ""] as const,
 };
