@@ -8,6 +8,14 @@ import type { AdminStudentInternshipProgress } from "./internshipApi";
 export const fetchCategories = () =>
   apiClient.get("/admin/categories").then((r) => r.data.data);
 
+export const fetchCategoriesPaginated = (
+  page: number = 1,
+  pageSize: number = 10,
+): Promise<PaginatedResponse<any>> =>
+  apiClient
+    .get("/admin/categories", { params: { page, pageSize } })
+    .then((r) => r.data.data);
+
 export const createCategory = (payload: {
   name: string;
   slug: string;

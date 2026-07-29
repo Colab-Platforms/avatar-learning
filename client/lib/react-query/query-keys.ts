@@ -57,4 +57,10 @@ export const queryKeys = {
   adminMockInterview: (userId: string) => ["admin-mock-interview", userId] as const,
   introVideo: ["direct2hire-intro-video"] as const,
   adminIntroVideo: ["admin-direct2hire-intro-video"] as const,
+  adminCategories: ["admin-categories"] as const,
+  adminCategoriesPage: (page: number, pageSize: number) =>
+    ["admin-categories", page, pageSize] as const,
+  adminCourses: ["admin-courses"] as const,
+  adminCoursesPage: (page: number, pageSize: number) =>
+    ["admin-courses", page, pageSize] as const,
 };

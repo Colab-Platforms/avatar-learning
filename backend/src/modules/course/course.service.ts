@@ -75,10 +75,15 @@ export class AdminCourseService {
     return prisma.category.create({ data });
   }
 
-  async getCategories() {
-    return prisma.category.findMany({
+  async getCategories(take?: number, skip?: number) {
+    const categories = await prisma.category.findMany({
       orderBy: { name: "asc" },
+      ...(take !== undefined && { take }),
+      ...(skip !== undefined && { skip }),
     });
+
+    const totalRecords = await prisma.category.count();
+    return { categories, totalRecords };
   }
 
   // Courses

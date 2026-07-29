@@ -2,16 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-    fetchAdminCourses,
-    fetchAdminCoursesPaginated,
     fetchCategories,
     createCourse,
     deleteCourse,
     toggleCoursePublish,
 } from "@/lib/adminApi";
-import type { PaginatedResponse } from "@/lib/coursesApi";
+import { useAdminCourses } from "@/hooks/queries/useAdminCourses";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/react-query/query-keys";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 
 interface Category { id: string; name: string; slug: string; }
@@ -36,12 +37,29 @@ const LEVEL_COLOR: Record<string, string> = {
 };
 
 export default function AdminCoursesPage() {
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [allCoursesCount, setAllCoursesCount] = useState(0);
-    const [pagination, setPagination] = useState<Omit<PaginatedResponse<Course>, 'data'> | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const queryClient = useQueryClient();
+
+    const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+    const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+    const { data, isLoading, isFetching } = useAdminCourses(currentPage, 10);
+    const courses = (data?.data ?? []) as Course[];
+    const allCoursesCount = data?.totalRecords ?? 0;
+    const pagination = data
+        ? {
+              currentPage: data.currentPage,
+              pageSize: data.pageSize,
+              totalRecords: data.totalRecords,
+              totalPages: data.totalPages,
+              hasNextPage: data.hasNextPage,
+              hasPreviousPage: data.hasPreviousPage,
+          }
+        : null;
+    const loading = isLoading;
+
     const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -56,29 +74,34 @@ export default function AdminCoursesPage() {
         isDirect2HireCourse: false,
     });
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [res, cats] = await Promise.all([fetchAdminCoursesPaginated(currentPage, 10), fetchCategories()]);
-            setCourses(res.data);
-            setAllCoursesCount(res.totalRecords);
-            setPagination({
-                currentPage: res.currentPage,
-                pageSize: res.pageSize,
-                totalRecords: res.totalRecords,
-                totalPages: res.totalPages,
-                hasNextPage: res.hasNextPage,
-                hasPreviousPage: res.hasPreviousPage,
-            });
-            setCategories(cats);
-        } finally { setLoading(false); }
-    }, [currentPage]);
+    useEffect(() => {
+        fetchCategories().then(setCategories);
+    }, []);
 
-    useEffect(() => { load(); }, [load]);
+    const invalidateCourses = useCallback(
+        () => queryClient.invalidateQueries({ queryKey: queryKeys.adminCourses }),
+        [queryClient],
+    );
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
+    const handlePageChange = useCallback(
+        (page: number) => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (page <= 1) {
+                params.delete("page");
+            } else {
+                params.set("page", String(page));
+            }
+            const qs = params.toString();
+            router.push(qs ? `/admin/courses?${qs}` : "/admin/courses");
+        },
+        [router, searchParams],
+    );
+
+    useEffect(() => {
+        if (data && currentPage > data.totalPages && data.totalPages > 0 && currentPage !== 1) {
+            handlePageChange(1);
+        }
+    }, [data, currentPage, handlePageChange]);
 
     const filtered = courses.filter((c) => {
         const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -97,7 +120,7 @@ export default function AdminCoursesPage() {
             await createCourse(form);
             setForm({ categoryId: "", title: "", description: "", thumbnail: "", level: "BEGINNER", price: 0, totalWeeks: 1, isDirect2HireCourse: false });
             setShowForm(false);
-            await load();
+            await invalidateCourses();
         } catch (err: any) {
             setError(err?.response?.data?.message ?? "Failed to create course");
         } finally { setSaving(false); }
@@ -105,7 +128,7 @@ export default function AdminCoursesPage() {
 
     const handleToggle = async (id: string) => {
         setTogglingId(id);
-        try { await toggleCoursePublish(id); await load(); }
+        try { await toggleCoursePublish(id); await invalidateCourses(); }
         catch { setError("Failed to toggle publish state"); }
         finally { setTogglingId(null); }
     };
@@ -113,7 +136,7 @@ export default function AdminCoursesPage() {
     const handleDelete = async (id: string, title: string) => {
         if (!confirm(`Delete "${title}" and all its lessons and videos?`)) return;
         setDeletingId(id);
-        try { await deleteCourse(id); await load(); }
+        try { await deleteCourse(id); await invalidateCourses(); }
         catch { setError("Failed to delete course"); }
         finally { setDeletingId(null); }
     };

@@ -52,12 +52,22 @@ export const createCategory = async (
 };
 
 export const getCategories = async (
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> => {
   try {
-    const categories = await adminService.getCategories();
-    sendResponse(res, true, categories, "Categories fetched");
+    const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
+    const { categories, totalRecords } = await adminService.getCategories(
+      take,
+      skip,
+    );
+    const response = formatPaginationResponse(
+      categories,
+      totalRecords,
+      page,
+      pageSize,
+    );
+    sendResponse(res, true, response, "Categories fetched");
   } catch (err: any) {
     sendResponse(
       res,
