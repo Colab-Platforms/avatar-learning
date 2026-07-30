@@ -49,7 +49,7 @@ function FetchedField({ label, value }: { label: string; value: string }) {
 export default function Direct2HireEnrollPage() {
   const router = useRouter();
   const { user, hasHydrated } = useSelector((state: RootState) => state.auth);
-  const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
+  const { enroll, processing, message, enrolled, secondsLeft } = useDirect2HireCheckout();
   const [savingLead, setSavingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [couponInput, setCouponInput] = useState("");
@@ -217,6 +217,30 @@ export default function Direct2HireEnrollPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (processing) {
+    const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
+    const ss = String(secondsLeft % 60).padStart(2, "0");
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-slate-50 px-6 text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Processing your payment…</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Complete the payment in the Razorpay window. Don&apos;t close or refresh this tab.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-3 font-mono text-2xl font-semibold text-slate-800 shadow-sm">
+          {mm}:{ss}
+        </div>
+        <p className="text-xs text-slate-400">
+          {secondsLeft > 0
+            ? "We'll flag this if it takes longer than expected."
+            : "This is taking longer than expected — check your dashboard shortly for the payment status."}
+        </p>
       </div>
     );
   }
