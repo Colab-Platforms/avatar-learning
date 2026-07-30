@@ -27,6 +27,7 @@ import type { AdminD2HStudentProfile } from "@/lib/adminApi";
 import type { AdminStudentInternshipTask } from "@/lib/internshipApi";
 import { AdminPlacementAssessmentSection } from "@/components/admin/AdminPlacementAssessmentSection";
 import { AdminMockInterviewSection } from "@/components/admin/AdminMockInterviewSection";
+import { AdminJobPlacementSection } from "@/components/admin/AdminJobPlacementSection";
 import { CounsellingFeedbackSection } from "@/components/admin/CounsellingFeedbackSection";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 
@@ -1087,6 +1088,8 @@ export default function AdminDirect2HireStudentPage() {
       <AdminPlacementAssessmentSection userId={userId} />
 
       <AdminMockInterviewSection userId={userId} />
+
+      <AdminJobPlacementSection userId={userId} />
     </div>
   );
 }

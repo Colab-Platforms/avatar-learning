@@ -4,6 +4,7 @@ import * as direct2hireController from "./direct2hire.controller.js";
 import * as direct2hireAdminController from "./admin/admin.controller.js";
 import * as placementController from "../course/placement/placement.controller.js";
 import * as mockInterviewController from "./mock-interview/mock-interview.controller.js";
+import * as jobPlacementController from "./job-placement/job-placement.controller.js";
 import internshipAdminRoutes from "./internship/internship.admin.route.js";
 import * as introVideoController from "./intro-video/intro-video.controller.js";
 
@@ -91,6 +92,11 @@ router.patch(
 router.patch(
     "/direct2hire/students/:userId/mock-interview/cancel",
     mockInterviewController.cancelInterview,
+);
+
+router.get(
+    "/direct2hire/students/:userId/job-placement",
+    jobPlacementController.getStudentJourney,
 );
 
 router.use("/direct2hire", internshipAdminRoutes);

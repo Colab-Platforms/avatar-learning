@@ -20,6 +20,7 @@ import {
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { AttemptCooldownCountdown } from "@/components/placement/AttemptCooldownCountdown";
 import { PlacementAttemptCard } from "@/components/placement/PlacementAttemptCard";
+import { PlacementJourneySection } from "@/components/placement/PlacementJourneySection";
 import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { usePlacementAssessment } from "@/hooks/queries/usePlacementAssessment";
 import { usePlacementAttemptHistory } from "@/hooks/queries/usePlacementAttemptHistory";
@@ -539,6 +540,8 @@ export default function DashboardPlacementPage() {
             </CollapsibleSection>
           </motion.div>
         )}
+
+        <PlacementJourneySection />
 
         <motion.div
           initial={{ opacity: 0, y: 8 }}
