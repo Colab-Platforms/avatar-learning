@@ -188,6 +188,7 @@ model User {
   internshipSubmissions     InternshipSubmission[]
   reviewedInternshipSubs    InternshipSubmission[]     @relation("InternshipSubmissionReviewer")
   mockInterview             MockInterview?
+  jobPlacementEntries       JobPlacementEntry[]
 
   partner         Partner?
   partnerReferral PartnerReferral?
@@ -1427,4 +1428,30 @@ model MockInterview {
 
   @@index([status])
   @@map("mock_interviews")
+}
+
+// ─── Direct2Hire Placement Journey (post-interview job tracking) ────────────
+
+model JobPlacementEntry {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+
+  companyName String  @map("company_name")
+  jobTitle    String  @map("job_title")
+  location    String?
+  ctcLpa      Float?  @map("ctc_lpa")
+
+  joinedAt DateTime  @map("joined_at")
+  leftAt   DateTime? @map("left_at")
+
+  notes String? @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, leftAt])
+  @@map("job_placement_entries")
 }

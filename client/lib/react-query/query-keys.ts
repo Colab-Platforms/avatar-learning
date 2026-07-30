@@ -55,6 +55,9 @@ export const queryKeys = {
     ["admin-student-placement-overrides", userId] as const,
   mockInterview: ["mock-interview"] as const,
   adminMockInterview: (userId: string) => ["admin-mock-interview", userId] as const,
+  jobPlacementJourney: ["job-placement-journey"] as const,
+  adminJobPlacementJourney: (userId: string) =>
+    ["admin-job-placement-journey", userId] as const,
   introVideo: ["direct2hire-intro-video"] as const,
   adminIntroVideo: ["admin-direct2hire-intro-video"] as const,
   adminCategories: ["admin-categories"] as const,
