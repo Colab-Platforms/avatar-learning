@@ -18,6 +18,12 @@ export const userSelectFields = {
     isEmailVerified: true,
     isPhoneVerified: true,
     isActive: true,
+    quizCompleted: true,
+    quizCompletedAt: true,
+    quizPrimaryCareerDomain: true,
+    quizSecondaryCareerDomain: true,
+    quizRecommendedCareer: true,
+    quizMatchPercentage: true,
     createdAt: true,
     updatedAt: true,
     userRoleMappings: {
@@ -55,6 +61,13 @@ export interface UpdateUserBody {
     city?: string;
     isActive?: boolean;
     isPhoneVerified?: boolean;
+}
+
+export interface CompleteQuizBody {
+    primaryCareerDomain: string;
+    secondaryCareerDomain?: string | null;
+    recommendedCareer: string;
+    matchPercentage: number;
 }
 
 export type Role = "USER" | "ADMIN" | "SUPERADMIN";

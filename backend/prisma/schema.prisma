@@ -155,6 +155,13 @@ model User {
   isIntroVideoWatched Boolean   @default(false) @map("is_intro_video_watched")
   introVideoWatchedAt DateTime? @map("intro_video_watched_at")
 
+  quizCompleted             Boolean   @default(false) @map("quiz_completed")
+  quizCompletedAt           DateTime? @map("quiz_completed_at")
+  quizPrimaryCareerDomain   String?   @map("quiz_primary_career_domain")
+  quizSecondaryCareerDomain String?   @map("quiz_secondary_career_domain")
+  quizRecommendedCareer     String?   @map("quiz_recommended_career")
+  quizMatchPercentage       Float?    @map("quiz_match_percentage")
+
   deletedAt DateTime? @map("deleted_at")
 
   createdAt DateTime  @default(now()) @map("created_at")

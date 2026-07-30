@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import UserService from "./user.service.js";
-import { validateCreateUserSchema, validateUpdateUserSchema, validateSetUserRoleSchema } from "./user.validators.js";
+import { validateCreateUserSchema, validateUpdateUserSchema, validateSetUserRoleSchema, validateCompleteQuizSchema } from "./user.validators.js";
 import type { Role } from "./user.types.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { getResumeUploadSignature } from "@/utils/cloudinary.js";
@@ -182,6 +182,21 @@ export const removeProfileImage = async (req: AuthRequest, res: Response): Promi
     try {
         const result = await userService.removeProfileImage(req.user!.id);
         sendResponse(res, true, result, "Profile image removed successfully", STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const completeQuiz = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const { error, value } = validateCompleteQuizSchema(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await userService.completeQuiz(req.user!.id, value);
+        sendResponse(res, true, result, "Career quiz completed successfully", STATUS_CODES.OK);
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }

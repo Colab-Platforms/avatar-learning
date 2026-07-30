@@ -2,7 +2,7 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { hashPassword } from "@/utils/auth.js";
-import { userSelectFields, CreateUserBody, UpdateUserBody, SetUserRoleBody, Role, ROLE_LEVEL } from "./user.types.js";
+import { userSelectFields, CreateUserBody, UpdateUserBody, SetUserRoleBody, CompleteQuizBody, Role, ROLE_LEVEL } from "./user.types.js";
 import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
 import { buildPrismaQuery } from "prisma-qb";
 import { deleteFromCloudinary, RESUME_FOLDER, PROFILE_IMAGES_FOLDER, uploadToCloudinary } from "@/utils/cloudinary.js";
@@ -330,6 +330,33 @@ class UserService {
         });
 
         return prisma.user.findUnique({ where: { id: targetId }, select: userSelectFields });
+    }
+
+    async completeQuiz(userId: string, data: CompleteQuizBody) {
+        const user = await prisma.user.findFirst({
+            where: { id: userId, isDeleted: false },
+            select: { id: true },
+        });
+
+        if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
+
+        const secondary =
+            data.secondaryCareerDomain && data.secondaryCareerDomain.trim().length > 0
+                ? data.secondaryCareerDomain.trim()
+                : null;
+
+        return prisma.user.update({
+            where: { id: userId },
+            data: {
+                quizCompleted: true,
+                quizCompletedAt: new Date(),
+                quizPrimaryCareerDomain: data.primaryCareerDomain.trim(),
+                quizSecondaryCareerDomain: secondary,
+                quizRecommendedCareer: data.recommendedCareer.trim(),
+                quizMatchPercentage: data.matchPercentage,
+            },
+            select: userSelectFields,
+        });
     }
 
     async deleteUser(targetId: string, callerRole: Role, callerId: string) {

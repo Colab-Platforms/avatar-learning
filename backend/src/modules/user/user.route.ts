@@ -7,6 +7,7 @@ const router = Router();
 
 router.get("/", auth("ADMIN", "SUPERADMIN"), userController.getAllUsers);
 router.get("/me", auth("USER"), userController.getMe);
+router.post("/me/quiz/complete", auth("USER"), userController.completeQuiz);
 router.get("/me/resume/sign", auth("USER"), userController.signResumeUpload);
 router.post("/me/resume/complete", auth("USER"), userController.completeResumeUpload);
 router.delete("/me/resume", auth("USER"), userController.deleteResume);

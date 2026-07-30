@@ -20,6 +20,12 @@ export interface AuthUser {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   isActive: boolean;
+  quizCompleted?: boolean;
+  quizCompletedAt?: string | null;
+  quizPrimaryCareerDomain?: string | null;
+  quizSecondaryCareerDomain?: string | null;
+  quizRecommendedCareer?: string | null;
+  quizMatchPercentage?: number | null;
   createdAt: string;
   updatedAt?: string;
 }

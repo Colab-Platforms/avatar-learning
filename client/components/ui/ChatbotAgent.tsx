@@ -197,6 +197,14 @@ export default function ChatbotAgent() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).__isChatbotOpen = isOpen;
+      const event = new CustomEvent("chatbotToggle", { detail: { isOpen } });
+      window.dispatchEvent(event);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { QUIZ_QUESTIONS, computeResult } from "@/data/quizQuestions";
+import { useEffect, useRef, useState } from "react";
+import { QUIZ_QUESTIONS, computeResult, DOMAINS } from "@/data/quizQuestions";
 import { Navbar } from "@/components/layout/Navbar";
 import { QuizQuestion } from "./QuizQuestion";
 import { QuizResult } from "./QuizResult";
@@ -9,26 +9,55 @@ import { QuizPanel } from "./QuizPanel";
 import { QuizLoginModal } from "./QuizLoginModal";
 import { Brain } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
+import { useCompleteQuiz } from "@/hooks/mutations/useCompleteQuiz";
+import { trackCareerQuizEvent } from "@/lib/analytics/careerQuizAnalytics";
 
 // answers stores string[] per question (single-select = 1-item array)
 export function QuizShell() {
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
+  const { mutate: persistQuizCompletion } = useCompleteQuiz();
+  const persistedForUserRef = useRef<string | null>(null);
+  const completedAsGuestRef = useRef(false);
 
   const [answers, setAnswers] = useState<Record<number, string[]>>({});
   const [current, setCurrent] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const total    = QUIZ_QUESTIONS.length;
+  const total = QUIZ_QUESTIONS.length;
   const question = QUIZ_QUESTIONS[current];
   const selected = answers[question.id] ?? [];
+
+  // Persist completion once results are visible for an authenticated user.
+  // Does not change quiz UX — only syncs status for the marketing prompt.
+  useEffect(() => {
+    if (!submitted || !user) return;
+    if (persistedForUserRef.current === user.id) return;
+
+    const result = computeResult(answers);
+    persistedForUserRef.current = user.id;
+
+    if (completedAsGuestRef.current) {
+      trackCareerQuizEvent("login_after_quiz");
+      completedAsGuestRef.current = false;
+    }
+
+    persistQuizCompletion({
+      primaryCareerDomain: DOMAINS[result.role.domain].label,
+      secondaryCareerDomain: DOMAINS[result.secondRole.domain].label,
+      recommendedCareer: result.role.title,
+      matchPercentage: result.matchPct,
+    });
+  }, [submitted, user, answers, persistQuizCompletion]);
 
   function handleToggle(label: string) {
     setAnswers((prev) => {
       const cur = prev[question.id] ?? [];
       if (question.multi) {
         // toggle in/out
-        const next = cur.includes(label) ? cur.filter((l) => l !== label) : [...cur, label];
+        const next = cur.includes(label)
+          ? cur.filter((l) => l !== label)
+          : [...cur, label];
         return { ...prev, [question.id]: next };
       } else {
         // single-select: always replace
@@ -46,6 +75,7 @@ export function QuizShell() {
     if (!hasHydrated) return;
 
     if (!user) {
+      completedAsGuestRef.current = true;
       setShowLoginModal(true);
       return;
     }
@@ -61,6 +91,8 @@ export function QuizShell() {
     setAnswers({});
     setCurrent(0);
     setSubmitted(false);
+    persistedForUserRef.current = null;
+    completedAsGuestRef.current = false;
   }
 
   function handleLoginModalClose() {
@@ -92,13 +124,13 @@ export function QuizShell() {
 
           <QuizPanel>
             <QuizQuestion
-            question={question}
-            selected={selected}
-            onToggle={handleToggle}
-            current={current}
-            total={total}
-            onNext={handleNext}
-            onBack={handleBack}
+              question={question}
+              selected={selected}
+              onToggle={handleToggle}
+              current={current}
+              total={total}
+              onNext={handleNext}
+              onBack={handleBack}
             />
           </QuizPanel>
         </div>

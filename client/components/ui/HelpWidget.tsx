@@ -24,6 +24,19 @@ export function HelpWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activeIcon, setActiveIcon] = useState<"whatsapp" | "phone">("whatsapp");
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsChatbotOpen(!!(window as any).__isChatbotOpen);
+    }
+    const handleChatbotToggle = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setIsChatbotOpen(customEvent.detail.isOpen);
+    };
+    window.addEventListener("chatbotToggle", handleChatbotToggle);
+    return () => window.removeEventListener("chatbotToggle", handleChatbotToggle);
+  }, []);
 
   useEffect(() => {
     if (isOpen) return;
@@ -59,12 +72,19 @@ export function HelpWidget() {
   const isDirect2Hire = pathname === "/direct2hire";
 
   return (
-    <div
-      ref={containerRef}
-      className={`fixed right-6 md:right-8 z-50 flex flex-col items-end gap-3 transition-all duration-300 ${
-        isDirect2Hire ? "bottom-[180px] md:bottom-[196px]" : "bottom-[108px] md:bottom-[132px]"
-      }`}
-    >
+    <AnimatePresence>
+      {!isChatbotOpen && (
+        <motion.div
+          ref={containerRef}
+          layout
+          initial={{ opacity: 0, scale: 0.92, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: 12 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className={`fixed right-6 md:right-8 z-50 flex flex-col items-end gap-3 ${
+            isDirect2Hire ? "bottom-[180px] md:bottom-[196px]" : "bottom-[108px] md:bottom-[132px]"
+          }`}
+        >
       {/* Panel */}
       <AnimatePresence>
         {isOpen && (
@@ -167,6 +187,8 @@ export function HelpWidget() {
           {isOpen ? "Close" : "Need Help?"}
         </span>
       </button>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -8,6 +8,7 @@ import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
 import ChatbotAgent from "@/components/ui/ChatbotAgent";
 import { HelpWidget } from "@/components/ui/HelpWidget";
+import { CareerQuizPrompt } from "@/components/quiz/CareerQuizPrompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,6 +65,7 @@ export default function RootLayout({
             {children}
             <ChatbotAgent />
             <HelpWidget />
+            <CareerQuizPrompt />
             <Toaster richColors position="top-right" />
           </QueryProvider>
         </StoreProvider>

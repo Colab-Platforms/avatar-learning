@@ -61,3 +61,25 @@ const setUserRoleSchema = Joi.object({
 export const validateSetUserRoleSchema = (data: unknown) => {
     return setUserRoleSchema.validate(data, { abortEarly: false });
 };
+
+// ── CompleteQuiz ────────────────────────────────────────────
+const completeQuizSchema = Joi.object({
+    primaryCareerDomain: Joi.string().trim().min(1).max(120).required().messages({
+        "string.empty": "primaryCareerDomain is required",
+        "any.required": "primaryCareerDomain is required",
+    }),
+    secondaryCareerDomain: Joi.string().trim().max(120).allow(null, "").optional(),
+    recommendedCareer: Joi.string().trim().min(1).max(200).required().messages({
+        "string.empty": "recommendedCareer is required",
+        "any.required": "recommendedCareer is required",
+    }),
+    matchPercentage: Joi.number().min(0).max(100).required().messages({
+        "any.required": "matchPercentage is required",
+        "number.min": "matchPercentage must be between 0 and 100",
+        "number.max": "matchPercentage must be between 0 and 100",
+    }),
+});
+
+export const validateCompleteQuizSchema = (data: unknown) => {
+    return completeQuizSchema.validate(data, { abortEarly: false });
+};
