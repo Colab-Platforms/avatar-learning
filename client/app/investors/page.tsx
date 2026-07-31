@@ -8,6 +8,8 @@ import {
   Check,
   Search,
   ExternalLink,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -23,6 +25,7 @@ export default function InvestorsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,11 +52,40 @@ export default function InvestorsPage() {
 
   const selectedCategory = categories.find((c) => c.id === selectedId) ?? null;
 
+  // Extract a 4-digit year from a document name, e.g. "FY 2024-25" -> "2024",
+  // "BM_Intimation_22_03_2025_signed" -> "2025" (last match wins - dates are day_month_year)
+  const extractYearFromName = (name: string) => {
+    const matches = name.match(/20\d{2}/g);
+    return matches ? matches[matches.length - 1] : null;
+  };
+
+  // Fall back to the upload date's year when the name has no year in it
+  const extractYear = (doc: { name: string; createdAt: string }) =>
+    extractYearFromName(doc.name) ?? String(new Date(doc.createdAt).getFullYear());
+
   // Client-side search filtering within the selected category
   const filteredDocuments =
     selectedCategory?.documents.filter((doc) =>
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()),
     ) ?? [];
+
+  // Group filtered documents by year for the accordion
+  const yearGroups = Array.from(
+    filteredDocuments.reduce((map, doc) => {
+      const year = extractYear(doc);
+      if (!map.has(year)) map.set(year, []);
+      map.get(year)!.push(doc);
+      return map;
+    }, new Map<string, typeof filteredDocuments>()),
+  ).sort(([a], [b]) => Number(b) - Number(a));
+
+  const toggleYear = (year: string) =>
+    setExpandedYears((prev) => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-800 flex flex-col justify-between">
@@ -110,6 +142,7 @@ export default function InvestorsPage() {
                             type="button"
                             onClick={() => {
                               setSelectedId(cat.id);
+                              setExpandedYears(new Set());
                               setSearchQuery("");
                             }}
                             className={`w-full text-left py-2.5 px-4 rounded-lg text-[13px] font-semibold tracking-wide transition-all duration-200 ${
@@ -167,6 +200,7 @@ export default function InvestorsPage() {
                             type="button"
                             onClick={() => {
                               setSelectedId(cat.id);
+                              setExpandedYears(new Set());
                               setSearchQuery("");
                               setDropdownOpen(false);
                             }}
@@ -216,68 +250,93 @@ export default function InvestorsPage() {
                         />
                       </div>
 
-                      {/* Document List / Table */}
-                      <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-xs">
-                        {/* Table Header */}
-                        <div className="bg-slate-50/50 border-b border-slate-200/80 px-6 py-3.5 flex justify-between items-center">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            Document Name
-                          </span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:inline-block">
-                            Action
-                          </span>
+                      {/* Year Accordion */}
+                      {yearGroups.length === 0 ? (
+                        <div className="border border-slate-200/90 rounded-2xl px-6 py-12 text-center bg-white shadow-xs">
+                          <p className="text-sm text-slate-400 font-medium">
+                            {searchQuery
+                              ? "No documents match your search query."
+                              : "No documents in this category yet."}
+                          </p>
                         </div>
-
-                        {/* Table Body */}
-                        {filteredDocuments.length === 0 ? (
-                          <div className="px-6 py-12 text-center">
-                            <p className="text-sm text-slate-400 font-medium">
-                              {searchQuery
-                                ? "No documents match your search query."
-                                : "No documents in this category yet."}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-slate-100">
-                            {filteredDocuments.map((doc) => (
+                      ) : (
+                        <div className="space-y-3">
+                          {yearGroups.map(([year, docs]) => {
+                            const isOpen =
+                              expandedYears.has(year) || Boolean(searchQuery);
+                            return (
                               <div
-                                key={doc.id}
-                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4.5 hover:bg-slate-50/30 transition-colors group"
+                                key={year}
+                                className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-xs"
                               >
-                                {/* Left: Document Name with Icon */}
-                                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                                  <span className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 text-slate-400 group-hover:text-brand-600 transition-colors">
-                                    <FileText className="h-4.5 w-4.5" />
+                                <button
+                                  type="button"
+                                  onClick={() => toggleYear(year)}
+                                  className="w-full flex items-center justify-between gap-3 px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                                >
+                                  <span className="text-sm font-bold text-slate-800">
+                                    {year}
                                   </span>
-                                  <a
-                                    href={doc.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm font-semibold text-[#1e40af] hover:text-blue-800 flex items-center gap-1.5 min-w-0"
-                                  >
-                                    <span className="truncate break-all sm:break-normal">
-                                      {doc.name}
+                                  <span className="flex items-center gap-3 shrink-0">
+                                    <span className="text-xs text-slate-400 font-medium">
+                                      {docs.length}{" "}
+                                      {docs.length === 1 ? "doc" : "docs"}
                                     </span>
-                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
-                                  </a>
-                                </div>
+                                    <span className="h-6 w-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-500">
+                                      {isOpen ? (
+                                        <Minus className="h-3.5 w-3.5" />
+                                      ) : (
+                                        <Plus className="h-3.5 w-3.5" />
+                                      )}
+                                    </span>
+                                  </span>
+                                </button>
 
-                                {/* Right: View PDF Button */}
-                                <div className="flex justify-end shrink-0">
-                                  <a
-                                    href={doc.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full sm:w-auto text-center px-4.5 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all shadow-2xs"
-                                  >
-                                    View PDF
-                                  </a>
-                                </div>
+                                {isOpen && (
+                                  <div className="divide-y divide-slate-100 border-t border-slate-200/80">
+                                    {docs.map((doc) => (
+                                      <div
+                                        key={doc.id}
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4.5 hover:bg-slate-50/30 transition-colors group"
+                                      >
+                                        {/* Left: Document Name with Icon */}
+                                        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                                          <span className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 text-slate-400 group-hover:text-brand-600 transition-colors">
+                                            <FileText className="h-4.5 w-4.5" />
+                                          </span>
+                                          <a
+                                            href={doc.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-semibold text-[#1e40af] hover:text-blue-800 flex items-center gap-1.5 min-w-0"
+                                          >
+                                            <span className="truncate break-all sm:break-normal">
+                                              {doc.name}
+                                            </span>
+                                            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                          </a>
+                                        </div>
+
+                                        {/* Right: View PDF Button */}
+                                        <div className="flex justify-end shrink-0">
+                                          <a
+                                            href={doc.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full sm:w-auto text-center px-4.5 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all shadow-2xs"
+                                          >
+                                            View PDF
+                                          </a>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

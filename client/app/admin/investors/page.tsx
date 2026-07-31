@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, FolderOpen, FileText, Trash2, Upload, Link as LinkIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, FolderOpen, FileText, Trash2, Pencil, Upload, Link as LinkIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import {
     fetchInvestorCategoriesAdmin,
     createInvestorCategory,
+    updateInvestorCategory,
     deleteInvestorCategory,
     fetchInvestorDocumentsPaginated,
     createInvestorDocument,
+    updateInvestorDocument,
     deleteInvestorDocument,
     uploadInvestorDocumentFile,
     type AdminInvestorCategory,
@@ -24,6 +26,7 @@ export default function AdminInvestorsPage() {
     const [showCategoryForm, setShowCategoryForm] = useState(false);
     const [savingCategory, setSavingCategory] = useState(false);
     const [categoryForm, setCategoryForm] = useState({ name: "", slug: "" });
+    const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
 
     const [showDocForm, setShowDocForm] = useState(false);
     const [savingDoc, setSavingDoc] = useState(false);
@@ -31,6 +34,7 @@ export default function AdminInvestorsPage() {
     const [docForm, setDocForm] = useState({ categoryId: "", name: "", url: "" });
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [editingDocId, setEditingDocId] = useState<string | null>(null);
 
     const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
     const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
@@ -82,15 +86,32 @@ export default function AdminInvestorsPage() {
         setSavingCategory(true);
         setError("");
         try {
-            await createInvestorCategory(categoryForm);
+            if (editingCategoryId) {
+                await updateInvestorCategory(editingCategoryId, categoryForm);
+            } else {
+                await createInvestorCategory(categoryForm);
+            }
             setCategoryForm({ name: "", slug: "" });
+            setEditingCategoryId(null);
             setShowCategoryForm(false);
             await load();
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? "Failed to create category");
+            setError(err?.response?.data?.message ?? `Failed to ${editingCategoryId ? "update" : "create"} category`);
         } finally {
             setSavingCategory(false);
         }
+    };
+
+    const startEditCategory = (cat: AdminInvestorCategory) => {
+        setEditingCategoryId(cat.id);
+        setCategoryForm({ name: cat.name, slug: cat.slug });
+        setShowCategoryForm(true);
+    };
+
+    const cancelCategoryForm = () => {
+        setShowCategoryForm(false);
+        setEditingCategoryId(null);
+        setCategoryForm({ name: "", slug: "" });
     };
 
     const handleDeleteCategory = async (id: string, name: string) => {
@@ -116,17 +137,39 @@ export default function AdminInvestorsPage() {
                 url = await uploadInvestorDocumentFile(uploadFile);
                 setUploading(false);
             }
-            await createInvestorDocument({ categoryId: docForm.categoryId, name: docForm.name, url });
+            if (editingDocId) {
+                await updateInvestorDocument(editingDocId, { categoryId: docForm.categoryId, name: docForm.name, url });
+            } else {
+                await createInvestorDocument({ categoryId: docForm.categoryId, name: docForm.name, url });
+            }
             setDocForm({ categoryId: "", name: "", url: "" });
             setUploadFile(null);
+            setEditingDocId(null);
+            setDocMode("url");
             setShowDocForm(false);
             await load();
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? "Failed to create document");
+            setError(err?.response?.data?.message ?? `Failed to ${editingDocId ? "update" : "create"} document`);
         } finally {
             setSavingDoc(false);
             setUploading(false);
         }
+    };
+
+    const startEditDocument = (doc: AdminInvestorDocument) => {
+        setEditingDocId(doc.id);
+        setDocForm({ categoryId: doc.categoryId, name: doc.name, url: doc.url });
+        setUploadFile(null);
+        setDocMode("url");
+        setShowDocForm(true);
+    };
+
+    const cancelDocForm = () => {
+        setShowDocForm(false);
+        setEditingDocId(null);
+        setUploadFile(null);
+        setDocMode("url");
+        setDocForm({ categoryId: "", name: "", url: "" });
     };
 
     const handleDeleteDocument = async (id: string, name: string) => {
@@ -158,7 +201,10 @@ export default function AdminInvestorsPage() {
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-white/80">Categories</h2>
                     <button
-                        onClick={() => setShowCategoryForm((v) => !v)}
+                        onClick={() => {
+                            if (showCategoryForm) cancelCategoryForm();
+                            else setShowCategoryForm(true);
+                        }}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500 text-ink-950 text-sm font-semibold hover:bg-brand-400 transition-colors"
                     >
                         <Plus size={15} />
@@ -189,9 +235,9 @@ export default function AdminInvestorsPage() {
                             </Field>
                             <div className="sm:col-span-2 flex gap-3">
                                 <button type="submit" disabled={savingCategory} className={`${primaryBtn} disabled:opacity-50`}>
-                                    {savingCategory ? "Creating…" : "Create Category"}
+                                    {savingCategory ? "Saving…" : editingCategoryId ? "Save Changes" : "Create Category"}
                                 </button>
-                                <button type="button" onClick={() => setShowCategoryForm(false)} className={ghostBtn}>
+                                <button type="button" onClick={cancelCategoryForm} className={ghostBtn}>
                                     Cancel
                                 </button>
                             </div>
@@ -225,14 +271,23 @@ export default function AdminInvestorsPage() {
                                             {cat._count.documents} docs
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                                        disabled={deletingCategoryId === cat.id}
-                                        className="p-1.5 rounded-lg text-white/35 hover:text-red-400 hover:bg-red-500/8 transition-colors disabled:opacity-50 shrink-0"
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                            onClick={() => startEditCategory(cat)}
+                                            className="p-1.5 rounded-lg text-white/35 hover:text-brand-400 hover:bg-brand-500/8 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                                            disabled={deletingCategoryId === cat.id}
+                                            className="p-1.5 rounded-lg text-white/35 hover:text-red-400 hover:bg-red-500/8 transition-colors disabled:opacity-50"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -245,7 +300,10 @@ export default function AdminInvestorsPage() {
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-white/80">Documents</h2>
                     <button
-                        onClick={() => setShowDocForm((v) => !v)}
+                        onClick={() => {
+                            if (showDocForm) cancelDocForm();
+                            else setShowDocForm(true);
+                        }}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500 text-ink-950 text-sm font-semibold hover:bg-brand-400 transition-colors"
                     >
                         <Plus size={15} />
@@ -317,9 +375,9 @@ export default function AdminInvestorsPage() {
 
                             <div className="sm:col-span-2 flex gap-3">
                                 <button type="submit" disabled={savingDoc} className={`${primaryBtn} disabled:opacity-50`}>
-                                    {uploading ? "Uploading…" : savingDoc ? "Saving…" : "Add Document"}
+                                    {uploading ? "Uploading…" : savingDoc ? "Saving…" : editingDocId ? "Save Changes" : "Add Document"}
                                 </button>
-                                <button type="button" onClick={() => setShowDocForm(false)} className={ghostBtn}>
+                                <button type="button" onClick={cancelDocForm} className={ghostBtn}>
                                     Cancel
                                 </button>
                             </div>
@@ -370,14 +428,23 @@ export default function AdminInvestorsPage() {
                                             </a>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <button
-                                                onClick={() => handleDeleteDocument(doc.id, doc.name)}
-                                                disabled={deletingDocId === doc.id}
-                                                className="p-1.5 rounded-lg text-white/35 hover:text-red-400 hover:bg-red-500/8 transition-colors disabled:opacity-50"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => startEditDocument(doc)}
+                                                    className="p-1.5 rounded-lg text-white/35 hover:text-brand-400 hover:bg-brand-500/8 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteDocument(doc.id, doc.name)}
+                                                    disabled={deletingDocId === doc.id}
+                                                    className="p-1.5 rounded-lg text-white/35 hover:text-red-400 hover:bg-red-500/8 transition-colors disabled:opacity-50"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

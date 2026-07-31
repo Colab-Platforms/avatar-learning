@@ -178,7 +178,7 @@ export class PublicInvestorService {
         documents: {
           where: { deletedAt: null },
           orderBy: { createdAt: "desc" },
-          select: { id: true, name: true, url: true },
+          select: { id: true, name: true, url: true, createdAt: true },
         },
       },
     });
