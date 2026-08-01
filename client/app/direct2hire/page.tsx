@@ -5,43 +5,23 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Video,
-  BrainCircuit,
-  FileText,
-  Target,
-  Route,
-  FileCheck2,
-  XCircle,
-  CheckCircle2,
-  Bot,
-  BadgePercent,
-  Map,
-  Zap,
-  ChevronDown,
-  Sparkles,
-  IndianRupee,
-  Briefcase,
-  MessageCircle,
-  Users,
-  Award,
-  Calculator,
-  Flame,
-  ChevronLeft,
-  ChevronRight,
   ArrowUpRight,
+  CheckCircle2,
+  Star,
+  Briefcase,
+  BrainCircuit,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import {
-  ScrollReveal,
-  AnimateOnScroll,
-  Button,
-  ShinyText,
-} from "@/components/ui";
+import { Button, ScrollReveal, AnimateOnScroll } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
 import { UrgencyBanner } from "./UrgencyBanner";
+import {
+  OfferTimerBar,
+  OFFER_BAR_HEIGHT,
+  useOfferCountdown,
+} from "./OfferTimerBar";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
@@ -52,278 +32,70 @@ const STATS = [
   { value: "50+", label: "Corporates Listed as Placement Partners" },
 ];
 
-const WHO_FOR = [
-  {
-    image: "/counselling-images/Collage-Students.png",
-    title: "College Students",
-    desc: "Already picked a degree but unsure if it leads to a career you'll actually enjoy.",
-  },
-  {
-    image: "/counselling-images/Final-Year-Students.png",
-    title: "Final-Year Students & Freshers",
-    desc: "Need real skills, an internship, and a job plan before or right after graduating.",
-  },
-  {
-    image: "/counselling-images/Early-Professionals.png",
-    title: "Early Professionals",
-    desc: "Feel stuck in the wrong job and ready to switch to a high-growth, future-proof career.",
-  },
-];
-
-const OUTCOME_ITEMS = [
-  {
-    highlight: "Complete clarity",
-    rest: " on the right career path for you — no more second-guessing.",
-    icon: Target,
-    bg: "bg-blue-50/80 text-blue-600 border-blue-100",
-  },
-  {
-    highlight: "Personalized roadmap",
-    rest: " mapped step-by-step to your goals and timeline.",
-    icon: Route,
-    bg: "bg-emerald-50/80 text-emerald-600 border-emerald-100",
-  },
-  {
-    highlight: "Practical AI skills",
-    rest: " that top employers are actively hiring for.",
-    icon: Bot,
-    bg: "bg-purple-50/80 text-purple-600 border-purple-100",
-  },
-  {
-    highlight: "Hands-on experience",
-    rest: " through a guided internship, not just theory.",
-    icon: Briefcase,
-    bg: "bg-amber-50/80 text-amber-600 border-amber-100",
-  },
-  {
-    highlight: "Active placement support",
-    rest: " until you land an offer, not just a certificate.",
-    icon: FileCheck2,
-    bg: "bg-rose-50/80 text-rose-600 border-rose-100",
-  },
-];
-
-const JOURNEY_STEPS = [
+const HOW_STEPS = [
   {
     num: "01",
     icon: BrainCircuit,
-    title: "AI-Powered Quiz",
-    desc: "Complete a short questionnaire in your dashboard and receive an AI-powered course recommendation tailored to your goals, interests, and personality.",
+    title: "Learn",
+    desc: "Job-ready AI skills through a mentor-led course made for beginners.",
+    dark: false,
   },
   {
     num: "02",
-    icon: Users,
-    title: "Career Counseling",
-    desc: "A 1-on-1 session with an experienced counselor to discuss your goals, strengths, and next steps — scheduled after your AI assessment.",
-  },
-  {
-    num: "03",
-    icon: Sparkles,
-    title: "AI Learning Programs",
-    desc: "A structured, mentor-guided program that builds the practical AI and digital skills employers are actively hiring for.",
-  },
-  {
-    num: "04",
     icon: Briefcase,
-    title: "Guaranteed Internship",
-    desc: "Apply what you've learned in a real internship with a partner company — the experience that makes your resume stand out.",
+    title: "Experience",
+    desc: "A real internship on live projects at one of our partner companies.",
+    dark: false,
   },
   {
-    num: "05",
-    icon: Award,
-    title: "Job Placement Support",
-    desc: "Get matched with hiring partners, prepped for interviews, and supported until you land an offer.",
-  },
-];
-
-const WITHOUT_PLAN = [
-  "4 years and ₹8–15 lakhs spent on the wrong degree",
-  "Graduating with no clarity about career options",
-  "Struggling to get internships or jobs after college",
-  "Regretting the decision for years",
-];
-
-const WITH_SESSION = [
-  "Get clarity on the right career path in 30 minutes",
-  "Receive a personalised roadmap",
-  "Understand high-growth skills and opportunities",
-  "Start your journey with confidence and direction",
-];
-
-const INCLUDED = [
-  {
-    icon: Video,
-    title: "30-Minute 1-on-1 Consultation",
-    desc: "Speak directly with an experienced career counselor who understands your background and goals.",
-  },
-  {
-    icon: BrainCircuit,
-    title: "AI-Powered Career Assessment",
-    desc: "Get data-backed insights into your personality, strengths, interests, and suitable career paths.",
-  },
-  {
-    icon: FileText,
-    title: "Personalized Career Report",
-    desc: "Receive a detailed report with your assessment results and career alignment analysis.",
-  },
-  {
-    icon: Target,
-    title: "Top Career Recommendations",
-    desc: "Get 3–5 well-researched career options tailored to your profile, skills, and interests.",
-  },
-  {
-    icon: Route,
-    title: "Extensive Learning Roadmap",
-    desc: "A clear, step-by-step action plan with skills to learn, courses, and milestones for the next few days.",
-  },
-  {
-    icon: FileCheck2,
-    title: "Resume Review + Feedback",
-    desc: "Get expert feedback on your current resume with specific suggestions to improve it.",
+    num: "★",
+    icon: Star,
+    title: "Get placed",
+    desc: "We connect you to 50+ hiring partners and stay until you're hired.",
+    dark: true,
   },
 ];
 
-const BONUS_BENEFITS = [
-  "Internship Guidance",
-  "7 Day WhatsApp Mentorship",
-  "Community Access",
-];
-
-const VALUE_STACK = [
-  { icon: Users, label: "Career Counseling Session", price: "₹2000/-" },
+const WALK_AWAY = [
   {
-    icon: BrainCircuit,
-    label: "AI Powered Quiz + Feedback",
-    price: "₹2000/-",
+    image: "/counselling-images/certificate.png",
+    title: "A recognised certificate",
+    desc: "Something recruiters trust.",
+    dark: false,
   },
   {
-    icon: Sparkles,
-    label: "AI Basic/AI Social Media Learning Program",
-    price: "₹10,000/-",
-  },
-  { icon: Briefcase, label: "Guaranteed Internship", price: "₹5,500/-" },
-  { icon: Target, label: "Job Placement Support", price: "₹5,499/-" },
-  { icon: Calculator, label: "Total", price: "₹24,999/-" },
-];
-
-const DIFFERENTIATORS = [
-  {
-    icon: Bot,
-    title: "AI + Human Expertise",
-    desc: "We combine powerful AI assessments with experienced human counselors who deeply understand the education system and job market.",
-    image: "/why-choose-avatar/AI   Human Expertise.png",
-    highlights: [
-      "20+ Personality & Aptitude parameters analyzed by AI",
-      "1-on-1 human counseling to validate and customize recommendations",
-    ],
+    image: "/counselling-images/new-banner.png",
+    title: "Real work experience",
+    desc: "A live internship on your resume.",
+    dark: false,
   },
   {
-    icon: BadgePercent,
-    title: "Affordable & Transparent",
-    desc: "Most platforms charge ₹30,000–₹60,000 for similar Programs. We deliver real clarity and a complete roadmap at just ₹999 with no hidden costs.",
-    image: "/why-choose-avatar/Affordable & Transparent.png",
-    highlights: [
-      "Flat fee of ₹999 with zero hidden costs or forced upsells",
-      "Same high-quality resources that typically cost up to ₹40,000",
-      "Accessible pricing so every Indian student can get quality guidance",
-    ],
-  },
-  {
-    icon: Map,
-    title: "Complete 5-Step Journey",
-    desc: "Direct2Hire is a complete career accelerator that guides you through assessment, counseling, practical learning, internship, and placement support.",
-    image: "/why-choose-avatar/Actionable Roadmap + Ongoing Support.png",
-    highlights: [
-      "AI assessment & 1-on-1 career counseling recommendation",
-      "Structured mentor-guided AI Learning program",
-      "Guaranteed Internship with placement partners for real experience",
-    ],
-  },
-  {
-    icon: Zap,
-    title: "Fast, Focused & Actionable",
-    desc: "Get real clarity and a clear plan in just one 30-minute session — no long, confusing processes.",
-    image: "/why-choose-avatar/Fast, Focused & Actionable.png",
-    highlights: [
-      "High-impact 30-minute counseling designed for busy students",
-      "Actionable recommendations focused purely on execution",
-      "Receive your report and assessment key immediately",
-    ],
+    image: "/counselling-images/job-offer.png",
+    title: "A job offer",
+    desc: "The whole point — a placement.",
+    dark: true,
   },
 ];
 
-const FAQS = [
+const TESTIMONIALS = [
   {
-    q: "Is the ₹999 session the entire Direct2Hire program?",
-    a: "It covers your first steps in Direct2Hire — an AI assessment with a personalized course recommendation, plus a 1-on-1 counseling session. Based on your results, you can continue into the AI Fundamentals Program, a guaranteed internship, and placement support to complete the full 5-step journey.",
+    quote:
+      "I had a degree and no idea what came next. 120 days later, I had an offer letter.",
+    name: "Ananya R.",
+    role: "B.Tech Final Year · Hyderabad",
   },
   {
-    q: "Am I locked into the full program after the session?",
-    a: "No. The ₹999 session stands on its own — you walk away with real clarity and a roadmap either way. Continuing to the AI program, internship, and placement is entirely optional and depends on fit.",
-  },
-  {
-    q: "Is ₹999 really enough for proper guidance?",
-    a: "Yes. You get an AI-powered assessment with a course recommendation, a 30-minute 1-on-1 counseling consultation, a personalized report, and a step-by-step roadmap. We keep the price low so every student can afford real guidance, not because we cut corners.",
-  },
-  {
-    q: "Who will conduct the session?",
-    a: "Your session is conducted by an experienced career counselor who understands the Indian education system, current job market trends, and high-growth career paths — supported by insights from our AI assessment.",
-  },
-  {
-    q: "How is this different from free advice online?",
-    a: "Free advice is generic. Our guidance is built specifically for you — based on your assessment results, background, interests, and goals — and comes with a concrete action plan.",
-  },
-  {
-    q: "Is this only for final-year students?",
-    a: "Not at all. Students from Class 9 onward, college students at any stage, and early-career professionals looking to switch paths all benefit from the session. The earlier you get clarity, the more time and money you save.",
-  },
-  {
-    q: "Can my parents join the session?",
-    a: "Absolutely. We encourage parents to join — career decisions are family decisions in India, and having everyone aligned on the plan makes execution much easier.",
-  },
-  {
-    q: "What is your refund policy?",
-    a: (
-      <div className="space-y-2 text-text-muted">
-        <p>
-          We offer a simple and transparent refund policy to ensure a fair
-          experience for all learners:
-        </p>
-        <ul className="list-disc pl-5 space-y-1 my-2">
-          <li>Within 48 hours of purchase: Eligible for a 100% refund.</li>
-          <li>Between Day 3 and Day 7: Eligible for a 50% refund.</li>
-          <li>
-            After 7 days from the date of purchase: No refund will be
-            applicable.
-          </li>
-        </ul>
-        <div className="mt-3 p-3 rounded-lg  border border-gray-200 text-[12.5px] text-amber-800">
-          <strong className="font-semibold text-amber-900">Note: </strong>
-          Avatar India reserves the right to verify refund requests and may
-          decline refunds in cases of policy misuse, fraudulent activity, or
-          violation of our Terms & Conditions.
-        </div>
-      </div>
-    ),
+    quote: "The internship is what got me hired. No other course gave me that.",
+    name: "Rahul V.",
+    role: "AI Associate · Bengaluru",
   },
 ];
 
 /* ─── page ──────────────────────────────────────────────────────────── */
 
 export default function Direct2HirePage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [whoForSlide, setWhoForSlide] = useState(0);
   const [statsSlide, setStatsSlide] = useState(0);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    if (isHovered) return;
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % DIFFERENTIATORS.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [isHovered]);
+  const [walkAwaySlide, setWalkAwaySlide] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -332,18 +104,33 @@ export default function Direct2HirePage() {
     return () => clearInterval(timer);
   }, []);
 
-  const { enroll, processing, message, enrolled } = useDirect2HireCheckout();
-
   useEffect(() => {
     const timer = setInterval(() => {
-      setWhoForSlide((i) => (i + 1) % WHO_FOR.length);
+      setWalkAwaySlide((i) => (i + 1) % WALK_AWAY.length);
     }, 3000);
     return () => clearInterval(timer);
   }, []);
 
+  const {
+    enroll: _enroll,
+    processing,
+    message,
+    enrolled,
+  } = useDirect2HireCheckout();
+  const offerLabel = useOfferCountdown();
+
+  const ctaHref = enrolled ? "/dashboard" : "/direct2hire/enroll";
+  const ctaLabel = processing
+    ? "Processing Payment…"
+    : enrolled
+      ? "Go to Dashboard"
+      : "Claim my seat now";
+
   return (
     <>
-      <Navbar />
+      <OfferTimerBar />
+      <Navbar offsetTop={OFFER_BAR_HEIGHT} />
+      <div style={{ height: OFFER_BAR_HEIGHT }} aria-hidden />
 
       <main className="min-h-screen bg-white text-text overflow-x-hidden">
         {/* ══════════════════════════════
@@ -360,13 +147,6 @@ export default function Direct2HirePage() {
               {/* left */}
               <div className="lg:col-span-5 xl:col-span-5">
                 <ScrollReveal animation="fade-up" delay={0}>
-                  {/* <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700 mb-4">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    </span>
-                    Admissions Open • 96% Discount Active
-                  </span> */}
                   <h1 className="h-display text-text mb-3 sm:mb-6">
                     Become AI Job Ready in{" "}
                     <span className="text-gradient-brand">Just 120 Days.</span>
@@ -416,10 +196,7 @@ export default function Direct2HirePage() {
                 <ScrollReveal animation="fade-up" delay={150}>
                   <UrgencyBanner />
                   <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
-                    <Link
-                      href={enrolled ? "/dashboard" : "/direct2hire/enroll"}
-                      className="w-full sm:w-auto"
-                    >
+                    <Link href={ctaHref} className="w-full sm:w-auto">
                       <Button
                         variant="primary"
                         size="lg"
@@ -474,7 +251,7 @@ export default function Direct2HirePage() {
                   <div className="relative w-full sm:w-[110%] lg:w-[120%] xl:w-[130%]">
                     <div className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden sm:mask-[linear-gradient(to_right,transparent_0%,black_15%,black_100%)]">
                       <Image
-                        src="/counselling-images/banner.jpeg"
+                        src="/counselling-images/new-banner.png"
                         alt="AI-powered career guidance"
                         fill
                         priority
@@ -484,6 +261,17 @@ export default function Direct2HirePage() {
                     </div>
                   </div>
                 </ScrollReveal>
+
+                {/* badges anchored to the visible column, not the oversized
+                    bleed wrapper, so they never clip off-viewport */}
+                <span className="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex items-center gap-1.5 rounded-full bg-text/90 backdrop-blur-sm px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg">
+                  guaranteed Internship
+                </span>
+
+                <span className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[13px] font-bold text-text shadow-lg">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  96.3% placement rate
+                </span>
               </div>
             </div>
 
@@ -555,255 +343,121 @@ export default function Direct2HirePage() {
         </section>
 
         {/* ══════════════════════════════
-            COMPLETE BREAKDOWN / PRICING
+            HOW YOU GET THERE
         ══════════════════════════════ */}
-        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up">
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-5 sm:mb-12">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                    <ShinyText
-                      text="COMPLETE BREAKDOWN"
-                      color="#1d4ed8"
-                      shineColor="#93c5fd"
-                      speed={2.5}
-                    />
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                    The Full Direct2Hire Journey{" "}
-                    <span className="text-gradient-brand">
-                      Starts at ₹999/-
-                    </span>
-                  </h2>
-                  <p className="mt-3 text-text-muted ">
-                    Quiz, Counseling, Learning, Internship, and Placement — Real
-                    value worth{" "}
-                    <span className="line-through text-text-subtle">
-                      ₹24,999
-                    </span>
-                    , now available at a fraction of the cost.
-                  </p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 items-stretch w-full">
-              {/* value stack */}
-              <AnimateOnScroll delay={0} className="w-full lg:col-span-3">
-                <div className="h-full w-full rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 flex flex-col justify-center divide-y divide-border">
-                  {VALUE_STACK.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between gap-3 sm:gap-4 px-2 sm:px-4 py-3 sm:py-4
-                                 hover:bg-brand-50 transition-colors duration-250 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                        <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg shrink-0 bg-white border border-brand-200">
-                          <item.icon className="h-4 w-4 text-brand-600" />
-                        </span>
-                        <p className="text-[13px] sm:text-[14px] text-text font-medium truncate">
-                          {item.label}
-                        </p>
-                      </div>
-                      <p className="text-[13px] sm:text-[14px] text-text-subtle font-semibold line-through shrink-0 pl-2">
-                        {item.price}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </AnimateOnScroll>
-
-              {/* you pay only card */}
-              <AnimateOnScroll delay={120} className="w-full lg:col-span-2">
-                <div className="relative w-full h-full rounded-2xl border border-brand-200 p-5 sm:p-10 overflow-hidden flex flex-col items-center justify-center text-center bg-gradient-to-br from-brand-50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-                  <p className="relative text-[11px] sm:text-[12px] text-text-subtle uppercase tracking-[0.16em] mb-3">
-                    You Pay Only
-                  </p>
-                  <p className="relative text-4xl sm:text-6xl font-black text-gradient-brand">
-                    ₹999/-
-                  </p>
-                  <span className="relative mt-4 sm:mt-5 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-semibold text-emerald-700">
-                    <IndianRupee className="h-3 w-3 shrink-0" />
-                    Save ₹24,000 (96% OFF)
-                  </span>
-                  <Link
-                    href="/direct2hire/enroll"
-                    className="relative mt-3 w-full sm:w-fit"
-                  >
-                    <Button variant="primary" size="md" className="w-full">
-                      Book Your Seat <ArrowRight className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </Link>
-                  <p className="relative mt-3 text-[10px] sm:text-[11px] text-text-subtle">
-                    Instant confirmation on WhatsApp
-                  </p>
-                </div>
-              </AnimateOnScroll>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            THE COST OF CONFUSION
-        ══════════════════════════════ */}
-        <section className="py-13 sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up">
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-5 sm:mb-12">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                    <ShinyText
-                      text="THE COST OF CONFUSION"
-                      color="#1d4ed8"
-                      shineColor="#93c5fd"
-                      speed={2.5}
-                    />
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text max-w-xl">
-                    <span className="text-gradient-brand">90% students</span>
-                    {"  "}
-                    make this mistake.
-                  </h2>
-                  <p className="mt-3 text-text-muted">
-                    Choses an education or Career without Guidance and a full
-                    proof plan
-                  </p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Without a plan */}
-              <AnimateOnScroll delay={0} className="order-2 md:order-1">
-                <div className="group h-full rounded-2xl border border-red-200 bg-white overflow-hidden card-lift">
-                  <div className="p-6 sm:p-10">
-                    <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 border border-red-200">
-                        <XCircle className="h-5 w-5 text-red-600" />
-                      </span>
-                      <h3 className="text-xl font-bold text-red-600">
-                        Without a Plan
-                      </h3>
-                    </div>
-                    <ul className="space-y-2.5 sm:space-y-4">
-                      {WITHOUT_PLAN.map((pt) => (
-                        <li
-                          key={pt}
-                          className="flex items-start gap-3 text-[14px] text-text-muted leading-relaxed"
-                        >
-                          <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-                          {pt}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </AnimateOnScroll>
-
-              {/* With Avatar's session */}
-              <AnimateOnScroll delay={120} className="order-1 md:order-2">
-                <div className="group h-full rounded-2xl border border-emerald-200 bg-white overflow-hidden card-lift">
-                  <div className="p-6 sm:p-10">
-                    <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                      </span>
-                      <h3 className="text-xl font-bold text-emerald-600">
-                        With Direct2Hire
-                      </h3>
-                    </div>
-                    <ul className="space-y-2.5 sm:space-y-4">
-                      {WITH_SESSION.map((pt) => (
-                        <li
-                          key={pt}
-                          className="flex items-start gap-3 text-[14px] text-text-muted leading-relaxed"
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                          {pt}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </AnimateOnScroll>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            WHO IT'S FOR
-        ══════════════════════════════ */}
-        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <ScrollReveal
-              animation="fade-up"
-              className="mb-5 sm:mb-12 text-center"
-            >
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                <ShinyText
-                  text="WHO IS THIS FOR ?"
-                  color="#1d4ed8"
-                  shineColor="#93c5fd"
-                  speed={2.5}
-                />
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                Direct2Hire Is Built For{" "}
-                <span className="text-gradient-brand">
-                  Anyone Facing Obstacles in Learning Real Corporates AI Skills
-                </span>
-              </h2>
-              <p className="mt-3 text-text-muted max-w-2xl mx-auto">
-                Wherever you need a support to help you with right skills or
-                opportunities to get a job, this program takes you there.
+        <section
+          id="journey"
+          className="py-13 sm:py-16 bg-surface-alt border-t border-border scroll-mt-20"
+        >
+          <div className="container-x">
+            <div className="mb-6 sm:mb-10">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-text-subtle mb-2">
+                How you get there
               </p>
-            </ScrollReveal>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                Learn. Intern.{" "}
+                <span className="text-gradient-brand">Get hired.</span>
+              </h2>
+            </div>
 
-            {/* mobile / tablet — single-card slideshow */}
-            <div className="mx-auto max-w-sm sm:max-w-md lg:hidden">
-              <div className="relative rounded-2xl border border-border bg-surface-alt overflow-hidden card-lift">
+            <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+              {HOW_STEPS.map((step) => (
+                <div
+                  key={step.title}
+                  className={cn(
+                    "h-full rounded-2xl p-6 sm:p-7 border card-lift",
+                    step.dark
+                      ? "bg-text border-text text-white"
+                      : "bg-white border-border text-text",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center h-8 w-8 rounded-lg text-[12px] font-bold mb-4",
+                      step.dark
+                        ? "bg-white/15 text-white"
+                        : "bg-brand-50 text-brand-600 border border-brand-200",
+                    )}
+                  >
+                    {step.dark ? (
+                      <Star className="h-3.5 w-3.5 fill-current" />
+                    ) : (
+                      step.num
+                    )}
+                  </span>
+                  <h3 className="font-semibold text-[17px] mb-2">
+                    {step.title}
+                  </h3>
+                  <p
+                    className={cn(
+                      "text-[13.5px] leading-relaxed",
+                      step.dark ? "text-white/70" : "text-text-muted",
+                    )}
+                  >
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            YOU'LL WALK AWAY WITH
+        ══════════════════════════════ */}
+        <section className="py-13 sm:py-16 bg-white border-t border-border">
+          <div className="container-x">
+            <div className="mb-6 sm:mb-10 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-text-subtle mb-2">
+                You&apos;ll walk away with
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                Proof, not just{" "}
+                <span className="text-gradient-brand">a certificate.</span>
+              </h2>
+            </div>
+
+            {/* mobile — single-card slideshow */}
+            <div className="mx-auto max-w-sm sm:hidden">
+              <div className="relative rounded-2xl border border-border overflow-hidden card-lift">
                 <div className="relative w-full aspect-4/3 overflow-hidden">
-                  {WHO_FOR.map((p, i) => (
+                  {WALK_AWAY.map((item, i) => (
                     <div
-                      key={p.title}
+                      key={item.title}
                       className={cn(
                         "absolute inset-0 transition-opacity duration-500 ease-out",
-                        i === whoForSlide
+                        i === walkAwaySlide
                           ? "opacity-100"
                           : "opacity-0 pointer-events-none",
                       )}
                     >
                       <Image
-                        src={p.image}
-                        alt={p.title}
+                        src={item.image}
+                        alt={item.title}
                         fill
-                        sizes="(max-width:640px) 90vw, 400px"
+                        sizes="90vw"
                         className="object-cover"
                       />
                     </div>
                   ))}
                 </div>
 
-                <div className="relative p-5 sm:p-7 min-h-35">
-                  {WHO_FOR.map((p, i) => (
+                <div className="relative p-5 min-h-24">
+                  {WALK_AWAY.map((item, i) => (
                     <div
-                      key={p.title}
+                      key={item.title}
                       className={cn(
                         "transition-opacity duration-500 ease-out",
-                        i === whoForSlide
+                        i === walkAwaySlide
                           ? "opacity-100 relative"
-                          : "opacity-0 absolute inset-0 p-5 sm:p-7 pointer-events-none",
+                          : "opacity-0 absolute inset-0 p-5 pointer-events-none",
                       )}
                     >
-                      <h3 className="font-semibold text-[16px] text-text mb-1.5">
-                        {p.title}
+                      <h3 className="font-semibold text-[16px] text-text mb-1">
+                        {item.title}
                       </h3>
-                      <p className="text-[13.5px] text-text-muted leading-relaxed">
-                        {p.desc}
+                      <p className="text-[13px] text-text-muted leading-relaxed">
+                        {item.desc}
                       </p>
                     </div>
                   ))}
@@ -811,18 +465,18 @@ export default function Direct2HirePage() {
               </div>
 
               {/* dots */}
-              <div className="flex items-center justify-center gap-2 mt-4">
-                {WHO_FOR.map((p, i) => (
+              <div className="flex items-center justify-center gap-1.5 mt-4">
+                {WALK_AWAY.map((item, i) => (
                   <button
-                    key={p.title}
-                    onClick={() => setWhoForSlide(i)}
-                    aria-label={`Show ${p.title}`}
-                    aria-current={i === whoForSlide}
+                    key={item.title}
+                    onClick={() => setWalkAwaySlide(i)}
+                    aria-label={`Show ${item.title}`}
+                    aria-current={i === walkAwaySlide}
                     className={cn(
-                      "h-2 rounded-full transition-all duration-300",
-                      i === whoForSlide
-                        ? "w-6 bg-brand-600"
-                        : "w-2 bg-border-strong hover:bg-brand-300",
+                      "h-1.5 rounded-full transition-all duration-300",
+                      i === walkAwaySlide
+                        ? "w-5 bg-brand-600"
+                        : "w-1.5 bg-border-strong hover:bg-brand-300",
                     )}
                   />
                 ))}
@@ -830,572 +484,188 @@ export default function Direct2HirePage() {
             </div>
 
             {/* desktop — all cards side by side */}
-            <div className="hidden lg:grid lg:grid-cols-3 gap-6">
-              {WHO_FOR.map((p, i) => (
-                <AnimateOnScroll key={p.title} delay={i * 80}>
-                  <div className="group h-full rounded-2xl border border-border bg-surface-alt overflow-hidden card-lift">
-                    <div className="relative w-full aspect-4/3 overflow-hidden">
-                      <Image
-                        src={p.image}
-                        alt={p.title}
-                        fill
-                        sizes="400px"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
+            <div className="hidden sm:grid sm:grid-cols-3 gap-4 sm:gap-6">
+              {WALK_AWAY.map((item) => (
+                <div
+                  key={item.title}
+                  className={cn(
+                    "group relative h-full min-h-70",
+                    item.dark && "isolate",
+                  )}
+                >
+                  {item.dark && (
+                    <div
+                      className="pointer-events-none absolute -top-10 -right-10 -z-10 h-40 w-40 rounded-full bg-brand-200/40 blur-[70px] translate-x-1/4 -translate-y-1/4"
+                      aria-hidden
+                    />
+                  )}
+                  <div className="relative h-full rounded-2xl border border-border overflow-hidden card-lift">
+                    {item.dark ? (
+                      <>
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          quality={100}
+                          sizes="(max-width:640px) 90vw, 400px"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-5">
+                          <h3 className="font-semibold text-[16px] text-white mb-1">
+                            {item.title}
+                          </h3>
+                          <p className="text-[13px] text-white/75 leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="relative w-full aspect-4/3">
+                          <Image
+                            src={item.image}
+                            alt={item.title}
+                            fill
+                            sizes="(max-width:640px) 90vw, 400px"
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="bg-white p-5">
+                          <h3 className="font-semibold text-[16px] text-text mb-1">
+                            {item.title}
+                          </h3>
+                          <p className="text-[13px] text-text-muted leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            TESTIMONIALS
+        ══════════════════════════════ */}
+        {/* <section className="py-13 sm:py-16 bg-surface-alt border-t border-border">
+          <div className="container-x">
+            <div className="mb-6 sm:mb-10">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-text-subtle mb-2">
+                Real, verified students
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
+                Students just like you,{" "}
+                <span className="text-gradient-brand">now hired.</span>
+              </h2>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+              {TESTIMONIALS.map((t) => (
+                <div
+                  key={t.name}
+                  className="h-full rounded-2xl border border-border bg-white p-6 sm:p-7 card-lift"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className="h-3.5 w-3.5 fill-amber-400 text-amber-400"
+                        />
+                      ))}
                     </div>
-                    <div className="p-6">
-                      <h3 className="font-semibold text-[16px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
-                        {p.title}
-                      </h3>
-                      <p className="text-[13.5px] text-text-muted leading-relaxed">
-                        {p.desc}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Verified
+                    </span>
+                  </div>
+                  <p className="text-[14.5px] text-text leading-relaxed mb-5">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-[12.5px] font-bold">
+                      {t.name.charAt(0)}
+                    </span>
+                    <div>
+                      <p className="text-[13.5px] font-semibold text-text leading-tight">
+                        {t.name}
+                      </p>
+                      <p className="text-[11.5px] text-text-subtle leading-tight mt-0.5">
+                        {t.role}
                       </p>
                     </div>
                   </div>
-                </AnimateOnScroll>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            THE DIRECT2HIRE JOURNEY
-        ══════════════════════════════ */}
-        <section
-          id="journey"
-          className="py-13 sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden scroll-mt-20"
-        >
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up" className="mb-6 sm:mb-14">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                <ShinyText
-                  text="THE COMPLETE PROGRAM"
-                  color="#1d4ed8"
-                  shineColor="#93c5fd"
-                  speed={2.5}
-                />
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                One Program.{" "}
-                <span className="text-gradient-brand">Five Guided Steps.</span>
-              </h2>
-              <p className="mt-3 text-text-muted max-w-2xl">
-                Direct2Hire isn&apos;t just a single session it&apos;s a
-                structured journey from figuring out your path to actually
-                getting hired.
-              </p>
-            </ScrollReveal>
-
-            <div className="relative">
-              {/* connector line (desktop) — spans from the center of the first
-                  step circle to the center of the last, matching the 5-col grid
-                  (44px circle, gap-5 = 20px gap) */}
-              <div className="absolute top-[22px] left-5.5 right-[calc(20%-38px)] hidden lg:block">
-                <div className="h-[2px] w-full bg-gradient-to-r from-brand-200 via-brand-400 to-brand-200" />
-              </div>
-
-              <div className="relative grid sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-5">
-                {JOURNEY_STEPS.map((step, i) => (
-                  <AnimateOnScroll key={step.num} delay={i * 80}>
-                    <div className="group h-full flex flex-col items-start">
-                      <div className="hidden sm:flex relative z-10 mb-3 sm:mb-4 h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white text-[13px] font-bold shadow-md shadow-brand-500/25">
-                        {step.num}
-                      </div>
-                      <div className="h-full w-full rounded-2xl border border-border bg-white p-5 sm:p-6 card-lift cursor-default">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl mb-3 sm:mb-4 bg-brand-50 border border-brand-200 group-hover:bg-brand-100 transition-all duration-300">
-                          <step.icon className="h-5 w-5 text-brand-600" />
-                        </div>
-                        <h3 className="font-semibold text-[15px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
-                          {step.title}
-                        </h3>
-                        <p className="text-[13px] text-text-muted leading-relaxed">
-                          {step.desc}
-                        </p>
-                      </div>
-                    </div>
-                  </AnimateOnScroll>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            WHAT'S INCLUDED
-        ══════════════════════════════ */}
-        {/* <section
-          id="whats-included"
-          className="py-14 bg-white border-t border-border relative overflow-hidden scroll-mt-20"
-        >
-          <div className="relative container-x">
-            <ScrollReveal animation="fade-up" className="mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text">
-                What You Get in the{" "}
-                <span className="text-gradient-brand">₹999</span>
-              </h2>
-            </ScrollReveal>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {INCLUDED.map((item, i) => (
-                <AnimateOnScroll key={item.title} delay={i * 70}>
-                  <div className="group h-full rounded-2xl border border-border bg-surface-alt p-7 card-lift cursor-default">
-                    <div
-                      className="flex h-11 w-11 items-center justify-center rounded-xl mb-5
-                                 bg-brand-50 border border-brand-200
-                                 group-hover:bg-brand-100 transition-all duration-350"
-                    >
-                      <item.icon className="h-5 w-5 text-brand-600" />
-                    </div>
-                    <h3 className="font-semibold text-[16px] text-text mb-2 group-hover:text-brand-600 transition-colors duration-300">
-                      {item.title}
-                    </h3>
-                    <p className="text-[13px] text-text-muted leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                </AnimateOnScroll>
-              ))}
-            </div>
-
-            bonus bar
-            <ScrollReveal animation="fade-up" delay={120} className="mt-6">
-              <div className="rounded-2xl border border-brand-200 bg-brand-50 px-7 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl shrink-0 bg-white border border-brand-200">
-                    <Gift className="h-5 w-5 text-brand-600" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-[15px] text-text">
-                      Bonus Benefits Included
-                    </p>
-                    <p className="text-[13px] text-text-muted mt-1">
-                      {BONUS_BENEFITS.join(" • ")}
-                    </p>
-                  </div>
                 </div>
-                <Link href="/direct2hire/enroll" className="w-full sm:w-fit shrink-0">
-                  <Button variant="primary" size="md" className="w-full sm:w-fit">
-                    Book now for ₹499/- <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </ScrollReveal>
+              ))}
+            </div>
           </div>
         </section> */}
 
         {/* ══════════════════════════════
-            THE OUTCOME
+            PRICE CTA BANNER
         ══════════════════════════════ */}
-        <section className="py-13  sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <div className="grid lg:grid-cols-5 gap-6 lg:gap-10 items-center">
-              <div className="lg:col-span-2">
-                <ScrollReveal animation="fade-up">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                    <ShinyText
-                      text="THE OUTCOME"
-                      color="#1d4ed8"
-                      shineColor="#93c5fd"
-                      speed={2.5}
-                    />
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text mb-3 sm:mb-4">
-                    You Don&apos;t Just Get Advice.{" "}
-                    <span className="text-gradient-brand">You Get Hired.</span>
-                  </h2>
-                  <p className="text-text-muted leading-relaxed mb-4 sm:mb-6">
-                    Most sessions end with a PDF and a goodbye. Direct2Hire is
-                    built to end with an offer letter here&apos;s exactly what
-                    changes for you.
-                  </p>
-                  <Link
-                    href="/direct2hire/enroll"
-                    className="block w-full sm:inline-block sm:w-fit"
-                  >
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      className="w-full sm:w-auto"
-                    >
-                      Start Your Transformation{" "}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </ScrollReveal>
-              </div>
-
-              <div className="lg:col-span-3">
-                <AnimateOnScroll delay={100}>
-                  <div className="rounded-2xl border border-border bg-white p-2.5 sm:p-3.5 shadow-sm hover:border-brand-200/80 transition-all duration-300">
-                    {OUTCOME_ITEMS.map((item, i) => {
-                      const Icon = item.icon;
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            "flex items-start gap-4 px-4 sm:px-5 py-3.5 sm:py-4.5 hover:bg-slate-50/40 rounded-xl transition-colors duration-200",
-                            i !== OUTCOME_ITEMS.length - 1 &&
-                              "border-b border-border",
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg border shadow-xs transition-transform duration-300 hover:scale-105",
-                              item.bg,
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <p className="text-[14px] sm:text-[15px] text-text-muted leading-relaxed">
-                            <strong className="font-semibold text-text">
-                              {item.highlight}
-                            </strong>
-                            {item.rest}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </AnimateOnScroll>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            WHY STUDENTS CHOOSE AVATAR (REDESIGNED STORYTELLING LAYOUT)
-        ══════════════════════════════ */}
-        <section className="py-13 sm:py-13 bg-surface-alt border-t border-border relative overflow-hidden">
-          {/* Subtle background glow decorative elements */}
-          <div
-            className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] bg-brand-100/10 rounded-full blur-[120px]"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-blue-100/10 rounded-full blur-[120px]"
-            aria-hidden
-          />
-
-          <div className="relative container-x">
-            <ScrollReveal
-              animation="fade-up"
-              className="text-center mb-12 sm:mb-16"
-            >
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                <ShinyText
-                  text="WHAT MAKES US DIFFERENT"
-                  color="#1d4ed8"
-                  shineColor="#93c5fd"
-                  speed={2.5}
-                />
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-text">
-                Why Students{" "}
-                <span className="text-gradient-brand">Choose Avatar</span>
-              </h2>
-              <p className="mt-4 text-text-muted max-w-2xl mx-auto text-[15px] sm:text-base leading-relaxed">
-                Our unique student-first methodology combining state-of-the-art
-                AI technology with human guidance, visual planning, and constant
-                mentoring.
-              </p>
-            </ScrollReveal>
-
-            {/* Interactive Carousel */}
-            <div className="max-w-4xl mx-auto">
-              {/* Main Carousel Frame */}
-              <div
-                className="relative bg-white border border-border/80 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[520px] sm:min-h-[460px] lg:min-h-[370px] flex items-center overflow-hidden"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                {/* Slide Content */}
-                <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative">
-                  {/* Image Column */}
-                  <div className="col-span-1 lg:col-span-5 w-full max-w-[360px] mx-auto lg:max-w-none relative">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeSlide}
-                        initial={{ opacity: 0, scale: 0.96 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{ duration: 0.3 }}
-                        className="relative aspect-[16/9] lg:aspect-[4/3] w-full rounded-2xl overflow-hidden bg-surface-alt border border-border/50"
-                      >
-                        <Image
-                          src={DIFFERENTIATORS[activeSlide].image}
-                          alt={DIFFERENTIATORS[activeSlide].title}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 40vw"
-                          className="object-cover"
-                          priority
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-brand-900/5 via-transparent to-transparent pointer-events-none" />
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Content Column */}
-                  <div className="col-span-1 lg:col-span-7 flex flex-col justify-center">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeSlide}
-                        initial={{ opacity: 0, x: 15 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -15 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-5 text-left"
-                      >
-                        {/* Header Row: Icon + Navigation */}
-                        <div className="flex items-center justify-between">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-100 shadow-2xs">
-                            {(() => {
-                              const IconComponent =
-                                DIFFERENTIATORS[activeSlide].icon;
-                              return (
-                                <IconComponent className="h-5 w-5 text-brand-600" />
-                              );
-                            })()}
-                          </span>
-
-                          {/* Navigation controls next to the icon */}
-                          <div className="flex items-center gap-4">
-                            {/* Dot markers */}
-                            <div className="flex items-center gap-1.5">
-                              {DIFFERENTIATORS.map((_, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => setActiveSlide(i)}
-                                  className={cn(
-                                    "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
-                                    i === activeSlide
-                                      ? "w-4 bg-brand-600"
-                                      : "w-1.5 bg-border-strong hover:bg-brand-300",
-                                  )}
-                                  aria-label={`Go to slide ${i + 1}`}
-                                />
-                              ))}
-                            </div>
-
-                            {/* Arrow buttons */}
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => {
-                                  setActiveSlide(
-                                    (prev) =>
-                                      (prev - 1 + DIFFERENTIATORS.length) %
-                                      DIFFERENTIATORS.length,
-                                  );
-                                }}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:text-brand-600 hover:border-brand-300 active:scale-95 transition-all cursor-pointer shadow-2xs"
-                                aria-label="Previous feature"
-                              >
-                                <ChevronLeft className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setActiveSlide(
-                                    (prev) =>
-                                      (prev + 1) % DIFFERENTIATORS.length,
-                                  );
-                                }}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:text-brand-600 hover:border-brand-300 active:scale-95 transition-all cursor-pointer shadow-2xs"
-                                aria-label="Next feature"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <h3 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight pt-1">
-                          {DIFFERENTIATORS[activeSlide].title}
-                        </h3>
-
-                        <p className="text-[14px] sm:text-[15.5px] text-text-muted leading-relaxed">
-                          {DIFFERENTIATORS[activeSlide].desc}
-                        </p>
-
-                        <ul className="space-y-2.5 sm:space-y-3.5 pt-2">
-                          {DIFFERENTIATORS[activeSlide].highlights.map(
-                            (highlight, idx) => (
-                              <li
-                                key={idx}
-                                className="flex items-start gap-2.5 text-[13px] sm:text-[14px] text-text-muted leading-relaxed"
-                              >
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 border border-emerald-100 mt-0.5">
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                                </span>
-                                <span>{highlight}</span>
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            CTA
-        ══════════════════════════════ */}
-        <section className="py-13 sm:py-13 bg-white border-t border-border relative overflow-hidden">
+        <section className="py-13 sm:py-16 bg-white border-t border-border">
           <div className="container-x">
-            <ScrollReveal animation="zoom-in" duration={800}>
-              <div className="relative rounded-3xl overflow-hidden border border-brand-100/60 p-6 sm:p-16 text-center bg-gradient-to-br from-brand-50/50 via-white to-brand-100/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-                <div className="relative inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-2 sm:mb-3 cursor-default">
-                  {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                  <ShinyText
-                    text="YOUR FUTURE STARTS HERE"
-                    color="#1d4ed8"
-                    shineColor="#93c5fd"
-                    speed={2.5}
-                  />
-                </div>
-                <h2 className="relative text-3xl sm:text-4xl font-bold text-text mb-3 sm:mb-4">
-                  Ready to take control{" "}
-                  <span className="text-gradient-brand">of your future?</span>
-                </h2>
-                <p className="relative text-text-muted max-w-lg mx-auto mb-4 sm:mb-6 text-[15px]">
-                  One 30-minute session can save you years of confusion and
-                  lakhs of rupees. Get clear direction, a personalized roadmap,
-                  and expert support — starting at just ₹999.
+            <div className="rounded-2xl border border-brand-200 bg-linear-to-br from-brand-50 via-white to-brand-100/50 p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700 mb-3">
+                  Offer ends in{" "}
+                  <span className="font-mono tabular-nums">{offerLabel}</span>
+                </span>
+                <p className="leading-none mb-3">
+                  <span className="text-4xl sm:text-5xl font-black text-gradient-brand">
+                    ₹999
+                  </span>{" "}
+                  <span className="text-text-subtle line-through text-lg">
+                    ₹4,999
+                  </span>
                 </p>
-                <div className="relative flex flex-col items-center">
-                  <div className="flex flex-wrap justify-center gap-3 w-full sm:w-auto">
-                    <Link
-                      href="/direct2hire/enroll"
-                      className="w-full sm:w-auto"
-                    >
-                      <Button
-                        variant="primary"
-                        size="lg"
-                        className="w-full sm:w-auto"
-                      >
-                        Book Your Seats Now <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-                <p className="relative mt-5 text-[12px] text-text-subtle">
-                  30-minute call • Limited time offer
+                <p className="text-[13.5px] text-text-muted max-w-sm leading-relaxed">
+                  A 30 minute mentor call and your AI assessment. Your full
+                  roadmap — learning, internship, and placement — shared on the
+                  call.
                 </p>
               </div>
-            </ScrollReveal>
+              <Link href={ctaHref} className="w-full md:w-fit shrink-0">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full md:w-auto"
+                >
+                  {ctaLabel} <ArrowRight className="h-4 w-4 shrink-0" />
+                </Button>
+                <p className="mt-2.5 text-center text-[11px] text-text-subtle">
+                  Instant confirmation on WhatsApp
+                </p>
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* ══════════════════════════════
-            FAQ
+            DARK CTA BANNER
         ══════════════════════════════ */}
-        <section className="py-7 sm:py-14 bg-surface-alt border-t border-border relative overflow-hidden">
-          <div className="relative container-x">
-            <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
-              {/* left */}
-              <div className="lg:col-span-2">
-                <ScrollReveal animation="fade-up">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-3 sm:mb-4 cursor-default">
-                    {/* <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" /> */}
-                    <ShinyText
-                      text="FREQUENTLY ASKED QUESTIONS"
-                      color="#1d4ed8"
-                      shineColor="#93c5fd"
-                      speed={2.5}
-                    />
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text mb-3 sm:mb-4">
-                    Got Questions?{" "}
-                    <span className="text-gradient-brand">
-                      We&apos;ve Got You Covered.
-                    </span>
-                  </h2>
-                </ScrollReveal>
-
-                <ScrollReveal animation="fade-up" delay={100}>
-                  <div className="mt-5 sm:mt-8 rounded-2xl border border-border bg-white p-6 sm:p-7 card-lift">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl mb-4 bg-brand-50 border border-brand-200">
-                      <MessageCircle className="h-5 w-5 text-brand-600" />
-                    </div>
-                    <h3 className="font-semibold text-[16px] text-text mb-2">
-                      Still have questions?
-                    </h3>
-                    <p className="text-[13px] text-text-muted leading-relaxed mb-5">
-                      We&apos;re here to help reach out to our team and
-                      we&apos;ll help you out.
-                    </p>
-                    <Link href="/contact">
-                      <Button variant="outline" size="sm">
-                        Contact Support <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </Link>
-                  </div>
-                </ScrollReveal>
-              </div>
-
-              {/* right — accordion */}
-              <div className="lg:col-span-3">
-                <div className="flex flex-col gap-2.5 sm:gap-3">
-                  {FAQS.map((faq, i) => {
-                    const open = openFaq === i;
-                    return (
-                      <AnimateOnScroll key={faq.q} delay={i * 60}>
-                        <div
-                          className={cn(
-                            "rounded-2xl border bg-white transition-all duration-300",
-                            open
-                              ? "border-brand-300 shadow-sm"
-                              : "border-border hover:border-border-strong",
-                          )}
-                        >
-                          <button
-                            onClick={() => setOpenFaq(open ? null : i)}
-                            className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 sm:py-5 text-left"
-                            aria-expanded={open}
-                          >
-                            <span
-                              className={cn(
-                                "text-[15px] font-medium transition-colors duration-250",
-                                open ? "text-brand-600" : "text-text",
-                              )}
-                            >
-                              {faq.q}
-                            </span>
-                            <ChevronDown
-                              className={cn(
-                                "h-4 w-4 shrink-0 transition-transform duration-300",
-                                open
-                                  ? "rotate-180 text-brand-600"
-                                  : "text-text-subtle",
-                              )}
-                            />
-                          </button>
-                          <div
-                            className={cn(
-                              "grid transition-all duration-300 ease-out",
-                              open
-                                ? "grid-rows-[1fr] opacity-100"
-                                : "grid-rows-[0fr] opacity-0",
-                            )}
-                          >
-                            <div className="overflow-hidden">
-                              <div className="px-6 pb-5 text-[13.5px] text-text-muted leading-relaxed whitespace-pre-line">
-                                {faq.a}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </AnimateOnScroll>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+        <section className="py-13 sm:py-16 bg-text border-t border-border">
+          <div className="container-x text-center">
+            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-6">
+              Secure your seat before it&apos;s gone.
+            </h2>
+            <Link href={ctaHref} className="inline-block">
+              <Button
+                variant="primary"
+                size="lg"
+                className="bg-white! text-text! hover:bg-white/90!"
+              >
+                {ctaLabel} <ArrowRight className="h-4 w-4 shrink-0" />
+              </Button>
+            </Link>
+            <p className="mt-4 text-[12.5px] text-white/60">
+              NSE-listed company · trusted by 10,000+ students
+            </p>
           </div>
         </section>
       </main>
