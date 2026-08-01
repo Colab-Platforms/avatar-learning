@@ -16,15 +16,78 @@ import {
   ChevronDown,
   BookOpen,
   ClipboardList,
+  Lock,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
+import { useCounsellingProfile } from "@/hooks/queries/useCounsellingProfile";
+import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
+import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
+import { useInternshipTasks } from "@/hooks/queries/useInternshipTasks";
+import { useAssessments } from "@/hooks/queries/useAssessment";
 import {
   courseIdFromDashboardLearningPath,
   d2hLearningRoutes,
   isAssessmentsSubpath,
   isLearningSubpath,
 } from "@/lib/learningRoutes";
+
+/** Dev escape hatch: set NEXT_PUBLIC_D2H_DEV_UNLOCK=true to skip the step-lock gate entirely. */
+const DEV_UNLOCK = process.env.NEXT_PUBLIC_D2H_DEV_UNLOCK === "true";
+
+const STEP_ORDER = [
+  "/dashboard/assessment",
+  "/dashboard/counselling",
+  "ai-learning",
+  "/dashboard/internships",
+  "/dashboard/placement",
+] as const;
+
+/** Returns, for each step id/href in STEP_ORDER, whether it is locked (previous step not yet completed). */
+function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
+  const { data: counsellingData } = useCounsellingProfile();
+  const profile = counsellingData?.profile ?? null;
+  const { data: booking } = useCounsellingBooking();
+  const { data: selection } = useCourseSelection();
+  const { data: internshipDashboard } = useInternshipTasks();
+  const { data: assessments } = useAssessments(activeCourseId ?? "");
+
+  return useMemo(() => {
+    if (DEV_UNLOCK) {
+      return Object.fromEntries(STEP_ORDER.map((id) => [id, false]));
+    }
+
+    const hasAssessment = !!profile?.isSubmitted;
+    const hasCounselling = !!(
+      booking?.counsellingCompleted || selection?.selectedCourseId
+    );
+    const finalAssessment = assessments?.find((a) => a.type === "FINAL");
+    const hasLearning = finalAssessment?.status === "PASSED";
+    const internshipProgress = internshipDashboard?.progress;
+    const hasInternship =
+      !!internshipProgress &&
+      internshipProgress.total > 0 &&
+      internshipProgress.approved === internshipProgress.total;
+
+    const completed = [
+      true, // assessment is always the entry step
+      hasAssessment,
+      hasCounselling,
+      hasLearning,
+      hasInternship,
+    ];
+
+    return Object.fromEntries(
+      STEP_ORDER.map((id, i) => [id, !completed[i]]),
+    );
+  }, [
+    profile,
+    booking?.counsellingCompleted,
+    selection?.selectedCourseId,
+    assessments,
+    internshipDashboard?.progress,
+  ]);
+}
 
 type NavLeaf = {
   kind: "link";
@@ -152,6 +215,7 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const courseId = useActiveCourseId(pathname);
   const nav = useMemo(() => buildDashboardNav(courseId), [courseId]);
+  const stepLocks = useStepLocks(courseId);
 
   const learningActive =
     pathname === "/dashboard/learning" ||
@@ -216,7 +280,24 @@ export function DashboardSidebar({
           {nav.map((item) => {
             if (item.kind === "link") {
               const active = isLinkActive(item.href, item.exact);
+              const locked = stepLocks[item.href] ?? false;
               const Icon = item.icon;
+
+              if (locked) {
+                return (
+                  <div
+                    key={item.href}
+                    aria-disabled="true"
+                    title="Complete the previous step to unlock"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/20 border border-transparent cursor-not-allowed select-none"
+                  >
+                    <Icon size={16} className="text-white/15" />
+                    {item.label}
+                    <Lock size={13} className="ml-auto text-white/20" />
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
@@ -242,6 +323,23 @@ export function DashboardSidebar({
 
             const Icon = item.icon;
             const groupActive = learningActive;
+            const groupLocked = stepLocks[item.id] ?? false;
+
+            if (groupLocked) {
+              return (
+                <div
+                  key={item.id}
+                  aria-disabled="true"
+                  title="Complete the previous step to unlock"
+                  className="pt-0.5 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/20 border border-transparent cursor-not-allowed select-none"
+                >
+                  <Icon size={16} className="text-white/15" />
+                  {item.label}
+                  <Lock size={13} className="ml-auto text-white/20" />
+                </div>
+              );
+            }
+
             return (
               <div key={item.id} className="pt-0.5">
                 <div
