@@ -49,6 +49,16 @@ export interface GoogleAuthBody {
     referralCode?: string;
 }
 
+export interface CompleteProfileBody {
+    firstName: string;
+    lastName: string;
+    phoneNo: string;
+    state: string;
+    country: string;
+    city: string;
+    dateOfBirth: string;
+}
+
 export interface JwtPayload {
     id: string;
     role: "USER" | "ADMIN" | "SUPERADMIN";

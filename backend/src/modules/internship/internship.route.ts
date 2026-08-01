@@ -1,27 +1,29 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireCompleteProfile } from "@/middlewares/requireCompleteProfile.js";
 import * as internshipController from "./internship.controller.js";
 
 const router = Router();
+const userAuth = [auth("USER"), requireCompleteProfile] as const;
 
 // ─── Public Routes ────────────────────────────────────────────────────────────
 router.get("/", internshipController.getInternships);
 
 // ─── Authenticated User Routes (must be before /:slug to avoid conflicts) ────
-router.get("/me/applications", auth("USER"), internshipController.getMyApplications);
+router.get("/me/applications", ...userAuth, internshipController.getMyApplications);
 router.post(
   "/:internshipId/apply",
-  auth("USER"),
+  ...userAuth,
   internshipController.applyInternship,
 );
 router.delete(
   "/:internshipId/apply",
-  auth("USER"),
+  ...userAuth,
   internshipController.withdrawApplication,
 );
 router.get(
   "/:internshipId/application",
-  auth("USER"),
+  ...userAuth,
   internshipController.checkApplication,
 );
 

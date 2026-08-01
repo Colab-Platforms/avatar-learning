@@ -1,151 +1,153 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireCompleteProfile } from "@/middlewares/requireCompleteProfile.js";
 import * as courseController from "./course.controller.js";
 import * as assessmentController from "./assessment/assessment.controller.js";
 import * as placementController from "./placement/placement.controller.js";
 
 const router = Router();
+const userAuth = [auth("USER"), requireCompleteProfile] as const;
 
 // ─── Public Routes ────────────────────────────────────────────────────────────
 router.get("/", courseController.getCourses);
 router.get("/hero", courseController.getHeroCourses);
 
 // ─── Authenticated User Routes (must be before /:slug to avoid conflicts) ────
-router.get("/me/enrollments", auth("USER"), courseController.getMyEnrollments);
+router.get("/me/enrollments", ...userAuth, courseController.getMyEnrollments);
 router.get(
   "/resources/:resourceId/download",
-  auth("USER"),
+  ...userAuth,
   courseController.downloadResource,
 );
 router.get(
   "/resources/:resourceId/playback",
-  auth("USER"),
+  ...userAuth,
   courseController.getVideoPlayback,
 );
-router.post("/:courseId/enroll", auth("USER"), courseController.enrollCourse);
+router.post("/:courseId/enroll", ...userAuth, courseController.enrollCourse);
 router.delete(
   "/:courseId/enroll",
-  auth("USER"),
+  ...userAuth,
   courseController.unenrollCourse,
 );
 router.get(
   "/:courseId/enrollment",
-  auth("USER"),
+  ...userAuth,
   courseController.checkEnrollment,
 );
 router.get(
   "/:courseId/learn",
-  auth("USER"),
+  ...userAuth,
   courseController.getEnrolledCourseDetail,
 );
 router.post(
   "/topics/:topicId/watch",
-  auth("USER"),
+  ...userAuth,
   courseController.markTopicWatched,
 );
 router.get(
   "/:courseId/certificate",
-  auth("USER"),
+  ...userAuth,
   courseController.downloadCertificate,
 );
 
 // ─── Assessment (must be before /:slug to avoid conflicts) ───────────────────
 router.get(
   "/:courseId/assessments",
-  auth("USER"),
+  ...userAuth,
   assessmentController.listAssessmentsForUser,
 );
 router.get(
   "/:courseId/assessments/:assessmentId",
-  auth("USER"),
+  ...userAuth,
   assessmentController.getAssessmentForUser,
 );
 router.get(
   "/:courseId/assessments/:assessmentId/attempts",
-  auth("USER"),
+  ...userAuth,
   assessmentController.getAttemptHistory,
 );
 router.post(
   "/:courseId/assessments/:assessmentId/attempts",
-  auth("USER"),
+  ...userAuth,
   assessmentController.startAttempt,
 );
 // Legacy aliases — prefer /assessments/:assessmentId routes above
 router.get(
   "/:courseId/assessment",
-  auth("USER"),
+  ...userAuth,
   assessmentController.listAssessmentsForUser,
 );
 router.post(
   "/:courseId/assessment/attempts",
-  auth("USER"),
+  ...userAuth,
   assessmentController.startAttempt,
 );
 router.get(
   "/assessments/attempts/:attemptId",
-  auth("USER"),
+  ...userAuth,
   assessmentController.getAttemptState,
 );
 router.put(
   "/assessments/attempts/:attemptId/answers/:questionId",
-  auth("USER"),
+  ...userAuth,
   assessmentController.saveAnswer,
 );
 router.post(
   "/assessments/attempts/:attemptId/violations",
-  auth("USER"),
+  ...userAuth,
   assessmentController.reportViolation,
 );
 router.post(
   "/assessments/attempts/:attemptId/submit",
-  auth("USER"),
+  ...userAuth,
   assessmentController.submitAttempt,
 );
 router.get(
   "/assessments/attempts/:attemptId/result",
-  auth("USER"),
+  ...userAuth,
   assessmentController.getAttemptResult,
 );
 
 // ─── Placement Assessment (must be before /:slug to avoid conflicts) ─────────
 router.get(
   "/:courseId/placement-assessment",
-  auth("USER"),
+  ...userAuth,
   placementController.getAssessmentForUser,
 );
 router.post(
   "/:courseId/placement-assessment/attempts",
-  auth("USER"),
+  ...userAuth,
   placementController.startAttempt,
 );
 router.get(
   "/:courseId/placement-assessment/attempts",
-  auth("USER"),
+  ...userAuth,
   placementController.listUserAttemptHistory,
 );
 router.get(
   "/placement-assessments/attempts/:attemptId",
-  auth("USER"),
+  ...userAuth,
   placementController.getAttemptState,
 );
 router.put(
   "/placement-assessments/attempts/:attemptId/answers/:questionId",
-  auth("USER"),
+  ...userAuth,
   placementController.saveAnswer,
 );
 router.post(
   "/placement-assessments/attempts/:attemptId/violations",
-  auth("USER"),
+  ...userAuth,
   placementController.reportViolation,
 );
 router.post(
   "/placement-assessments/attempts/:attemptId/submit",
-  auth("USER"),
+  ...userAuth,
   placementController.submitAttempt,
 );
 router.get(
   "/placement-assessments/attempts/:attemptId/result",
-  auth("USER"),
+  ...userAuth,
   placementController.getAttemptResult,
 );
 

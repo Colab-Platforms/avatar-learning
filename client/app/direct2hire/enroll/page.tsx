@@ -63,6 +63,10 @@ export default function Direct2HireEnrollPage() {
     if (!hasHydrated) return;
     if (!user) {
       router.replace("/login?redirect=/direct2hire/enroll");
+      return;
+    }
+    if (user.profileCompleted === false) {
+      router.replace("/complete-profile");
     }
   }, [hasHydrated, user, router]);
 

@@ -9,6 +9,7 @@ import QueryProvider from "@/store/QueryProvider";
 import ChatbotAgent from "@/components/ui/ChatbotAgent";
 import { HelpWidget } from "@/components/ui/HelpWidget";
 import { CareerQuizPrompt } from "@/components/quiz/CareerQuizPrompt";
+import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -62,7 +63,9 @@ export default function RootLayout({
       <body>
         <StoreProvider>
           <QueryProvider>
-            {children}
+            <ProfileCompletionGuard>
+              {children}
+            </ProfileCompletionGuard>
             <ChatbotAgent />
             <HelpWidget />
             <CareerQuizPrompt />

@@ -27,6 +27,10 @@ export default function DashboardLayout({
     if (!hasHydrated) return;
     if (!authUser) {
       router.replace("/login");
+      return;
+    }
+    if (authUser.profileCompleted === false) {
+      router.replace("/complete-profile");
     }
   }, [hasHydrated, authUser, router]);
 

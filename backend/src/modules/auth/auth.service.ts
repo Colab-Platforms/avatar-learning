@@ -18,12 +18,14 @@ import {
   ResendOtpBody,
   VerifyPhoneBody,
   GoogleAuthBody,
+  CompleteProfileBody,
 } from "./auth.types.js";
 
 dayjs.extend(utc);
 
 const REFRESH_TOKEN_TTL_DAYS = 30;
 const ACCESS_TOKEN_TTL = "1d";
+const MIN_PROFILE_AGE_YEARS = 10;
 
 const getHighestRole = (
   roleNames: string[],
@@ -89,6 +91,32 @@ const issueAuthTokens = async (
   return { user: safeUser, accessToken, refreshToken };
 };
 
+/**
+ * Existing email/password accounts created before profileCompleted existed
+ * should not be forced through Google onboarding. Google-only accounts
+ * (no password) must complete the dedicated profile step.
+ */
+const ensureEmailProfileCompleted = async <
+  T extends {
+    id: string;
+    password: string | null;
+    authProvider: AuthProvider;
+    profileCompleted: boolean;
+    userRoleMappings: { role: { name: string } }[];
+  },
+>(
+  user: T,
+): Promise<T> => {
+  if (user.profileCompleted) return user;
+  if (user.authProvider === AuthProvider.GOOGLE && !user.password) return user;
+
+  return prisma.user.update({
+    where: { id: user.id },
+    data: { profileCompleted: true },
+    include: { userRoleMappings: { include: { role: true } } },
+  }) as unknown as Promise<T>;
+};
+
 class AuthService {
   async register(data: RegisterBody) {
     const existingUser = await prisma.user.findFirst({
@@ -137,6 +165,7 @@ class AuthService {
           country: data.country,
           city: data.city,
           isPhoneVerified: false,
+          profileCompleted: true,
         },
       });
     }
@@ -156,6 +185,7 @@ class AuthService {
             city: data.city,
             isEmailVerified: false,
             isPhoneVerified: false,
+            profileCompleted: true,
           },
         });
         await tx.userRoleMapping.create({
@@ -225,7 +255,8 @@ class AuthService {
       user.isEmailVerified = true;
     }
 
-    const tokens = await issueAuthTokens(user, device);
+    const readyUser = await ensureEmailProfileCompleted(user);
+    const tokens = await issueAuthTokens(readyUser, device);
 
     return {
       ...tokens,
@@ -290,7 +321,8 @@ class AuthService {
 
     user.isPhoneVerified = true;
 
-    const tokens = await issueAuthTokens(user, device);
+    const readyUser = await ensureEmailProfileCompleted(user);
+    const tokens = await issueAuthTokens(readyUser, device);
 
     return {
       ...tokens,
@@ -371,7 +403,8 @@ class AuthService {
       };
     }
 
-    const tokens = await issueAuthTokens(user, device);
+    const readyUser = await ensureEmailProfileCompleted(user);
+    const tokens = await issueAuthTokens(readyUser, device);
     return tokens;
   }
 
@@ -455,8 +488,8 @@ class AuthService {
           return newUser;
         });
 
-        // Secondary reporting — never blocks Google sign-in
-        void googleSheetsService.appendUser(created);
+        // Defer Google Sheets sync until /complete-profile — phone/location
+        // are not available at Google account creation time.
 
         user = await prisma.user.findUniqueOrThrow({
           where: { id: created.id },
@@ -657,6 +690,77 @@ class AuthService {
     ]);
 
     return { message: "Password reset successfully. You can now log in." };
+  }
+
+  async completeProfile(userId: string, data: CompleteProfileBody) {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, isDeleted: false },
+      include: { userRoleMappings: { include: { role: true } } },
+    });
+
+    if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
+
+    if (user.profileCompleted) {
+      throw new ApiError(
+        "Profile has already been completed.",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    const dob = dayjs(data.dateOfBirth);
+    if (!dob.isValid()) {
+      throw new ApiError(
+        "Enter a valid date of birth",
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+    if (dob.isAfter(dayjs())) {
+      throw new ApiError(
+        "Date of birth cannot be in the future",
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+    if (dayjs().diff(dob, "year") < MIN_PROFILE_AGE_YEARS) {
+      throw new ApiError(
+        `You must be at least ${MIN_PROFILE_AGE_YEARS} years old`,
+        STATUS_CODES.BAD_REQUEST,
+      );
+    }
+
+    const phoneConflict = await prisma.user.findFirst({
+      where: {
+        phoneNo: data.phoneNo,
+        isDeleted: false,
+        NOT: { id: user.id },
+      },
+    });
+    if (phoneConflict) {
+      throw new ApiError(
+        "This phone number is already registered to another account.",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNo: data.phoneNo,
+        state: data.state,
+        country: data.country,
+        city: data.city,
+        dateOfBirth: dob.startOf("day").toDate(),
+        profileCompleted: true,
+      },
+      include: { userRoleMappings: { include: { role: true } } },
+    });
+
+    // Sync to Sheets only after profile details (including phone) are collected
+    void googleSheetsService.appendUser(updated);
+
+    const { password: _, ...safeUser } = updated;
+    return safeUser;
   }
 }
 

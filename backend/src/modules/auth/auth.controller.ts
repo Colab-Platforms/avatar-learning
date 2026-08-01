@@ -13,6 +13,7 @@ import {
     validateResetPasswordSchema,
     validateVerifyPhoneSchema,
     validateGoogleAuthSchema,
+    validateCompleteProfileSchema,
 } from "./auth.validators.js";
 
 const authService = new AuthService();
@@ -200,6 +201,21 @@ export const getMsg91Config = async (_req: Request, res: Response): Promise<void
     try {
         const config = authService.getMsg91Config();
         sendResponse(res, true, config, "MSG91 config loaded.", STATUS_CODES.OK);
+    } catch (error: any) {
+        sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
+    }
+};
+
+export const completeProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const { error, value } = validateCompleteProfileSchema(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await authService.completeProfile(req.user!.id, value);
+        sendResponse(res, true, result, "Profile completed successfully.", STATUS_CODES.OK);
     } catch (error: any) {
         sendResponse(res, false, null, error.message, error.statusCode ?? STATUS_CODES.SERVER_ERROR);
     }

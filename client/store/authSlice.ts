@@ -17,6 +17,10 @@ export interface AuthUser {
   state: string | null;
   country: string | null;
   city: string | null;
+  dateOfBirth?: string | null;
+  authProvider?: "LOCAL" | "GOOGLE";
+  /** Explicit flag — only `false` triggers Google onboarding; undefined = legacy session */
+  profileCompleted?: boolean;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   isActive: boolean;
@@ -331,6 +335,35 @@ export const updateUser = createAsyncThunk(
   }
 );
 
+export const completeProfile = createAsyncThunk(
+  "auth/completeProfile",
+  async (
+    data: {
+      firstName: string;
+      lastName: string;
+      phoneNo: string;
+      state: string;
+      country: string;
+      city: string;
+      dateOfBirth: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { data: res } = await apiClient.post<ApiResponse<AuthUser>>(
+        "/auth/complete-profile",
+        data
+      );
+      if (!res.data) {
+        throw new Error("Profile completion response was incomplete.");
+      }
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(extractError(err));
+    }
+  }
+);
+
 export const uploadResume = createAsyncThunk(
   "auth/uploadResume",
   async (file: File, { rejectWithValue }) => {
@@ -615,6 +648,29 @@ const authSlice = createSlice({
         }
       })
       .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // COMPLETE PROFILE
+      .addCase(completeProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(completeProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.user) {
+          state.user = { ...state.user, ...action.payload, profileCompleted: true };
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+              const { accessToken, refreshToken } = JSON.parse(stored);
+              persist(state.user, accessToken, refreshToken);
+            }
+          } catch { /* ignore */ }
+        }
+      })
+      .addCase(completeProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

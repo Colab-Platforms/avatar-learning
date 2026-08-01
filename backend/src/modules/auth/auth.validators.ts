@@ -119,6 +119,44 @@ const googleAuthSchema = Joi.object({
     referralCode: Joi.string().trim().uppercase().optional().allow(""),
 });
 
+const completeProfileSchema = Joi.object({
+    firstName: Joi.string().trim().required().messages({
+        "string.empty": "First name is required",
+        "any.required": "First name is required",
+    }),
+    lastName: Joi.string().trim().required().messages({
+        "string.empty": "Last name is required",
+        "any.required": "Last name is required",
+    }),
+    phoneNo: Joi.string()
+        .trim()
+        .pattern(/^[6-9]\d{9}$/)
+        .required()
+        .messages({
+            "string.empty": "Phone number is required",
+            "string.pattern.base": "Enter a valid 10-digit Indian mobile number",
+            "any.required": "Phone number is required",
+        }),
+    state: Joi.string().trim().required().messages({
+        "string.empty": "State is required",
+        "any.required": "State is required",
+    }),
+    country: Joi.string().trim().required().messages({
+        "string.empty": "Country is required",
+        "any.required": "Country is required",
+    }),
+    city: Joi.string().trim().required().messages({
+        "string.empty": "City is required",
+        "any.required": "City is required",
+    }),
+    dateOfBirth: Joi.date().iso().max("now").required().messages({
+        "date.base": "Enter a valid date of birth",
+        "date.format": "Enter a valid date of birth",
+        "date.max": "Date of birth cannot be in the future",
+        "any.required": "Date of birth is required",
+    }),
+});
+
 const verifyPhoneSchema = Joi.object({
     email: Joi.string().trim().lowercase().email().required().messages({
         "string.email": "A valid email is required",
@@ -137,6 +175,7 @@ export const validateVerifyOtpSchema = (data: unknown) => verifyOtpSchema.valida
 export const validateResendOtpSchema = (data: unknown) => resendOtpSchema.validate(data, { abortEarly: false });
 export const validateVerifyPhoneSchema = (data: unknown) => verifyPhoneSchema.validate(data, { abortEarly: false });
 export const validateGoogleAuthSchema = (data: unknown) => googleAuthSchema.validate(data, { abortEarly: false });
+export const validateCompleteProfileSchema = (data: unknown) => completeProfileSchema.validate(data, { abortEarly: false });
 export const validateRefreshTokenSchema = (data: unknown) => refreshTokenSchema.validate(data, { abortEarly: false });
 export const validateForgotPasswordSchema = (data: unknown) => forgotPasswordSchema.validate(data, { abortEarly: false });
 export const validateResetPasswordSchema = (data: unknown) => resetPasswordSchema.validate(data, { abortEarly: false });

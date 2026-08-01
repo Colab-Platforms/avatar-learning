@@ -66,8 +66,13 @@ export default function PartnerOnboardingPage() {
 
   // Auth guard
   useEffect(() => {
-    if (hasHydrated && !user) {
+    if (!hasHydrated) return;
+    if (!user) {
       router.replace(`/login?returnTo=${encodeURIComponent("/partners/onboarding")}`);
+      return;
+    }
+    if (user.profileCompleted === false) {
+      router.replace("/complete-profile");
     }
   }, [hasHydrated, user, router]);
 

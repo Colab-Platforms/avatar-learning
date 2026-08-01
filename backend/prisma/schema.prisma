@@ -134,6 +134,7 @@ model User {
   state                String?
   country              String?
   city                 String?
+  dateOfBirth          DateTime? @map("date_of_birth")
   profileImage         String? @map("profile_image")
   profileImagePublicId String? @map("profile_image_public_id")
   resumeUrl            String? @map("resume_url")
@@ -146,6 +147,8 @@ model User {
 
   googleId     String?      @unique @map("google_id")
   authProvider AuthProvider @default(LOCAL) @map("auth_provider")
+
+  profileCompleted Boolean @default(false) @map("profile_completed")
 
   isEmailVerified Boolean @default(false) @map("is_email_verified")
   isPhoneVerified Boolean @default(false) @map("is_phone_verified")
