@@ -44,6 +44,10 @@ function LoginForm() {
 
   useEffect(() => {
     if (!user) return;
+    if (user.profileCompleted === false) {
+      router.replace("/complete-profile");
+      return;
+    }
     const redirect = searchParams.get("redirect");
     router.push(redirect || "/");
   }, [user, router, searchParams]);

@@ -224,7 +224,14 @@ export default function PartnerDashboardPage() {
 
   /* auth guard */
   useEffect(() => {
-    if (hasHydrated && !user) router.replace("/login");
+    if (!hasHydrated) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+    if (user.profileCompleted === false) {
+      router.replace("/complete-profile");
+    }
   }, [hasHydrated, user, router]);
 
   /* fetch partner */

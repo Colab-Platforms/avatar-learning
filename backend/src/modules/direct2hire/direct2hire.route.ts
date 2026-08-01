@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireCompleteProfile } from "@/middlewares/requireCompleteProfile.js";
 import { createOrder, getStatus } from "./direct2hire.controller.js";
 import * as direct2hireController from "./direct2hire.controller.js";
 import counsellingRoutes from "./counselling/counselling.route.js";
@@ -13,15 +14,14 @@ import introVideoRoutes from "./intro-video/intro-video.route.js";
 
 const router = Router();
 
-router.get("/status", auth("USER"), getStatus);
-router.post("/create-order", auth("USER"), createOrder);
-router.get(
-  "/referral-discount",
-  auth("USER"),
-  direct2hireController.getReferralDiscount,
-);
+// All Direct2Hire student APIs require a completed profile
+router.use(auth("USER"), requireCompleteProfile);
 
-router.get("/me", auth("USER"), direct2hireController.getMyStatus);
+router.get("/status", getStatus);
+router.post("/create-order", createOrder);
+router.get("/referral-discount", direct2hireController.getReferralDiscount);
+router.get("/me", direct2hireController.getMyStatus);
+
 router.use("/intro-video", introVideoRoutes);
 router.use("/counselling", counsellingRoutes);
 router.use("/lead", leadRoutes);
@@ -32,11 +32,7 @@ router.use("/mock-interview", mockInterviewRoutes);
 router.use("/job-placement", jobPlacementRoutes);
 
 if (process.env.NODE_ENV !== "production") {
-  router.post(
-    "/dev/continue-as-paid",
-    auth("USER"),
-    direct2hireController.devContinueAsPaid,
-  );
+  router.post("/dev/continue-as-paid", direct2hireController.devContinueAsPaid);
 }
 
 export default router;

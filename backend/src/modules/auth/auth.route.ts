@@ -15,6 +15,13 @@ router.post("/resend-otp", authController.resendOtp);
 router.post("/login", authController.login);
 router.post("/google", authController.googleAuth);
 
+// Google / incomplete-profile onboarding (authenticated session continues)
+router.post(
+  "/complete-profile",
+  auth("USER", "ADMIN", "SUPERADMIN"),
+  authController.completeProfile,
+);
+
 // Session management
 router.post("/refresh", authController.refresh);
 router.post("/logout", authController.logout);

@@ -45,6 +45,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (hasHydrated && !user) router.replace("/login");
+    else if (hasHydrated && user?.profileCompleted === false) {
+      router.replace("/complete-profile");
+    }
   }, [hasHydrated, user, router]);
 
   useEffect(() => {

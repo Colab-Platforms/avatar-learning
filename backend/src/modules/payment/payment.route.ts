@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireCompleteProfile } from "@/middlewares/requireCompleteProfile.js";
 import {
   createOrder,
   verifyPayment,
@@ -14,7 +15,7 @@ router.post("/webhook", handleRazorpayWebhook);
 router.post("/webhook/cashfree", handleCashfreeWebhook);
 
 router.get("/config", getPaymentConfig);
-router.post("/create-order", auth("USER"), createOrder);
-router.post("/verify", auth("USER"), verifyPayment);
+router.post("/create-order", auth("USER"), requireCompleteProfile, createOrder);
+router.post("/verify", auth("USER"), requireCompleteProfile, verifyPayment);
 
 export default router;

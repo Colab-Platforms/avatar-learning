@@ -84,7 +84,14 @@ function RegisterForm() {
   const states = useMemo(() => getStatesForCountry(form.country), [form.country]);
   const cities = useMemo(() => getCitiesForState(form.country, form.state), [form.country, form.state]);
 
-  useEffect(() => { if (user) router.push("/onboarded"); }, [user, router]);
+  useEffect(() => {
+    if (!user) return;
+    if (user.profileCompleted === false) {
+      router.replace("/complete-profile");
+      return;
+    }
+    router.push("/onboarded");
+  }, [user, router]);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
