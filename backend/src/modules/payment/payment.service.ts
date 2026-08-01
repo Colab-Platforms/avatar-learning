@@ -12,6 +12,7 @@ import {
 } from "@/modules/direct2hire/direct2hire.service.js";
 import { partnerService } from "@/modules/partners/partner.service.js";
 import { couponService } from "@/modules/coupon/coupon.service.js";
+import { googleSheetsService } from "@/services/googleSheets.service.js";
 import type {
   CreateOrderResponse,
   RazorpayWebhookPayload,
@@ -135,11 +136,21 @@ async function saveDirect2HireLead(
   userId: string,
   lead: Direct2HireLeadInput,
 ): Promise<void> {
-  await prisma.direct2HireLead.upsert({
+  const existing = await prisma.direct2HireLead.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  const saved = await prisma.direct2HireLead.upsert({
     where: { userId },
     create: { userId, ...lead, paymentCompleted: true },
     update: { ...lead, paymentCompleted: true },
   });
+
+  // Sync only when payment path creates the lead for the first time
+  if (!existing) {
+    void googleSheetsService.appendLead(saved);
+  }
 }
 
 async function completePayment(params: {
@@ -185,6 +196,10 @@ async function completePayment(params: {
   }
 
   try {
+    let createdLeadForSheets: Awaited<
+      ReturnType<typeof prisma.direct2HireLead.upsert>
+    > | null = null;
+
     await prisma.$transaction(async (tx) => {
       await tx.paymentTransaction.create({
         data: {
@@ -213,11 +228,21 @@ async function completePayment(params: {
         });
 
         if (lead) {
-          await tx.direct2HireLead.upsert({
+          const existingLead = await tx.direct2HireLead.findUnique({
+            where: { userId: order.userId },
+            select: { id: true },
+          });
+
+          const savedLead = await tx.direct2HireLead.upsert({
             where: { userId: order.userId },
             create: { userId: order.userId, ...lead, paymentCompleted: true },
             update: { ...lead, paymentCompleted: true },
           });
+
+          // Sync only on create — payment updates must not re-append
+          if (!existingLead) {
+            createdLeadForSheets = savedLead;
+          }
         }
       } else if (order.courseId) {
         await tx.courseUserMapper.upsert({
@@ -229,6 +254,10 @@ async function completePayment(params: {
         });
       }
     });
+
+    if (createdLeadForSheets) {
+      void googleSheetsService.appendLead(createdLeadForSheets);
+    }
 
     if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {
       // Grant course access + schedule any referring partner's commission

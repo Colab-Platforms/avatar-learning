@@ -10,6 +10,7 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { sendOtpEmail, sendPasswordResetEmail } from "@/utils/mailer.js";
 import { verifyMsg91AccessToken, getMsg91WidgetConfig } from "@/utils/msg91.js";
 import { verifyGoogleIdToken } from "@/utils/googleAuth.js";
+import { googleSheetsService } from "@/services/googleSheets.service.js";
 import {
   RegisterBody,
   LoginBody,
@@ -141,9 +142,9 @@ class AuthService {
     }
     //new user
     else {
-      await prisma.$transaction(async (tx) => {
+      const created = await prisma.$transaction(async (tx) => {
         //creating user and mapping role in a transaction
-        const created = await tx.user.create({
+        const user = await tx.user.create({
           data: {
             firstName: data.firstName,
             lastName: data.lastName,
@@ -158,7 +159,7 @@ class AuthService {
           },
         });
         await tx.userRoleMapping.create({
-          data: { userId: created.id, roleId: roleRecord.id },
+          data: { userId: user.id, roleId: roleRecord.id },
         });
         if (data.referralCode) {
           const partner = await tx.partner.findFirst({
@@ -166,13 +167,16 @@ class AuthService {
           });
           if (partner) {
             await tx.partnerReferral.create({
-              data: { partnerId: partner.id, referredUserId: created.id },
+              data: { partnerId: partner.id, referredUserId: user.id },
             });
           }
         }
 
-        return created;
+        return user;
       });
+
+      // Secondary reporting — never blocks registration
+      void googleSheetsService.appendUser(created);
     }
 
     return {
@@ -450,6 +454,9 @@ class AuthService {
           }
           return newUser;
         });
+
+        // Secondary reporting — never blocks Google sign-in
+        void googleSheetsService.appendUser(created);
 
         user = await prisma.user.findUniqueOrThrow({
           where: { id: created.id },

@@ -2,6 +2,7 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { hashPassword } from "@/utils/auth.js";
+import { googleSheetsService } from "@/services/googleSheets.service.js";
 import { userSelectFields, CreateUserBody, UpdateUserBody, SetUserRoleBody, CompleteQuizBody, Role, ROLE_LEVEL } from "./user.types.js";
 import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
 import { buildPrismaQuery } from "prisma-qb";
@@ -117,6 +118,11 @@ class UserService {
 
             return tx.user.findUnique({ where: { id: created.id }, select: userSelectFields });
         });
+
+        if (user) {
+            // Secondary reporting — never blocks user creation
+            void googleSheetsService.appendUser(user);
+        }
 
         return user;
     }
