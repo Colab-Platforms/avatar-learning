@@ -28,10 +28,30 @@ import { Testimonials } from "@/components/home/Testimonials/Testimonials";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
+const SEATS_TOTAL = 50;
+const SEATS_FILLED = 38;
+const SEATS_PERCENT = Math.round((SEATS_FILLED / SEATS_TOTAL) * 100);
+
 const STATS = [
-  { value: "10,000+", label: "Students Got Their Dream Job" },
-  { value: "96.3%", label: "Placement Rate" },
-  { value: "50+", label: "Placement Partners" },
+  {
+    value: "4.9/5",
+    label: "3,200+ reviews",
+    bg: "bg-surface-alt",
+    valueClass: "text-text",
+    stars: true,
+  },
+  {
+    value: "96.3%",
+    label: "placement rate",
+    bg: "bg-brand-50",
+    valueClass: "text-brand-600",
+  },
+  {
+    value: "10K+",
+    label: "students placed",
+    bg: "bg-emerald-50",
+    valueClass: "text-emerald-600",
+  },
 ];
 
 const HOW_STEPS = [
@@ -66,7 +86,7 @@ const WALK_AWAY = [
     dark: false,
   },
   {
-    image: "/counselling-images/new-banner.png",
+    image: "/counselling-images/work-exp.png",
     title: "Real work experience",
     desc: "A live internship on your resume.",
     dark: false,
@@ -96,15 +116,7 @@ const TESTIMONIALS = [
 /* ─── page ──────────────────────────────────────────────────────────── */
 
 export default function Direct2HirePage() {
-  const [statsSlide, setStatsSlide] = useState(0);
   const [walkAwaySlide, setWalkAwaySlide] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setStatsSlide((i) => (i + 1) % STATS.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -153,7 +165,7 @@ export default function Direct2HirePage() {
               {/* left */}
               <div className="lg:col-span-5 xl:col-span-5">
                 <ScrollReveal animation="fade-up" delay={0}>
-                  <h1 className="h-display text-text mb-3 sm:mb-6">
+                  <h1 className="h-display font-bold  text-text mb-3 sm:mb-6">
                     Become AI Job Ready in{" "}
                     <span className="text-gradient-brand">Just 120 Days.</span>
                   </h1>
@@ -302,14 +314,45 @@ export default function Direct2HirePage() {
                       </span>
                     </div>
 
-                    <span className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[13px] font-bold text-text shadow-lg">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                      96.3% placement rate
+                    <span className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 inline-flex items-center gap-2.5 sm:gap-3 rounded-2xl bg-white px-3 py-2.5 sm:px-4 sm:py-3 shadow-lg">
+                      <span className="shrink-0 inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                      </span>
+                      <span className="flex flex-col leading-tight text-left">
+                        <span className="text-base sm:text-xl font-bold text-text">
+                          96.3%
+                        </span>
+                        <span className="text-[11px] sm:text-[12.5px] text-text-subtle">
+                          placement rate
+                        </span>
+                      </span>
                     </span>
                   </div>
                 </ScrollReveal>
               </div>
             </div>
+
+            {/* batch fill progress */}
+            <ScrollReveal
+              animation="fade-up"
+              delay={180}
+              className="mt-8 sm:mt-10"
+            >
+              <div className="flex items-baseline justify-between mb-2">
+                <p className="text-[14px] sm:text-[15px] font-bold text-text">
+                  This batch is {SEATS_PERCENT}% full
+                </p>
+                <p className="text-[13px] sm:text-[14px] font-bold text-brand-600">
+                  {SEATS_FILLED} / {SEATS_TOTAL} seats
+                </p>
+              </div>
+              <div className="h-2 sm:h-2.5 w-full rounded-full bg-surface-alt overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-brand-500 to-brand-600"
+                  style={{ width: `${SEATS_PERCENT}%` }}
+                />
+              </div>
+            </ScrollReveal>
 
             {/* stat strip */}
             <ScrollReveal
@@ -318,24 +361,59 @@ export default function Direct2HirePage() {
               className="mt-8 sm:mt-10"
             >
               {/* Desktop / Tablet view (>= sm) */}
-              <div className="hidden sm:grid sm:grid-cols-4 gap-2.5 sm:gap-4">
+              <div className="hidden sm:grid sm:grid-cols-4 gap-3 sm:gap-4 items-stretch">
                 {STATS.map((s, i) => (
-                  <AnimateOnScroll key={s.label} delay={i * 70}>
-                    <div className="rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 text-center card-lift">
-                      <p className="text-2xl sm:text-3xl font-bold text-text mb-1">
-                        {s.value}
-                      </p>
-                      <p className="text-[11px] sm:text-[12px] text-text-subtle uppercase tracking-wider">
-                        {s.label}
-                      </p>
+                  <AnimateOnScroll
+                    key={s.label}
+                    delay={i * 70}
+                    className="h-full"
+                  >
+                    <div className="h-full rounded-2xl border border-border bg-white px-4 sm:px-5 py-4 sm:py-5 card-lift flex items-center">
+                      {s.stars ? (
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {Array.from({ length: 5 }).map((_, j) => (
+                              <Star
+                                key={j}
+                                className="h-3.5 w-3.5 text-amber-400 fill-amber-400"
+                              />
+                            ))}
+                            <span
+                              className={cn(
+                                "text-xl sm:text-2xl font-bold ml-1 leading-none",
+                                s.valueClass,
+                              )}
+                            >
+                              {s.value}
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-[12px] text-text-subtle">
+                            {s.label}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className={cn(
+                              "text-2xl sm:text-3xl font-bold leading-none shrink-0",
+                              s.valueClass,
+                            )}
+                          >
+                            {s.value}
+                          </span>
+                          <span className="text-[11px] sm:text-[12px] text-text-subtle leading-tight max-w-14 sm:max-w-17">
+                            {s.label}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </AnimateOnScroll>
                 ))}
 
-                <AnimateOnScroll delay={STATS.length * 70}>
-                  <div className="h-full rounded-2xl bg-text p-3 sm:p-6 text-left card-lift flex items-center gap-3">
-                    <span className="shrink-0 inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/15">
-                      <ShieldCheck className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-white" />
+                <AnimateOnScroll delay={STATS.length * 70} className="h-full">
+                  <div className="h-full rounded-2xl bg-text px-4 sm:px-5 py-4 sm:py-5 card-lift flex items-center gap-3">
+                    <span className="shrink-0 inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border-2 border-brand-400">
+                      <ShieldCheck className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-red-400" />
                     </span>
                     <div className="min-w-0">
                       <p className="text-[13px] sm:text-[14px] font-bold text-white leading-tight">
@@ -349,57 +427,45 @@ export default function Direct2HirePage() {
                 </AnimateOnScroll>
               </div>
 
-              {/* Mobile Carousel View (< sm) */}
+              {/* Mobile static view (< sm) */}
               <div className="sm:hidden">
-                <div className="relative rounded-2xl border border-border bg-surface-alt p-5 text-center card-lift overflow-hidden min-h-[110px] flex flex-col justify-center items-center">
-                  {STATS.map((s, i) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {STATS.map((s) => (
                     <div
                       key={s.label}
                       className={cn(
-                        "w-full transition-opacity duration-500 ease-out",
-                        i === statsSlide
-                          ? "opacity-100 relative"
-                          : "opacity-0 absolute inset-0 p-5 pointer-events-none flex flex-col justify-center items-center",
+                        "rounded-2xl p-3 text-center card-lift",
+                        s.bg,
                       )}
                     >
-                      <p className="text-2xl font-bold text-text mb-1">
+                      <p className={cn("text-lg font-bold mb-1", s.valueClass)}>
                         {s.value}
                       </p>
-                      <p className="text-[11.5px] text-text-subtle uppercase tracking-wider">
-                        {s.label}
-                      </p>
+                      {s.stars && (
+                        <div className="flex items-center justify-center gap-0.5 mb-1">
+                          {Array.from({ length: 5 }).map((_, j) => (
+                            <Star
+                              key={j}
+                              className="h-3 w-3 text-amber-400 fill-amber-400"
+                            />
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] text-text-subtle">{s.label}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* Carousel dots indicator */}
-                <div className="flex items-center justify-center gap-1.5 mt-3">
-                  {STATS.map((s, i) => (
-                    <button
-                      key={s.label}
-                      onClick={() => setStatsSlide(i)}
-                      aria-label={`Show stat ${i + 1}`}
-                      aria-current={i === statsSlide}
-                      className={cn(
-                        "h-1.5 rounded-full transition-all duration-300",
-                        i === statsSlide
-                          ? "w-5 bg-brand-600"
-                          : "w-1.5 bg-border-strong hover:bg-brand-300",
-                      )}
-                    />
-                  ))}
-                </div>
-
                 <div className="mt-3 rounded-2xl bg-text p-3.5 text-left card-lift flex items-center gap-3">
-                  <span className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
-                    <ShieldCheck className="h-4 w-4 text-white" />
+                  <span className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-brand-400">
+                    <ShieldCheck className="h-4 w-4 text-red-400" />
                   </span>
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold text-white leading-tight">
-                      Placement-backed
+                      Placement-backed program
                     </p>
                     <p className="text-[10.5px] text-white/70 leading-tight">
-                      Guarantee on clear terms
+                      A placement guarantee, on terms shared upfront.
                     </p>
                   </div>
                 </div>
@@ -426,12 +492,12 @@ export default function Direct2HirePage() {
               </h2>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid gap-3 sm:gap-6 sm:grid-cols-3">
               {HOW_STEPS.map((step) => (
                 <div
                   key={step.title}
                   className={cn(
-                    "h-full rounded-2xl p-6 sm:p-7 border card-lift",
+                    "h-full flex items-center gap-4 sm:block rounded-2xl p-4 sm:p-7 border card-lift",
                     step.dark
                       ? "bg-text border-text text-white"
                       : "bg-white border-border text-text",
@@ -439,29 +505,31 @@ export default function Direct2HirePage() {
                 >
                   <span
                     className={cn(
-                      "inline-flex items-center justify-center h-8 w-8 rounded-lg text-[12px] font-bold mb-4",
+                      "shrink-0 inline-flex items-center justify-center h-14 w-14 sm:h-8 sm:w-8 rounded-2xl sm:rounded-lg text-lg sm:text-[12px] font-bold mb-0 sm:mb-4",
                       step.dark
-                        ? "bg-white/15 text-white"
+                        ? "bg-brand-600 sm:bg-white/15 text-white"
                         : "bg-brand-50 text-brand-600 border border-brand-200",
                     )}
                   >
                     {step.dark ? (
-                      <Star className="h-3.5 w-3.5 fill-current" />
+                      <Star className="h-5 w-5 sm:h-3.5 sm:w-3.5 fill-current" />
                     ) : (
                       step.num
                     )}
                   </span>
-                  <h3 className="font-semibold text-[17px] mb-2">
-                    {step.title}
-                  </h3>
-                  <p
-                    className={cn(
-                      "text-[13.5px] leading-relaxed",
-                      step.dark ? "text-white/70" : "text-text-muted",
-                    )}
-                  >
-                    {step.desc}
-                  </p>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-[17px] mb-0.5 sm:mb-2">
+                      {step.title}
+                    </h3>
+                    <p
+                      className={cn(
+                        "text-[13.5px] leading-relaxed",
+                        step.dark ? "text-white/70" : "text-text-muted",
+                      )}
+                    >
+                      {step.desc}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -688,7 +756,9 @@ export default function Direct2HirePage() {
                       You are enrolled in Direct2Hire!
                     </h3>
                     <p className="text-[14.5px] text-slate-500 max-w-[480px] leading-relaxed">
-                      Access your AI career roadmap, internship program details, and schedule your mentor calls directly from your dashboard.
+                      Access your AI career roadmap, internship program details,
+                      and schedule your mentor calls directly from your
+                      dashboard.
                     </p>
                   </>
                 ) : (
@@ -696,7 +766,9 @@ export default function Direct2HirePage() {
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ebf0ff] px-3.5 py-1 text-[11px] font-bold text-[#2563eb] mb-5 tracking-wide">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />
                       OFFER ENDS IN{" "}
-                      <span className="font-mono tabular-nums">{offerLabel}</span>
+                      <span className="font-mono tabular-nums">
+                        {offerLabel}
+                      </span>
                     </span>
                     <p className="flex items-baseline gap-2.5 mb-4">
                       <span className="text-[38px] sm:text-[46px] font-extrabold text-slate-900 tracking-tight leading-none">
@@ -708,8 +780,8 @@ export default function Direct2HirePage() {
                     </p>
                     <p className="text-[14px] sm:text-[15px] text-slate-500 max-w-[480px] leading-relaxed">
                       A 30–minute mentor call and your AI assessment. Your full
-                      roadmap — learning, internship, and placement — shared on the
-                      call.
+                      roadmap — learning, internship, and placement — shared on
+                      the call.
                     </p>
                   </>
                 )}
@@ -740,7 +812,9 @@ export default function Direct2HirePage() {
         ══════════════════════════════ */}
         <section
           className="relative py-16 sm:py-20 overflow-hidden"
-          style={{ background: "linear-gradient(117.44deg, #1E3A8A 0%, #2563EB 100%)" }}
+          style={{
+            background: "linear-gradient(117.44deg, #1E3A8A 0%, #2563EB 100%)",
+          }}
         >
           {/* Decorative Bubbles */}
           <div
@@ -764,7 +838,9 @@ export default function Direct2HirePage() {
             )}
 
             <h2 className="text-3xl sm:text-[40px] font-bold text-white mb-8 tracking-tight leading-tight max-w-3xl">
-              {enrolled ? "Go to your dashboard." : "Secure your seat before it's gone."}
+              {enrolled
+                ? "Go to your dashboard."
+                : "Secure your seat before it's gone."}
             </h2>
 
             <Link href={ctaHref} className="w-full sm:w-auto inline-block">
