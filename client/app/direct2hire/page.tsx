@@ -10,6 +10,7 @@ import {
   Star,
   Briefcase,
   BrainCircuit,
+  ShieldCheck,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -23,13 +24,14 @@ import {
   useOfferCountdown,
 } from "./OfferTimerBar";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
+import { Testimonials } from "@/components/home/Testimonials/Testimonials";
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
 const STATS = [
   { value: "10,000+", label: "Students Got Their Dream Job" },
   { value: "96.3%", label: "Placement Rate" },
-  { value: "50+", label: "Corporates Listed as Placement Partners" },
+  { value: "50+", label: "Placement Partners" },
 ];
 
 const HOW_STEPS = [
@@ -159,7 +161,7 @@ export default function Direct2HirePage() {
                     skills, gain real experience, and land your first job with
                     expert guidance every step of the way.
                   </p>
-                  <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-4 sm:mb-8">
+                  {/* <p className="text-text-muted text-[15px] sm:text-[16px] leading-relaxed mb-4 sm:mb-8">
                     Start your journey from Career Counseling to AI Learning,
                     Internship and Placement for just{"  "}
                     <span className="text-text-subtle line-through">
@@ -168,7 +170,7 @@ export default function Direct2HirePage() {
                     <span className="text-brand-600 font-bold text-xl">
                       ₹999/-
                     </span>
-                  </p>
+                  </p> */}
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={120}>
@@ -194,8 +196,33 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={150}>
-                  <UrgencyBanner />
-                  <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
+                  {/* <UrgencyBanner /> */}
+
+                  <div className="flex items-stretch rounded-2xl border border-border bg-white overflow-hidden w-full sm:w-fit shadow-sm mb-4 sm:mb-5">
+                    <div className="min-w-0 flex-1 sm:flex-none px-3 sm:px-5 py-2.5 sm:py-3.5">
+                      <p className="text-[10px] sm:text-[11px] text-text-subtle mb-0.5 whitespace-nowrap">
+                        Your counselling call
+                      </p>
+                      <p className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
+                        <span className="text-brand-600 font-bold text-xl sm:text-[28px]">
+                          ₹999
+                        </span>
+                        <span className="text-text-subtle line-through text-[12px] sm:text-[15px]">
+                          ₹24,999
+                        </span>
+                      </p>
+                    </div>
+                    <div className="bg-text text-white flex flex-col items-center justify-center px-5 sm:px-7 min-w-26 sm:min-w-32 shrink-0">
+                      <span className="text-lg sm:text-xl font-black leading-none whitespace-nowrap">
+                        80%
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] tracking-wider">
+                        OFF
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center sm:items-center gap-2 sm:gap-4">
                     <Link href={ctaHref} className="w-full sm:w-auto">
                       <Button
                         variant="primary"
@@ -210,19 +237,17 @@ export default function Direct2HirePage() {
                             <ArrowUpRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                           </>
                         ) : (
-                          "Enroll Now for ₹999"
+                          <>
+                            Claim my seat now
+                            <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" />
+                          </>
                         )}
                       </Button>
                     </Link>
-                    <Link href="#journey" className="w-full sm:w-auto">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="w-full sm:w-auto"
-                      >
-                        See our 5-Step Journey
-                      </Button>
-                    </Link>
+                    <p className="text-[12px] text-text-subtle leading-tight">
+                      Instant confirmation
+                      <br className="hidden sm:block" /> on WhatsApp
+                    </p>
                   </div>
                   {message && (
                     <div
@@ -239,9 +264,6 @@ export default function Direct2HirePage() {
                       {message.text}
                     </div>
                   )}
-                  <p className="mt-3 text-[12px] text-text-subtle">
-                    Instant WhatsApp confirmation • No hidden costs
-                  </p>
                 </ScrollReveal>
               </div>
 
@@ -249,7 +271,7 @@ export default function Direct2HirePage() {
               <div className="lg:col-span-7 xl:col-span-7 relative">
                 <ScrollReveal animation="fade-left" delay={200} duration={900}>
                   <div className="relative w-full sm:w-[110%] lg:w-[120%] xl:w-[130%]">
-                    <div className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden sm:mask-[linear-gradient(to_right,transparent_0%,black_15%,black_100%)]">
+                    <div className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden">
                       <Image
                         src="/counselling-images/new-banner.png"
                         alt="AI-powered career guidance"
@@ -259,19 +281,20 @@ export default function Direct2HirePage() {
                         className="object-cover object-center"
                       />
                     </div>
+
+                    {/* badges anchored to this bleed wrapper so they sit at
+                        the image's real corners on desktop, not the narrower
+                        grid column */}
+                    <span className="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex items-center gap-1.5 rounded-full bg-text/90 backdrop-blur-sm px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg">
+                      guaranteed Internship
+                    </span>
+
+                    <span className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[13px] font-bold text-text shadow-lg">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      96.3% placement rate
+                    </span>
                   </div>
                 </ScrollReveal>
-
-                {/* badges anchored to the visible column, not the oversized
-                    bleed wrapper, so they never clip off-viewport */}
-                <span className="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex items-center gap-1.5 rounded-full bg-text/90 backdrop-blur-sm px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg">
-                  guaranteed Internship
-                </span>
-
-                <span className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[13px] font-bold text-text shadow-lg">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                  96.3% placement rate
-                </span>
               </div>
             </div>
 
@@ -282,7 +305,7 @@ export default function Direct2HirePage() {
               className="mt-8 sm:mt-10"
             >
               {/* Desktop / Tablet view (>= sm) */}
-              <div className="hidden sm:grid sm:grid-cols-3 gap-2.5 sm:gap-4">
+              <div className="hidden sm:grid sm:grid-cols-4 gap-2.5 sm:gap-4">
                 {STATS.map((s, i) => (
                   <AnimateOnScroll key={s.label} delay={i * 70}>
                     <div className="rounded-2xl border border-border bg-surface-alt p-3 sm:p-6 text-center card-lift">
@@ -295,6 +318,22 @@ export default function Direct2HirePage() {
                     </div>
                   </AnimateOnScroll>
                 ))}
+
+                <AnimateOnScroll delay={STATS.length * 70}>
+                  <div className="h-full rounded-2xl bg-text p-3 sm:p-6 text-left card-lift flex items-center gap-3">
+                    <span className="shrink-0 inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/15">
+                      <ShieldCheck className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-white" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[13px] sm:text-[14px] font-bold text-white leading-tight">
+                        Placement-backed
+                      </p>
+                      <p className="text-[10.5px] sm:text-[11.5px] text-white/70 leading-tight">
+                        Guarantee on clear terms
+                      </p>
+                    </div>
+                  </div>
+                </AnimateOnScroll>
               </div>
 
               {/* Mobile Carousel View (< sm) */}
@@ -336,6 +375,20 @@ export default function Direct2HirePage() {
                       )}
                     />
                   ))}
+                </div>
+
+                <div className="mt-3 rounded-2xl bg-text p-3.5 text-left card-lift flex items-center gap-3">
+                  <span className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
+                    <ShieldCheck className="h-4 w-4 text-white" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-white leading-tight">
+                      Placement-backed
+                    </p>
+                    <p className="text-[10.5px] text-white/70 leading-tight">
+                      Guarantee on clear terms
+                    </p>
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
@@ -604,6 +657,7 @@ export default function Direct2HirePage() {
             </div>
           </div>
         </section> */}
+        <Testimonials className="py-13 sm:py-16" />
 
         {/* ══════════════════════════════
             PRICE CTA BANNER
