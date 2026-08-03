@@ -130,9 +130,13 @@ export default function Direct2HirePage() {
 
   return (
     <>
-      <OfferTimerBar />
-      <Navbar offsetTop={OFFER_BAR_HEIGHT} />
-      <div style={{ height: OFFER_BAR_HEIGHT }} aria-hidden />
+      {!enrolled && (
+        <>
+          <OfferTimerBar />
+          <div style={{ height: OFFER_BAR_HEIGHT }} aria-hidden />
+        </>
+      )}
+      <Navbar offsetTop={enrolled ? 0 : OFFER_BAR_HEIGHT} />
 
       <main className="min-h-screen bg-white text-text overflow-x-hidden">
         {/* ══════════════════════════════
@@ -198,29 +202,31 @@ export default function Direct2HirePage() {
                 <ScrollReveal animation="fade-up" delay={150}>
                   {/* <UrgencyBanner /> */}
 
-                  <div className="flex items-stretch rounded-2xl border border-border bg-white overflow-hidden w-full sm:w-fit shadow-sm mb-4 sm:mb-5">
-                    <div className="min-w-0 flex-1 sm:flex-none px-3 sm:px-5 py-2.5 sm:py-3.5">
-                      <p className="text-[10px] sm:text-[11px] text-text-subtle mb-0.5 whitespace-nowrap">
-                        Your counselling call
-                      </p>
-                      <p className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
-                        <span className="text-brand-600 font-bold text-xl sm:text-[28px]">
-                          ₹999
+                  {!enrolled && (
+                    <div className="flex items-stretch rounded-2xl border border-border bg-white overflow-hidden w-full sm:w-fit shadow-sm mb-4 sm:mb-5">
+                      <div className="min-w-0 flex-1 sm:flex-none px-3 sm:px-5 py-2.5 sm:py-3.5">
+                        <p className="text-[10px] sm:text-[11px] text-text-subtle mb-0.5 whitespace-nowrap">
+                          Your counselling call
+                        </p>
+                        <p className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
+                          <span className="text-brand-600 font-bold text-xl sm:text-[28px]">
+                            ₹999
+                          </span>
+                          <span className="text-text-subtle line-through text-[12px] sm:text-[15px]">
+                            ₹24,999
+                          </span>
+                        </p>
+                      </div>
+                      <div className="bg-text text-white flex flex-col items-center justify-center px-5 sm:px-7 min-w-26 sm:min-w-32 shrink-0">
+                        <span className="text-lg sm:text-xl font-black leading-none whitespace-nowrap">
+                          96%
                         </span>
-                        <span className="text-text-subtle line-through text-[12px] sm:text-[15px]">
-                          ₹24,999
+                        <span className="text-[9px] sm:text-[10px] tracking-wider">
+                          OFF
                         </span>
-                      </p>
+                      </div>
                     </div>
-                    <div className="bg-text text-white flex flex-col items-center justify-center px-5 sm:px-7 min-w-26 sm:min-w-32 shrink-0">
-                      <span className="text-lg sm:text-xl font-black leading-none whitespace-nowrap">
-                        80%
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] tracking-wider">
-                        OFF
-                      </span>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center sm:items-center gap-2 sm:gap-4">
                     <Link href={ctaHref} className="w-full sm:w-auto">
@@ -244,10 +250,12 @@ export default function Direct2HirePage() {
                         )}
                       </Button>
                     </Link>
-                    <p className="text-[12px] text-text-subtle leading-tight">
-                      Instant confirmation
-                      <br className="hidden sm:block" /> on WhatsApp
-                    </p>
+                    {!enrolled && (
+                      <p className="text-[12px] text-text-subtle leading-tight">
+                        Instant confirmation
+                        <br className="hidden sm:block" /> on WhatsApp
+                      </p>
+                    )}
                   </div>
                   {message && (
                     <div
@@ -270,7 +278,7 @@ export default function Direct2HirePage() {
               {/* right — image */}
               <div className="lg:col-span-7 xl:col-span-7 relative">
                 <ScrollReveal animation="fade-left" delay={200} duration={900}>
-                  <div className="relative w-full sm:w-[110%] lg:w-[120%] xl:w-[130%]">
+                  <div className="relative w-full">
                     <div className="relative w-full aspect-[1672/941] rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden">
                       <Image
                         src="/counselling-images/new-banner.png"
@@ -285,9 +293,14 @@ export default function Direct2HirePage() {
                     {/* badges anchored to this bleed wrapper so they sit at
                         the image's real corners on desktop, not the narrower
                         grid column */}
-                    <span className="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex items-center gap-1.5 rounded-full bg-text/90 backdrop-blur-sm px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg">
-                      guaranteed Internship
-                    </span>
+                    <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex flex-col items-start bg-[#0b1329] px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-[14px] sm:rounded-[18px] shadow-lg select-none">
+                      <span className="text-[10px] sm:text-[11.5px] text-slate-400 font-medium tracking-wide lowercase mb-0.5 sm:mb-1">
+                        guaranteed
+                      </span>
+                      <span className="text-[14px] sm:text-[17px] font-bold text-white leading-none">
+                        Internship
+                      </span>
+                    </div>
 
                     <span className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-[13px] font-bold text-text shadow-lg">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
@@ -664,38 +677,60 @@ export default function Direct2HirePage() {
         ══════════════════════════════ */}
         <section className="py-13 sm:py-16 bg-white border-t border-border">
           <div className="container-x">
-            <div className="rounded-2xl border border-brand-200 bg-linear-to-br from-brand-50 via-white to-brand-100/50 p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700 mb-3">
-                  Offer ends in{" "}
-                  <span className="font-mono tabular-nums">{offerLabel}</span>
-                </span>
-                <p className="leading-none mb-3">
-                  <span className="text-4xl sm:text-5xl font-black text-gradient-brand">
-                    ₹999
-                  </span>{" "}
-                  <span className="text-text-subtle line-through text-lg">
-                    ₹4,999
-                  </span>
-                </p>
-                <p className="text-[13.5px] text-text-muted max-w-sm leading-relaxed">
-                  A 30 minute mentor call and your AI assessment. Your full
-                  roadmap — learning, internship, and placement — shared on the
-                  call.
-                </p>
+            <div className="relative overflow-hidden rounded-3xl border border-[#ebf0fc] bg-white p-6 sm:p-10 shadow-[0_8px_30px_rgb(235,240,252,0.4)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              {/* Radial Blur Glow in top right */}
+              <div className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl animate-pulse duration-[8000ms]" />
+
+              <div className="relative z-10">
+                {enrolled ? (
+                  <>
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
+                      You are enrolled in Direct2Hire!
+                    </h3>
+                    <p className="text-[14.5px] text-slate-500 max-w-[480px] leading-relaxed">
+                      Access your AI career roadmap, internship program details, and schedule your mentor calls directly from your dashboard.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ebf0ff] px-3.5 py-1 text-[11px] font-bold text-[#2563eb] mb-5 tracking-wide">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />
+                      OFFER ENDS IN{" "}
+                      <span className="font-mono tabular-nums">{offerLabel}</span>
+                    </span>
+                    <p className="flex items-baseline gap-2.5 mb-4">
+                      <span className="text-[38px] sm:text-[46px] font-extrabold text-slate-900 tracking-tight leading-none">
+                        ₹999
+                      </span>
+                      <span className="text-[18px] sm:text-[22px] text-slate-400/80 line-through font-medium leading-none">
+                        ₹24,999
+                      </span>
+                    </p>
+                    <p className="text-[14px] sm:text-[15px] text-slate-500 max-w-[480px] leading-relaxed">
+                      A 30–minute mentor call and your AI assessment. Your full
+                      roadmap — learning, internship, and placement — shared on the
+                      call.
+                    </p>
+                  </>
+                )}
               </div>
-              <Link href={ctaHref} className="w-full md:w-fit shrink-0">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full md:w-auto"
-                >
-                  {ctaLabel} <ArrowRight className="h-4 w-4 shrink-0" />
-                </Button>
-                <p className="mt-2.5 text-center text-[11px] text-text-subtle">
-                  Instant confirmation on WhatsApp
-                </p>
-              </Link>
+
+              <div className="relative z-10 w-full md:w-auto shrink-0 flex flex-col items-center md:items-end gap-2.5">
+                <Link href={ctaHref} className="w-full md:w-fit">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full md:w-auto bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold !rounded-2xl px-8 py-3.5 shadow-[0_12px_24px_rgba(37,99,235,0.25)] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(37,99,235,0.35)] hover:scale-[1.01] active:scale-[0.98] inline-flex items-center justify-center gap-2"
+                  >
+                    {ctaLabel} <ArrowRight className="h-4 w-4 shrink-0" />
+                  </Button>
+                </Link>
+                {!enrolled && (
+                  <p className="text-center text-[12px] text-slate-400 w-full">
+                    Instant confirmation on WhatsApp
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -703,22 +738,50 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             DARK CTA BANNER
         ══════════════════════════════ */}
-        <section className="py-13 sm:py-16 bg-text border-t border-border">
-          <div className="container-x text-center">
-            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-6">
-              Secure your seat before it&apos;s gone.
+        <section
+          className="relative py-16 sm:py-20 overflow-hidden"
+          style={{ background: "linear-gradient(117.44deg, #1E3A8A 0%, #2563EB 100%)" }}
+        >
+          {/* Decorative Bubbles */}
+          <div
+            className="pointer-events-none absolute -top-24 -left-20 w-80 h-80 rounded-full bg-white/[0.07]"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute -bottom-28 -right-20 w-80 h-80 rounded-full bg-white/[0.07] hidden sm:block"
+            aria-hidden="true"
+          />
+
+          <div className="relative z-10 container-x text-center flex flex-col items-center">
+            {/* Countdown Badge / Pill */}
+            {!enrolled && (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/20 border border-white/10 px-4 py-1.5 text-xs sm:text-[13px] font-semibold text-white mb-6">
+                <span>⏳</span>
+                <span className="sm:hidden">12 seats left · ends </span>
+                <span className="hidden sm:inline">Offer ends in </span>
+                <span className="font-mono tabular-nums">{offerLabel}</span>
+              </div>
+            )}
+
+            <h2 className="text-3xl sm:text-[40px] font-bold text-white mb-8 tracking-tight leading-tight max-w-3xl">
+              {enrolled ? "Go to your dashboard." : "Secure your seat before it's gone."}
             </h2>
-            <Link href={ctaHref} className="inline-block">
+
+            <Link href={ctaHref} className="w-full sm:w-auto inline-block">
               <Button
                 variant="primary"
                 size="lg"
-                className="bg-white! text-text! hover:bg-white/90!"
+                className="w-full sm:w-auto bg-white! text-[#1E3A8A]! hover:bg-slate-50! font-bold rounded-2xl! px-10 py-4 shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all duration-300 inline-flex items-center justify-center gap-2"
               >
-                {ctaLabel} <ArrowRight className="h-4 w-4 shrink-0" />
+                {ctaLabel} <ArrowRight className="h-[18px] w-[18px] shrink-0" />
               </Button>
             </Link>
-            <p className="mt-4 text-[12.5px] text-white/60">
-              NSE-listed company · trusted by 10,000+ students
+
+            <p className="mt-5 text-[13px] sm:text-[14px] text-white/70 font-medium">
+              <span className="sm:hidden">Trusted by 10,000+ students</span>
+              <span className="hidden sm:inline">
+                NSE-listed company · trusted by 10,000+ students
+              </span>
             </p>
           </div>
         </section>
