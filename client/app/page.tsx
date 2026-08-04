@@ -16,7 +16,7 @@ export default function Page() {
       <Navbar />
       <Hero />
       <Direct2HireBanner />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <QuizBanner />
       <TimelineSection />
       <CoursesSection />

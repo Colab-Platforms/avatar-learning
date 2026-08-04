@@ -11,7 +11,7 @@ import { TESTIMONIALS } from "./testimonials.data";
 const SWIPE_THRESHOLD = 48;
 const SWIPE_VELOCITY = 400;
 
-export function Testimonials() {
+export function Testimonials({ className }: { className?: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoOpenIndex, setVideoOpenIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -70,7 +70,10 @@ export function Testimonials() {
 
   return (
     <section
-      className="relative bg-white py-12 sm:py-16 md:py-20 overflow-hidden"
+      className={cn(
+        "relative bg-white py-12 sm:py-16 md:py-20 overflow-hidden",
+        className,
+      )}
       aria-label="Learner testimonials"
     >
       <div className="absolute inset-0 pointer-events-none">

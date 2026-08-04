@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Zap, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
+import { useOfferCountdown } from "./OfferTimerBar";
 
 export function StickyBuyBar() {
   // Visible from the moment the page loads; only hides once the footer
@@ -26,7 +27,10 @@ export function StickyBuyBar() {
   }, []);
 
   const { processing, enrolled } = useDirect2HireCheckout();
+  const offerLabel = useOfferCountdown();
 
+  if (enrolled) return null;
+  
   return (
     <AnimatePresence>
       {visible && (
@@ -48,34 +52,24 @@ export function StickyBuyBar() {
                   </span>
 
                   <div className="flex flex-col justify-center min-w-0">
-                    {/* Title (Desktop only) */}
-                    <p className="hidden sm:block text-[11px] text-text-subtle font-medium leading-none mb-1">
-                      Direct2Hire Career Plan
+                    {/* Offer Countdown Timer */}
+                    <p className="text-[11px] sm:text-[12px] text-text-muted font-medium leading-none mb-1">
+                      Offer ends in{" "}
+                      <span className="font-semibold text-text font-mono tabular-nums">
+                        {offerLabel}
+                      </span>
                     </p>
 
-                    {/* Main Price */}
-                    <div className="flex items-baseline gap-1.5 leading-none">
+                    {/* Pricing */}
+                    <div className="flex items-center gap-1.5 leading-none">
                       <span className="text-xl sm:text-2xl font-black text-text tracking-tight">
                         ₹999
                       </span>
-                      {/* Desktop inline cut price & badge */}
-                      <span className="hidden sm:inline-flex items-center gap-1.5 ml-1">
-                        <span className="text-xs text-text-subtle line-through font-medium">
-                          ₹24,999
-                        </span>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded">
-                          96% OFF
-                        </span>
-                      </span>
-                    </div>
-
-                    {/* Mobile cut price & discount badge (below main price) */}
-                    <div className="flex sm:hidden items-center gap-1.5 mt-1 leading-none">
-                      <span className="text-[11px] text-text-subtle line-through font-medium">
+                      <span className="text-xs sm:text-sm text-text-subtle line-through font-medium">
                         ₹24,999
                       </span>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-1 py-0.5 rounded">
-                        96% OFF
+                      <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 bg-blue-50/70 border border-blue-200/40 px-1.5 py-0.5 rounded">
+                        96% off
                       </span>
                     </div>
                   </div>

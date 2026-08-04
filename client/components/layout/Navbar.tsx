@@ -15,7 +15,7 @@ import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function Navbar() {
+export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
@@ -78,7 +78,10 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 inset-x-0 z-50 anim-slide-down bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
+      <header
+        className="fixed inset-x-0 z-50 anim-slide-down bg-white/95 backdrop-blur-md border-b border-border shadow-xs"
+        style={{ top: offsetTop }}
+      >
         <div className="container-x flex items-center justify-between h-16">
           <Link
             href="/"
@@ -347,13 +350,14 @@ export function Navbar() {
       {/* Mobile menu */}
       <div
         className={cn(
-          "fixed inset-x-0 top-16 z-40 md:hidden",
+          "fixed inset-x-0 z-40 md:hidden",
           "bg-white border-b border-border shadow-sm",
           "transition-all duration-300 ease-out",
           mobileOpen
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 -translate-y-2 pointer-events-none",
         )}
+        style={{ top: 64 + offsetTop }}
       >
         <nav className="container-x py-4 flex flex-col gap-1.5">
           {NAV_ITEMS.map((item) => {
