@@ -80,24 +80,24 @@ function PartnerDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-ink-900 p-6"
+        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-ink-900 p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Application Details</h2>
-          <button onClick={onClose} className="text-slate-400 dark:text-white/40 hover:text-slate-900 dark:hover:text-white transition-colors">
+          <h2 className="text-lg font-bold text-white">Application Details</h2>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
             <X size={18} />
           </button>
         </div>
 
         {!detail ? (
           <div className="py-10 flex justify-center">
-            <Loader2 size={20} className="animate-spin text-slate-500 dark:text-white/40" />
+            <Loader2 size={20} className="animate-spin text-white/40" />
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-200 dark:bg-white/8 text-slate-700 dark:text-white/70">
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/8 text-white/70">
                 {detail.type}
               </span>
               <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${STATUS_COLOR[detail.status]}`}>
@@ -111,8 +111,8 @@ function PartnerDetailModal({
                 if (!value) return null;
                 return (
                   <div key={key}>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35">{label}</p>
-                    <p className="text-sm text-slate-800 dark:text-white/85 wrap-break-word">{String(value)}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">{label}</p>
+                    <p className="text-sm text-white/85 wrap-break-word">{String(value)}</p>
                   </div>
                 );
               })}
@@ -120,9 +120,9 @@ function PartnerDetailModal({
 
             {KYC_DOCS.some((d) => detail[d.key]) && (
               <>
-                <div className="h-px bg-slate-200 dark:bg-white/10" />
+                <div className="h-px bg-white/10" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35 mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-2">
                     KYC Documents
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ function PartnerDetailModal({
                         href={detail[d.key] as string}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-500/30 bg-brand-500/8 text-xs font-medium text-brand-600 dark:text-brand-300 hover:bg-brand-500/15 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-500/30 bg-brand-500/8 text-xs font-medium text-brand-300 hover:bg-brand-500/15 transition-colors"
                       >
                         {d.label}
                       </a>
@@ -142,41 +142,41 @@ function PartnerDetailModal({
               </>
             )}
 
-            <div className="h-px bg-slate-200 dark:bg-white/10" />
+            <div className="h-px bg-white/10" />
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35">Account Email</p>
-                <p className="text-sm text-slate-800 dark:text-white/85">{detail.user.email}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Account Email</p>
+                <p className="text-sm text-white/85">{detail.user.email}</p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35">Applied On</p>
-                <p className="text-sm text-slate-800 dark:text-white/85">{new Date(detail.createdAt).toLocaleString()}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Applied On</p>
+                <p className="text-sm text-white/85">{new Date(detail.createdAt).toLocaleString()}</p>
               </div>
               {detail.referralCode && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35">Referral Code</p>
-                  <p className="text-sm text-slate-800 dark:text-white/85 font-mono">{detail.referralCode}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Referral Code</p>
+                  <p className="text-sm text-white/85 font-mono">{detail.referralCode}</p>
                 </div>
               )}
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35">Wallet Balance</p>
-                <p className="text-sm text-slate-800 dark:text-white/85">₹{detail.walletBalance}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Wallet Balance</p>
+                <p className="text-sm text-white/85">₹{detail.walletBalance}</p>
               </div>
             </div>
 
             {detail.referrals.length > 0 && (
               <>
-                <div className="h-px bg-slate-200 dark:bg-white/10" />
+                <div className="h-px bg-white/10" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35 mb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-2">
                     Referrals ({detail.referrals.length})
                   </p>
                   <div className="space-y-1.5">
                     {detail.referrals.map((r) => (
                       <div key={r.id} className="flex items-center justify-between text-xs">
-                        <span className="text-slate-600 dark:text-white/50">{new Date(r.createdAt).toLocaleDateString()}</span>
-                        <span className={r.creditedAt ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-white/35"}>
+                        <span className="text-white/50">{new Date(r.createdAt).toLocaleDateString()}</span>
+                        <span className={r.creditedAt ? "text-emerald-400" : "text-white/35"}>
                           {r.creditedAt ? `₹${r.commissionEarned}` : "Pending"}
                         </span>
                       </div>
@@ -188,22 +188,22 @@ function PartnerDetailModal({
 
             {detail.status !== "PENDING" && detail.reviewNote && (
               <>
-                <div className="h-px bg-slate-200 dark:bg-white/10" />
+                <div className="h-px bg-white/10" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35 mb-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-1">
                     Admin Feedback
                   </p>
-                  <p className="text-sm text-slate-800 dark:text-white/85 wrap-break-word">{detail.reviewNote}</p>
+                  <p className="text-sm text-white/85 wrap-break-word">{detail.reviewNote}</p>
                 </div>
               </>
             )}
 
             {detail.status === "PENDING" && (
               <>
-                <div className="h-px bg-slate-200 dark:bg-white/10" />
+                <div className="h-px bg-white/10" />
                 <div className="space-y-3">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/35 mb-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35 mb-1.5">
                       Feedback (shown to applicant, required for rejection)
                     </p>
                     <textarea
@@ -211,12 +211,12 @@ function PartnerDetailModal({
                       onChange={(e) => setNote(e.target.value)}
                       rows={3}
                       placeholder="e.g. Aadhar document is blurry, please re-upload"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-ink-950 px-3 py-2 text-sm text-slate-800 dark:text-white/85 placeholder-slate-400 dark:placeholder-white/25 focus:outline-none focus:border-brand-500/50 resize-none"
+                      className="w-full rounded-lg border border-white/10 bg-ink-950 px-3 py-2 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-brand-500/50 resize-none"
                     />
                   </div>
 
                   {actionErr && (
-                    <p className="text-xs text-red-600 dark:text-red-400">{actionErr}</p>
+                    <p className="text-xs text-red-400">{actionErr}</p>
                   )}
 
                   <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ function PartnerDetailModal({
                       <button
                         onClick={() => runAction("approve")}
                         disabled={acting !== null}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 text-xs font-semibold text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50 transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/8 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50 transition-colors"
                       >
                         {acting === "approve" ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                         Approve
@@ -239,7 +239,7 @@ function PartnerDetailModal({
                         runAction("reject");
                       }}
                       disabled={acting !== null}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 bg-red-500/8 text-xs font-semibold text-red-600 dark:text-red-300 hover:bg-red-500/15 disabled:opacity-50 transition-colors"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 bg-red-500/8 text-xs font-semibold text-red-300 hover:bg-red-500/15 disabled:opacity-50 transition-colors"
                     >
                       {acting === "reject" ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
                       Reject
@@ -256,10 +256,10 @@ function PartnerDetailModal({
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: "text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-400/10",
-  APPROVED: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-400/10",
-  REJECTED: "text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-400/10",
-  PAID: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-400/10",
+  PENDING: "text-amber-400 bg-amber-400/10",
+  APPROVED: "text-emerald-400 bg-emerald-400/10",
+  REJECTED: "text-red-400 bg-red-400/10",
+  PAID: "text-emerald-400 bg-emerald-400/10",
 };
 
 const partnerName = (p: AdminPartner): string =>
@@ -331,14 +331,14 @@ export default function AdminPartnersPage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Partners</h1>
-        <p className="text-sm text-slate-500 dark:text-white/40 mt-0.5">
+        <h1 className="text-2xl font-bold text-white">Partners</h1>
+        <p className="text-sm text-white/40 mt-0.5">
           Review partner applications and process payout claims.
         </p>
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 p-1">
+        <div className="inline-flex items-center gap-1 rounded-xl border border-white/10 p-1">
           {(["applications", "claims"] as const).map((t) => (
             <button
               key={t}
@@ -347,7 +347,7 @@ export default function AdminPartnersPage() {
                 setStatusFilter("");
               }}
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                tab === t ? "bg-brand-500/15 text-brand-600 dark:text-brand-300" : "text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white/80"
+                tab === t ? "bg-brand-500/15 text-brand-300" : "text-white/50 hover:text-white/80"
               }`}
             >
               {t}
@@ -358,7 +358,7 @@ export default function AdminPartnersPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white dark:bg-ink-900 border border-slate-200 dark:border-white/8 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-white/70 focus:outline-none focus:border-brand-500/50"
+          className="bg-ink-900 border border-white/8 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-brand-500/50"
         >
           <option value="">All statuses</option>
           {tab === "applications" ? (
@@ -383,41 +383,41 @@ export default function AdminPartnersPage() {
       )}
 
       {tab === "applications" ? (
-        <div className="border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
+        <div className="border border-white/5 rounded-2xl overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-white/3 border-b border-slate-200 dark:border-white/5">
+            <thead className="bg-white/3 border-b border-white/5">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Applicant</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Referral Code</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Wallet</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Applicant</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Referral Code</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Wallet</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+            <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500 dark:text-white/40">Loading…</td>
+                  <td colSpan={7} className="px-4 py-6 text-center text-white/40">Loading…</td>
                 </tr>
               ) : partners.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500 dark:text-white/40">No applications yet</td>
+                  <td colSpan={7} className="px-4 py-6 text-center text-white/40">No applications yet</td>
                 </tr>
               ) : (
                 partners.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-white/2 transition-colors">
-                    <td className="px-4 py-3 text-slate-700 dark:text-white/70 text-xs">{p.type}</td>
-                    <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">{partnerName(p)}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-white/50 text-xs">
+                  <tr key={p.id} className="hover:bg-white/2 transition-colors">
+                    <td className="px-4 py-3 text-white/70 text-xs">{p.type}</td>
+                    <td className="px-4 py-3 text-white font-medium">{partnerName(p)}</td>
+                    <td className="px-4 py-3 text-white/50 text-xs">
                       <div>{p.email}</div>
-                      <div className="text-slate-500 dark:text-white/35">{p.phone}</div>
+                      <div className="text-white/35">{p.phone}</div>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-white/60 text-xs font-mono">
+                    <td className="px-4 py-3 text-white/60 text-xs font-mono">
                       {p.referralCode ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-white/60 text-xs">₹{p.walletBalance}</td>
+                    <td className="px-4 py-3 text-white/60 text-xs">₹{p.walletBalance}</td>
                     <td className="px-4 py-3">
                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${STATUS_COLOR[p.status]}`}>
                         {p.status}
@@ -426,7 +426,7 @@ export default function AdminPartnersPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => setViewId(p.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-xs font-medium text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-white/10 bg-white/5 text-xs font-medium text-white/60 hover:bg-white/10 transition-colors"
                       >
                         <Eye size={12} /> {p.status === "PENDING" ? "Review" : "View"}
                       </button>
@@ -438,39 +438,39 @@ export default function AdminPartnersPage() {
           </table>
         </div>
       ) : (
-        <div className="border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
+        <div className="border border-white/5 rounded-2xl overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-white/3 border-b border-slate-200 dark:border-white/5">
+            <thead className="bg-white/3 border-b border-white/5">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Partner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Requested</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-white/60">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Partner</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Requested</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+            <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-500 dark:text-white/40">Loading…</td>
+                  <td colSpan={6} className="px-4 py-6 text-center text-white/40">Loading…</td>
                 </tr>
               ) : claims.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-500 dark:text-white/40">No claims yet</td>
+                  <td colSpan={6} className="px-4 py-6 text-center text-white/40">No claims yet</td>
                 </tr>
               ) : (
                 claims.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-white/2 transition-colors">
-                    <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">
+                  <tr key={c.id} className="hover:bg-white/2 transition-colors">
+                    <td className="px-4 py-3 text-white font-medium">
                       {c.partner.organizationName ?? c.partner.contactPerson ?? c.partner.email}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-white/50 text-xs">
+                    <td className="px-4 py-3 text-white/50 text-xs">
                       <div>{c.partner.email}</div>
-                      <div className="text-slate-500 dark:text-white/35">{c.partner.phone}</div>
+                      <div className="text-white/35">{c.partner.phone}</div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-white/70 text-xs font-semibold">₹{c.amount}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-white/60 text-xs">
+                    <td className="px-4 py-3 text-white/70 text-xs font-semibold">₹{c.amount}</td>
+                    <td className="px-4 py-3 text-white/60 text-xs">
                       {new Date(c.requestedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
@@ -483,13 +483,13 @@ export default function AdminPartnersPage() {
                         <button
                           onClick={() => handleMarkPaid(c.id)}
                           disabled={actingId === c.id}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/8 text-xs font-medium text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/8 text-xs font-medium text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50 transition-colors"
                         >
                           {actingId === c.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                           Mark Paid
                         </button>
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-white/25">—</span>
+                        <span className="text-xs text-white/25">—</span>
                       )}
                     </td>
                   </tr>

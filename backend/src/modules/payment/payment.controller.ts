@@ -71,10 +71,15 @@ export const handleRazorpayWebhook = async (req: Request, res: Response): Promis
       return;
     }
 
-    const payload = req.body as RazorpayWebhookPayload;
-    await service.handleRazorpayWebhook(payload);
-
+    // Ack immediately once signature verified — Razorpay only needs 2xx here.
+    // Processing errors below must never surface as a failed delivery, or
+    // repeated retries eventually get this webhook endpoint auto-deactivated.
     res.status(STATUS_CODES.OK).json({ success: true });
+
+    const payload = req.body as RazorpayWebhookPayload;
+    service.handleRazorpayWebhook(payload).catch((err) => {
+      console.error("Razorpay webhook processing error:", err);
+    });
   } catch (err: any) {
     console.error("Razorpay webhook error:", err);
     res.status(STATUS_CODES.SERVER_ERROR).json({ success: false });

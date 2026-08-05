@@ -306,8 +306,8 @@ export default function Direct2HirePage() {
                         the image's real corners on desktop, not the narrower
                         grid column */}
                     <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex flex-col items-start bg-[#0b1329] px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-[14px] sm:rounded-[18px] shadow-lg select-none">
-                      <span className="text-[10px] sm:text-[11.5px] text-slate-400 font-medium tracking-wide lowercase mb-0.5 sm:mb-1">
-                        guaranteed
+                      <span className="text-[10px] sm:text-[11.5px] text-slate-400 font-medium tracking-wide  mb-0.5 sm:mb-1">
+                        Guaranteed
                       </span>
                       <span className="text-[14px] sm:text-[17px] font-bold text-white leading-none">
                         Internship

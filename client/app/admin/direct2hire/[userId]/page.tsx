@@ -998,7 +998,11 @@ export default function AdminDirect2HireStudentPage() {
       <Card>
         <h2 className="text-sm font-semibold text-white/80 mb-4">Payment</h2>
         {payment ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <Field
+              label="Amount Paid"
+              value={`₹${(payment.amount / 100).toLocaleString("en-IN")}`}
+            />
             <Field label="Provider" value={payment.provider} />
             <Field label="Status" value={payment.status} />
             <Field label="Transaction ID" value={payment.gatewayPaymentId ?? undefined} />
