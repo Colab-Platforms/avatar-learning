@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 export const OFFER_BAR_HEIGHT = 36;
 
-const OFFER_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
-const DEADLINE_KEY = "d2h_offer_deadline";
+const OFFER_WINDOW_MS = 48 * 60 * 60 * 1000; // 48 hours
+const DEADLINE_KEY = "d2h_offer_deadline_v2";
 
 function readDeadline() {
   const stored = Number(localStorage.getItem(DEADLINE_KEY));
