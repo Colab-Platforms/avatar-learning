@@ -8,6 +8,17 @@ import { D2HCourseSummary } from "./direct2hire.types.js";
 // payment, regardless of which D2H course the student actually enrolls in.
 export const DIRECT2HIRE_COMMISSION_BASE_AMOUNT = 999;
 
+export const DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES: number = parseInt(
+    process.env.DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES!,
+);
+
+export function hasAssessmentCounsellingAccess(enrollment: {
+    status: string;
+    assessmentCounsellingPaidAt: Date | null;
+}): boolean {
+    return enrollment.status === "PAID" || !!enrollment.assessmentCounsellingPaidAt;
+}
+
 export class Direct2HireService {
     async getOrCreateEnrollment(userId: string) {
         const existing = await prisma.direct2HireEnrollment.findFirst({
@@ -56,7 +67,13 @@ export class Direct2HireService {
             };
         });
 
-        return { enrollment, courses };
+        return {
+            enrollment: {
+                ...enrollment,
+                hasAssessmentCounsellingAccess: hasAssessmentCounsellingAccess(enrollment),
+            },
+            courses,
+        };
     }
 
     /**
@@ -149,6 +166,31 @@ export class Direct2HireService {
                 },
             },
             orderBy: { createdAt: "desc" },
+            ...(take !== undefined && { take }),
+            ...(skip !== undefined && { skip }),
+        });
+
+        const totalRecords = await prisma.direct2HireEnrollment.count({ where });
+        return { enrollments, totalRecords };
+    }
+
+    async getAllAssessmentCounsellingPurchases(take?: number, skip?: number) {
+        const where = { assessmentCounsellingPaidAt: { not: null } };
+
+        const enrollments = await prisma.direct2HireEnrollment.findMany({
+            where,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        phoneNo: true,
+                    },
+                },
+            },
+            orderBy: { assessmentCounsellingPaidAt: "desc" },
             ...(take !== undefined && { take }),
             ...(skip !== undefined && { skip }),
         });

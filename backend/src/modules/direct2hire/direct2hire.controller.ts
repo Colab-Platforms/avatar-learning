@@ -85,6 +85,28 @@ export const createOrder = async (
   }
 };
 
+export const createAssessmentCounsellingOrder = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const result = await paymentService.createDirect2HireAssessmentCounsellingOrder(
+      req.user!.id,
+    );
+    sendResponse(res, true, result, "Order created", STATUS_CODES.CREATED);
+  } catch (err: any) {
+    console.log("Assessment+Counselling order:", err);
+
+    sendResponse(
+      res,
+      false,
+      null,
+      err.error?.description ?? err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
 export const getStatus = async (
   req: AuthRequest,
   res: Response,
@@ -177,6 +199,37 @@ export const getAllEnrollments = async (
       pageSize,
     );
     sendResponse(res, true, response, "Direct2Hire enrollments fetched");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const getAllAssessmentCounsellingPurchases = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { page, pageSize, take, skip } = getPaginationOptions(req.query, 20);
+    const { enrollments, totalRecords } =
+      await service.getAllAssessmentCounsellingPurchases(take, skip);
+    const response = formatPaginationResponse(
+      enrollments,
+      totalRecords,
+      page,
+      pageSize,
+    );
+    sendResponse(
+      res,
+      true,
+      response,
+      "Assessment + Counselling purchases fetched",
+    );
   } catch (err: any) {
     sendResponse(
       res,

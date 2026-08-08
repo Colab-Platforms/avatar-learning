@@ -7,6 +7,7 @@ import type {
   UpdateCounsellingProfileInput,
 } from "./counselling.types.js";
 import { RecommendationService } from "../recommendation/recommendation.service.js";
+import { direct2hireService } from "../direct2hire.service.js";
 import type { CourseRecommendationResponse } from "../recommendation/recommendation.types.js";
 import type { CounsellingProfile, CounsellingBooking } from "@prisma/client";
 import { sendCounsellingScheduleEmail } from "./counselling.mail.js";
@@ -502,6 +503,17 @@ export class CounsellingService {
       throw new ApiError(
         "A Direct2Hire course has already been selected",
         STATUS_CODES.CONFLICT,
+      );
+    }
+
+    // Selecting a course immediately grants access to its content
+    // (courseUserMapper upsert below) — only full ₹999 access may do that.
+    // ₹99 Assessment + Counselling buyers must upgrade first.
+    const enrollment = await direct2hireService.getOrCreateEnrollment(userId);
+    if (enrollment.status !== "PAID") {
+      throw new ApiError(
+        "Upgrade to the full Direct2Hire programme (₹900 more) to select your course",
+        402,
       );
     }
 

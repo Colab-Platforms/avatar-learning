@@ -27,8 +27,12 @@ const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
   process.env.DIRECT2HIRE_PRICE_RUPEES!,
 );
 
+const DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES: number = parseInt(
+  process.env.DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES!,
+);
+
 interface OrderContext {
-  productType: "COURSE" | "DIRECT2HIRE";
+  productType: "COURSE" | "DIRECT2HIRE" | "D2H_ASSESSMENT_COUNSELLING";
   courseId?: string;
   direct2hireEnrollmentId?: string;
   description: string;
@@ -244,6 +248,14 @@ async function completePayment(params: {
             createdLeadForSheets = savedLead;
           }
         }
+      } else if (
+        order.productType === "D2H_ASSESSMENT_COUNSELLING" &&
+        order.direct2hireEnrollmentId
+      ) {
+        await tx.direct2HireEnrollment.update({
+          where: { id: order.direct2hireEnrollmentId },
+          data: { assessmentCounsellingPaidAt: new Date() },
+        });
       } else if (order.courseId) {
         await tx.courseUserMapper.upsert({
           where: {
@@ -404,6 +416,14 @@ export class PaymentService {
         );
       }
     }
+
+    // Already bought the ₹99 Assessment + Counselling tier — credit it toward
+    // the full programme instead of charging for it twice.
+    if (enrollment.assessmentCounsellingPaidAt) {
+      discountRupees += DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES;
+    }
+    discountRupees = Math.min(discountRupees, DIRECT2HIRE_PRICE_RUPEES);
+
     const priceRupees = DIRECT2HIRE_PRICE_RUPEES - discountRupees;
 
     const provider = getPaymentProvider();
@@ -422,6 +442,61 @@ export class PaymentService {
         userId,
         ctx,
         priceRupees,
+        amountInPaise,
+        pendingOrder?.id,
+      );
+    }
+
+    return this.createRazorpayOrder(
+      userId,
+      ctx,
+      amountInPaise,
+      pendingOrder?.id,
+    );
+  }
+
+  async createDirect2HireAssessmentCounsellingOrder(
+    userId: string,
+  ): Promise<CreateOrderResponse> {
+    const enrollment = await direct2hireService.getOrCreateEnrollment(userId);
+
+    if (enrollment.status === "PAID") {
+      throw new ApiError(
+        "You already have full Direct2Hire access",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+    if (enrollment.assessmentCounsellingPaidAt) {
+      throw new ApiError(
+        "You have already purchased Assessment + Counselling",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    const pendingOrder = await prisma.paymentOrder.findFirst({
+      where: {
+        userId,
+        direct2hireEnrollmentId: enrollment.id,
+        productType: "D2H_ASSESSMENT_COUNSELLING",
+        status: "PENDING",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const provider = getPaymentProvider();
+    const amountInPaise = DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES * 100;
+    const ctx: OrderContext = {
+      productType: "D2H_ASSESSMENT_COUNSELLING",
+      direct2hireEnrollmentId: enrollment.id,
+      description: "Direct2Hire Assessment + Counselling",
+      returnPath: "/direct2hire/assessment-counselling",
+    };
+
+    if (provider === "cashfree") {
+      return this.createCashfreeOrder(
+        userId,
+        ctx,
+        DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES,
         amountInPaise,
         pendingOrder?.id,
       );
