@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -84,25 +85,46 @@ const WALK_AWAY = [
 const HERO_VARIANTS = [
   {
     tab: "OUTCOME",
-    title: "Your first job, in just ",
+    title: "Your first job, secured in just ",
     highlight: "120 days.",
+    image: "/direct2hire/Outcome Real Job.png",
   },
   {
     tab: "BATCH",
     title: "Limited batches ",
     highlight: "AI career program",
+    image: "/direct2hire/Batch Limited.png",
   },
   {
     tab: "VALUE",
     title: "One program. Every step. ",
     highlight: "Fraction of price.",
+    image: "/direct2hire/Value 999.png",
   },
   {
     tab: "TRUST",
     title: "NSE-listed AI firm opens ",
     highlight: "flagship program.",
+    image: "/direct2hire/Trusted 10k+ Hire.png",
   },
 ];
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? "100%" : "-100%",
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    zIndex: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? "100%" : "-100%",
+    opacity: 0,
+    zIndex: 0,
+  }),
+};
 
 const STAT_TILES = [
   {
@@ -200,8 +222,35 @@ const TESTIMONIALS = [
 
 export default function Direct2HirePage() {
   const [walkAwaySlide, setWalkAwaySlide] = useState(0);
-  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroState, setHeroState] = useState({ index: 0, direction: 1 });
+  const heroIndex = heroState.index;
+  const heroDirection = heroState.direction;
   const [enrollmentIndex, setEnrollmentIndex] = useState(0);
+
+  const changeHeroIndex = (
+    nextIndexOrFn: number | ((prev: number) => number),
+  ) => {
+    setHeroState((prev) => {
+      const nextIndex =
+        typeof nextIndexOrFn === "function"
+          ? nextIndexOrFn(prev.index)
+          : nextIndexOrFn;
+      let dir = 1; // default forward
+      if (nextIndex !== prev.index) {
+        if (nextIndex === 0 && prev.index === HERO_VARIANTS.length - 1) {
+          // Wrap-around forward
+          dir = 1;
+        } else if (nextIndex === HERO_VARIANTS.length - 1 && prev.index === 0) {
+          // Wrap-around backward
+          dir = -1;
+        } else {
+          dir = nextIndex > prev.index ? 1 : -1;
+        }
+      }
+      return { index: nextIndex, direction: dir };
+    });
+  };
+  const setHeroIndex = changeHeroIndex;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -213,7 +262,7 @@ export default function Direct2HirePage() {
   useEffect(() => {
     const timer = setInterval(() => {
       setHeroIndex((i) => (i + 1) % HERO_VARIANTS.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -274,11 +323,22 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={40}>
-                  <h1 className="h-display font-bold text-text mb-3 sm:mb-6 min-h-[2.4em] sm:min-h-[2.2em]">
-                    {HERO_VARIANTS[heroIndex].title}
-                    <span className="text-gradient-brand">
-                      {HERO_VARIANTS[heroIndex].highlight}
-                    </span>
+                  <h1 className="h-display font-bold text-text mb-3 sm:mb-6 min-h-[3.6em] sm:min-h-[3.3em]">
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={heroIndex}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="block"
+                      >
+                        {HERO_VARIANTS[heroIndex].title}
+                        <span className="text-gradient-brand">
+                          {HERO_VARIANTS[heroIndex].highlight}
+                        </span>
+                      </motion.span>
+                    </AnimatePresence>
                   </h1>
                 </ScrollReveal>
 
@@ -469,21 +529,37 @@ export default function Direct2HirePage() {
               <div className="lg:col-span-7 xl:col-span-7 relative">
                 <ScrollReveal animation="fade-left" delay={200} duration={900}>
                   <div className="relative w-full">
-                    <div className="relative w-full h-95 sm:h-115 lg:h-155 xl:h-170 rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden">
-                      <Image
-                        src="/counselling-images/new-banner.png"
-                        alt="AI-powered career guidance"
-                        fill
-                        priority
-                        sizes="(max-width:640px) 100vw, (max-width:1024px) 100vw, 70vw"
-                        className="object-cover object-center"
-                      />
+                    <div className="relative w-full h-95 sm:h-115 lg:h-155 xl:h-170 rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden bg-slate-50 border border-slate-100 shadow-inner">
+                      <AnimatePresence initial={false} custom={heroDirection}>
+                        <motion.div
+                          key={heroIndex}
+                          custom={heroDirection}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{
+                            x: { type: "spring", stiffness: 300, damping: 32 },
+                            opacity: { duration: 0.25 },
+                          }}
+                          className="absolute inset-0 w-full h-full"
+                        >
+                          <Image
+                            src={HERO_VARIANTS[heroIndex].image}
+                            alt={HERO_VARIANTS[heroIndex].tab}
+                            fill
+                            priority
+                            sizes="(max-width:640px) 100vw, (max-width:1024px) 100vw, 70vw"
+                            className="object-cover object-center"
+                          />
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
 
                     {/* badges anchored to this bleed wrapper so they sit at
                         the image's real corners on desktop, not the narrower
                         grid column */}
-                    <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex flex-col items-start bg-[#0b1329] px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-[14px] sm:rounded-[18px] shadow-lg select-none">
+                    <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 flex flex-col items-start bg-[#0b1329]/95 backdrop-blur-xs px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-[14px] sm:rounded-[18px] shadow-lg select-none border border-white/10">
                       <span className="text-[10px] sm:text-[11.5px] text-slate-400 font-medium tracking-wide  mb-0.5 sm:mb-1">
                         Guaranteed
                       </span>
@@ -492,7 +568,7 @@ export default function Direct2HirePage() {
                       </span>
                     </div>
 
-                    <span className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 inline-flex items-center gap-2.5 sm:gap-3 rounded-2xl bg-white px-3 py-2.5 sm:px-4 sm:py-3 shadow-lg">
+                    <span className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 z-10 inline-flex items-center gap-2.5 sm:gap-3 rounded-2xl bg-white/95 backdrop-blur-xs px-3 py-2.5 sm:px-4 sm:py-3 shadow-lg border border-slate-100">
                       <span className="shrink-0 inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-emerald-50">
                         <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                       </span>
