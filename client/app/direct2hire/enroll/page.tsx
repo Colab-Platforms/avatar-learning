@@ -13,6 +13,7 @@ import {
   type LeadFormValues,
 } from "@/lib/counselling/counsellingSchema";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
+import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { upsertDirect2HireLead } from "@/lib/direct2hire/leadApi";
 import {
   applyCoupon,
@@ -50,6 +51,11 @@ export default function Direct2HireEnrollPage() {
   const router = useRouter();
   const { user, hasHydrated } = useSelector((state: RootState) => state.auth);
   const { enroll, processing, message, enrolled, secondsLeft } = useDirect2HireCheckout();
+  const { data: d2hStatus } = useD2HStatus({ enabled: Boolean(user) });
+  const assessmentCounsellingCredit = d2hStatus?.enrollment?.assessmentCounsellingPaidAt
+    ? 99
+    : 0;
+  const basePrice = 999 - assessmentCounsellingCredit;
   const [savingLead, setSavingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [couponInput, setCouponInput] = useState("");
@@ -265,7 +271,7 @@ export default function Direct2HireEnrollPage() {
             Enroll in Direct2Hire
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Fill in your details, then complete a one-time payment of ₹999 to
+            Fill in your details, then complete a one-time payment of ₹{basePrice} to
             unlock your Direct2Hire dashboard.
           </p>
         </div>
@@ -471,10 +477,20 @@ export default function Direct2HireEnrollPage() {
               <div className="flex-1">
                 <h2 className="text-lg font-bold text-slate-800">Payment</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Complete your enrollment with a one-time payment of ₹999.
+                  Complete your enrollment with a one-time payment of ₹{basePrice}.
                 </p>
               </div>
             </div>
+
+            {assessmentCounsellingCredit > 0 && (
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <Tag className="h-4 w-4" />
+                <span>
+                  ₹{assessmentCounsellingCredit} already paid for Assessment + Counselling
+                  — credited automatically
+                </span>
+              </div>
+            )}
 
             {referralDiscount && !appliedCoupon && (
               <div className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -566,7 +582,7 @@ export default function Direct2HireEnrollPage() {
                 </>
               ) : (
                 <>
-                  Pay ₹{(activeDiscount?.finalAmount ?? 999).toLocaleString("en-IN")} &amp; Continue
+                  Pay ₹{(activeDiscount?.finalAmount ?? basePrice).toLocaleString("en-IN")} &amp; Continue
                 </>
               )}
             </button>

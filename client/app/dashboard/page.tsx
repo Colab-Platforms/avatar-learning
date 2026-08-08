@@ -80,6 +80,7 @@ export default function DashboardOverviewPage() {
   const firstName = user?.firstName || "there";
 
   // ─── DYNAMIC PROGRESS & PILLARS CALCULATIONS ───────────────────────────────
+  const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
   const profile = counsellingData?.profile ?? null;
   const recommendation = counsellingData?.recommendation ?? null;
 
@@ -181,6 +182,9 @@ export default function DashboardOverviewPage() {
       }
       return "Your AI Assessment is complete! Now, book your 1-on-1 counselling session with a mentor to confirm your course selection.";
     }
+    if (!hasFullAccess) {
+      return "You're all set on assessment + counselling! Unlock AI learning, internship, and placement by upgrading to the full Direct2Hire programme for ₹900 more.";
+    }
     if (!hasLearning) {
       return `You're on track. Complete the sessions and modules in "${activeCourseSummary?.title || "AI Fundamentals"}" to unlock your hands-on internship!`;
     }
@@ -209,6 +213,7 @@ export default function DashboardOverviewPage() {
   }, [
     hasAssessment,
     hasCounselling,
+    hasFullAccess,
     booking,
     hasLearning,
     activeCourseSummary,
@@ -224,6 +229,9 @@ export default function DashboardOverviewPage() {
     }
     if (!hasCounselling) {
       return { label: "Book Counselling", href: "/dashboard/counselling" };
+    }
+    if (!hasFullAccess) {
+      return { label: "Unlock Full Programme — ₹900", href: "/direct2hire/enroll" };
     }
     if (!hasLearning) {
       return {
@@ -260,6 +268,7 @@ export default function DashboardOverviewPage() {
   }, [
     hasAssessment,
     hasCounselling,
+    hasFullAccess,
     hasLearning,
     hasInternship,
     hasPlacementAssessment,
@@ -304,55 +313,61 @@ export default function DashboardOverviewPage() {
       {
         number: 3,
         title: "AI Learning",
-        statusText: hasLearning
-          ? "Syllabus completed!"
-          : hasCounselling
-            ? `${learningProgress}% completed - In progress`
-            : "Unlock after counselling",
+        statusText: !hasFullAccess
+          ? "Upgrade to the full programme to unlock"
+          : hasLearning
+            ? "Syllabus completed!"
+            : hasCounselling
+              ? `${learningProgress}% completed - In progress`
+              : "Unlock after counselling",
         completed: hasLearning,
-        active: hasCounselling && !hasLearning,
-        locked: !hasCounselling,
-        href: "/dashboard/learning",
+        active: hasCounselling && hasFullAccess && !hasLearning,
+        locked: !hasCounselling || !hasFullAccess,
+        href: hasFullAccess ? "/dashboard/learning" : "/direct2hire/enroll",
         icon: GraduationCap,
       },
       {
         number: 4,
         title: "Internship",
-        statusText: hasInternship
-          ? "All weekly tasks approved!"
-          : hasLearning
-            ? `${approvedInternshipTasks} of ${totalInternshipTasks} tasks approved`
-            : "Unlock after completing course",
+        statusText: !hasFullAccess
+          ? "Upgrade to the full programme to unlock"
+          : hasInternship
+            ? "All weekly tasks approved!"
+            : hasLearning
+              ? `${approvedInternshipTasks} of ${totalInternshipTasks} tasks approved`
+              : "Unlock after completing course",
         completed: hasInternship,
-        active: hasLearning && !hasInternship,
-        locked: !hasLearning,
-        href: "/dashboard/internships",
+        active: hasLearning && hasFullAccess && !hasInternship,
+        locked: !hasLearning || !hasFullAccess,
+        href: hasFullAccess ? "/dashboard/internships" : "/direct2hire/enroll",
         icon: Briefcase,
       },
       {
         number: 5,
         title: "Placement",
-        statusText: hasPlacement
-          ? "Mock interview cleared — ready for placement!"
-          : hasGoodMockFeedback
-            ? "Ready for placement!"
-            : hasPlacementAssessment
-              ? mockInterview?.status === "FEEDBACK_PUBLISHED"
-                ? "Feedback received — keep improving"
-                : mockInterview?.status === "SCHEDULED"
-                  ? "Mock interview scheduled"
-                  : mockInterview?.status === "REQUESTED"
-                    ? "Mock interview requested"
-                    : "Assessment passed — request mock interview"
-              : placement?.mockInterviewUnlocked
-                ? "Mock Interview unlocked"
-                : hasInternship
-                  ? "Placement assessment unlocked"
-                  : "Complete internship first",
+        statusText: !hasFullAccess
+          ? "Upgrade to the full programme to unlock"
+          : hasPlacement
+            ? "Mock interview cleared — ready for placement!"
+            : hasGoodMockFeedback
+              ? "Ready for placement!"
+              : hasPlacementAssessment
+                ? mockInterview?.status === "FEEDBACK_PUBLISHED"
+                  ? "Feedback received — keep improving"
+                  : mockInterview?.status === "SCHEDULED"
+                    ? "Mock interview scheduled"
+                    : mockInterview?.status === "REQUESTED"
+                      ? "Mock interview requested"
+                      : "Assessment passed — request mock interview"
+                : placement?.mockInterviewUnlocked
+                  ? "Mock Interview unlocked"
+                  : hasInternship
+                    ? "Placement assessment unlocked"
+                    : "Complete internship first",
         completed: hasPlacement,
-        active: hasInternship && !hasPlacement,
-        locked: !hasInternship,
-        href: "/dashboard/placement",
+        active: hasInternship && hasFullAccess && !hasPlacement,
+        locked: !hasInternship || !hasFullAccess,
+        href: hasFullAccess ? "/dashboard/placement" : "/direct2hire/enroll",
         icon: Trophy,
       },
     ];
@@ -360,6 +375,7 @@ export default function DashboardOverviewPage() {
     hasAssessment,
     recommendation,
     hasCounselling,
+    hasFullAccess,
     booking,
     hasLearning,
     learningProgress,
@@ -731,7 +747,7 @@ export default function DashboardOverviewPage() {
             )}
           </div>
 
-          {activeCourseSummary && hasCounselling ? (
+          {activeCourseSummary && hasCounselling && hasFullAccess ? (
             <div className="flex-1 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-5 flex flex-col justify-between">
               {/* Media controller card layout */}
               <div className="flex flex-col sm:flex-row gap-5">
@@ -852,14 +868,22 @@ export default function DashboardOverviewPage() {
                 Course syllabus locked
               </h3>
               <p className="text-xs text-slate-500 max-w-xs mt-1">
-                Complete your AI Assessment and 1-on-1 Counselling session to
-                select and unlock your course path.
+                {hasCounselling && !hasFullAccess
+                  ? "You've finished assessment + counselling. Upgrade to the full Direct2Hire programme to unlock your course."
+                  : "Complete your AI Assessment and 1-on-1 Counselling session to select and unlock your course path."}
               </p>
               <Link
-                href="/dashboard/counselling"
+                href={
+                  hasCounselling && !hasFullAccess
+                    ? "/direct2hire/enroll"
+                    : "/dashboard/counselling"
+                }
                 className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/10"
               >
-                Go to Counselling <ArrowRight size={12} />
+                {hasCounselling && !hasFullAccess
+                  ? "Unlock Full Programme — ₹900"
+                  : "Go to Counselling"}{" "}
+                <ArrowRight size={12} />
               </Link>
             </div>
           )}
@@ -955,7 +979,7 @@ export default function DashboardOverviewPage() {
             </p>
           </div>
 
-          {hasCounselling ? (
+          {hasCounselling && hasFullAccess ? (
             <>
               {/* Progress Line */}
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">

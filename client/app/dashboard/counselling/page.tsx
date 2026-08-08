@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Compass,
@@ -16,9 +17,12 @@ import {
   User2,
   ExternalLink,
   ChevronDown,
+  ClipboardCheck,
+  ArrowRight,
 } from "lucide-react";
 import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
 import { useCounsellingFeedback } from "@/hooks/queries/useCounsellingFeedback";
+import { useCounsellingProfile } from "@/hooks/queries/useCounsellingProfile";
 import { useCreateCounsellingBooking } from "@/hooks/mutations/useCreateCounsellingBooking";
 import { CourseSelectionPanel } from "@/components/counselling/CourseSelectionPanel";
 import { CounsellorFeedbackCard } from "@/components/counselling/CounsellorFeedbackCard";
@@ -61,6 +65,8 @@ function formatDateTime(value?: string | null) {
 
 export default function CounsellingPage() {
   const { data: booking, isLoading: bookingLoading } = useCounsellingBooking();
+  const { data: counsellingData, isLoading: profileLoading } =
+    useCounsellingProfile();
   const createBookingMutation = useCreateCounsellingBooking();
   const counsellingCompleted = booking?.counsellingCompleted ?? false;
   const { data: feedback, isLoading: feedbackLoading } = useCounsellingFeedback(
@@ -79,10 +85,40 @@ export default function CounsellingPage() {
     });
   };
 
-  if (bookingLoading || (counsellingCompleted && feedbackLoading)) {
+  if (
+    bookingLoading ||
+    profileLoading ||
+    (counsellingCompleted && feedbackLoading)
+  ) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const hasAssessment = !!counsellingData?.profile?.isSubmitted;
+
+  if (!hasAssessment) {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-4 py-16 sm:px-6 lg:px-8 text-center">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+          <ClipboardCheck size={26} />
+        </div>
+        <h1 className="text-xl font-bold text-slate-900">
+          Complete your AI Assessment first
+        </h1>
+        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+          We use your assessment answers to match you with the right
+          counsellor and course recommendation. It only takes about 5
+          minutes.
+        </p>
+        <Link
+          href="/dashboard/assessment"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+        >
+          Go to AI Assessment <ArrowRight size={16} />
+        </Link>
       </div>
     );
   }
