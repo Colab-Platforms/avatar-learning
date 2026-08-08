@@ -75,6 +75,11 @@ export const createDirect2HireOrder = (
     .post("/direct2hire/create-order", couponCode ? { couponCode } : {})
     .then((r) => r.data.data);
 
+export const createAssessmentCounsellingOrder = (): Promise<CreateOrderResponse> =>
+  apiClient
+    .post("/direct2hire/assessment-counselling/create-order")
+    .then((r) => r.data.data);
+
 export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
   apiClient.post("/coupons/apply", { code }).then((r) => r.data.data);
 

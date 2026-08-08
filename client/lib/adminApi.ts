@@ -579,6 +579,32 @@ export const markD2HRefunded = (enrollmentId: string) =>
     .patch(`/admin/direct2hire/${enrollmentId}/mark-refunded`)
     .then((r) => r.data.data);
 
+export interface AdminD2HAssessmentCounsellingPurchase {
+  id: string;
+  userId: string;
+  status: "PENDING" | "PAID" | "REFUNDED";
+  assessmentCounsellingPaidAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    phoneNo?: string;
+  };
+}
+
+export const fetchD2HAssessmentCounsellingPaginated = (
+  page: number = 1,
+  pageSize: number = 20,
+): Promise<PaginatedResponse<AdminD2HAssessmentCounsellingPurchase>> =>
+  apiClient
+    .get("/admin/direct2hire/assessment-counselling", {
+      params: { page, pageSize },
+    })
+    .then((r) => r.data.data);
+
 // ─── Direct2Hire Student Profiles (read-only) ─────────────────────────────────
 
 export interface AdminD2HPaymentInfo {
