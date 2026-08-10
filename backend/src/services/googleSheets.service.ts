@@ -1,6 +1,6 @@
 import { google, sheets_v4 } from "googleapis";
 
-const USERS_SHEET = "Users";
+const USERS_SHEET = "Signups";
 const LEADS_SHEET = "Leads";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 400;

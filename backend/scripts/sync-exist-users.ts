@@ -21,7 +21,7 @@ const sheets = google.sheets({
   auth,
 });
 
-const SHEET_NAME = "Users";
+const SHEET_NAME = "Signups";
 
 async function ensureHeaderExists() {
   const res = await sheets.spreadsheets.values.get({
