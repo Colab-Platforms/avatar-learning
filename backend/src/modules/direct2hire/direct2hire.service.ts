@@ -37,16 +37,16 @@ export class Direct2HireService {
             select: { selectedCourseId: true },
         });
 
-        const d2hCourses = await prisma.courses.findMany({
-            where: {
-                isDirect2HireCourse: true,
-                ...(booking?.selectedCourseId
-                    ? { id: booking.selectedCourseId }
-                    : {}),
-            },
-            include: { _count: { select: { lessons: true } } },
-            orderBy: { createdAt: "asc" },
-        });
+        const d2hCourses = booking?.selectedCourseId
+            ? await prisma.courses.findMany({
+                where: {
+                    isDirect2HireCourse: true,
+                    id: booking.selectedCourseId,
+                },
+                include: { _count: { select: { lessons: true } } },
+                orderBy: { createdAt: "asc" },
+            })
+            : [];
 
         const courseIds = d2hCourses.map((c) => c.id);
         const mappers = await prisma.courseUserMapper.findMany({

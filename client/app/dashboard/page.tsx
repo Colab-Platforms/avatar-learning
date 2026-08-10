@@ -87,14 +87,14 @@ export default function DashboardOverviewPage() {
   const hasAssessment = !!profile?.isSubmitted;
   const assessmentProgress = hasAssessment ? 100 : 0;
 
-  const hasCounselling = !!(
-    booking?.counsellingCompleted || selection?.selectedCourseId
-  );
+  const hasCounselling = !!selection?.selectedCourseId;
   const counsellingProgress = hasCounselling
     ? 100
-    : booking?.scheduledAt
-      ? 50
-      : 0;
+    : booking?.counsellingCompleted
+      ? 75
+      : booking?.scheduledAt
+        ? 50
+        : 0;
 
   const learningProgress = activeCourseSummary?.progress ?? 0;
   const hasLearning = !!(
@@ -231,7 +231,10 @@ export default function DashboardOverviewPage() {
       return { label: "Book Counselling", href: "/dashboard/counselling" };
     }
     if (!hasFullAccess) {
-      return { label: "Unlock Full Programme — ₹900", href: "/direct2hire/enroll" };
+      return {
+        label: "Unlock Full Programme — ₹900",
+        href: "/direct2hire/enroll",
+      };
     }
     if (!hasLearning) {
       return {
@@ -633,12 +636,12 @@ export default function DashboardOverviewPage() {
               Five milestones from assessment to job placement
             </p>
           </div>
-          <Link
+          {/* <Link
             href="/dashboard/learning"
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
           >
             View roadmap <ArrowRight size={13} />
-          </Link>
+          </Link> */}
         </div>
 
         {/* Timeline Grid */}
@@ -737,7 +740,7 @@ export default function DashboardOverviewPage() {
             <h2 className="text-sm font-semibold text-slate-800">
               Continue Learning
             </h2>
-            {activeCourseSummary && (
+            {activeCourseSummary && hasCounselling && hasFullAccess && (
               <Link
                 href={d2hLearningRoutes(activeCourseSummary.id).learn}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
@@ -868,21 +871,27 @@ export default function DashboardOverviewPage() {
                 Course syllabus locked
               </h3>
               <p className="text-xs text-slate-500 max-w-xs mt-1">
-                {hasCounselling && !hasFullAccess
-                  ? "You've finished assessment + counselling. Upgrade to the full Direct2Hire programme to unlock your course."
-                  : "Complete your AI Assessment and 1-on-1 Counselling session to select and unlock your course path."}
+                {!hasAssessment
+                  ? "Complete your AI Assessment first to get your personalised course recommendation."
+                  : hasCounselling && !hasFullAccess
+                    ? "You've finished assessment + counselling. Upgrade to the full Direct2Hire programme to unlock your course."
+                    : "Complete your 1-on-1 Counselling session to select and unlock your course path."}
               </p>
               <Link
                 href={
-                  hasCounselling && !hasFullAccess
-                    ? "/direct2hire/enroll"
-                    : "/dashboard/counselling"
+                  !hasAssessment
+                    ? "/dashboard/assessment"
+                    : hasCounselling && !hasFullAccess
+                      ? "/direct2hire/enroll"
+                      : "/dashboard/counselling"
                 }
                 className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/10"
               >
-                {hasCounselling && !hasFullAccess
-                  ? "Unlock Full Programme — ₹900"
-                  : "Go to Counselling"}{" "}
+                {!hasAssessment
+                  ? "Go to Assessment"
+                  : hasCounselling && !hasFullAccess
+                    ? "Unlock Full Programme — ₹900"
+                    : "Go to Counselling"}{" "}
                 <ArrowRight size={12} />
               </Link>
             </div>
@@ -906,7 +915,7 @@ export default function DashboardOverviewPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 tracking-wider">
-                  Coming Soon
+                  Individual Tier
                 </span>
                 <Share2
                   size={16}
@@ -919,11 +928,11 @@ export default function DashboardOverviewPage() {
               <p className="text-xs leading-relaxed text-slate-500  font-semibold">
                 Get{" "}
                 <span className="text-blue-600 font-bold">
-                  ₹500 cash rewards
+                  ₹100 cash rewards
                 </span>{" "}
                 for every friend who registers and joins Direct2Hire. Plus, your
                 friends get a special{" "}
-                <span className="text-emerald-600 font-bold">10% discount</span>{" "}
+                <span className="text-emerald-600 font-bold">20% discount</span>{" "}
                 on their enrollment.
               </p>
             </div>
@@ -950,13 +959,12 @@ export default function DashboardOverviewPage() {
             </div> */}
 
             {/* Bottom: Apply Now button */}
-            <button
-              type="button"
-              disabled
-              className="w-full inline-flex items-center justify-center gap-1 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed text-xs font-bold py-2.5 transition active:scale-[0.99]"
+            <Link
+              href="/partners"
+              className="w-full inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white text-xs font-bold py-2.5 transition active:scale-[0.99]"
             >
-              Apply Now
-            </button>
+              Apply Now <ArrowRight size={12} />
+            </Link>
           </div>
         </div>
       </div>
