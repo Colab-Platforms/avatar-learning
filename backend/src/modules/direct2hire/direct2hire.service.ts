@@ -149,8 +149,22 @@ export class Direct2HireService {
         }
     }
 
-    async getAllEnrollments(take?: number, skip?: number) {
-        const where = { status: "PAID" as const };
+    async getAllEnrollments(take?: number, skip?: number, search?: string) {
+        const where = {
+            status: "PAID" as const,
+            ...(search
+                ? {
+                    user: {
+                        OR: [
+                            { firstName: { contains: search, mode: "insensitive" as const } },
+                            { lastName: { contains: search, mode: "insensitive" as const } },
+                            { email: { contains: search, mode: "insensitive" as const } },
+                            { phoneNo: { contains: search, mode: "insensitive" as const } },
+                        ],
+                    },
+                }
+                : {}),
+        };
 
         const enrollments = await prisma.direct2HireEnrollment.findMany({
             where,

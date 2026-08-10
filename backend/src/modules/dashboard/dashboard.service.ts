@@ -37,6 +37,9 @@ export class AdminDashboardService {
       revenueByProduct.find((r) => r.productType === "COURSE")?._sum.amount ?? 0;
     const direct2hireRevenue =
       revenueByProduct.find((r) => r.productType === "DIRECT2HIRE")?._sum.amount ?? 0;
+    const assessmentCounsellingRevenue =
+      revenueByProduct.find((r) => r.productType === "D2H_ASSESSMENT_COUNSELLING")
+        ?._sum.amount ?? 0;
 
     const d2hCounts = { PENDING: 0, PAID: 0, REFUNDED: 0 };
     for (const row of d2hByStatus) d2hCounts[row.status] = row._count;
@@ -51,7 +54,8 @@ export class AdminDashboardService {
       revenue: {
         courseInPaise: courseRevenue,
         direct2hireInPaise: direct2hireRevenue,
-        totalInPaise: courseRevenue + direct2hireRevenue,
+        assessmentCounsellingInPaise: assessmentCounsellingRevenue,
+        totalInPaise: courseRevenue + direct2hireRevenue + assessmentCounsellingRevenue,
       },
       users: { total: totalUsers, active: activeUsers },
       d2h: {

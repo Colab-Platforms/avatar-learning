@@ -188,9 +188,12 @@ export const getAllEnrollments = async (
 ): Promise<void> => {
   try {
     const { page, pageSize, take, skip } = getPaginationOptions(req.query, 20);
+    const search =
+      typeof req.query.search === "string" ? req.query.search.trim() : undefined;
     const { enrollments, totalRecords } = await service.getAllEnrollments(
       take,
       skip,
+      search || undefined,
     );
     const response = formatPaginationResponse(
       enrollments,

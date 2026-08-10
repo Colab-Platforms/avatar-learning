@@ -561,9 +561,12 @@ export interface AdminD2HEnrollment {
 export const fetchD2HEnrollmentsPaginated = (
   page: number = 1,
   pageSize: number = 20,
+  search?: string,
 ): Promise<PaginatedResponse<AdminD2HEnrollment>> =>
   apiClient
-    .get("/admin/direct2hire", { params: { page, pageSize } })
+    .get("/admin/direct2hire", {
+      params: { page, pageSize, ...(search ? { search } : {}) },
+    })
     .then((r) => r.data.data);
 
 export const markD2HPaid = (enrollmentId: string) =>
@@ -823,7 +826,12 @@ export const deleteContact = (id: string) =>
 // ─── Dashboard Overview ─────────────────────────────────────────────────────────
 
 export interface AdminDashboardOverview {
-  revenue: { courseInPaise: number; direct2hireInPaise: number; totalInPaise: number };
+  revenue: {
+    courseInPaise: number;
+    direct2hireInPaise: number;
+    assessmentCounsellingInPaise: number;
+    totalInPaise: number;
+  };
   users: { total: number; active: number };
   d2h: { pending: number; paid: number; refunded: number };
   partners: { pending: number; approved: number; rejected: number };
