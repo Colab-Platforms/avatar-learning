@@ -751,6 +751,30 @@ export default function Direct2HirePage() {
                 </div>
               </div>
             </div>
+
+            <ScrollReveal animation="fade-up" delay={100}>
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-border bg-white px-5 sm:px-6 py-4 sm:py-5">
+                <div className="text-center sm:text-left">
+                  <p className="text-[14px] sm:text-[15px] font-bold text-text">
+                    Just want the Assessment + Counselling?
+                  </p>
+                  <p className="text-[12.5px] text-text-subtle mt-0.5">
+                    Try the first two steps on their own for ₹99 — credited
+                    toward the full programme if you upgrade later.
+                  </p>
+                </div>
+                <Link href="/direct2hire/assessment-counselling" className="shrink-0">
+                  <Button
+                    variant="outline"
+                    size="md"
+                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    Try for ₹99
+                    <ArrowRight className="h-4 w-4 shrink-0" />
+                  </Button>
+                </Link>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
 

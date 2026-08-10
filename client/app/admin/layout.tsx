@@ -83,6 +83,11 @@ const NAV: NavItem[] = [
         icon: Users,
       },
       {
+        href: "/admin/direct2hire/assessment-counselling",
+        label: "Assessment + Counselling",
+        icon: Tag,
+      },
+      {
         href: "/admin/direct2hire/intro-video",
         label: "Intro Video",
         icon: Video,

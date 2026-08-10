@@ -55,7 +55,7 @@ export default function DashboardLayout({
     );
   }
 
-  if (d2hStatus?.enrollment?.status !== "PAID") {
+  if (!d2hStatus?.enrollment?.hasAssessmentCounsellingAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-lime-50 px-6">
         <div className="max-w-md text-center">
@@ -64,16 +64,24 @@ export default function DashboardLayout({
             Direct2Hire dashboard locked
           </h1>
           <p className="text-sm text-black/45 mb-6">
-            This dashboard is only available to enrolled Direct2Hire students.
-            Complete your enrollment to unlock AI assessment, counselling,
-            learning, internship, and placement tracking.
+            This dashboard unlocks once you buy Assessment + Counselling
+            (₹99) or the full Direct2Hire programme (₹999) — learning,
+            internship, and placement tracking need the full programme.
           </p>
-          <Link
-            href="/direct2hire/enroll"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-ink-950 text-sm font-semibold hover:bg-brand-400 transition-colors"
-          >
-            Complete enrollment
-          </Link>
+          <div className="flex flex-col items-center gap-2.5">
+            <Link
+              href="/direct2hire/enroll"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-ink-950 text-sm font-semibold hover:bg-brand-400 transition-colors"
+            >
+              Get the full programme — ₹999
+            </Link>
+            <Link
+              href="/direct2hire/assessment-counselling"
+              className="text-sm font-semibold text-black/60 hover:text-black transition-colors"
+            >
+              Or try Assessment + Counselling for ₹99
+            </Link>
+          </div>
         </div>
       </div>
     );

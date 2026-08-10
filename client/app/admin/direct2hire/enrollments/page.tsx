@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight, CheckCircle2, Search } from "lucide-react";
 import {
   fetchD2HEnrollmentsPaginated,
   markD2HPaid,
@@ -25,10 +25,34 @@ export default function AdminDirect2HirePage() {
   const [refundConfirmId, setRefundConfirmId] = useState<string | null>(null);
   const [refundSuccess, setRefundSuccess] = useState(false);
 
+  // Search box value updates every keystroke; debouncedSearch only catches up
+  // 400ms after typing stops, so `load` (and the API call it makes) doesn't
+  // fire on every keystroke — see explanation below.
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(searchInput.trim());
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
+
+  // Jump back to page 1 whenever the effective search term changes, so a
+  // stale currentPage (e.g. page 4) doesn't request an out-of-range page
+  // against the new, smaller filtered result set.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchD2HEnrollmentsPaginated(currentPage, 20);
+      const res = await fetchD2HEnrollmentsPaginated(
+        currentPage,
+        20,
+        debouncedSearch || undefined,
+      );
       setEnrollments(res.data);
       setPagination({
         currentPage: res.currentPage,
@@ -43,7 +67,7 @@ export default function AdminDirect2HirePage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, debouncedSearch]);
 
   useEffect(() => {
     load();
@@ -91,6 +115,20 @@ export default function AdminDirect2HirePage() {
         </div>
       )}
 
+      <div className="relative max-w-sm">
+        <Search
+          size={15}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25"
+        />
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search by name, email, or phone…"
+          className="w-full rounded-xl border border-white/10 bg-ink-800 pl-10 pr-4 py-2.5 text-sm text-white/90 placeholder-white/25 outline-none transition focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
+        />
+      </div>
+
       <div className="bg-ink-800 border border-white/6 rounded-2xl overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-6 py-2.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest border-b border-white/4">
           <span className="col-span-4">Student</span>
@@ -111,7 +149,11 @@ export default function AdminDirect2HirePage() {
         ) : enrollments.length === 0 ? (
           <div className="py-16 text-center">
             <Users size={32} className="mx-auto text-white/15 mb-3" />
-            <p className="text-sm text-white/35">No enrollments yet.</p>
+            <p className="text-sm text-white/35">
+              {debouncedSearch
+                ? `No enrollments match "${debouncedSearch}".`
+                : "No enrollments yet."}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-white/4">

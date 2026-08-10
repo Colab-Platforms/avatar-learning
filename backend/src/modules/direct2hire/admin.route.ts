@@ -24,6 +24,10 @@ router.post(
 router.delete("/direct2hire/intro-video", introVideoController.deleteIntro);
 
 router.get("/direct2hire", direct2hireController.getAllEnrollments);
+router.get(
+    "/direct2hire/assessment-counselling",
+    direct2hireController.getAllAssessmentCounsellingPurchases,
+);
 router.patch(
     "/direct2hire/:enrollmentId/mark-paid",
     direct2hireController.markPaid,

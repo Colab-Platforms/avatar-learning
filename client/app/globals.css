@@ -99,6 +99,16 @@
   }
 }
 
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
 @keyframes text-shimmer {
   from {
     background-position: 220% center;

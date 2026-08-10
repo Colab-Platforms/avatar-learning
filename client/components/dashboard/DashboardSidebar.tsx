@@ -43,7 +43,14 @@ const STEP_ORDER = [
   "/dashboard/placement",
 ] as const;
 
-/** Returns, for each step id/href in STEP_ORDER, whether it is locked (previous step not yet completed). */
+/** Steps that additionally require full ₹999 Direct2Hire access, regardless of progression. */
+const FULL_ACCESS_STEPS = new Set<string>([
+  "ai-learning",
+  "/dashboard/internships",
+  "/dashboard/placement",
+]);
+
+/** Returns, for each step id/href in STEP_ORDER, whether it is locked (previous step not yet completed, or — for learning/internship/placement — full programme not yet purchased). */
 function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
   const { data: counsellingData } = useCounsellingProfile();
   const profile = counsellingData?.profile ?? null;
@@ -51,12 +58,14 @@ function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
   const { data: selection } = useCourseSelection();
   const { data: internshipDashboard } = useInternshipTasks();
   const { data: assessments } = useAssessments(activeCourseId ?? "");
+  const { data: d2hStatus } = useD2HStatus();
 
   return useMemo(() => {
     if (DEV_UNLOCK) {
       return Object.fromEntries(STEP_ORDER.map((id) => [id, false]));
     }
 
+    const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
     const hasAssessment = !!profile?.isSubmitted;
     const hasCounselling = !!(
       booking?.counsellingCompleted || selection?.selectedCourseId
@@ -78,9 +87,13 @@ function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
     ];
 
     return Object.fromEntries(
-      STEP_ORDER.map((id, i) => [id, !completed[i]]),
+      STEP_ORDER.map((id, i) => [
+        id,
+        !completed[i] || (FULL_ACCESS_STEPS.has(id) && !hasFullAccess),
+      ]),
     );
   }, [
+    d2hStatus?.enrollment?.status,
     profile,
     booking?.counsellingCompleted,
     selection?.selectedCourseId,
@@ -288,7 +301,11 @@ export function DashboardSidebar({
                   <div
                     key={item.href}
                     aria-disabled="true"
-                    title="Complete the previous step to unlock"
+                    title={
+                      FULL_ACCESS_STEPS.has(item.href)
+                        ? "Upgrade to the full programme to unlock"
+                        : "Complete the previous step to unlock"
+                    }
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/20 border border-transparent cursor-not-allowed select-none"
                   >
                     <Icon size={16} className="text-white/15" />
@@ -330,7 +347,11 @@ export function DashboardSidebar({
                 <div
                   key={item.id}
                   aria-disabled="true"
-                  title="Complete the previous step to unlock"
+                  title={
+                    FULL_ACCESS_STEPS.has(item.id)
+                      ? "Upgrade to the full programme to unlock"
+                      : "Complete the previous step to unlock"
+                  }
                   className="pt-0.5 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/20 border border-transparent cursor-not-allowed select-none"
                 >
                   <Icon size={16} className="text-white/15" />

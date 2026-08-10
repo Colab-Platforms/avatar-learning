@@ -1071,29 +1071,41 @@ export default function AdminDirect2HireStudentPage() {
         )}
       </Card>
 
-      <InternshipProgressSection
-        userId={userId}
-        internship={
-          data.internship ?? {
-            course: null,
-            progress: {
-              approved: 0,
-              underReview: 0,
-              available: 0,
-              locked: 0,
-              total: 0,
-              approvedCount: 0,
-            },
-            tasks: [],
-          }
-        }
-      />
+      {enrollment?.status === "PAID" ? (
+        <>
+          <InternshipProgressSection
+            userId={userId}
+            internship={
+              data.internship ?? {
+                course: null,
+                progress: {
+                  approved: 0,
+                  underReview: 0,
+                  available: 0,
+                  locked: 0,
+                  total: 0,
+                  approvedCount: 0,
+                },
+                tasks: [],
+              }
+            }
+          />
 
-      <AdminPlacementAssessmentSection userId={userId} />
+          <AdminPlacementAssessmentSection userId={userId} />
 
-      <AdminMockInterviewSection userId={userId} />
+          <AdminMockInterviewSection userId={userId} />
 
-      <AdminJobPlacementSection userId={userId} />
+          <AdminJobPlacementSection userId={userId} />
+        </>
+      ) : (
+        <Card>
+          <p className="text-sm text-white/35">
+            Student is on the ₹99 Assessment + Counselling tier only. Learning,
+            internship, and placement sections unlock after upgrading to the
+            full Direct2Hire programme.
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

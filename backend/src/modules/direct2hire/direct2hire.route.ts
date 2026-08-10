@@ -19,6 +19,10 @@ router.use(auth("USER"), requireCompleteProfile);
 
 router.get("/status", getStatus);
 router.post("/create-order", createOrder);
+router.post(
+  "/assessment-counselling/create-order",
+  direct2hireController.createAssessmentCounsellingOrder,
+);
 router.get("/referral-discount", direct2hireController.getReferralDiscount);
 router.get("/me", direct2hireController.getMyStatus);
 

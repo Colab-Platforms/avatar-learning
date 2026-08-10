@@ -5,6 +5,8 @@ export interface D2HEnrollment {
   id: string;
   userId: string;
   status: "PENDING" | "PAID";
+  assessmentCounsellingPaidAt: string | null;
+  hasAssessmentCounsellingAccess: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,15 +1,18 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireAssessmentCounsellingAccess } from "../assessmentCounsellingAccess.middleware.js";
 import * as counsellingController from "./counselling.controller.js";
 
 const router = Router();
 
-router.get("/", auth("USER"), counsellingController.getMyProfile);
-router.post("/", auth("USER"), counsellingController.createProfile);
-router.put("/", auth("USER"), counsellingController.updateProfile);
+router.use(auth("USER"), requireAssessmentCounsellingAccess);
 
-router.get("/booking", auth("USER"), counsellingController.getBooking);
-router.post("/booking", auth("USER"), counsellingController.createBooking);
-router.get("/feedback", auth("USER"), counsellingController.getMyFeedback);
+router.get("/", counsellingController.getMyProfile);
+router.post("/", counsellingController.createProfile);
+router.put("/", counsellingController.updateProfile);
+
+router.get("/booking", counsellingController.getBooking);
+router.post("/booking", counsellingController.createBooking);
+router.get("/feedback", counsellingController.getMyFeedback);
 
 export default router;

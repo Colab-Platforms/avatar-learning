@@ -67,6 +67,7 @@ enum PaymentOrderStatus {
 enum PaymentProductType {
   COURSE
   DIRECT2HIRE
+  D2H_ASSESSMENT_COUNSELLING
 }
 
 enum PaymentProvider {
@@ -646,6 +647,8 @@ model Direct2HireEnrollment {
   status Direct2HireStatus @default(PENDING)
 
   paidAt DateTime? @map("paid_at")
+
+  assessmentCounsellingPaidAt DateTime? @map("assessment_counselling_paid_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

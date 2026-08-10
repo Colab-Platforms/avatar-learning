@@ -152,6 +152,13 @@ export default function AdminOverviewPage() {
             color: "text-amber-400 bg-amber-500/10",
         },
         {
+            label: "Assessment + Counselling Revenue",
+            value: formatPaise(overview.revenue.assessmentCounsellingInPaise),
+            sub: "From ₹99 tier purchases",
+            icon: IndianRupee,
+            color: "text-sky-400 bg-sky-500/10",
+        },
+        {
             label: "D2H Enrolled",
             value: overview.d2h.paid,
             sub: `${overview.d2h.refunded} refunded overall`,
@@ -177,6 +184,7 @@ export default function AdminOverviewPage() {
     const revenueSegments: BreakdownSegment[] = overview ? [
         { label: "Direct2Hire", count: overview.revenue.direct2hireInPaise, color: "bg-amber-400", bar: "bg-amber-500" },
         { label: "Courses", count: overview.revenue.courseInPaise, color: "bg-brand-400", bar: "bg-brand-500" },
+        { label: "Assessment + Counselling", count: overview.revenue.assessmentCounsellingInPaise, color: "bg-sky-400", bar: "bg-sky-500" },
     ] : [];
 
     const d2hFunnelSegments: BreakdownSegment[] = overview ? [

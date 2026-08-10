@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Loader2,
@@ -10,9 +11,11 @@ import {
   BarChart3,
   Sparkles,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { useSelectCourse } from "@/hooks/mutations/useSelectCourse";
+import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import type { CourseSelectionCourse } from "@/lib/direct2hireApi";
 
 function CourseCard({
@@ -164,11 +167,12 @@ function ConfirmDialog({
 export function CourseSelectionPanel() {
   const router = useRouter();
   const { data, isLoading, isError } = useCourseSelection();
+  const { data: d2hStatus, isLoading: d2hLoading } = useD2HStatus();
   const selectMutation = useSelectCourse();
   const [pendingCourse, setPendingCourse] =
     useState<CourseSelectionCourse | null>(null);
 
-  if (isLoading) {
+  if (isLoading || d2hLoading) {
     return (
       <div className="flex items-center justify-center py-16 text-slate-400">
         <Loader2 size={20} className="animate-spin" />
@@ -186,6 +190,41 @@ export function CourseSelectionPanel() {
 
   if (!data.counsellingCompleted) {
     return null;
+  }
+
+  const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
+
+  if (!data.selectedCourseId && !hasFullAccess) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-blue-200 bg-blue-50/60 p-6"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+            <Lock size={20} />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900">
+              Unlock course selection
+            </h2>
+            <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+              Assessment + Counselling are done — nice work. Choosing your
+              Direct2Hire course and unlocking learning, internship, and
+              placement needs the full programme. You&apos;ve already paid
+              ₹99, so it&apos;s just ₹900 more.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/direct2hire/enroll"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+        >
+          Unlock Full Programme — ₹900 <ArrowRight size={14} />
+        </Link>
+      </motion.div>
+    );
   }
 
   if (data.selectedCourseId && data.selectedCourse) {
