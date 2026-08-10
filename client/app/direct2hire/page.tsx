@@ -87,25 +87,25 @@ const HERO_VARIANTS = [
     tab: "OUTCOME",
     title: "Your first job, secured in just ",
     highlight: "120 days.",
-    image: "/direct2hire/Outcome Real Job.png",
+    image: "/Direct2hire/Outcome-Real-Job.png",
   },
   {
     tab: "BATCH",
     title: "Limited batches ",
     highlight: "AI career program",
-    image: "/direct2hire/Batch Limited.png",
+    image: "/Direct2hire/Batch-Limited.png",
   },
   {
     tab: "VALUE",
     title: "One program. Every step. ",
     highlight: "Fraction of price.",
-    image: "/direct2hire/Value 999.png",
+    image: "/Direct2hire/Value-999.png",
   },
   {
     tab: "TRUST",
     title: "NSE-listed AI firm opens ",
     highlight: "flagship program.",
-    image: "/direct2hire/Trusted 10k+ Hire.png",
+    image: "/Direct2hire/Trusted-10k-Hire.png",
   },
 ];
 
@@ -159,7 +159,7 @@ const STAT_TILES = [
 const HERO_PILLS = [
   { tab: "OUTCOME", label: "Real job" },
   { tab: "BATCH", label: "Limited" },
-  { tab: "VALUE", label: "₹999" },
+  { tab: "VALUE", label: "Affordable" },
   { tab: "TRUST", label: "10K+ hired" },
 ];
 
