@@ -21,6 +21,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Button, ScrollReveal } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
+import { StickyMemoSticker } from "./StickyMemoSticker";
 import { UrgencyBanner } from "./UrgencyBanner";
 import {
   OfferTimerBar,
@@ -303,7 +304,7 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             HERO
         ══════════════════════════════ */}
-        <section className="relative pt-20 pb-6 sm:pt-25 sm:pb-14 overflow-hidden">
+        <section id="d2h-hero" className="relative pt-20 pb-6 sm:pt-25 sm:pb-14 overflow-hidden">
           <div
             className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] bg-brand-200/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3"
             aria-hidden
@@ -528,7 +529,7 @@ export default function Direct2HirePage() {
               {/* right — image */}
               <div className="lg:col-span-7 xl:col-span-7 relative">
                 <ScrollReveal animation="fade-left" delay={200} duration={900}>
-                  <div className="relative w-full">
+                  <div id="d2h-slideshow" className="relative w-full">
                     <div className="relative w-full h-95 sm:h-115 lg:h-155 xl:h-170 rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] overflow-hidden bg-slate-50 border border-slate-100 shadow-inner">
                       <AnimatePresence initial={false} custom={heroDirection}>
                         <motion.div
@@ -652,7 +653,7 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             WHAT YOU GET — VALUE BREAKDOWN
         ══════════════════════════════ */}
-        <section className="py-13 sm:py-16 bg-surface-alt border-t border-border">
+        <section id="what-you-get" className="py-13 sm:py-16 bg-surface-alt border-t border-border">
           <div className="container-x">
             <ScrollReveal animation="fade-up" delay={0}>
               <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
@@ -1241,6 +1242,7 @@ export default function Direct2HirePage() {
 
       <Footer />
       <StickyBuyBar />
+      <StickyMemoSticker />
     </>
   );
 }
