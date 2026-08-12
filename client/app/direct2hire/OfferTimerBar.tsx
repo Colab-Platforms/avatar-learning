@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 export const OFFER_BAR_HEIGHT = 40;
+const PROMO_CODE = "FREEDOM90";
 
 const OFFER_WINDOW_MS = 48 * 60 * 60 * 1000; // 48 hours
 const DEADLINE_KEY = "d2h_offer_deadline_v2";
@@ -48,53 +49,66 @@ export function useOfferCountdown() {
 }
 
 export function OfferTimerBar() {
-  // const label = useOfferCountdown();
+  const [copied, setCopied] = useState(false);
 
-  // return (
-  //   <div
-  //     className="fixed inset-x-0 top-0 z-60 flex items-center justify-center bg-linear-to-r from-brand-700 via-brand-600 to-brand-700 px-3 text-center"
-  //     style={{ height: OFFER_BAR_HEIGHT }}
-  //   >
-  //     <p className="text-[11px] sm:text-[12.5px] font-semibold text-white truncate">
-  //       Batch enrolment offer ends in{" "}
-  //       <span className="font-mono tabular-nums">{label}</span>
-  //     </p>
-  //   </div>
-  // );
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(PROMO_CODE);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard access denied; ignore
+    }
+  };
 
   return (
-    <Link
-      href="/direct2hire"
+    <div
       className="fixed inset-x-0 top-0 z-60 flex items-center justify-center overflow-hidden border-b border-white/10 bg-linear-to-r from-orange-600 via-brand-700 to-green-700 px-2 text-center shadow-[0_2px_10px_rgba(0,0,0,0.25)] animate-[offer-glow_2.6s_ease-in-out_infinite]"
       style={{ height: OFFER_BAR_HEIGHT }}
     >
       <p className="relative z-10 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 sm:gap-x-2 text-[10px] xs:text-[11px] sm:text-[12.5px] font-semibold text-white">
-        {/* <Sparkles
-          aria-hidden
-          className="hidden xs:block h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 animate-pulse"
-        /> */}
+        <Link
+          href="/direct2hire"
+          className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 sm:gap-x-2"
+        >
+          <span className="hidden sm:inline">Independence Day Offer</span>
+          <span className="sm:hidden">Independence Offer</span>
 
-        <span className="hidden sm:inline">Independence Day Offer</span>
-        <span className="sm:hidden">Independence Offer</span>
+          <span className="inline-flex items-center rounded-full bg-white px-2 py-px text-[10px] sm:text-[11.5px] font-extrabold text-orange-700 shadow-sm animate-[badge-pop_1.8s_ease-in-out_infinite]">
+            90% OFF
+          </span>
 
-        <span className="inline-flex items-center rounded-full bg-white px-2 py-px text-[10px] sm:text-[11.5px] font-extrabold text-orange-700 shadow-sm animate-[badge-pop_1.8s_ease-in-out_infinite]">
-          90% OFF
-        </span>
+          <span className="text-white/90">
+            Direct2Hire —{" "}
+            <span className="line-through decoration-white decoration-2">
+              ₹999
+            </span>{" "}
+            <span className="font-extrabold text-green-300">₹99</span>
+          </span>
+        </Link>
 
-        <span className="text-white/90">
-          Direct2Hire —{" "}
-          <span className="line-through decoration-white/60">₹999</span>{" "}
-          <span className="font-extrabold text-green-300">₹99</span>
-        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          title="Copy code"
+          className="inline-flex items-center gap-1 rounded-full border border-dashed border-white/60 bg-white/10 px-2 py-px text-white transition-colors hover:bg-white/20 active:scale-95"
+        >
+          Code: <span className="font-mono font-extrabold">{PROMO_CODE}</span>
+          {copied ? (
+            <Check className="h-3 w-3 text-green-300" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </button>
 
-        <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-px text-white/95">
+        <Link
+          href="/direct2hire"
+          className="hidden md:inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-px text-white/95"
+        >
           Ends 16th August
-        </span>
-
-        {/* <Sparkles
-          aria-hidden
-          className="hidden xs:block h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-300 animate-pulse"
-        /> */}
+        </Link>
       </p>
 
       <style jsx>{`
@@ -117,6 +131,6 @@ export function OfferTimerBar() {
           }
         }
       `}</style>
-    </Link>
+    </div>
   );
 }
