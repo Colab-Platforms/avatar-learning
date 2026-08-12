@@ -7,8 +7,8 @@ import { Check, Copy, PartyPopper, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SHOW_DELAY_MS = 1200;
-const STORAGE_KEY = "id2026-freedom20-dismissed";
-const COUPON_CODE = "FREEDOM20";
+const STORAGE_KEY = "id2026-freedom90-dismissed";
+const COUPON_CODE = "FREEDOM90";
 
 const EXCLUDED_PREFIXES = [
   "/login",
@@ -133,15 +133,16 @@ export function IndependenceDayPromo() {
               >
                 Celebrate Freedom with{" "}
                 <span className="bg-gradient-to-r from-[#FF9933] via-[#a85800] to-[#138808] bg-clip-text text-transparent">
-                  20% Off
+                  90% Off
                 </span>
               </h3>
 
               <p className="mb-6 max-w-[320px] text-sm leading-relaxed text-slate-500">
-                This Independence Day, get 20% off on our{" "}
+                This Independence Day, get our{" "}
                 <span className="font-bold text-[#138808]">₹999</span>{" "}
-                Direct2Hire program. Use the code below at checkout before
-                the offer flies away.
+                Direct2Hire program for just{" "}
+                <span className="font-bold text-[#138808]">₹99</span>. Use
+                the code below at checkout — valid till 15th August.
               </p>
 
               <button
