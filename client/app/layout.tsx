@@ -9,6 +9,7 @@ import QueryProvider from "@/store/QueryProvider";
 import ChatbotAgent from "@/components/ui/ChatbotAgent";
 import { HelpWidget } from "@/components/ui/HelpWidget";
 import { CareerQuizPrompt } from "@/components/quiz/CareerQuizPrompt";
+import { IndependenceDayPromo } from "@/components/ui/IndependenceDayPromo";
 import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
 
 const inter = Inter({
@@ -69,6 +70,7 @@ export default function RootLayout({
             <ChatbotAgent />
             <HelpWidget />
             <CareerQuizPrompt />
+            <IndependenceDayPromo />
             <Toaster richColors position="top-right" />
           </QueryProvider>
         </StoreProvider>
