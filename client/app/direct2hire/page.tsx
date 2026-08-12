@@ -23,11 +23,7 @@ import { cn } from "@/lib/utils";
 import { StickyBuyBar } from "./StickyBuyBar";
 import { StickyMemoSticker } from "./StickyMemoSticker";
 import { UrgencyBanner } from "./UrgencyBanner";
-import {
-  OfferTimerBar,
-  OFFER_BAR_HEIGHT,
-  useOfferCountdown,
-} from "./OfferTimerBar";
+import { useOfferCountdown } from "./OfferTimerBar";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 import { Testimonials } from "@/components/home/Testimonials/Testimonials";
 import { RECENT_ENROLLMENTS } from "@/data/socialProof";
@@ -292,19 +288,16 @@ export default function Direct2HirePage() {
 
   return (
     <>
-      {!enrolled && (
-        <>
-          <OfferTimerBar />
-          <div style={{ height: OFFER_BAR_HEIGHT }} aria-hidden />
-        </>
-      )}
-      <Navbar offsetTop={enrolled ? 0 : OFFER_BAR_HEIGHT} />
+      <Navbar hideOfferBar={enrolled} />
 
       <main className="min-h-screen bg-white text-text overflow-x-hidden">
         {/* ══════════════════════════════
             HERO
         ══════════════════════════════ */}
-        <section id="d2h-hero" className="relative pt-20 pb-6 sm:pt-25 sm:pb-14 overflow-hidden">
+        <section
+          id="d2h-hero"
+          className="relative pt-20 pb-6 sm:pt-25 sm:pb-14 overflow-hidden"
+        >
           <div
             className="pointer-events-none absolute top-0 right-0 w-[700px] h-[500px] bg-brand-200/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3"
             aria-hidden
@@ -653,7 +646,10 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             WHAT YOU GET — VALUE BREAKDOWN
         ══════════════════════════════ */}
-        <section id="what-you-get" className="py-13 sm:py-16 bg-surface-alt border-t border-border">
+        <section
+          id="what-you-get"
+          className="py-13 sm:py-16 bg-surface-alt border-t border-border"
+        >
           <div className="container-x">
             <ScrollReveal animation="fade-up" delay={0}>
               <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
@@ -764,7 +760,10 @@ export default function Direct2HirePage() {
                     toward the full programme if you upgrade later.
                   </p>
                 </div>
-                <Link href="/direct2hire/assessment-counselling" className="shrink-0">
+                <Link
+                  href="/direct2hire/assessment-counselling"
+                  className="shrink-0"
+                >
                   <Button
                     variant="outline"
                     size="md"

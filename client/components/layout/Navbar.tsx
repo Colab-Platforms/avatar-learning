@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, User, ChevronDown, Menu, X, Handshake, GraduationCap } from "lucide-react";
+import {
+  LogOut,
+  User,
+  ChevronDown,
+  Menu,
+  X,
+  Handshake,
+  GraduationCap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
 import { buttonVariants, ConfirmationDialog } from "@/components/ui";
@@ -14,8 +22,36 @@ import { getMyPartner } from "@/lib/partnersApi";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
+import { OfferTimerBar, OFFER_BAR_HEIGHT } from "@/app/direct2hire/OfferTimerBar";
 
-export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
+/* Routes where the site-wide offer bar should NOT appear —
+   student dashboard, admin, partner dashboard, and in-course learning/assessment. */
+const OFFER_BAR_EXCLUDED_PREFIXES = [
+  "/dashboard",
+  "/admin",
+  "/partner-dashboard",
+  "/login",
+  "/register",
+  "/checkout",
+  "/payment",
+  "/onboarded",
+];
+
+function isOfferBarExcluded(pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (/\/(learn|assessment)(\/|$)/.test(pathname)) return true;
+  return OFFER_BAR_EXCLUDED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+export function Navbar({
+  offsetTop,
+  hideOfferBar = false,
+}: {
+  offsetTop?: number;
+  hideOfferBar?: boolean;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
@@ -23,7 +59,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [corporateOpen, setCorporateOpen] = useState(false);
   const [mobileCorporateOpen, setMobileCorporateOpen] = useState(false);
-  
+
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
@@ -34,10 +70,16 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
   });
   const isD2HEnrolled = d2hStatus?.enrollment?.status === "PAID";
 
+  const showOfferBar = !hideOfferBar && !isOfferBarExcluded(pathname);
+  const effectiveOffsetTop = offsetTop ?? (showOfferBar ? OFFER_BAR_HEIGHT : 0);
+
   /* Silently check partner status once user is known — used to show/hide
      the Partner Dashboard link in the dropdown. Fails silently if not a partner. */
   useEffect(() => {
-    if (!user) { setIsApprovedPartner(false); return; }
+    if (!user) {
+      setIsApprovedPartner(false);
+      return;
+    }
     getMyPartner()
       .then((p) => setIsApprovedPartner(p?.status === "APPROVED"))
       .catch(() => setIsApprovedPartner(false));
@@ -61,7 +103,6 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
     }
   };
 
-
   const isActiveRoute = (href: string) => {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";
@@ -78,9 +119,15 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
 
   return (
     <>
+      {showOfferBar && (
+        <>
+          <OfferTimerBar />
+          <div style={{ height: OFFER_BAR_HEIGHT }} aria-hidden />
+        </>
+      )}
       <header
         className="fixed inset-x-0 z-50 anim-slide-down bg-white/95 backdrop-blur-md border-b border-border shadow-xs"
-        style={{ top: offsetTop }}
+        style={{ top: effectiveOffsetTop }}
       >
         <div className="container-x flex items-center justify-between h-16">
           <Link
@@ -113,7 +160,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                     <button
                       className={cn(
                         "relative inline-flex items-center gap-1 px-3 py-2 text-[13.5px] rounded-lg transition-all duration-200 cursor-pointer group font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50",
-                        active && "text-brand-600 font-bold bg-brand-50/50"
+                        active && "text-brand-600 font-bold bg-brand-50/50",
                       )}
                     >
                       {active && (
@@ -123,7 +170,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                       <ChevronDown
                         className={cn(
                           "h-3.5 w-3.5 text-slate-400 transition-transform duration-200",
-                          corporateOpen && "rotate-180"
+                          corporateOpen && "rotate-180",
                         )}
                       />
 
@@ -133,7 +180,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                           "absolute bottom-0 left-2.5 right-2.5 h-[2.5px] rounded-full transition-all duration-300 origin-left",
                           active
                             ? "bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-500 scale-x-100 opacity-100"
-                            : "bg-brand-500 scale-x-0 group-hover:scale-x-100 opacity-0 group-hover:opacity-100"
+                            : "bg-brand-500 scale-x-0 group-hover:scale-x-100 opacity-0 group-hover:opacity-100",
                         )}
                       />
                     </button>
@@ -158,7 +205,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                                   "flex items-center px-3 py-2 text-[13px] font-medium rounded-lg transition-colors duration-150",
                                   childActive
                                     ? "text-brand-600 bg-brand-50/70"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
                                 )}
                               >
                                 {child.label}
@@ -180,7 +227,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                     "relative inline-flex items-center gap-1.5 px-3 py-2 text-[13.5px] rounded-lg transition-all duration-200 group",
                     active
                       ? "text-brand-600 font-bold bg-brand-50/50"
-                      : "font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      : "font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50",
                   )}
                 >
                   {active && (
@@ -194,7 +241,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                       "absolute bottom-0 left-2.5 right-2.5 h-[2.5px] rounded-full transition-all duration-300 origin-left",
                       active
                         ? "bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-500 scale-x-100 opacity-100"
-                        : "bg-brand-500 scale-x-0 group-hover:scale-x-100 opacity-0 group-hover:opacity-100"
+                        : "bg-brand-500 scale-x-0 group-hover:scale-x-100 opacity-0 group-hover:opacity-100",
                     )}
                   />
                 </Link>
@@ -357,7 +404,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 -translate-y-2 pointer-events-none",
         )}
-        style={{ top: 64 + offsetTop }}
+        style={{ top: 64 + effectiveOffsetTop }}
       >
         <nav className="container-x py-4 flex flex-col gap-1.5">
           {NAV_ITEMS.map((item) => {
@@ -369,14 +416,15 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                     onClick={() => setMobileCorporateOpen(!mobileCorporateOpen)}
                     className={cn(
                       "flex items-center justify-between px-4 py-2.5 text-[14px] rounded-xl transition-all duration-150 font-medium text-text-muted hover:text-text hover:bg-surface-alt w-full cursor-pointer",
-                      active && "text-brand-600 font-bold bg-brand-50/60 pl-3.5 border-l-3 border-brand-600"
+                      active &&
+                        "text-brand-600 font-bold bg-brand-50/60 pl-3.5 border-l-3 border-brand-600",
                     )}
                   >
                     <span>{item.label}</span>
                     <ChevronDown
                       className={cn(
                         "h-4 w-4 text-slate-400 transition-transform duration-200",
-                        mobileCorporateOpen && "rotate-180"
+                        mobileCorporateOpen && "rotate-180",
                       )}
                     />
                   </button>
@@ -403,7 +451,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                                 "flex items-center px-4 py-2.5 text-[13.5px] rounded-lg transition-all duration-150 font-medium",
                                 childActive
                                   ? "text-brand-600 bg-brand-50/40"
-                                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
                               )}
                             >
                               {child.label}
@@ -426,7 +474,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                   "flex items-center justify-between px-4 py-2.5 text-[14px] rounded-xl transition-all duration-150",
                   active
                     ? "text-brand-600 font-bold bg-brand-50/60 border-l-3 border-brand-600 pl-3.5"
-                    : "font-medium text-text-muted hover:text-text hover:bg-surface-alt"
+                    : "font-medium text-text-muted hover:text-text hover:bg-surface-alt",
                 )}
               >
                 <span>{item.label}</span>
@@ -467,7 +515,7 @@ export function Navbar({ offsetTop = 0 }: { offsetTop?: number }) {
                     Partner Dashboard
                   </Link>
                 )}
-                 <button
+                <button
                   onClick={() => {
                     setMobileOpen(false);
                     handleLogoutClick();
