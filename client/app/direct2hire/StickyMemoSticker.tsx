@@ -40,7 +40,9 @@ function useStickyPosition() {
         return;
       }
 
-      const displayW = 360;
+      const isLaptop = window.innerWidth < 1440;
+      const displayW = isLaptop ? 220 : 360;
+      const overlapFraction = isLaptop ? 0.2 : 0.45;
       const displayH = Math.round((IMG_H / IMG_W) * displayW);
 
       const naturalTop = slideshowRect.top + ANCHOR_OFFSET_FROM_SLIDESHOW_TOP;
@@ -51,10 +53,9 @@ function useStickyPosition() {
       let left: number | undefined = undefined;
       let right: number | undefined = undefined;
 
-      left = slideshowRect.right - displayW * 0.45;
+      left = slideshowRect.right - displayW * overlapFraction;
       if (left + displayW > window.innerWidth) {
-        left = undefined;
-        right = 16;
+        left = Math.max(slideshowRect.right - displayW, 16);
       }
 
       setState({
