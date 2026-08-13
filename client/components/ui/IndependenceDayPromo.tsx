@@ -149,10 +149,10 @@ export function IndependenceDayPromo() {
                 type="button"
                 onClick={handleCopy}
                 className={cn(
-                  "group mb-6 flex w-full max-w-[280px] items-center justify-between rounded-2xl border-2 border-dashed px-5 py-3.5 transition-all duration-200 cursor-pointer",
+                  "group mb-6 flex w-full max-w-[280px] items-center justify-between rounded-2xl border px-5 py-3.5 transition-all duration-200 cursor-pointer shadow-xs",
                   copied
                     ? "border-[#138808] bg-[#138808]/5"
-                    : "border-slate-300 bg-slate-50 hover:border-[#FF9933] hover:bg-[#FF9933]/5",
+                    : "border-slate-200 bg-slate-50/50 hover:border-[#FF9933]/60 hover:bg-[#FF9933]/5 hover:shadow-xs",
                 )}
               >
                 <span className="font-mono text-lg font-bold tracking-[0.2em] text-slate-800">

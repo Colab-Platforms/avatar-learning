@@ -68,7 +68,8 @@ export function OfferTimerBar() {
       className="fixed inset-x-0 top-0 z-60 flex items-center justify-center overflow-hidden border-b border-white/10 bg-linear-to-r from-orange-600 via-brand-700 to-green-700 px-2 text-center shadow-[0_2px_10px_rgba(0,0,0,0.25)] animate-[offer-glow_2.6s_ease-in-out_infinite]"
       style={{ height: OFFER_BAR_HEIGHT }}
     >
-      <p className="relative z-10 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 sm:gap-x-2 text-[10px] xs:text-[11px] sm:text-[12.5px] font-semibold text-white">
+      {/* Desktop/Tablet View */}
+      <p className="hidden sm:flex relative z-10 flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 sm:gap-x-2 text-[10px] xs:text-[11px] sm:text-[12.5px] font-semibold text-white">
         <Link
           href="/direct2hire"
           className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 sm:gap-x-2"
@@ -93,7 +94,7 @@ export function OfferTimerBar() {
           type="button"
           onClick={handleCopy}
           title="Copy code"
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-white/60 bg-white/10 px-2 py-px text-white transition-colors hover:bg-white/20 active:scale-95"
+          className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-px text-white transition-all hover:bg-white/20 hover:border-white/45 active:scale-95"
         >
           Code: <span className="font-mono font-extrabold">{PROMO_CODE}</span>
           {copied ? (
@@ -110,6 +111,80 @@ export function OfferTimerBar() {
           Ends 16th August
         </Link>
       </p>
+
+      {/* Mobile Scrolling Marquee View */}
+      <div className="flex sm:hidden w-full overflow-hidden relative items-center justify-start h-full">
+        <div className="animate-marquee whitespace-nowrap flex items-center select-none py-1">
+          <div className="flex items-center gap-4 text-[10.5px] font-semibold text-white px-4">
+            <Link
+              href="/direct2hire"
+              className="flex items-center gap-1.5"
+            >
+              <span>Independence Offer</span>
+              <span className="inline-flex items-center rounded-full bg-white px-1.5 py-px text-[9.5px] font-extrabold text-orange-700 shadow-sm">
+                90% OFF
+              </span>
+              <span className="text-white/90">
+                Direct2Hire —{" "}
+                <span className="line-through decoration-white">₹999</span>{" "}
+                <span className="font-extrabold text-green-300">₹99</span>
+              </span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              title="Copy code"
+              className="inline-flex items-center gap-0.5 rounded-full border border-white/20 bg-white/10 px-2 py-px text-white active:scale-95 transition-all hover:bg-white/20 hover:border-white/45"
+            >
+              Code: <span className="font-mono font-extrabold">{PROMO_CODE}</span>
+              {copied ? (
+                <Check className="h-2.5 w-2.5 text-green-300" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+            </button>
+
+            <span className="text-white/80">Ends 16th August</span>
+            <span className="mx-2 text-white/35 font-normal select-none">•</span>
+          </div>
+
+          {/* Repeated duplicate for seamless loop */}
+          <div className="flex items-center gap-4 text-[10.5px] font-semibold text-white px-4" aria-hidden="true">
+            <Link
+              href="/direct2hire"
+              className="flex items-center gap-1.5"
+            >
+              <span>Independence Offer</span>
+              <span className="inline-flex items-center rounded-full bg-white px-1.5 py-px text-[9.5px] font-extrabold text-orange-700 shadow-sm">
+                90% OFF
+              </span>
+              <span className="text-white/90">
+                Direct2Hire —{" "}
+                <span className="line-through decoration-white">₹999</span>{" "}
+                <span className="font-extrabold text-green-300">₹99</span>
+              </span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              title="Copy code"
+              className="inline-flex items-center gap-0.5 rounded-full border border-white/20 bg-white/10 px-2 py-px text-white active:scale-95 transition-all hover:bg-white/20 hover:border-white/45"
+            >
+              Code: <span className="font-mono font-extrabold">{PROMO_CODE}</span>
+              {copied ? (
+                <Check className="h-2.5 w-2.5 text-green-300" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+            </button>
+
+            <span className="text-white/80">Ends 16th August</span>
+            <span className="mx-2 text-white/35 font-normal select-none">•</span>
+          </div>
+        </div>
+      </div>
 
       <style jsx>{`
         @keyframes offer-glow {
@@ -129,6 +204,22 @@ export function OfferTimerBar() {
           50% {
             transform: scale(1.08);
           }
+        }
+        @keyframes marquee {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(-50%, 0, 0);
+          }
+        }
+        .animate-marquee {
+          display: flex;
+          width: max-content;
+          animation: marquee 16s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
         }
       `}</style>
     </div>
