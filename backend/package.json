@@ -15,7 +15,9 @@
     "db:studio": "prisma studio",
     "type-check": "tsc --noEmit",
     "sync:users": "tsx scripts/sync-exist-users.ts",
-    "sync:leads": "tsx scripts/sync-exist-leads.ts"
+    "sync:leads": "tsx scripts/sync-exist-leads.ts",
+    "sync:enrollments": "tsx scripts/sync-exist-enrollments.ts",
+    "convert:ist": "tsx scripts/convert-time-to-ist.ts"
   },
   "keywords": [],
   "author": "",

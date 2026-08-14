@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import {
   fetchD2HAssessmentCounsellingPaginated,
+  markD2HPaid,
   type AdminD2HAssessmentCounsellingPurchase,
 } from "@/lib/adminApi";
 import type { PaginatedResponse } from "@/lib/coursesApi";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -29,6 +31,11 @@ export default function AdminAssessmentCounsellingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [upgradeConfirmId, setUpgradeConfirmId] = useState<string | null>(
+    null,
+  );
+  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,6 +60,21 @@ export default function AdminAssessmentCounsellingPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleUpgrade = async (id: string) => {
+    setMarkingId(id);
+    try {
+      await markD2HPaid(id);
+      await load();
+      setUpgradeConfirmId(null);
+      setUpgradeSuccess(true);
+    } catch {
+      setError("Failed to upgrade user to full Direct2Hire access.");
+      setUpgradeConfirmId(null);
+    } finally {
+      setMarkingId(null);
+    }
+  };
 
   return (
     <div className="p-8 space-y-6">
@@ -134,6 +156,21 @@ export default function AdminAssessmentCounsellingPage() {
                   >
                     View Profile
                   </Link>
+                  {p.status !== "PAID" && (
+                    <button
+                      onClick={() => setUpgradeConfirmId(p.id)}
+                      disabled={markingId === p.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                                 bg-brand-500 text-ink-950 hover:bg-brand-400 transition-colors
+                                 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {markingId === p.id ? (
+                        <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        "Upgrade to Full"
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -167,6 +204,45 @@ export default function AdminAssessmentCounsellingPage() {
             Next
             <ChevronRight size={16} />
           </button>
+        </div>
+      )}
+
+      <ConfirmationDialog
+        isOpen={!!upgradeConfirmId}
+        onClose={() => setUpgradeConfirmId(null)}
+        onConfirm={async () => {
+          if (upgradeConfirmId) await handleUpgrade(upgradeConfirmId);
+        }}
+        title="Upgrade to Full Direct2Hire Access"
+        message="This will grant full Direct2Hire program access (all D2H courses) to this user, on top of their Assessment + Counselling purchase. Use this when they've paid for the full programme outside the normal checkout flow."
+        confirmText="Upgrade User"
+        isLoading={markingId === upgradeConfirmId}
+      />
+
+      {upgradeSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setUpgradeSuccess(false)}
+          />
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.15)] z-10 flex flex-col items-center text-center">
+            <div className="mb-4 mt-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 border border-brand-200 text-brand-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <h3 className="text-[17px] font-semibold text-text tracking-tight mb-2 px-1">
+              User Upgraded
+            </h3>
+            <p className="text-[13px] text-text-muted leading-relaxed mb-6 px-2">
+              User now has full Direct2Hire programme access.
+            </p>
+            <button
+              type="button"
+              onClick={() => setUpgradeSuccess(false)}
+              className="w-full inline-flex items-center justify-center rounded-xl bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 text-[13px] font-semibold transition-all duration-150 active:scale-[0.98] select-none cursor-pointer"
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

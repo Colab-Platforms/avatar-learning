@@ -2,6 +2,7 @@ import { google, sheets_v4 } from "googleapis";
 
 const USERS_SHEET = "Signups";
 const LEADS_SHEET = "Leads";
+const ENROLLMENTS_SHEET = "Enrollments";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 400;
 
@@ -26,6 +27,14 @@ export type SheetsLeadInput = {
   createdAt: Date;
 };
 
+export type SheetsEnrollmentInput = {
+  fullName: string;
+  email: string;
+  phoneNumber?: string | null;
+  amountPaid: number;
+  enrolledAt: Date;
+};
+
 function formatDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
@@ -46,18 +55,27 @@ function formatBoolean(value: boolean): string {
   return value ? "Yes" : "No";
 }
 
+// amountPaid is stored in paise (smallest currency unit) — convert to rupees.
+function formatAmount(amountPaise: number): string {
+  return (amountPaise / 100).toFixed(2);
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function logSyncSuccess(entity: "User" | "Lead", email: string, sheet: string) {
+function logSyncSuccess(
+  entity: "User" | "Lead" | "Enrollment",
+  email: string,
+  sheet: string,
+) {
   console.log(
     `[Google Sheets]\n${entity} synced:\n${email}\n\nSheet:\n${sheet}`,
   );
 }
 
 function logSyncFailure(
-  entity: "User" | "Lead",
+  entity: "User" | "Lead" | "Enrollment",
   email: string,
   reason: unknown,
 ) {
@@ -241,6 +259,25 @@ class GoogleSheetsService {
       logSyncSuccess("Lead", lead.email, LEADS_SHEET);
     } catch (err) {
       logSyncFailure("Lead", lead.email, err);
+    }
+  }
+
+  /**
+   * Append a newly successful Direct2Hire enrollment to the Enrollments sheet.
+   * Never throws — failures are logged only.
+   */
+  async appendEnrollment(enrollment: SheetsEnrollmentInput): Promise<void> {
+    try {
+      await this.appendRow(ENROLLMENTS_SHEET, [
+        enrollment.fullName,
+        enrollment.email,
+        enrollment.phoneNumber ?? "",
+        formatAmount(enrollment.amountPaid),
+        formatDate(enrollment.enrolledAt),
+      ]);
+      logSyncSuccess("Enrollment", enrollment.email, ENROLLMENTS_SHEET);
+    } catch (err) {
+      logSyncFailure("Enrollment", enrollment.email, err);
     }
   }
 }

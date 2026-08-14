@@ -203,6 +203,10 @@ async function completePayment(params: {
     let createdLeadForSheets: Awaited<
       ReturnType<typeof prisma.direct2HireLead.upsert>
     > | null = null;
+    let enrolledUserSheetFullName = "";
+    let enrolledUserSheetEmail = "";
+    let enrolledUserSheetPhone: string | null = null;
+    let didEnroll = false;
 
     await prisma.$transaction(async (tx) => {
       await tx.paymentTransaction.create({
@@ -230,6 +234,22 @@ async function completePayment(params: {
           where: { id: order.direct2hireEnrollmentId },
           data: { status: "PAID", paidAt: new Date() },
         });
+
+        const enrolledUser = await tx.user.findUnique({
+          where: { id: order.userId },
+          select: { firstName: true, lastName: true, email: true, phoneNo: true },
+        });
+        if (enrolledUser) {
+          didEnroll = true;
+          enrolledUserSheetFullName = [
+            enrolledUser.firstName,
+            enrolledUser.lastName,
+          ]
+            .filter(Boolean)
+            .join(" ");
+          enrolledUserSheetEmail = enrolledUser.email;
+          enrolledUserSheetPhone = enrolledUser.phoneNo;
+        }
 
         if (lead) {
           const existingLead = await tx.direct2HireLead.findUnique({
@@ -269,6 +289,16 @@ async function completePayment(params: {
 
     if (createdLeadForSheets) {
       void googleSheetsService.appendLead(createdLeadForSheets);
+    }
+
+    if (didEnroll) {
+      void googleSheetsService.appendEnrollment({
+        fullName: enrolledUserSheetFullName,
+        email: enrolledUserSheetEmail,
+        phoneNumber: enrolledUserSheetPhone,
+        amountPaid: order.amount,
+        enrolledAt: new Date(),
+      });
     }
 
     if (order.productType === "DIRECT2HIRE" && order.direct2hireEnrollmentId) {

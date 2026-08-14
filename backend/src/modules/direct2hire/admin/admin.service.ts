@@ -17,7 +17,7 @@ export class Direct2HireAdminService {
     const orders = await prisma.paymentOrder.findMany({
       where: {
         userId: { in: userIds },
-        productType: "DIRECT2HIRE",
+        productType: { in: ["DIRECT2HIRE", "D2H_ASSESSMENT_COUNSELLING"] },
         status: "PAID",
       },
       orderBy: { createdAt: "desc" },
