@@ -6,7 +6,9 @@ import type { AdminStudentInternshipProgress } from "./internshipApi";
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export const fetchCategories = () =>
-  apiClient.get("/admin/categories").then((r) => r.data.data);
+  apiClient
+    .get("/admin/categories", { params: { pageSize: 100 } })
+    .then((r) => r.data.data.data);
 
 export const fetchCategoriesPaginated = (
   page: number = 1,
