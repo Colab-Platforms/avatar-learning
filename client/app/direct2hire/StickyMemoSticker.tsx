@@ -144,7 +144,9 @@ function MobileFullScreenModal() {
             {/* Blue decorative blob top-right */}
             <div
               className="absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl pointer-events-none opacity-40"
-              style={{ background: "radial-gradient(circle, #3b82f6, #1d4ed8)" }}
+              style={{
+                background: "radial-gradient(circle, #3b82f6, #1d4ed8)",
+              }}
             />
 
             {/* ── drag handle ── */}
@@ -177,7 +179,8 @@ function MobileFullScreenModal() {
                 Assessment + Counselling
               </h2>
               <p className="text-center text-[13px] text-slate-500 mb-5 leading-relaxed">
-                Know exactly which AI career is right for you — in just 30 minutes.
+                Know exactly which AI career is right for you — in just 30
+                minutes.
               </p>
 
               {/* ── Perks ── */}
@@ -185,17 +188,25 @@ function MobileFullScreenModal() {
                 {PERKS.map((perk) => (
                   <div key={perk} className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                    <p className="text-[13px] text-slate-700 leading-snug">{perk}</p>
+                    <p className="text-[13px] text-slate-700 leading-snug">
+                      {perk}
+                    </p>
                   </div>
                 ))}
               </div>
 
               {/* ── Price block ── */}
               <div className="flex items-center justify-center gap-3 mb-5">
-                <span className="text-[42px] font-black text-blue-600 leading-none">₹99</span>
+                <span className="text-[42px] font-black text-blue-600 leading-none">
+                  ₹99
+                </span>
                 <div className="flex flex-col">
-                  <span className="text-[15px] text-slate-400 line-through leading-none">₹2,000</span>
-                  <span className="text-[11px] font-bold text-emerald-600 mt-0.5">95% OFF today</span>
+                  <span className="text-[15px] text-slate-400 line-through leading-none">
+                    ₹2,000
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-600 mt-0.5">
+                    95% OFF today
+                  </span>
                 </div>
               </div>
 
@@ -204,7 +215,10 @@ function MobileFullScreenModal() {
                 href="/direct2hire/assessment-counselling"
                 onClick={dismiss}
                 className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 font-bold text-[15.5px] text-white shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all"
-                style={{ background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" }}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                }}
               >
                 Get started for ₹99
                 <ArrowRight className="w-4.5 h-4.5 shrink-0" />
@@ -269,7 +283,7 @@ export function StickyMemoSticker() {
       )}
 
       {/* Mobile full-screen modal */}
-      <MobileFullScreenModal />
+      {/* <MobileFullScreenModal /> */}
     </>
   );
 }

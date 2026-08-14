@@ -1241,7 +1241,7 @@ export default function Direct2HirePage() {
 
       <Footer />
       <StickyBuyBar />
-      <StickyMemoSticker />
+      {/* <StickyMemoSticker /> */}
     </>
   );
 }
