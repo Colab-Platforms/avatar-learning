@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useWebinarCheckout } from "@/hooks/useWebinarCheckout";
 
 interface TimeLeft {
   days: string;
@@ -15,6 +16,8 @@ export default function RegistrationForm() {
     email: "",
     whatsApp: "",
   });
+  const [formError, setFormError] = useState<string | null>(null);
+  const { register, processing, message } = useWebinarCheckout();
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: "09",
@@ -65,9 +68,30 @@ export default function RegistrationForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isRegistered = message?.type === "success";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Thank you ${formData.fullName || "there"}! This is the frontend-only implementation. Registration demo successful.`);
+    setFormError(null);
+
+    const fullName = formData.fullName.trim();
+    const email = formData.email.trim();
+    const whatsApp = formData.whatsApp.trim();
+
+    if (!fullName || !email || !whatsApp) {
+      setFormError("Please fill in all fields.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setFormError("Please enter a valid email address.");
+      return;
+    }
+    if (!/^[0-9+\-\s]{7,15}$/.test(whatsApp)) {
+      setFormError("Please enter a valid WhatsApp number.");
+      return;
+    }
+
+    await register({ name: fullName, email, phoneNumber: whatsApp });
   };
 
   return (
@@ -125,54 +149,76 @@ export default function RegistrationForm() {
         </div>
       </div>
 
-      {/* Registration form inputs */}
-      <form onSubmit={handleSubmit} className="space-y-3 mb-4">
-        <div>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Full name"
-            required
-            className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all"
-          />
+      {isRegistered ? (
+        /* Success state */
+        <div className="mb-4 rounded-xl border border-[#22C55E]/20 bg-[#1F2C24] px-4 py-5 text-center">
+          <p className="text-[#4ADE80] font-bold text-sm mb-1">
+            You&rsquo;re confirmed! 🎉
+          </p>
+          <p className="text-gray-300 text-xs">{message?.text}</p>
         </div>
-        <div>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email address"
-            required
-            className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all"
-          />
-        </div>
-        <div>
-          <input
-            type="tel"
-            name="whatsApp"
-            value={formData.whatsApp}
-            onChange={handleChange}
-            placeholder="WhatsApp number"
-            required
-            className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all"
-          />
-        </div>
+      ) : (
+        <>
+          {/* Registration form inputs */}
+          <form onSubmit={handleSubmit} className="space-y-3 mb-4">
+            <div>
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Full name"
+                required
+                disabled={processing}
+                className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60"
+              />
+            </div>
+            <div>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email address"
+                required
+                disabled={processing}
+                className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60"
+              />
+            </div>
+            <div>
+              <input
+                type="tel"
+                name="whatsApp"
+                value={formData.whatsApp}
+                onChange={handleChange}
+                placeholder="WhatsApp number"
+                required
+                disabled={processing}
+                className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60"
+              />
+            </div>
 
-        <button
-          type="submit"
-          className="w-full bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-bold py-3.5 px-4 rounded-xl text-center shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-[1px] active:translate-y-0 text-sm tracking-wide"
-        >
-          Book my seat &middot; ₹7
-        </button>
-      </form>
+            {(formError || (message && message.type === "error")) && (
+              <p className="text-[#F87171] text-[11px] font-medium">
+                {formError ?? message?.text}
+              </p>
+            )}
 
-      {/* WhatsApp text */}
-      <div className="text-center text-[10px] text-gray-400 mb-5">
-        Instant confirmation on WhatsApp
-      </div>
+            <button
+              type="submit"
+              disabled={processing}
+              className="w-full bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-bold py-3.5 px-4 rounded-xl text-center shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-[1px] active:translate-y-0 text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {processing ? "Processing…" : "Book my seat · ₹7"}
+            </button>
+          </form>
+
+          {/* WhatsApp text */}
+          <div className="text-center text-[10px] text-gray-400 mb-5">
+            Instant confirmation on WhatsApp
+          </div>
+        </>
+      )}
 
       {/* Progress & seats footer */}
       <div className="border-t border-white/5 pt-4">
