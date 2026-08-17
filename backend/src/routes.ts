@@ -19,6 +19,7 @@ import couponRoutes from "./modules/coupon/coupon.route.js";
 import adminCouponRoutes from "./modules/coupon/admin.route.js";
 import adminDashboardRoutes from "./modules/dashboard/admin.route.js";
 import webinarRoutes from "./modules/webinar/webinar.route.js";
+import adminWebinarRoutes from "./modules/webinar/admin.route.js";
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use("/coupons", couponRoutes);
 router.use("/admin", adminCouponRoutes);
 router.use("/admin", adminDashboardRoutes);
 router.use("/webinar", webinarRoutes);
+router.use("/admin", adminWebinarRoutes);
 
 export default router;

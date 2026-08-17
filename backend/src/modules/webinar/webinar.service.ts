@@ -4,6 +4,7 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "@/modules/payment/payment.utils.js";
 import type { RazorpayWebhookPayload } from "@/modules/payment/payment.types.js";
+import { sendWebinarPaymentConfirmationEmail } from "./webinar.mail.js";
 import type {
   CreateWebinarOrderBody,
   CreateWebinarOrderResponse,
@@ -139,7 +140,7 @@ export class WebinarService {
     }
 
     try {
-      await prisma.webinarRegistration.update({
+      const updated = await prisma.webinarRegistration.update({
         where: { id: registration.id },
         data: {
           status: "PAID",
@@ -147,6 +148,11 @@ export class WebinarService {
           razorpaySignature,
           paidAt: new Date(),
         },
+      });
+      void sendWebinarPaymentConfirmationEmail(updated.email, {
+        name: updated.name,
+        amount: updated.amount,
+        currency: updated.currency,
       });
     } catch (err: any) {
       if (err.code === "P2002") {
@@ -177,7 +183,7 @@ export class WebinarService {
       if (!registration || registration.status !== "PENDING") return;
 
       try {
-        await prisma.webinarRegistration.update({
+        const updated = await prisma.webinarRegistration.update({
           where: { id: registration.id },
           data: {
             status: "PAID",
@@ -185,6 +191,11 @@ export class WebinarService {
             razorpaySignature: "webhook",
             paidAt: new Date(),
           },
+        });
+        void sendWebinarPaymentConfirmationEmail(updated.email, {
+          name: updated.name,
+          amount: updated.amount,
+          currency: updated.currency,
         });
       } catch (err: any) {
         // Concurrent /verify-payment call already recorded this payment.
@@ -211,3 +222,54 @@ export class WebinarService {
 }
 
 export const webinarService = new WebinarService();
+
+export class AdminWebinarService {
+  async getAll(
+    take?: number,
+    skip?: number,
+    search?: string,
+    status?: "PENDING" | "PAID" | "FAILED" | "REFUNDED",
+  ) {
+    const where = {
+      ...(status ? { status } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" as const } },
+              { email: { contains: search, mode: "insensitive" as const } },
+              {
+                phoneNumber: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const registrations = await prisma.webinarRegistration.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      ...(take !== undefined && { take }),
+      ...(skip !== undefined && { skip }),
+    });
+
+    const totalRecords = await prisma.webinarRegistration.count({ where });
+    return { registrations, totalRecords };
+  }
+
+  async getById(id: string) {
+    const registration = await prisma.webinarRegistration.findUnique({
+      where: { id },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+    return registration;
+  }
+}
+
+export const adminWebinarService = new AdminWebinarService();
