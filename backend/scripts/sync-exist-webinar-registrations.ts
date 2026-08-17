@@ -21,25 +21,14 @@ const sheets = google.sheets({
   auth,
 });
 
-const SHEET_NAME = "Leads";
+const SHEET_NAME = "Webinar Registrations";
 
-const HEADER = [
-  "Full Name",
-  "Email",
-  "Phone Number",
-  "Institution",
-  "Education",
-  "City",
-  "State",
-  "Country",
-  "Payment Completed",
-  "Created At",
-];
+const HEADER = ["Name", "Email", "Phone Number", "Amount Paid", "Paid At"];
 
 async function ensureHeaderExists() {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_NAME}!A1:J1`,
+    range: `${SHEET_NAME}!A1:E1`,
   });
 
   if (!res.data.values || res.data.values.length === 0) {
@@ -73,16 +62,17 @@ async function getExistingEmails(): Promise<Set<string>> {
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
 function formatDate(date: Date) {
-  const ist = new Date(date.getTime() + IST_OFFSET_MS);
   const pad = (n: number) => String(n).padStart(2, "0");
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
 
   return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(
     ist.getUTCDate(),
   )} ${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
 }
 
-function formatBoolean(value: boolean) {
-  return value ? "Yes" : "No";
+// amount is stored in paise (smallest currency unit) — convert to rupees.
+function formatAmount(amountPaise: number): string {
+  return (amountPaise / 100).toFixed(2);
 }
 
 async function main() {
@@ -92,40 +82,30 @@ async function main() {
 
   const existingEmails = await getExistingEmails();
 
-  const leads = await prisma.direct2HireLead.findMany({
-    orderBy: {
-      createdAt: "asc",
-    },
+  const registrations = await prisma.webinarRegistration.findMany({
+    where: { status: "PAID" },
+    orderBy: { paidAt: "asc" },
     select: {
-      fullName: true,
+      name: true,
       email: true,
       phoneNumber: true,
-      institutionName: true,
-      currentEducation: true,
-      city: true,
-      state: true,
-      country: true,
-      paymentCompleted: true,
+      amount: true,
+      paidAt: true,
       createdAt: true,
     },
   });
 
   const rows: string[][] = [];
 
-  for (const lead of leads) {
-    if (existingEmails.has(lead.email.toLowerCase())) continue;
+  for (const registration of registrations) {
+    if (existingEmails.has(registration.email.toLowerCase())) continue;
 
     rows.push([
-      lead.fullName,
-      lead.email,
-      lead.phoneNumber,
-      lead.institutionName,
-      lead.currentEducation,
-      lead.city,
-      lead.state,
-      lead.country,
-      formatBoolean(lead.paymentCompleted),
-      formatDate(lead.createdAt),
+      registration.name,
+      registration.email,
+      registration.phoneNumber,
+      formatAmount(registration.amount),
+      formatDate(registration.paidAt ?? registration.createdAt),
     ]);
   }
 
@@ -136,7 +116,7 @@ async function main() {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_NAME}!A:J`,
+    range: `${SHEET_NAME}!A:E`,
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: {
@@ -144,7 +124,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Synced ${rows.length} leads.`);
+  console.log(`✅ Synced ${rows.length} webinar registrations.`);
 }
 
 main()

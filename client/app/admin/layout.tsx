@@ -103,6 +103,13 @@ const NAV: NavItem[] = [
   },
   {
     kind: "link",
+    href: "/admin/webinar",
+    label: "Webinar",
+    icon: Video,
+    exact: false,
+  },
+  {
+    kind: "link",
     href: "/admin/investors",
     label: "Investors",
     icon: Landmark,

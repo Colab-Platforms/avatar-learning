@@ -81,6 +81,13 @@ enum PaymentTransactionStatus {
   REFUNDED
 }
 
+enum WebinarRegistrationStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
 enum AssessmentAttemptStatus {
   IN_PROGRESS
   SUBMITTED
@@ -905,6 +912,33 @@ model PaymentOrder {
   @@index([userId])
   @@index([couponId])
   @@map("payment_orders")
+}
+
+model WebinarRegistration {
+  id String @id @default(cuid())
+
+  name        String
+  email       String
+  phoneNumber String @map("phone_number")
+
+  amount   Int
+  currency String @default("INR")
+
+  status WebinarRegistrationStatus @default(PENDING)
+
+  razorpayOrderId   String? @unique @map("razorpay_order_id")
+  razorpayPaymentId String? @unique @map("razorpay_payment_id")
+  razorpaySignature String? @map("razorpay_signature")
+
+  paidAt DateTime? @map("paid_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([status])
+  @@map("webinar_registrations")
 }
 
 model Coupon {

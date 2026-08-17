@@ -872,3 +872,40 @@ export const setUserRole = (
   role: "ADMIN" | "USER",
 ): Promise<AdminUser> =>
   apiClient.patch(`/users/${id}/role`, { role }).then((r) => r.data.data);
+
+// ─── Webinar Registrations ─────────────────────────────────────────────────────
+
+export type WebinarRegistrationStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+
+export interface AdminWebinarRegistration {
+  id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  amount: number;
+  currency: string;
+  status: WebinarRegistrationStatus;
+  razorpayOrderId: string | null;
+  razorpayPaymentId: string | null;
+  razorpaySignature: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export const fetchWebinarRegistrationsPaginated = (
+  page: number = 1,
+  pageSize: number = 20,
+  search?: string,
+  status?: WebinarRegistrationStatus,
+): Promise<PaginatedResponse<AdminWebinarRegistration>> =>
+  apiClient
+    .get("/admin/webinar/registrations", {
+      params: { page, pageSize, ...(search && { search }), ...(status && { status }) },
+    })
+    .then((r) => r.data.data);
+
+export const fetchWebinarRegistrationDetail = (
+  id: string,
+): Promise<AdminWebinarRegistration> =>
+  apiClient.get(`/admin/webinar/registrations/${id}`).then((r) => r.data.data);

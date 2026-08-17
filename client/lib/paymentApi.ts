@@ -85,3 +85,36 @@ export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
 
 export const getReferralDiscount = (): Promise<ReferralDiscountResponse | null> =>
   apiClient.get("/direct2hire/referral-discount").then((r) => r.data.data);
+
+export interface CreateWebinarOrderInput {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
+export interface CreateWebinarOrderResponse {
+  orderId: string;
+  amount: number;
+  currency: string;
+  key: string;
+  registrationId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
+export interface VerifyWebinarPaymentPayload {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+export const createWebinarOrder = (
+  input: CreateWebinarOrderInput,
+): Promise<CreateWebinarOrderResponse> =>
+  apiClient.post("/webinar/create-order", input).then((r) => r.data.data);
+
+export const verifyWebinarPayment = (
+  payload: VerifyWebinarPaymentPayload,
+): Promise<void> =>
+  apiClient.post("/webinar/verify-payment", payload).then((r) => r.data);

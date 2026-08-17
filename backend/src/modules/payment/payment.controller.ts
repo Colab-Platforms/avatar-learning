@@ -9,6 +9,7 @@ import {
   verifyCashfreeWebhookSignature,
 } from "./payment.utils.js";
 import { getPaymentProvider } from "./payment.config.js";
+import { webinarService } from "@/modules/webinar/webinar.service.js";
 import type { RazorpayWebhookPayload, CashfreeWebhookPayload } from "./payment.types.js";
 
 const service = new PaymentService();
@@ -79,6 +80,10 @@ export const handleRazorpayWebhook = async (req: Request, res: Response): Promis
     const payload = req.body as RazorpayWebhookPayload;
     service.handleRazorpayWebhook(payload).catch((err) => {
       console.error("Razorpay webhook processing error:", err);
+    });
+    // Separate table/flow from PaymentOrder — no-ops for orderIds it doesn't recognise.
+    webinarService.handleRazorpayWebhook(payload).catch((err) => {
+      console.error("Webinar webhook processing error:", err);
     });
   } catch (err: any) {
     console.error("Razorpay webhook error:", err);
