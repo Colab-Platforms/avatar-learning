@@ -3,6 +3,7 @@ import { google, sheets_v4 } from "googleapis";
 const USERS_SHEET = "Signups";
 const LEADS_SHEET = "Leads";
 const ENROLLMENTS_SHEET = "Enrollments";
+const WEBINAR_SHEET = "Webinar Registrations";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 400;
 
@@ -35,10 +36,21 @@ export type SheetsEnrollmentInput = {
   enrolledAt: Date;
 };
 
+export type SheetsWebinarInput = {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  amountPaid: number;
+  paidAt: Date;
+};
+
+// Neon stores/returns timestamps as UTC instants regardless of the server's
+// local timezone (Render/Vercel run in UTC by default) — so naive
+// getFullYear()/getHours() calls silently render UTC, not IST, and are off
+// by 5:30 hours. Shift by the fixed IST offset and read back with the UTC
+// getters so the output is correct no matter what timezone the process runs in.
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
-// Server TZ is not guaranteed to be IST (differs between local dev and prod
-// host) — anchor to UTC + fixed IST offset instead of Date's local getters.
 function formatDate(date: Date): string {
   const ist = new Date(date.getTime() + IST_OFFSET_MS);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -70,7 +82,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 function logSyncSuccess(
-  entity: "User" | "Lead" | "Enrollment",
+  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration",
   email: string,
   sheet: string,
 ) {
@@ -80,7 +92,7 @@ function logSyncSuccess(
 }
 
 function logSyncFailure(
-  entity: "User" | "Lead" | "Enrollment",
+  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration",
   email: string,
   reason: unknown,
 ) {
@@ -183,16 +195,15 @@ class GoogleSheetsService {
       meta.data.sheets?.map((s) => s.properties?.title).filter(Boolean) ?? [];
 
     if (!titles.includes(sheetName)) {
-      throw new Error(`Sheet tab "${sheetName}" was not found in the spreadsheet.`);
+      throw new Error(
+        `Sheet tab "${sheetName}" was not found in the spreadsheet.`,
+      );
     }
 
     this.verifiedSheetIds.add(cacheKey);
   }
 
-  private async appendRow(
-    sheetName: string,
-    values: string[],
-  ): Promise<void> {
+  private async appendRow(sheetName: string, values: string[]): Promise<void> {
     const client = await this.getClient();
     if (!client) {
       throw new Error("Google Sheets client is not available.");
@@ -283,6 +294,25 @@ class GoogleSheetsService {
       logSyncSuccess("Enrollment", enrollment.email, ENROLLMENTS_SHEET);
     } catch (err) {
       logSyncFailure("Enrollment", enrollment.email, err);
+    }
+  }
+
+  /**
+   * Append a successful webinar payment to the Webinar Registrations sheet.
+   * Never throws — failures are logged only.
+   */
+  async appendWebinarRegistration(input: SheetsWebinarInput): Promise<void> {
+    try {
+      await this.appendRow(WEBINAR_SHEET, [
+        input.name,
+        input.email,
+        input.phoneNumber,
+        formatAmount(input.amountPaid),
+        formatDate(input.paidAt),
+      ]);
+      logSyncSuccess("Webinar Registration", input.email, WEBINAR_SHEET);
+    } catch (err) {
+      logSyncFailure("Webinar Registration", input.email, err);
     }
   }
 }

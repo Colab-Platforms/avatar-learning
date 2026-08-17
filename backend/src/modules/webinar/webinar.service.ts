@@ -5,6 +5,7 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "@/modules/payment/payment.utils.js";
 import type { RazorpayWebhookPayload } from "@/modules/payment/payment.types.js";
 import { sendWebinarPaymentConfirmationEmail } from "./webinar.mail.js";
+import { googleSheetsService } from "@/services/googleSheets.service.js";
 import type {
   CreateWebinarOrderBody,
   CreateWebinarOrderResponse,
@@ -154,6 +155,13 @@ export class WebinarService {
         amount: updated.amount,
         currency: updated.currency,
       });
+      void googleSheetsService.appendWebinarRegistration({
+        name: updated.name,
+        email: updated.email,
+        phoneNumber: updated.phoneNumber,
+        amountPaid: updated.amount,
+        paidAt: updated.paidAt ?? new Date(),
+      });
     } catch (err: any) {
       if (err.code === "P2002") {
         // Concurrent verify call already recorded this payment — safe to ignore.
@@ -196,6 +204,13 @@ export class WebinarService {
           name: updated.name,
           amount: updated.amount,
           currency: updated.currency,
+        });
+        void googleSheetsService.appendWebinarRegistration({
+          name: updated.name,
+          email: updated.email,
+          phoneNumber: updated.phoneNumber,
+          amountPaid: updated.amount,
+          paidAt: updated.paidAt ?? new Date(),
         });
       } catch (err: any) {
         // Concurrent /verify-payment call already recorded this payment.

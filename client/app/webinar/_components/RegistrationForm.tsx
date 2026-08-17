@@ -16,7 +16,11 @@ export default function RegistrationForm() {
     email: "",
     whatsApp: "",
   });
-  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    whatsApp?: string;
+  }>({});
   const { register, processing, message } = useWebinarCheckout();
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
@@ -66,30 +70,56 @@ export default function RegistrationForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear this field's error as soon as the user edits it.
+    setFieldErrors((prev) => (prev[name as keyof typeof prev] ? { ...prev, [name]: undefined } : prev));
   };
 
   const isRegistered = message?.type === "success";
 
+  const NAME_PATTERN = /^[A-Za-z][A-Za-z\s'.-]{1,59}$/;
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function validate(fullName: string, email: string, whatsApp: string) {
+    const errors: typeof fieldErrors = {};
+
+    if (!fullName) {
+      errors.fullName = "Full name is required.";
+    } else if (!NAME_PATTERN.test(fullName)) {
+      errors.fullName =
+        "Enter a valid name (letters only, at least 2 characters).";
+    }
+
+    if (!email) {
+      errors.email = "Email is required.";
+    } else if (!EMAIL_PATTERN.test(email)) {
+      errors.email = "Enter a valid email address.";
+    }
+
+    if (!whatsApp) {
+      errors.whatsApp = "WhatsApp number is required.";
+    } else {
+      // Digits only after stripping formatting characters — rejects
+      // symbol-only input like "-------" that a plain character-class
+      // regex would otherwise accept.
+      const digitsOnly = whatsApp.replace(/[\s\-()]/g, "");
+      if (!/^\+?[0-9]{8,15}$/.test(digitsOnly)) {
+        errors.whatsApp = "Enter a valid WhatsApp number (8-15 digits).";
+      }
+    }
+
+    return errors;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
 
     const fullName = formData.fullName.trim();
     const email = formData.email.trim();
     const whatsApp = formData.whatsApp.trim();
 
-    if (!fullName || !email || !whatsApp) {
-      setFormError("Please fill in all fields.");
-      return;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setFormError("Please enter a valid email address.");
-      return;
-    }
-    if (!/^[0-9+\-\s]{7,15}$/.test(whatsApp)) {
-      setFormError("Please enter a valid WhatsApp number.");
-      return;
-    }
+    const errors = validate(fullName, email, whatsApp);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     await register({ name: fullName, email, phoneNumber: whatsApp });
   };
@@ -170,8 +200,18 @@ export default function RegistrationForm() {
                 placeholder="Full name"
                 required
                 disabled={processing}
-                className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60"
+                aria-invalid={!!fieldErrors.fullName}
+                className={`w-full bg-white text-black px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60 ${
+                  fieldErrors.fullName
+                    ? "border-[#F87171] focus:ring-[#F87171]"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
               />
+              {fieldErrors.fullName && (
+                <p className="text-[#F87171] text-[11px] font-medium mt-1">
+                  {fieldErrors.fullName}
+                </p>
+              )}
             </div>
             <div>
               <input
@@ -182,8 +222,18 @@ export default function RegistrationForm() {
                 placeholder="Email address"
                 required
                 disabled={processing}
-                className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60"
+                aria-invalid={!!fieldErrors.email}
+                className={`w-full bg-white text-black px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60 ${
+                  fieldErrors.email
+                    ? "border-[#F87171] focus:ring-[#F87171]"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
               />
+              {fieldErrors.email && (
+                <p className="text-[#F87171] text-[11px] font-medium mt-1">
+                  {fieldErrors.email}
+                </p>
+              )}
             </div>
             <div>
               <input
@@ -194,13 +244,23 @@ export default function RegistrationForm() {
                 placeholder="WhatsApp number"
                 required
                 disabled={processing}
-                className="w-full bg-white text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60"
+                aria-invalid={!!fieldErrors.whatsApp}
+                className={`w-full bg-white text-black px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 placeholder:text-gray-400 text-sm transition-all disabled:opacity-60 ${
+                  fieldErrors.whatsApp
+                    ? "border-[#F87171] focus:ring-[#F87171]"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
               />
+              {fieldErrors.whatsApp && (
+                <p className="text-[#F87171] text-[11px] font-medium mt-1">
+                  {fieldErrors.whatsApp}
+                </p>
+              )}
             </div>
 
-            {(formError || (message && message.type === "error")) && (
+            {message && message.type === "error" && (
               <p className="text-[#F87171] text-[11px] font-medium">
-                {formError ?? message?.text}
+                {message.text}
               </p>
             )}
 

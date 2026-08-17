@@ -23,7 +23,13 @@ const sheets = google.sheets({
 
 const SHEET_NAME = "Enrollments";
 
-const HEADER = ["Full Name", "Email", "Phone Number", "Amount Paid", "Enrolled At"];
+const HEADER = [
+  "Full Name",
+  "Email",
+  "Phone Number",
+  "Amount Paid",
+  "Enrolled At",
+];
 
 async function ensureHeaderExists() {
   const res = await sheets.spreadsheets.values.get({
@@ -56,6 +62,9 @@ async function getExistingEmails(): Promise<Set<string>> {
   return new Set(rows.flat().map((email) => email.toLowerCase().trim()));
 }
 
+// Neon returns UTC instants regardless of the server's local timezone — shift
+// by the fixed IST offset and read back with UTC getters so this is correct
+// no matter what timezone the script runs in (see convert-time-to-ist.ts).
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
 function formatDate(date: Date) {

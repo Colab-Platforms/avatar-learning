@@ -9,21 +9,39 @@ export function validateCreateWebinarOrder(data: unknown): {
   value: CreateWebinarOrderBody;
 } {
   const schema = Joi.object<CreateWebinarOrderBody>({
-    name: Joi.string().trim().min(2).required().messages({
-      "any.required": "name is required",
-      "string.empty": "name cannot be empty",
-    }),
+    name: Joi.string()
+      .trim()
+      .min(2)
+      .max(60)
+      .pattern(/^[A-Za-z][A-Za-z\s'.-]*$/)
+      .required()
+      .messages({
+        "any.required": "name is required",
+        "string.empty": "name cannot be empty",
+        "string.min": "name must be at least 2 characters",
+        "string.max": "name cannot exceed 60 characters",
+        "string.pattern.base": "name must contain only letters, spaces, and -'.",
+      }),
     email: Joi.string().trim().email().required().messages({
       "any.required": "email is required",
       "string.email": "email must be a valid email address",
     }),
+    // Digits only (after stripping spaces/hyphens/parens), optional leading
+    // "+", 8-15 digits — the old character-class-only regex accepted strings
+    // with zero digits (e.g. "-------"), which is not a valid phone number.
     phoneNumber: Joi.string()
       .trim()
-      .pattern(/^[0-9+\-\s]{7,15}$/)
+      .custom((value: string, helpers) => {
+        const digits = value.replace(/[\s\-()]/g, "");
+        if (!/^\+?[0-9]{8,15}$/.test(digits)) {
+          return helpers.error("any.invalid");
+        }
+        return value;
+      })
       .required()
       .messages({
         "any.required": "phoneNumber is required",
-        "string.pattern.base": "phoneNumber must be a valid phone number",
+        "any.invalid": "phoneNumber must be a valid phone number",
       }),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });
