@@ -44,7 +44,7 @@ export default function WebinarPage() {
       <AgendaSection />
 
       {/* 6. No Theory Section ("You'll watch it built live") */}
-      <NoTheorySection />
+      {/* <NoTheorySection /> */}
 
       {/* 7. Hands-on Section ("Real tools opened live") */}
       <HandsOnSection />

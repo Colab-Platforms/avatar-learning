@@ -379,9 +379,9 @@ export default function HeroSection() {
           </div>
 
           {/* Right Column: Registration Card on Desktop */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center">
+          <div className="lg:col-span-5 lg:self-stretch">
             {/* The form card is shown inline here on desktop */}
-            <div className="hidden lg:block w-full">
+            <div className="hidden lg:flex lg:sticky lg:top-24 w-full justify-center">
               <RegistrationForm />
             </div>
           </div>

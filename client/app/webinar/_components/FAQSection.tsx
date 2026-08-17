@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldCheck, Plus, Minus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 
 const faqData = [
   {
@@ -34,62 +34,71 @@ export default function FAQSection() {
   };
 
   return (
-    <section className="bg-white py-12 sm:py-16 border-b border-gray-100">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section className="bg-white py-16 sm:py-20 border-b border-gray-100">
+      {/* Outer container spanning the full page width matching other cards (max-w-7xl) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         {/* Shield commitment badge box */}
-        <div className="bg-[#F0FDF4] border border-[#DCFCE7] rounded-2xl p-5 mb-12 flex gap-4 text-left">
-          <div className="w-10 h-10 bg-green-150 border border-green-200 rounded-xl flex items-center justify-center text-green-600 shrink-0 shadow-inner">
-            <ShieldCheck className="w-5 h-5 fill-green-600/10 stroke-[2]" />
-          </div>
+        <div className="bg-[#EBF9F1] border border-[#D1F2DC] rounded-[24px] p-6 flex items-center gap-6 text-left w-full">
+          <img
+            src="/webinar/shield.png"
+            alt="Commitment Shield"
+            className="w-[42px] h-[48px] object-contain shrink-0"
+          />
           <div>
-            <h4 className="font-extrabold text-green-900 text-sm sm:text-base mb-1">
+            <h4 className="font-extrabold text-[#065F46] text-[15px] sm:text-base mb-1 leading-snug">
               Just ₹7 to hold your seat
             </h4>
-            <p className="text-green-700 text-xs sm:text-sm leading-relaxed font-medium">
+            <p className="text-[#047857] text-[11px] sm:text-[13px] leading-relaxed font-medium">
               The nominal fee keeps no-shows out so serious learners get a spot. Show up live and everything &mdash; the session, the certificate and all four bonuses &mdash; is yours to keep.
             </p>
           </div>
         </div>
+      </div>
 
+      {/* Inner container for the FAQ Accordion (max-w-3xl for optimal readability) */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="mb-8 text-left">
-          <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#1E6BFA]">
+        <div className="mb-10 text-center">
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-[#1E6BFA]">
             &sect; QUESTIONS
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2">
-            Questions, <span className="text-gray-400 font-medium italic">answered.</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B132B] mt-2 tracking-tight">
+            Questions, answered.
           </h2>
         </div>
 
         {/* Accordion Questions List */}
-        <div className="space-y-3.5">
+        <div className="space-y-4">
           {faqData.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
               <div
                 key={idx}
-                className="border border-gray-150 rounded-2xl overflow-hidden bg-white hover:border-gray-300 transition-all duration-200"
+                className="border border-[#E2E8F0] rounded-[16px] overflow-hidden bg-[#F4F6F9] hover:bg-[#EDF0F5] hover:border-[#CBD5E1] transition-all duration-200"
               >
                 <button
                   onClick={() => toggleFaq(idx)}
-                  className="w-full px-6 py-4.5 text-left flex justify-between items-center gap-4 focus:outline-none cursor-pointer"
+                  className="w-full px-6 py-5 text-left flex justify-between items-center gap-4 focus:outline-none cursor-pointer"
                 >
-                  <span className="font-extrabold text-gray-900 text-sm sm:text-base leading-snug">
+                  <span className="font-bold text-[#0B132B] text-[15px] sm:text-[17px] leading-snug">
                     {faq.question}
                   </span>
-                  <span className="shrink-0 text-gray-500 hover:text-gray-900 transition-colors">
-                    {isOpen ? <Minus className="w-4 h-4 stroke-[3]" /> : <Plus className="w-4 h-4 stroke-[3]" />}
+                  <span className="shrink-0 text-[#1E6BFA] transition-colors">
+                    {isOpen ? (
+                      <Minus className="w-4 h-4 stroke-[3]" />
+                    ) : (
+                      <Plus className="w-4 h-4 stroke-[3]" />
+                    )}
                   </span>
                 </button>
 
                 {/* Animated expandable content */}
                 <div
                   className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    isOpen ? "max-h-40 border-t border-gray-100" : "max-h-0"
+                    isOpen ? "max-h-[300px] border-t border-[#E2E8F0]" : "max-h-0"
                   }`}
                 >
-                  <div className="px-6 py-4 text-gray-600 text-xs sm:text-sm leading-relaxed">
+                  <div className="px-6 py-5 text-slate-600 text-xs sm:text-sm leading-relaxed bg-[#F4F6F9]">
                     {faq.answer}
                   </div>
                 </div>
@@ -97,8 +106,8 @@ export default function FAQSection() {
             );
           })}
         </div>
-
       </div>
     </section>
   );
 }
+
