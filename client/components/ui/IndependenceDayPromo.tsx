@@ -142,7 +142,7 @@ export function IndependenceDayPromo() {
                 <span className="font-bold text-[#138808]">₹999</span>{" "}
                 Direct2Hire program for just{" "}
                 <span className="font-bold text-[#138808]">₹99</span>. Use the
-                code below at checkout — valid till 16th August.
+                code below at checkout — valid till 20th August.
               </p>
 
               <button

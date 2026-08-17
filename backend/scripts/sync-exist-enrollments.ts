@@ -56,12 +56,15 @@ async function getExistingEmails(): Promise<Set<string>> {
   return new Set(rows.flat().map((email) => email.toLowerCase().trim()));
 }
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
 function formatDate(date: Date) {
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
   const pad = (n: number) => String(n).padStart(2, "0");
 
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate(),
-  )} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(
+    ist.getUTCDate(),
+  )} ${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
 }
 
 // amount is stored in paise (smallest currency unit) — convert to rupees.

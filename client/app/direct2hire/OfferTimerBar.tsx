@@ -108,7 +108,7 @@ export function OfferTimerBar() {
           href="/direct2hire"
           className="hidden md:inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-px text-white/95"
         >
-          Ends 16th August
+          Ends 20th August
         </Link>
       </p>
 
@@ -116,10 +116,7 @@ export function OfferTimerBar() {
       <div className="flex sm:hidden w-full overflow-hidden relative items-center justify-start h-full">
         <div className="animate-marquee whitespace-nowrap flex items-center select-none py-1">
           <div className="flex items-center gap-4 text-[10.5px] font-semibold text-white px-4">
-            <Link
-              href="/direct2hire"
-              className="flex items-center gap-1.5"
-            >
+            <Link href="/direct2hire" className="flex items-center gap-1.5">
               <span>Independence Offer</span>
               <span className="inline-flex items-center rounded-full bg-white px-1.5 py-px text-[9.5px] font-extrabold text-orange-700 shadow-sm">
                 90% OFF
@@ -137,7 +134,8 @@ export function OfferTimerBar() {
               title="Copy code"
               className="inline-flex items-center gap-0.5 rounded-full border border-white/20 bg-white/10 px-2 py-px text-white active:scale-95 transition-all hover:bg-white/20 hover:border-white/45"
             >
-              Code: <span className="font-mono font-extrabold">{PROMO_CODE}</span>
+              Code:{" "}
+              <span className="font-mono font-extrabold">{PROMO_CODE}</span>
               {copied ? (
                 <Check className="h-2.5 w-2.5 text-green-300" />
               ) : (
@@ -146,15 +144,17 @@ export function OfferTimerBar() {
             </button>
 
             <span className="text-white/80">Ends 16th August</span>
-            <span className="mx-2 text-white/35 font-normal select-none">•</span>
+            <span className="mx-2 text-white/35 font-normal select-none">
+              •
+            </span>
           </div>
 
           {/* Repeated duplicate for seamless loop */}
-          <div className="flex items-center gap-4 text-[10.5px] font-semibold text-white px-4" aria-hidden="true">
-            <Link
-              href="/direct2hire"
-              className="flex items-center gap-1.5"
-            >
+          <div
+            className="flex items-center gap-4 text-[10.5px] font-semibold text-white px-4"
+            aria-hidden="true"
+          >
+            <Link href="/direct2hire" className="flex items-center gap-1.5">
               <span>Independence Offer</span>
               <span className="inline-flex items-center rounded-full bg-white px-1.5 py-px text-[9.5px] font-extrabold text-orange-700 shadow-sm">
                 90% OFF
@@ -172,7 +172,8 @@ export function OfferTimerBar() {
               title="Copy code"
               className="inline-flex items-center gap-0.5 rounded-full border border-white/20 bg-white/10 px-2 py-px text-white active:scale-95 transition-all hover:bg-white/20 hover:border-white/45"
             >
-              Code: <span className="font-mono font-extrabold">{PROMO_CODE}</span>
+              Code:{" "}
+              <span className="font-mono font-extrabold">{PROMO_CODE}</span>
               {copied ? (
                 <Check className="h-2.5 w-2.5 text-green-300" />
               ) : (
@@ -181,7 +182,9 @@ export function OfferTimerBar() {
             </button>
 
             <span className="text-white/80">Ends 16th August</span>
-            <span className="mx-2 text-white/35 font-normal select-none">•</span>
+            <span className="mx-2 text-white/35 font-normal select-none">
+              •
+            </span>
           </div>
         </div>
       </div>

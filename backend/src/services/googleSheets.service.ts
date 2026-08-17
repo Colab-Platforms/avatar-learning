@@ -35,11 +35,16 @@ export type SheetsEnrollmentInput = {
   enrolledAt: Date;
 };
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+// Server TZ is not guaranteed to be IST (differs between local dev and prod
+// host) — anchor to UTC + fixed IST offset instead of Date's local getters.
 function formatDate(date: Date): string {
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate(),
-  )} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(
+    ist.getUTCDate(),
+  )} ${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
 }
 
 function formatUserName(

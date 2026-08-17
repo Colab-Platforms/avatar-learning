@@ -22,6 +22,7 @@ const APPLY = process.argv.includes("--apply");
 const TARGETS: { tab: string; header: string }[] = [
   { tab: "Signups", header: "Registered At" },
   { tab: "Leads", header: "Created At" },
+  { tab: "Enrollments", header: "Enrolled At" },
 ];
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
