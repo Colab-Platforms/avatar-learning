@@ -68,11 +68,17 @@ export const createPaymentOrder = (courseId: string): Promise<CreateOrderRespons
 export const verifyPayment = (payload: VerifyPaymentPayload): Promise<void> =>
   apiClient.post("/payment/verify", payload).then((r) => r.data);
 
+export type Direct2HirePlan = "BASIC" | "STANDARD" | "PRO";
+
 export const createDirect2HireOrder = (
+  plan: Direct2HirePlan,
   couponCode?: string,
 ): Promise<CreateOrderResponse> =>
   apiClient
-    .post("/direct2hire/create-order", couponCode ? { couponCode } : {})
+    .post("/direct2hire/create-order", {
+      plan,
+      ...(couponCode ? { couponCode } : {}),
+    })
     .then((r) => r.data.data);
 
 export const createAssessmentCounsellingOrder = (): Promise<CreateOrderResponse> =>
@@ -80,11 +86,18 @@ export const createAssessmentCounsellingOrder = (): Promise<CreateOrderResponse>
     .post("/direct2hire/assessment-counselling/create-order")
     .then((r) => r.data.data);
 
-export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
-  apiClient.post("/coupons/apply", { code }).then((r) => r.data.data);
+export const applyCoupon = (
+  code: string,
+  plan: Direct2HirePlan = "STANDARD",
+): Promise<ApplyCouponResponse> =>
+  apiClient.post("/coupons/apply", { code, plan }).then((r) => r.data.data);
 
-export const getReferralDiscount = (): Promise<ReferralDiscountResponse | null> =>
-  apiClient.get("/direct2hire/referral-discount").then((r) => r.data.data);
+export const getReferralDiscount = (
+  plan: Direct2HirePlan = "STANDARD",
+): Promise<ReferralDiscountResponse | null> =>
+  apiClient
+    .get("/direct2hire/referral-discount", { params: { plan } })
+    .then((r) => r.data.data);
 
 export interface CreateWebinarOrderInput {
   name: string;

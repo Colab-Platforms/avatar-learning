@@ -83,10 +83,9 @@ export function OfferTimerBar() {
 
           <span className="text-white/90">
             Direct2Hire —{" "}
-            <span className="line-through decoration-white decoration-2">
-              ₹999
-            </span>{" "}
-            <span className="font-extrabold text-green-300">₹99</span>
+            <span className="font-extrabold text-green-300">
+              plans from ₹99
+            </span>
           </span>
         </Link>
 
@@ -123,8 +122,9 @@ export function OfferTimerBar() {
               </span>
               <span className="text-white/90">
                 Direct2Hire —{" "}
-                <span className="line-through decoration-white">₹999</span>{" "}
-                <span className="font-extrabold text-green-300">₹99</span>
+                <span className="font-extrabold text-green-300">
+                  plans from ₹99
+                </span>
               </span>
             </Link>
 
@@ -161,8 +161,9 @@ export function OfferTimerBar() {
               </span>
               <span className="text-white/90">
                 Direct2Hire —{" "}
-                <span className="line-through decoration-white">₹999</span>{" "}
-                <span className="font-extrabold text-green-300">₹99</span>
+                <span className="font-extrabold text-green-300">
+                  plans from ₹99
+                </span>
               </span>
             </Link>
 

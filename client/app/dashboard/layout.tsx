@@ -55,7 +55,12 @@ export default function DashboardLayout({
     );
   }
 
-  if (!d2hStatus?.enrollment?.hasAssessmentCounsellingAccess) {
+  const enrollment = d2hStatus?.enrollment;
+  const hasAnyD2HAccess =
+    enrollment?.status === "PAID" ||
+    !!enrollment?.assessmentCounsellingPaidAt;
+
+  if (!hasAnyD2HAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-lime-50 px-6">
         <div className="max-w-md text-center">

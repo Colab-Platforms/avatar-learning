@@ -81,6 +81,10 @@ export default function DashboardOverviewPage() {
 
   // ─── DYNAMIC PROGRESS & PILLARS CALCULATIONS ───────────────────────────────
   const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
+  const plan = d2hStatus?.enrollment?.plan ?? null;
+  // Internship is Standard+; placement is Pro-only. Basic stops at AI Learning.
+  const hasInternshipAccess = hasFullAccess && plan !== "BASIC";
+  const hasPlacementAccess = hasFullAccess && plan === "PRO";
   const profile = counsellingData?.profile ?? null;
   const recommendation = counsellingData?.recommendation ?? null;
 
@@ -188,8 +192,14 @@ export default function DashboardOverviewPage() {
     if (!hasLearning) {
       return `You're on track. Complete the sessions and modules in "${activeCourseSummary?.title || "AI Fundamentals"}" to unlock your hands-on internship!`;
     }
+    if (!hasInternshipAccess) {
+      return "You've completed your learning! Upgrade to the Standard Direct2Hire plan to unlock your hands-on internship.";
+    }
     if (!hasInternship) {
       return `Awesome job completing your courses! Now work on your weekly internship tasks. Get all tasks approved to earn your internship certificate.`;
+    }
+    if (!hasPlacementAccess) {
+      return "Internship complete! Upgrade to the Pro Direct2Hire plan to unlock the Placement Assessment and mock interviews.";
     }
     if (!hasPlacementAssessment) {
       return "Fantastic! You've finished your learning and internship. Take the Placement Assessment and unlock mock interviews with industry experts.";
@@ -217,7 +227,9 @@ export default function DashboardOverviewPage() {
     booking,
     hasLearning,
     activeCourseSummary,
+    hasInternshipAccess,
     hasInternship,
+    hasPlacementAccess,
     hasPlacementAssessment,
     hasGoodMockFeedback,
     mockInterview,
@@ -244,10 +256,22 @@ export default function DashboardOverviewPage() {
           : "/dashboard/learning",
       };
     }
+    if (!hasInternshipAccess) {
+      return {
+        label: "Upgrade to Standard — Unlock Internship",
+        href: "/direct2hire/enroll",
+      };
+    }
     if (!hasInternship) {
       return {
         label: "Go to Internship Tasks",
         href: "/dashboard/internships",
+      };
+    }
+    if (!hasPlacementAccess) {
+      return {
+        label: "Upgrade to Pro — Unlock Placement",
+        href: "/direct2hire/enroll",
       };
     }
     if (!hasPlacementAssessment) {
@@ -273,7 +297,9 @@ export default function DashboardOverviewPage() {
     hasCounselling,
     hasFullAccess,
     hasLearning,
+    hasInternshipAccess,
     hasInternship,
+    hasPlacementAccess,
     hasPlacementAssessment,
     hasGoodMockFeedback,
     mockInterview,
@@ -334,15 +360,19 @@ export default function DashboardOverviewPage() {
         title: "Internship",
         statusText: !hasFullAccess
           ? "Upgrade to the full programme to unlock"
-          : hasInternship
-            ? "All weekly tasks approved!"
-            : hasLearning
-              ? `${approvedInternshipTasks} of ${totalInternshipTasks} tasks approved`
-              : "Unlock after completing course",
+          : !hasInternshipAccess
+            ? "Upgrade to the Standard plan to unlock"
+            : hasInternship
+              ? "All weekly tasks approved!"
+              : hasLearning
+                ? `${approvedInternshipTasks} of ${totalInternshipTasks} tasks approved`
+                : "Unlock after completing course",
         completed: hasInternship,
-        active: hasLearning && hasFullAccess && !hasInternship,
-        locked: !hasLearning || !hasFullAccess,
-        href: hasFullAccess ? "/dashboard/internships" : "/direct2hire/enroll",
+        active: hasLearning && hasInternshipAccess && !hasInternship,
+        locked: !hasLearning || !hasInternshipAccess,
+        href: hasInternshipAccess
+          ? "/dashboard/internships"
+          : "/direct2hire/enroll",
         icon: Briefcase,
       },
       {
@@ -350,27 +380,29 @@ export default function DashboardOverviewPage() {
         title: "Placement",
         statusText: !hasFullAccess
           ? "Upgrade to the full programme to unlock"
-          : hasPlacement
-            ? "Mock interview cleared — ready for placement!"
-            : hasGoodMockFeedback
-              ? "Ready for placement!"
-              : hasPlacementAssessment
-                ? mockInterview?.status === "FEEDBACK_PUBLISHED"
-                  ? "Feedback received — keep improving"
-                  : mockInterview?.status === "SCHEDULED"
-                    ? "Mock interview scheduled"
-                    : mockInterview?.status === "REQUESTED"
-                      ? "Mock interview requested"
-                      : "Assessment passed — request mock interview"
-                : placement?.mockInterviewUnlocked
-                  ? "Mock Interview unlocked"
-                  : hasInternship
-                    ? "Placement assessment unlocked"
-                    : "Complete internship first",
+          : !hasPlacementAccess
+            ? "Upgrade to the Pro plan to unlock"
+            : hasPlacement
+              ? "Mock interview cleared — ready for placement!"
+              : hasGoodMockFeedback
+                ? "Ready for placement!"
+                : hasPlacementAssessment
+                  ? mockInterview?.status === "FEEDBACK_PUBLISHED"
+                    ? "Feedback received — keep improving"
+                    : mockInterview?.status === "SCHEDULED"
+                      ? "Mock interview scheduled"
+                      : mockInterview?.status === "REQUESTED"
+                        ? "Mock interview requested"
+                        : "Assessment passed — request mock interview"
+                  : placement?.mockInterviewUnlocked
+                    ? "Mock Interview unlocked"
+                    : hasInternship
+                      ? "Placement assessment unlocked"
+                      : "Complete internship first",
         completed: hasPlacement,
-        active: hasInternship && hasFullAccess && !hasPlacement,
-        locked: !hasInternship || !hasFullAccess,
-        href: hasFullAccess ? "/dashboard/placement" : "/direct2hire/enroll",
+        active: hasInternship && hasPlacementAccess && !hasPlacement,
+        locked: !hasInternship || !hasPlacementAccess,
+        href: hasPlacementAccess ? "/dashboard/placement" : "/direct2hire/enroll",
         icon: Trophy,
       },
     ];
@@ -382,9 +414,11 @@ export default function DashboardOverviewPage() {
     booking,
     hasLearning,
     learningProgress,
+    hasInternshipAccess,
     hasInternship,
     approvedInternshipTasks,
     totalInternshipTasks,
+    hasPlacementAccess,
     hasPlacement,
     hasPlacementAssessment,
     hasGoodMockFeedback,
@@ -987,7 +1021,7 @@ export default function DashboardOverviewPage() {
             </p>
           </div>
 
-          {hasCounselling && hasFullAccess ? (
+          {hasCounselling && hasInternshipAccess ? (
             <>
               {/* Progress Line */}
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
@@ -1047,7 +1081,9 @@ export default function DashboardOverviewPage() {
             <div className="rounded-2xl bg-slate-50/50 border border-slate-100 p-6 flex flex-col items-center justify-center text-center">
               <Lock className="w-6 h-6 text-slate-300 mb-2" />
               <p className="text-xs text-slate-500 font-medium">
-                Internship tasks will unlock after completing courses
+                {!hasFullAccess || hasInternshipAccess
+                  ? "Internship tasks will unlock after completing courses"
+                  : "Upgrade to the Standard plan to unlock internship tasks"}
               </p>
             </div>
           )}
@@ -1064,7 +1100,7 @@ export default function DashboardOverviewPage() {
             </p>
           </div>
 
-          {hasInternship ? (
+          {hasInternship && hasPlacementAccess ? (
             <>
               <div className="flex items-center gap-4 border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -1158,7 +1194,9 @@ export default function DashboardOverviewPage() {
             <div className="rounded-2xl bg-slate-50/50 border border-slate-100 p-6 flex flex-col items-center justify-center text-center">
               <Lock className="w-6 h-6 text-slate-300 mb-2" />
               <p className="text-xs text-slate-500 font-medium">
-                Placement assessment unlocks after finishing internship
+                {!hasInternship
+                  ? "Placement assessment unlocks after finishing internship"
+                  : "Upgrade to the Pro plan to unlock placement"}
               </p>
             </div>
           )}

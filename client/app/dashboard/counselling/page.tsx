@@ -19,11 +19,13 @@ import {
   ChevronDown,
   ClipboardCheck,
   ArrowRight,
+  PlayCircle,
 } from "lucide-react";
 import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
 import { useCounsellingFeedback } from "@/hooks/queries/useCounsellingFeedback";
 import { useCounsellingProfile } from "@/hooks/queries/useCounsellingProfile";
 import { useCreateCounsellingBooking } from "@/hooks/mutations/useCreateCounsellingBooking";
+import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { CourseSelectionPanel } from "@/components/counselling/CourseSelectionPanel";
 import { CounsellorFeedbackCard } from "@/components/counselling/CounsellorFeedbackCard";
 import { cn } from "@/lib/utils";
@@ -63,14 +65,48 @@ function formatDateTime(value?: string | null) {
   });
 }
 
+// Basic-plan students don't get a live 1-on-1 counselling slot — they get a
+// pre-recorded session instead. Content isn't wired up yet, so this is a
+// placeholder until a real recording is dropped in.
+function RecordedCounsellingPlaceholder() {
+  return (
+    <div className="mx-auto w-full max-w-2xl px-4 py-16 sm:px-6 lg:px-8 text-center">
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+        <PlayCircle size={26} />
+      </div>
+      <h1 className="text-xl font-bold text-slate-900">
+        Recorded Counselling
+      </h1>
+      <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+        Your Basic plan includes a pre-recorded counselling session covering
+        career clarity and a learning roadmap. It&apos;ll appear here soon —
+        check back shortly.
+      </p>
+      <p className="mx-auto mt-4 max-w-md text-sm text-slate-500">
+        Want a live 1-on-1 call with a counsellor instead? Contact support to
+        upgrade to the Standard plan.
+      </p>
+    </div>
+  );
+}
+
 export default function CounsellingPage() {
-  const { data: booking, isLoading: bookingLoading } = useCounsellingBooking();
+  const { data: d2hStatus, isLoading: d2hStatusLoading } = useD2HStatus();
+  const plan = d2hStatus?.enrollment?.plan;
+  const isBasicPlan = plan === "BASIC";
+  const hasLiveCounsellingAccess = d2hStatus
+    ? (d2hStatus.enrollment?.hasLiveCounsellingAccess ?? !isBasicPlan)
+    : true;
+
+  const { data: booking, isLoading: bookingLoading } = useCounsellingBooking(
+    !d2hStatusLoading && hasLiveCounsellingAccess,
+  );
   const { data: counsellingData, isLoading: profileLoading } =
-    useCounsellingProfile();
+    useCounsellingProfile(!d2hStatusLoading && hasLiveCounsellingAccess);
   const createBookingMutation = useCreateCounsellingBooking();
   const counsellingCompleted = booking?.counsellingCompleted ?? false;
   const { data: feedback, isLoading: feedbackLoading } = useCounsellingFeedback(
-    counsellingCompleted,
+    hasLiveCounsellingAccess && counsellingCompleted,
   );
 
   const [preferredMode, setPreferredMode] = useState<"VOICE" | "VIDEO">("VOICE");
@@ -86,6 +122,7 @@ export default function CounsellingPage() {
   };
 
   if (
+    d2hStatusLoading ||
     bookingLoading ||
     profileLoading ||
     (counsellingCompleted && feedbackLoading)
@@ -95,6 +132,10 @@ export default function CounsellingPage() {
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
+  }
+
+  if (!hasLiveCounsellingAccess) {
+    return <RecordedCounsellingPlaceholder />;
   }
 
   const hasAssessment = !!counsellingData?.profile?.isSubmitted;

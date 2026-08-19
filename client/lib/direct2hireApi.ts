@@ -1,12 +1,16 @@
 import apiClient from "./apiClient";
 import type { DBCourse } from "./coursesApi";
 
+export type Direct2HirePlan = "BASIC" | "STANDARD" | "PRO";
+
 export interface D2HEnrollment {
   id: string;
   userId: string;
   status: "PENDING" | "PAID";
+  plan: Direct2HirePlan | null;
   assessmentCounsellingPaidAt: string | null;
   hasAssessmentCounsellingAccess: boolean;
+  hasLiveCounsellingAccess: boolean;
   createdAt: string;
   updatedAt: string;
 }

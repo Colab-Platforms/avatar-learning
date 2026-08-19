@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireJobPlacementAccess } from "../assessmentCounsellingAccess.middleware.js";
 import * as jobPlacementController from "./job-placement.controller.js";
 
 const router = Router();
+const userAuth = [auth("USER"), requireJobPlacementAccess] as const;
 
-router.get("/", auth("USER"), jobPlacementController.getMyJourney);
-router.post("/", auth("USER"), jobPlacementController.createEntry);
-router.put("/:entryId", auth("USER"), jobPlacementController.updateEntry);
-router.delete("/:entryId", auth("USER"), jobPlacementController.deleteEntry);
+router.get("/", ...userAuth, jobPlacementController.getMyJourney);
+router.post("/", ...userAuth, jobPlacementController.createEntry);
+router.put("/:entryId", ...userAuth, jobPlacementController.updateEntry);
+router.delete("/:entryId", ...userAuth, jobPlacementController.deleteEntry);
 
 export default router;

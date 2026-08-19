@@ -43,14 +43,36 @@ const STEP_ORDER = [
   "/dashboard/placement",
 ] as const;
 
-/** Steps that additionally require full ₹999 Direct2Hire access, regardless of progression. */
+/** Steps that additionally require full Direct2Hire purchase, regardless of progression. */
 const FULL_ACCESS_STEPS = new Set<string>([
   "ai-learning",
   "/dashboard/internships",
   "/dashboard/placement",
 ]);
 
-/** Returns, for each step id/href in STEP_ORDER, whether it is locked (previous step not yet completed, or — for learning/internship/placement — full programme not yet purchased). */
+/** Minimum plan tier required for each full-access step. Basic covers "ai-learning";
+ * Standard adds internships; Pro adds placement. */
+const PLAN_RANK: Record<string, number> = { BASIC: 0, STANDARD: 1, PRO: 2 };
+const STEP_MIN_PLAN: Record<string, keyof typeof PLAN_RANK> = {
+  "ai-learning": "BASIC",
+  "/dashboard/internships": "STANDARD",
+  "/dashboard/placement": "PRO",
+};
+
+const PLAN_LABEL: Record<string, string> = {
+  BASIC: "Basic",
+  STANDARD: "Standard",
+  PRO: "Pro",
+};
+
+function lockTitle(id: string): string {
+  if (FULL_ACCESS_STEPS.has(id)) {
+    return `Upgrade to the ${PLAN_LABEL[STEP_MIN_PLAN[id]]} Direct2Hire plan to unlock`;
+  }
+  return "Complete the previous step to unlock";
+}
+
+/** Returns, for each step id/href in STEP_ORDER, whether it is locked (previous step not yet completed, or — for learning/internship/placement — plan tier too low). */
 function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
   const { data: counsellingData } = useCounsellingProfile();
   const profile = counsellingData?.profile ?? null;
@@ -65,7 +87,9 @@ function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
       return Object.fromEntries(STEP_ORDER.map((id) => [id, false]));
     }
 
-    const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
+    const enrollment = d2hStatus?.enrollment;
+    const hasFullAccess = enrollment?.status === "PAID";
+    const planRank = enrollment?.plan ? PLAN_RANK[enrollment.plan] : -1;
     const hasAssessment = !!profile?.isSubmitted;
     const hasCounselling = !!(
       booking?.counsellingCompleted || selection?.selectedCourseId
@@ -89,11 +113,14 @@ function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
     return Object.fromEntries(
       STEP_ORDER.map((id, i) => [
         id,
-        !completed[i] || (FULL_ACCESS_STEPS.has(id) && !hasFullAccess),
+        !completed[i] ||
+          (FULL_ACCESS_STEPS.has(id) &&
+            (!hasFullAccess || planRank < PLAN_RANK[STEP_MIN_PLAN[id]])),
       ]),
     );
   }, [
     d2hStatus?.enrollment?.status,
+    d2hStatus?.enrollment?.plan,
     profile,
     booking?.counsellingCompleted,
     selection?.selectedCourseId,
@@ -301,11 +328,7 @@ export function DashboardSidebar({
                   <div
                     key={item.href}
                     aria-disabled="true"
-                    title={
-                      FULL_ACCESS_STEPS.has(item.href)
-                        ? "Upgrade to the full programme to unlock"
-                        : "Complete the previous step to unlock"
-                    }
+                    title={lockTitle(item.href)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/20 border border-transparent cursor-not-allowed select-none"
                   >
                     <Icon size={16} className="text-white/15" />
@@ -347,11 +370,7 @@ export function DashboardSidebar({
                 <div
                   key={item.id}
                   aria-disabled="true"
-                  title={
-                    FULL_ACCESS_STEPS.has(item.id)
-                      ? "Upgrade to the full programme to unlock"
-                      : "Complete the previous step to unlock"
-                  }
+                  title={lockTitle(item.id)}
                   className="pt-0.5 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/20 border border-transparent cursor-not-allowed select-none"
                 >
                   <Icon size={16} className="text-white/15" />

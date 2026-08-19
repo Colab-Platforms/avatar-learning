@@ -20,6 +20,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button, ScrollReveal } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { PlanPricingCards } from "./PlanPricingCards";
 import { StickyBuyBar } from "./StickyBuyBar";
 import { StickyMemoSticker } from "./StickyMemoSticker";
 import { UrgencyBanner } from "./UrgencyBanner";
@@ -279,7 +280,7 @@ export default function Direct2HirePage() {
   const offerLabel = useOfferCountdown();
   const [offerHrs, offerMin, offerSec] = offerLabel.split(":");
 
-  const ctaHref = enrolled ? "/dashboard" : "/direct2hire/enroll";
+  const ctaHref = enrolled ? "/dashboard" : "/direct2hire/enroll?plan=STANDARD";
   const ctaLabel = processing
     ? "Processing Payment…"
     : enrolled
@@ -409,23 +410,23 @@ export default function Direct2HirePage() {
                     <div className="flex items-stretch rounded-2xl border border-border bg-white overflow-hidden w-full sm:w-fit shadow-sm mb-3">
                       <div className="min-w-0 flex-1 sm:flex-none px-3 sm:px-5 py-2.5 sm:py-3.5">
                         <p className="text-[10px] sm:text-[11px] text-text-subtle mb-0.5 whitespace-nowrap">
-                          Enroll today for
+                          Plans starting at
                         </p>
                         <p className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
                           <span className="text-brand-600 font-bold text-xl sm:text-[28px]">
-                            ₹999
+                            ₹99
                           </span>
-                          <span className="text-text-subtle line-through text-[12px] sm:text-[15px]">
-                            ₹24,999
+                          <span className="text-text-subtle text-[12px] sm:text-[15px]">
+                            worth ₹24,999
                           </span>
                         </p>
                       </div>
                       <div className="bg-text text-white flex flex-col items-center justify-center px-5 sm:px-7 min-w-26 sm:min-w-32 shrink-0">
                         <span className="text-lg sm:text-xl font-black leading-none whitespace-nowrap">
-                          96%
+                          3
                         </span>
                         <span className="text-[9px] sm:text-[10px] tracking-wider">
-                          OFF
+                          PLANS
                         </span>
                       </div>
                     </div>
@@ -643,6 +644,8 @@ export default function Direct2HirePage() {
           </div>
         </section>
 
+        <PlanPricingCards enrolled={enrolled} />
+
         {/* ══════════════════════════════
             WHAT YOU GET — VALUE BREAKDOWN
         ══════════════════════════════ */}
@@ -654,11 +657,11 @@ export default function Direct2HirePage() {
             <ScrollReveal animation="fade-up" delay={0}>
               <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-text-subtle mb-2">
-                  What you get · Worth ₹24,999
+                  Standard plan · Worth ₹24,999
                 </p>
                 <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-text">
                   Everything you need to get hired —{" "}
-                  <span className="text-brand-600">for ₹999.</span>
+                  <span className="text-brand-600">for ₹299.</span>
                 </h2>
                 <p className="mt-3 text-text-muted text-[14px] sm:text-[15px] leading-relaxed">
                   Five guided steps, one program, one price. No hidden fees.
@@ -713,10 +716,10 @@ export default function Direct2HirePage() {
                     You pay only
                   </p>
                   <p className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-3">
-                    ₹999
+                    ₹299
                   </p>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-500/20 px-3 py-1 text-[12px] font-semibold text-brand-300 mb-5">
-                    Save ₹24,000 · 96% off
+                    Save ₹24,700 · 98% off
                   </span>
 
                   <Link href={ctaHref} className="w-full sm:w-auto">
@@ -842,7 +845,7 @@ export default function Direct2HirePage() {
                     ₹40,000–1L+
                   </div>
                   <div className="py-3 sm:py-4 lg:py-5 text-center text-[15px] sm:text-[18px] lg:text-[20px] font-black text-brand-600">
-                    ₹999
+                    From ₹99
                   </div>
                 </div>
               </div>
@@ -1148,7 +1151,7 @@ export default function Direct2HirePage() {
                     </span>
                     <p className="flex items-baseline gap-2.5 mb-4">
                       <span className="text-[38px] sm:text-[46px] font-extrabold text-slate-900 tracking-tight leading-none">
-                        ₹999
+                        ₹299
                       </span>
                       <span className="text-[18px] sm:text-[22px] text-slate-400/80 line-through font-medium leading-none">
                         ₹24,999

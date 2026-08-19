@@ -6,9 +6,11 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "./payment.utils.js";
 import { getPaymentProvider, getBackendBaseUrl } from "./payment.config.js";
 import { getCashfree, getCashfreeEnvironment } from "./cashfree.client.js";
+import type { Direct2HirePlan } from "@prisma/client";
 import {
   direct2hireService,
   DIRECT2HIRE_COMMISSION_BASE_AMOUNT,
+  DIRECT2HIRE_PLAN_PRICES,
 } from "@/modules/direct2hire/direct2hire.service.js";
 import { partnerService } from "@/modules/partners/partner.service.js";
 import { couponService } from "@/modules/coupon/coupon.service.js";
@@ -22,10 +24,6 @@ import type {
   VerifyRazorpayPaymentBody,
   Direct2HireLeadInput,
 } from "./payment.types.js";
-
-const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
-  process.env.DIRECT2HIRE_PRICE_RUPEES!,
-);
 
 const DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES: number = parseInt(
   process.env.DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES!,
@@ -207,6 +205,7 @@ async function completePayment(params: {
     let enrolledUserSheetEmail = "";
     let enrolledUserSheetPhone: string | null = null;
     let didEnroll = false;
+    let enrollmentPlan: Direct2HirePlan | null = null;
 
     await prisma.$transaction(async (tx) => {
       await tx.paymentTransaction.create({
@@ -230,10 +229,11 @@ async function completePayment(params: {
         order.productType === "DIRECT2HIRE" &&
         order.direct2hireEnrollmentId
       ) {
-        await tx.direct2HireEnrollment.update({
+        const updatedEnrollment = await tx.direct2HireEnrollment.update({
           where: { id: order.direct2hireEnrollmentId },
           data: { status: "PAID", paidAt: new Date() },
         });
+        enrollmentPlan = updatedEnrollment.plan;
 
         const enrolledUser = await tx.user.findUnique({
           where: { id: order.userId },
@@ -307,7 +307,12 @@ async function completePayment(params: {
       // partnerService.scheduleReferralCredit). Best-effort — a hiccup here
       // must never fail a payment that has already been captured.
       try {
-        await direct2hireService.grantCourseAccess(order.userId);
+        // Defaults to PRO (not STANDARD) as a safety net while tiered plan
+        // selection is still rolling out.
+        await direct2hireService.grantCourseAccess(
+          order.userId,
+          enrollmentPlan ?? "PRO",
+        );
         await partnerService.scheduleReferralCredit(
           order.userId,
           order.direct2hireEnrollmentId,
@@ -398,8 +403,14 @@ export class PaymentService {
 
   async createDirect2HireOrder(
     userId: string,
+    plan: Direct2HirePlan,
     couponCode?: string,
   ): Promise<CreateOrderResponse> {
+    const planPriceRupees = DIRECT2HIRE_PLAN_PRICES[plan];
+    if (!planPriceRupees) {
+      throw new ApiError("Invalid Direct2Hire plan", STATUS_CODES.BAD_REQUEST);
+    }
+
     const paidEnrollment = await prisma.direct2HireEnrollment.findFirst({
       where: { userId, status: "PAID" },
     });
@@ -416,7 +427,12 @@ export class PaymentService {
     });
     if (!enrollment) {
       enrollment = await prisma.direct2HireEnrollment.create({
-        data: { userId },
+        data: { userId, plan },
+      });
+    } else if (enrollment.plan !== plan) {
+      enrollment = await prisma.direct2HireEnrollment.update({
+        where: { id: enrollment.id },
+        data: { plan },
       });
     }
 
@@ -435,26 +451,26 @@ export class PaymentService {
       const coupon = await couponService.validateCoupon(couponCode);
       couponId = coupon.id;
       discountRupees = Math.round(
-        (DIRECT2HIRE_PRICE_RUPEES * coupon.discountPercent) / 100,
+        (planPriceRupees * coupon.discountPercent) / 100,
       );
     } else {
       const referralDiscountPercent =
         await partnerService.getReferralDiscountPercent(userId);
       if (referralDiscountPercent) {
         discountRupees = Math.round(
-          (DIRECT2HIRE_PRICE_RUPEES * referralDiscountPercent) / 100,
+          (planPriceRupees * referralDiscountPercent) / 100,
         );
       }
     }
 
     // Already bought the ₹99 Assessment + Counselling tier — credit it toward
-    // the full programme instead of charging for it twice.
+    // the plan price instead of charging for it twice.
     if (enrollment.assessmentCounsellingPaidAt) {
       discountRupees += DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES;
     }
-    discountRupees = Math.min(discountRupees, DIRECT2HIRE_PRICE_RUPEES);
+    discountRupees = Math.min(discountRupees, planPriceRupees);
 
-    const priceRupees = DIRECT2HIRE_PRICE_RUPEES - discountRupees;
+    const priceRupees = planPriceRupees - discountRupees;
 
     const provider = getPaymentProvider();
     const amountInPaise = priceRupees * 100;
