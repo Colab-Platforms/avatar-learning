@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-react";
@@ -14,7 +14,6 @@ declare global {
 }
 
 const D2H_PRICE_INR = 999;
-const AUTO_REDIRECT_SECONDS = 10;
 
 export default function Direct2HireSuccessPage() {
   const router = useRouter();
@@ -23,7 +22,6 @@ export default function Direct2HireSuccessPage() {
     enabled: hasHydrated && Boolean(user),
   });
   const firedRef = useRef(false);
-  const [secondsLeft, setSecondsLeft] = useState(AUTO_REDIRECT_SECONDS);
 
   const paid = statusData?.enrollment?.status === "PAID";
 
@@ -45,16 +43,6 @@ export default function Direct2HireSuccessPage() {
       window.fbq?.("track", "Purchase", { value: D2H_PRICE_INR, currency: "INR" });
     }
   }, [hasHydrated, user, isLoading, paid, router]);
-
-  useEffect(() => {
-    if (!paid) return;
-    if (secondsLeft <= 0) {
-      router.replace("/dashboard");
-      return;
-    }
-    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [paid, secondsLeft, router]);
 
   if (!paid) {
     return (
@@ -123,10 +111,6 @@ export default function Direct2HireSuccessPage() {
           Go to Dashboard
           <ArrowRight className="h-4 w-4" />
         </Link>
-
-        <p className="mt-3 text-xs text-slate-400">
-          Redirecting automatically in {secondsLeft}s…
-        </p>
       </div>
     </div>
   );

@@ -707,24 +707,27 @@ class AuthService {
       );
     }
 
-    const dob = dayjs(data.dateOfBirth);
-    if (!dob.isValid()) {
-      throw new ApiError(
-        "Enter a valid date of birth",
-        STATUS_CODES.BAD_REQUEST,
-      );
-    }
-    if (dob.isAfter(dayjs())) {
-      throw new ApiError(
-        "Date of birth cannot be in the future",
-        STATUS_CODES.BAD_REQUEST,
-      );
-    }
-    if (dayjs().diff(dob, "year") < MIN_PROFILE_AGE_YEARS) {
-      throw new ApiError(
-        `You must be at least ${MIN_PROFILE_AGE_YEARS} years old`,
-        STATUS_CODES.BAD_REQUEST,
-      );
+    let dob: dayjs.Dayjs | null = null;
+    if (data.dateOfBirth) {
+      dob = dayjs(data.dateOfBirth);
+      if (!dob.isValid()) {
+        throw new ApiError(
+          "Enter a valid date of birth",
+          STATUS_CODES.BAD_REQUEST,
+        );
+      }
+      if (dob.isAfter(dayjs())) {
+        throw new ApiError(
+          "Date of birth cannot be in the future",
+          STATUS_CODES.BAD_REQUEST,
+        );
+      }
+      if (dayjs().diff(dob, "year") < MIN_PROFILE_AGE_YEARS) {
+        throw new ApiError(
+          `You must be at least ${MIN_PROFILE_AGE_YEARS} years old`,
+          STATUS_CODES.BAD_REQUEST,
+        );
+      }
     }
 
     const phoneConflict = await prisma.user.findFirst({
@@ -750,7 +753,7 @@ class AuthService {
         state: data.state,
         country: data.country,
         city: data.city,
-        dateOfBirth: dob.startOf("day").toDate(),
+        dateOfBirth: dob ? dob.startOf("day").toDate() : undefined,
         profileCompleted: true,
       },
       include: { userRoleMappings: { include: { role: true } } },

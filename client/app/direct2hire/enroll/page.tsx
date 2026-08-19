@@ -55,7 +55,7 @@ export default function Direct2HireEnrollPage() {
   const assessmentCounsellingCredit = d2hStatus?.enrollment?.assessmentCounsellingPaidAt
     ? 99
     : 0;
-  const basePrice = 999 - assessmentCounsellingCredit;
+  const basePrice = 99 - assessmentCounsellingCredit;
   const [savingLead, setSavingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [couponInput, setCouponInput] = useState("");
@@ -116,11 +116,13 @@ export default function Direct2HireEnrollPage() {
       fullName,
       email: user?.email ?? "",
       phoneNumber: user?.phoneNo ?? "",
-      institutionName: "",
-      currentEducation: "",
-      country: hasProfileCountry ? user!.country! : DEFAULT_COUNTRY_CODE,
-      state: hasProfileState ? user!.state! : "",
-      city: hasProfileCity ? user!.city! : "",
+      // School/college, grade, and location fields are hidden on this form —
+      // placeholder values keep the (still-required) backend/DB fields satisfied.
+      institutionName: "NA",
+      currentEducation: "NA",
+      country: hasProfileCountry ? user!.country! : "NA",
+      state: hasProfileState ? user!.state! : "NA",
+      city: hasProfileCity ? user!.city! : "NA",
     };
   }, [user, hasProfileCountry, hasProfileState, hasProfileCity]);
 
@@ -339,6 +341,7 @@ export default function Direct2HireEnrollPage() {
               )}
             </div>
 
+            {/*
             <div>
               <label htmlFor="institutionName" className={labelCls}>
                 School / College
@@ -467,6 +470,7 @@ export default function Direct2HireEnrollPage() {
                 )}
               </div>
             )}
+            */}
           </div>
 
           <div className="mt-8 border-t border-slate-100 pt-6">
@@ -568,7 +572,7 @@ export default function Direct2HireEnrollPage() {
             <button
               type="submit"
               disabled={processing || savingLead}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-10 sm:py-4 sm:text-base"
             >
               {savingLead ? (
                 <>

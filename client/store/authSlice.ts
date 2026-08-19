@@ -342,10 +342,10 @@ export const completeProfile = createAsyncThunk(
       firstName: string;
       lastName: string;
       phoneNo: string;
-      state: string;
-      country: string;
-      city: string;
-      dateOfBirth: string;
+      state?: string;
+      country?: string;
+      city?: string;
+      dateOfBirth?: string;
     },
     { rejectWithValue }
   ) => {

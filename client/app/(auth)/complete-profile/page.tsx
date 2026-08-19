@@ -1,17 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearError, completeProfile, logoutThunk } from "@/store/authSlice";
-import {
-  getCountries,
-  getStatesForCountry,
-  getCitiesForState,
-  DEFAULT_COUNTRY_CODE,
-} from "@/data/countries";
 
 const primaryBtn = [
   "w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl",
@@ -51,26 +45,18 @@ function buildFullName(
   return [firstName, lastName].filter(Boolean).join(" ").trim();
 }
 
-export default function CompleteProfilePage() {
+function CompleteProfileForm() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading, error, hasHydrated } = useAppSelector((s) => s.auth);
 
   const [fullName, setFullName] = useState("");
   const [phoneNo, setPhoneNo] = useState("");
-  const [country, setCountry] = useState(DEFAULT_COUNTRY_CODE);
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
-  const countries = useMemo(() => getCountries(), []);
-  const states = useMemo(() => getStatesForCountry(country), [country]);
-  const cities = useMemo(
-    () => getCitiesForState(country, state),
-    [country, state],
-  );
+  const redirectTo = searchParams.get("redirect") || "/";
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -79,28 +65,16 @@ export default function CompleteProfilePage() {
       return;
     }
     if (user.profileCompleted === true) {
-      router.replace("/");
+      router.replace(redirectTo);
     }
-  }, [hasHydrated, user, router]);
+  }, [hasHydrated, user, router, redirectTo]);
 
   useEffect(() => {
     if (!user || initialized) return;
     setFullName(buildFullName(user.firstName, user.lastName));
     setPhoneNo(user.phoneNo ?? "");
-    setDateOfBirth(user.dateOfBirth ? user.dateOfBirth.slice(0, 10) : "");
     setInitialized(true);
   }, [user, initialized]);
-
-  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCountry(e.target.value);
-    setState("");
-    setCity("");
-  };
-
-  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setState(e.target.value);
-    setCity("");
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,37 +90,17 @@ export default function CompleteProfilePage() {
       setLocalError("Enter a valid 10-digit Indian mobile number");
       return;
     }
-    if (!state) {
-      setLocalError("State is required");
-      return;
-    }
-    if (!city) {
-      setLocalError("City is required");
-      return;
-    }
-    if (!dateOfBirth) {
-      setLocalError("Date of birth is required");
-      return;
-    }
-
-    const countryName =
-      countries.find((c) => c.isoCode === country)?.name ?? country;
-    const stateName = states.find((s) => s.isoCode === state)?.name ?? state;
 
     const result = await dispatch(
       completeProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phoneNo: phoneNo.trim(),
-        country: countryName,
-        state: stateName,
-        city,
-        dateOfBirth,
       }),
     );
 
     if (completeProfile.fulfilled.match(result)) {
-      router.replace("/");
+      router.replace(redirectTo);
     }
   };
 
@@ -184,7 +138,7 @@ export default function CompleteProfilePage() {
             htmlFor="fullName"
             className="text-[12px] font-semibold tracking-wide uppercase text-slate-400"
           >
-            Full name
+            Full name* 
           </label>
           <input
             id="fullName"
@@ -203,7 +157,7 @@ export default function CompleteProfilePage() {
             htmlFor="phone"
             className="text-[12px] font-semibold tracking-wide uppercase text-slate-400"
           >
-            Phone number
+            Phone number*
           </label>
           <input
             id="phone"
@@ -219,111 +173,6 @@ export default function CompleteProfilePage() {
             placeholder="9876543210"
             className={inputCls}
           />
-        </div>
-
-        <div className="space-y-1.5">
-          <label
-            htmlFor="dateOfBirth"
-            className="text-[12px] font-semibold tracking-wide uppercase text-slate-400"
-          >
-            Date of birth
-          </label>
-          <input
-            id="dateOfBirth"
-            type="date"
-            required
-            value={dateOfBirth}
-            max={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            className={inputCls}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="country"
-              className="text-[12px] font-semibold tracking-wide uppercase text-slate-400"
-            >
-              Country
-            </label>
-            <select
-              id="country"
-              required
-              value={country}
-              onChange={handleCountryChange}
-              className={cn(
-                inputCls,
-                "appearance-none cursor-pointer bg-white",
-              )}
-            >
-              {countries.map((c) => (
-                <option key={c.isoCode} value={c.isoCode}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label
-              htmlFor="state"
-              className="text-[12px] font-semibold tracking-wide uppercase text-slate-400"
-            >
-              State
-            </label>
-            <select
-              id="state"
-              required
-              value={state}
-              onChange={handleStateChange}
-              disabled={states.length === 0}
-              className={cn(
-                inputCls,
-                "appearance-none cursor-pointer bg-white disabled:opacity-50",
-              )}
-            >
-              <option value="">
-                {states.length === 0 ? "No states" : "Select state"}
-              </option>
-              {states.map((s) => (
-                <option key={s.isoCode} value={s.isoCode}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label
-              htmlFor="city"
-              className="text-[12px] font-semibold tracking-wide uppercase text-slate-400"
-            >
-              City
-            </label>
-            <select
-              id="city"
-              required
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              disabled={!state || cities.length === 0}
-              className={cn(
-                inputCls,
-                "appearance-none cursor-pointer bg-white disabled:opacity-50",
-              )}
-            >
-              <option value="">
-                {!state
-                  ? "Select state"
-                  : cities.length === 0
-                    ? "No cities"
-                    : "Select city"}
-              </option>
-              {cities.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {displayError && (
@@ -359,5 +208,19 @@ export default function CompleteProfilePage() {
         </button>
       </p> */}
     </div>
+  );
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        </div>
+      }
+    >
+      <CompleteProfileForm />
+    </Suspense>
   );
 }

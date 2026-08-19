@@ -44,11 +44,15 @@ function LoginForm() {
 
   useEffect(() => {
     if (!user) return;
+    const redirect = searchParams.get("redirect");
     if (user.profileCompleted === false) {
-      router.replace("/complete-profile");
+      router.replace(
+        redirect
+          ? `/complete-profile?redirect=${encodeURIComponent(redirect)}`
+          : "/complete-profile",
+      );
       return;
     }
-    const redirect = searchParams.get("redirect");
     router.push(redirect || "/");
   }, [user, router, searchParams]);
 
@@ -233,7 +237,14 @@ function LoginForm() {
 
       <p className="text-center text-[13px] text-slate-400">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200">
+        <Link
+          href={
+            searchParams.get("redirect")
+              ? `/register?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
+              : "/register"
+          }
+          className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200"
+        >
           Create one
         </Link>
       </p>
