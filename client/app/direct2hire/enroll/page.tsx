@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import {
   getReferralDiscount,
   type ApplyCouponResponse,
   type ReferralDiscountResponse,
+  type Direct2HirePlan,
 } from "@/lib/paymentApi";
 import type { RootState } from "@/store";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,24 @@ const inputCls =
 
 const labelCls = "mb-1.5 block text-sm font-medium text-slate-700";
 
+const PLAN_PRICES: Record<Direct2HirePlan, number> = {
+  BASIC: 99,
+  STANDARD: 299,
+  PRO: 2999,
+};
+
+const PLAN_LABELS: Record<Direct2HirePlan, string> = {
+  BASIC: "Basic",
+  STANDARD: "Standard",
+  PRO: "Pro",
+};
+
+function parsePlan(value: string | null): Direct2HirePlan {
+  return value === "BASIC" || value === "STANDARD" || value === "PRO"
+    ? value
+    : "STANDARD";
+}
+
 /* Fetched-from-profile values are shown read-only instead of asked again. */
 function FetchedField({ label, value }: { label: string; value: string }) {
   return (
@@ -48,14 +67,24 @@ function FetchedField({ label, value }: { label: string; value: string }) {
 }
 
 export default function Direct2HireEnrollPage() {
+  return (
+    <Suspense fallback={null}>
+      <Direct2HireEnrollForm />
+    </Suspense>
+  );
+}
+
+function Direct2HireEnrollForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const plan = parsePlan(searchParams.get("plan"));
   const { user, hasHydrated } = useSelector((state: RootState) => state.auth);
   const { enroll, processing, message, enrolled, secondsLeft } = useDirect2HireCheckout();
   const { data: d2hStatus } = useD2HStatus({ enabled: Boolean(user) });
   const assessmentCounsellingCredit = d2hStatus?.enrollment?.assessmentCounsellingPaidAt
     ? 99
     : 0;
-  const basePrice = 999 - assessmentCounsellingCredit;
+  const basePrice = Math.max(PLAN_PRICES[plan] - assessmentCounsellingCredit, 0);
   const [savingLead, setSavingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [couponInput, setCouponInput] = useState("");
@@ -82,10 +111,10 @@ export default function Direct2HireEnrollPage() {
   // relevant when no coupon is in play; a manually applied coupon always wins.
   useEffect(() => {
     if (!authorized) return;
-    getReferralDiscount()
+    getReferralDiscount(plan)
       .then(setReferralDiscount)
       .catch(() => setReferralDiscount(null));
-  }, [authorized]);
+  }, [authorized, plan]);
 
   const activeDiscount = appliedCoupon ?? referralDiscount;
 
@@ -173,7 +202,7 @@ export default function Direct2HireEnrollPage() {
     setCouponError("");
     setCouponApplying(true);
     try {
-      const result = await applyCoupon(code);
+      const result = await applyCoupon(code, plan);
       setAppliedCoupon(result);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -220,7 +249,7 @@ export default function Direct2HireEnrollPage() {
     setSavingLead(false);
 
     checkoutStarted.current = true;
-    await enroll(resolvedValues, appliedCoupon?.code);
+    await enroll(plan, resolvedValues, appliedCoupon?.code);
   });
 
   if (!authorized) {
@@ -268,7 +297,7 @@ export default function Direct2HireEnrollPage() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">
-            Enroll in Direct2Hire
+            Enroll in Direct2Hire &mdash; {PLAN_LABELS[plan]}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Fill in your details, then complete a one-time payment of ₹{basePrice} to

@@ -11,6 +11,7 @@ import { useAppSelector } from "@/store/hooks";
 import type {
   CreateOrderResponse,
   Direct2HireLeadInput,
+  Direct2HirePlan,
 } from "@/lib/paymentApi";
 
 type MessageType = "success" | "error";
@@ -163,7 +164,11 @@ export function useDirect2HireCheckout() {
   );
 
   const enroll = useCallback(
-    async (lead?: Direct2HireLeadInput, couponCode?: string) => {
+    async (
+      plan: Direct2HirePlan,
+      lead?: Direct2HireLeadInput,
+      couponCode?: string,
+    ) => {
       if (!user) {
         router.push("/login");
         return;
@@ -180,7 +185,7 @@ export function useDirect2HireCheckout() {
       setMessage(null);
 
       try {
-        const order = await createOrder(couponCode);
+        const order = await createOrder({ plan, couponCode });
 
         if (order.provider === "cashfree") {
           if (!cashfreeLoaded) {
