@@ -1,11 +1,12 @@
 import prisma from "@root/prisma.js";
+import type { Direct2HirePlan } from "@prisma/client";
 import { PaymentService } from "@/modules/payment/payment.service.js";
 import { Request, Response } from "express";
 import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { partnerService } from "@/modules/partners/partner.service.js";
-import { Direct2HireService } from "./direct2hire.service.js";
+import { Direct2HireService, DIRECT2HIRE_PLAN_PRICES } from "./direct2hire.service.js";
 import {
   getPaginationOptions,
   formatPaginationResponse,
@@ -13,9 +14,14 @@ import {
 
 const paymentService = new PaymentService();
 
-const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
-  process.env.DIRECT2HIRE_PRICE_RUPEES!,
-);
+const DIRECT2HIRE_PLANS: Direct2HirePlan[] = ["BASIC", "STANDARD", "PRO"];
+
+function parsePlan(value: unknown): Direct2HirePlan | null {
+  return typeof value === "string" &&
+    (DIRECT2HIRE_PLANS as string[]).includes(value)
+    ? (value as Direct2HirePlan)
+    : null;
+}
 
 // Preview-only, mirrors /coupons/apply — lets the enroll page show the
 // auto-applied referral discount before checkout without the user typing
@@ -26,6 +32,9 @@ export const getReferralDiscount = async (
   res: Response,
 ): Promise<void> => {
   try {
+    const plan = parsePlan(req.query.plan) ?? "STANDARD";
+    const planPriceRupees = DIRECT2HIRE_PLAN_PRICES[plan];
+
     const discountPercent = await partnerService.getReferralDiscountPercent(
       req.user!.id,
     );
@@ -34,16 +43,16 @@ export const getReferralDiscount = async (
       return;
     }
     const discountAmount = Math.round(
-      (DIRECT2HIRE_PRICE_RUPEES * discountPercent) / 100,
+      (planPriceRupees * discountPercent) / 100,
     );
     sendResponse(
       res,
       true,
       {
         discountPercent,
-        originalAmount: DIRECT2HIRE_PRICE_RUPEES,
+        originalAmount: planPriceRupees,
         discountAmount,
-        finalAmount: DIRECT2HIRE_PRICE_RUPEES - discountAmount,
+        finalAmount: planPriceRupees - discountAmount,
       },
       "Referral discount",
     );
@@ -63,12 +72,24 @@ export const createOrder = async (
   res: Response,
 ): Promise<void> => {
   try {
+    const plan = parsePlan(req.body?.plan);
+    if (!plan) {
+      sendResponse(
+        res,
+        false,
+        null,
+        "plan must be one of BASIC, STANDARD, PRO",
+        STATUS_CODES.BAD_REQUEST,
+      );
+      return;
+    }
     const couponCode =
       typeof req.body?.couponCode === "string" && req.body.couponCode.trim()
         ? req.body.couponCode.trim()
         : undefined;
     const result = await paymentService.createDirect2HireOrder(
       req.user!.id,
+      plan,
       couponCode,
     );
     sendResponse(res, true, result, "Order created", STATUS_CODES.CREATED);
@@ -79,7 +100,7 @@ export const createOrder = async (
       res,
       false,
       null,
-      err.error.description,
+      err.error?.description ?? err.message,
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
   }
@@ -166,7 +187,8 @@ export const devContinueAsPaid = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const status = await service.continueAsPaidForDev(req.user!.id);
+    const plan = parsePlan(req.body?.plan) ?? "STANDARD";
+    const status = await service.continueAsPaidForDev(req.user!.id, plan);
     sendResponse(res, true, status, "Development access granted");
   } catch (err: unknown) {
     const error = err as { message?: string; statusCode?: number };
@@ -246,7 +268,8 @@ export const getAllAssessmentCounsellingPurchases = async (
 
 export const markPaid = async (req: Request, res: Response): Promise<void> => {
   try {
-    const enrollment = await service.markPaid(param(req, "enrollmentId"));
+    const plan = parsePlan(req.body?.plan) ?? "STANDARD";
+    const enrollment = await service.markPaid(param(req, "enrollmentId"), plan);
     sendResponse(res, true, enrollment, "Enrollment marked as paid");
   } catch (err: any) {
     sendResponse(

@@ -14,6 +14,7 @@ export interface UpdateCouponBody {
 
 export interface ApplyCouponBody {
   code: string;
+  plan?: "BASIC" | "STANDARD" | "PRO";
 }
 
 export function validateCreateCoupon(data: unknown): {
@@ -53,6 +54,7 @@ export function validateApplyCoupon(data: unknown): {
       "any.required": "Coupon code is required",
       "string.empty": "Coupon code cannot be empty",
     }),
+    plan: Joi.string().valid("BASIC", "STANDARD", "PRO").optional(),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });
   if (error) return { error: { message: error.message }, value: value as ApplyCouponBody };

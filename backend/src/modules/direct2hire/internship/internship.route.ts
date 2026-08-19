@@ -1,19 +1,21 @@
 import { Router } from "express";
 import { auth } from "@/middlewares/authMiddleware.js";
+import { requireInternshipAccess } from "../assessmentCounsellingAccess.middleware.js";
 import * as internshipController from "./internship.controller.js";
 
 const router = Router();
+const userAuth = [auth("USER"), requireInternshipAccess] as const;
 
 router.get(
   "/upload/sign",
-  auth("USER"),
+  ...userAuth,
   internshipController.getUploadSignature,
 );
-router.get("/tasks", auth("USER"), internshipController.getMyTasks);
-router.get("/tasks/:taskId", auth("USER"), internshipController.getMyTask);
+router.get("/tasks", ...userAuth, internshipController.getMyTasks);
+router.get("/tasks/:taskId", ...userAuth, internshipController.getMyTask);
 router.post(
   "/tasks/:taskId/submit",
-  auth("USER"),
+  ...userAuth,
   internshipController.submitTask,
 );
 

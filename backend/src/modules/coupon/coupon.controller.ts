@@ -1,17 +1,24 @@
 import { Request, Response } from "express";
+import type { Direct2HirePlan } from "@prisma/client";
 import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { couponService } from "./coupon.service.js";
+import { DIRECT2HIRE_PLAN_PRICES } from "@/modules/direct2hire/direct2hire.service.js";
 import {
   validateCreateCoupon,
   validateUpdateCoupon,
   validateApplyCoupon,
 } from "./coupon.validation.js";
 
-const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
-  process.env.DIRECT2HIRE_PRICE_RUPEES!,
-);
+const DIRECT2HIRE_PLANS: Direct2HirePlan[] = ["BASIC", "STANDARD", "PRO"];
+
+function parsePlan(value: unknown): Direct2HirePlan | null {
+  return typeof value === "string" &&
+    (DIRECT2HIRE_PLANS as string[]).includes(value)
+    ? (value as Direct2HirePlan)
+    : null;
+}
 
 export const applyCoupon = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -20,9 +27,12 @@ export const applyCoupon = async (req: AuthRequest, res: Response): Promise<void
       sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
       return;
     }
+    const plan = parsePlan(value.plan) ?? "STANDARD";
+    const planPriceRupees = DIRECT2HIRE_PLAN_PRICES[plan];
+
     const coupon = await couponService.validateCoupon(value.code);
     const discountAmount = Math.round(
-      (DIRECT2HIRE_PRICE_RUPEES * coupon.discountPercent) / 100,
+      (planPriceRupees * coupon.discountPercent) / 100,
     );
     sendResponse(
       res,
@@ -30,9 +40,9 @@ export const applyCoupon = async (req: AuthRequest, res: Response): Promise<void
       {
         code: coupon.code,
         discountPercent: coupon.discountPercent,
-        originalAmount: DIRECT2HIRE_PRICE_RUPEES,
+        originalAmount: planPriceRupees,
         discountAmount,
-        finalAmount: DIRECT2HIRE_PRICE_RUPEES - discountAmount,
+        finalAmount: planPriceRupees - discountAmount,
       },
       "Coupon applied",
     );
