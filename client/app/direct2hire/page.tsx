@@ -413,16 +413,16 @@ export default function Direct2HirePage() {
                         </p>
                         <p className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
                           <span className="text-brand-600 font-bold text-xl sm:text-[28px]">
-                            ₹999
+                            ₹99
                           </span>
                           <span className="text-text-subtle line-through text-[12px] sm:text-[15px]">
-                            ₹24,999
+                            ₹999
                           </span>
                         </p>
                       </div>
                       <div className="bg-text text-white flex flex-col items-center justify-center px-5 sm:px-7 min-w-26 sm:min-w-32 shrink-0">
                         <span className="text-lg sm:text-xl font-black leading-none whitespace-nowrap">
-                          96%
+                          90%
                         </span>
                         <span className="text-[9px] sm:text-[10px] tracking-wider">
                           OFF
@@ -646,7 +646,7 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             WHAT YOU GET — VALUE BREAKDOWN
         ══════════════════════════════ */}
-        <section
+        {/* <section
           id="what-you-get"
           className="py-13 sm:py-16 bg-surface-alt border-t border-border"
         >
@@ -658,7 +658,7 @@ export default function Direct2HirePage() {
                 </p>
                 <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-text">
                   Everything you need to get hired —{" "}
-                  <span className="text-brand-600">for ₹999.</span>
+                  <span className="text-brand-600">for ₹99.</span>
                 </h2>
                 <p className="mt-3 text-text-muted text-[14px] sm:text-[15px] leading-relaxed">
                   Five guided steps, one program, one price. No hidden fees.
@@ -668,7 +668,7 @@ export default function Direct2HirePage() {
 
             <div className="grid lg:grid-cols-5 gap-4 sm:gap-6 items-stretch">
               {/* left — itemised value list */}
-              <div className="lg:col-span-3">
+              {/* <div className="lg:col-span-3">
                 <div className="h-full rounded-2xl border border-border bg-white overflow-hidden">
                   {VALUE_ITEMS.map((item) => (
                     <div
@@ -707,13 +707,13 @@ export default function Direct2HirePage() {
               </div>
 
               {/* right — you pay only */}
-              <div className="lg:col-span-2">
+              {/* <div className="lg:col-span-2">
                 <div className="h-full flex flex-col items-center justify-center text-center rounded-2xl bg-text px-6 py-8 sm:py-10">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-2">
                     You pay only
                   </p>
                   <p className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-3">
-                    ₹999
+                    ₹99
                   </p>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-500/20 px-3 py-1 text-[12px] font-semibold text-brand-300 mb-5">
                     Save ₹24,000 · 96% off
@@ -776,7 +776,7 @@ export default function Direct2HirePage() {
               </div>
             </ScrollReveal>
           </div>
-        </section>
+        </section> */}
 
         {/* ══════════════════════════════
             DIRECT2HIRE VS OTHERS
@@ -842,7 +842,7 @@ export default function Direct2HirePage() {
                     ₹40,000–1L+
                   </div>
                   <div className="py-3 sm:py-4 lg:py-5 text-center text-[15px] sm:text-[18px] lg:text-[20px] font-black text-brand-600">
-                    ₹999
+                    ₹99
                   </div>
                 </div>
               </div>
@@ -1148,10 +1148,10 @@ export default function Direct2HirePage() {
                     </span>
                     <p className="flex items-baseline gap-2.5 mb-4">
                       <span className="text-[38px] sm:text-[46px] font-extrabold text-slate-900 tracking-tight leading-none">
-                        ₹999
+                        ₹99
                       </span>
                       <span className="text-[18px] sm:text-[22px] text-slate-400/80 line-through font-medium leading-none">
-                        ₹24,999
+                        ₹999
                       </span>
                     </p>
                     <p className="text-[14px] sm:text-[15px] text-slate-500 max-w-[480px] leading-relaxed">

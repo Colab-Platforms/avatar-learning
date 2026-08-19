@@ -22,7 +22,8 @@ import { getMyPartner } from "@/lib/partnersApi";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
-import { OfferTimerBar, OFFER_BAR_HEIGHT } from "@/app/direct2hire/OfferTimerBar";
+// import { OfferTimerBar, OFFER_BAR_HEIGHT } from "@/app/direct2hire/OfferTimerBar";
+const OFFER_BAR_HEIGHT = 0;
 
 /* Routes where the site-wide offer bar should NOT appear —
    student dashboard, admin, partner dashboard, and in-course learning/assessment. */
@@ -70,7 +71,7 @@ export function Navbar({
   });
   const isD2HEnrolled = d2hStatus?.enrollment?.status === "PAID";
 
-  const showOfferBar = !hideOfferBar && !isOfferBarExcluded(pathname);
+  const showOfferBar = false && !hideOfferBar && !isOfferBarExcluded(pathname);
   const effectiveOffsetTop = offsetTop ?? (showOfferBar ? OFFER_BAR_HEIGHT : 0);
 
   /* Silently check partner status once user is known — used to show/hide
@@ -119,12 +120,12 @@ export function Navbar({
 
   return (
     <>
-      {showOfferBar && (
+      {/* {showOfferBar && (
         <>
           <OfferTimerBar />
           <div style={{ height: OFFER_BAR_HEIGHT }} aria-hidden />
         </>
-      )}
+      )} */}
       <header
         className="fixed inset-x-0 z-50 anim-slide-down bg-white/95 backdrop-blur-md border-b border-border shadow-xs"
         style={{ top: effectiveOffsetTop }}
