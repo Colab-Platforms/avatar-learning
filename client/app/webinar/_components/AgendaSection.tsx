@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { ListChecks } from "lucide-react";
+import { ShinyText } from "@/components/ui";
 
 const agendaItems = [
   {
@@ -40,12 +42,10 @@ export default function AgendaSection() {
     <section className="bg-white py-12 sm:py-16 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header with Line separator */}
-        <div className="flex items-center gap-4 mb-3">
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#1E6BFA] shrink-0">
-            &sect; THE 1-HOUR AGENDA
-          </span>
-          <div className="h-px bg-[#E2E8F0] w-full"></div>
+        {/* Section Header */}
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white/80 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4">
+          <ListChecks className="h-3.5 w-3.5 text-blue-600" />
+          <ShinyText text="The 1-Hour Agenda" color="#1d4ed8" shineColor="#93c5fd" speed={2.5} />
         </div>
 
         {/* Heading */}

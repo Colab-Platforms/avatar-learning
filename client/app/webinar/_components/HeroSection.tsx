@@ -236,7 +236,7 @@ export default function HeroSection() {
                 <CalendarSticker />
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-sm">
-                    Sun 23 Aug 2026
+                    Sat 22 Aug 2026
                   </h4>
                   <p className="text-xs text-slate-400 font-medium">
                     mark your calendar
@@ -289,7 +289,7 @@ export default function HeroSection() {
                 <CalendarSticker />
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-xs">
-                    Sun 23 Aug
+                    Sat 22 Aug
                   </h4>
                   <p className="text-[10px] text-slate-400 font-medium">2026</p>
                 </div>

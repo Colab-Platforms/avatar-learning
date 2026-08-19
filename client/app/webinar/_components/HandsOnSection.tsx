@@ -2,6 +2,8 @@
 
 import React from "react";
 import Image from "next/image";
+import { Wrench } from "lucide-react";
+import { ShinyText } from "@/components/ui";
 
 const toolList = [
   {
@@ -41,9 +43,10 @@ export default function HandsOnSection() {
             
             {/* Left Column: Title Block */}
             <div className="lg:col-span-5 text-center lg:text-left space-y-4">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-blue-300">
-                GET HANDS-ON WITH
-              </span>
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-bold uppercase tracking-wider text-blue-300 backdrop-blur-md">
+                <Wrench className="h-3.5 w-3.5 text-blue-300" />
+                <ShinyText text="Get Hands-On With" color="#93c5fd" shineColor="#ffffff" speed={2.5} />
+              </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
                 Real tools, <span className="text-white relative underline decoration-[#3B82F6] decoration-[3px] underline-offset-6">opened live.</span>
               </h2>

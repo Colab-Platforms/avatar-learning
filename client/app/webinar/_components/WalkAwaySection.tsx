@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Check } from "lucide-react";
+import { Check, Target, Users } from "lucide-react";
+import { ShinyText } from "@/components/ui";
 
 const checkList = [
   "Pick the right AI tool for the task in front of you",
@@ -31,10 +32,11 @@ export default function WalkAwaySection() {
           
           {/* Left Side: Checklist */}
           <div className="lg:col-span-6">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1E6BFA]">
-              &sect; WHAT YOU'LL WALK AWAY WITH
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2 mb-6">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white/80 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md">
+              <Target className="h-3.5 w-3.5 text-blue-600" />
+              <ShinyText text="What You'll Walk Away With" color="#1d4ed8" shineColor="#93c5fd" speed={2.5} />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-4 mb-6">
               Walk out able to <span className="text-blue-600">do this.</span>
             </h2>
 
@@ -54,10 +56,11 @@ export default function WalkAwaySection() {
 
           {/* Right Side: Who It's For */}
           <div className="lg:col-span-6 flex flex-col justify-start">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1E6BFA]">
-              &sect; WHO IT'S FOR
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2 mb-4">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white/80 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md w-fit">
+              <Users className="h-3.5 w-3.5 text-blue-600" />
+              <ShinyText text="Who It's For" color="#1d4ed8" shineColor="#93c5fd" speed={2.5} />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-4 mb-4">
               If you can use a browser, <span className="text-gray-400 font-medium italic">you're ready.</span>
             </h2>
             <p className="text-gray-500 text-sm mb-6 leading-relaxed">

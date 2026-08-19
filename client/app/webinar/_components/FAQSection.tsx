@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, HelpCircle } from "lucide-react";
+import { ShinyText } from "@/components/ui";
 
 const faqData = [
   {
@@ -59,10 +60,11 @@ export default function FAQSection() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-10 text-center">
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-[#1E6BFA]">
-            &sect; QUESTIONS
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B132B] mt-2 tracking-tight">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white/80 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md">
+            <HelpCircle className="h-3.5 w-3.5 text-blue-600" />
+            <ShinyText text="Questions" color="#1d4ed8" shineColor="#93c5fd" speed={2.5} />
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B132B] mt-3 tracking-tight">
             Questions, answered.
           </h2>
         </div>

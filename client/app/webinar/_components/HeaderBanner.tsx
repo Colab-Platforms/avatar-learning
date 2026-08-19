@@ -11,11 +11,11 @@ export default function HeaderBanner() {
       </span>
       {/* Mobile Text */}
       <span className="sm:hidden text-[11px] tracking-wide">
-        Live workshop &middot; Sun 23 Aug &middot; <span className="text-red-400 font-semibold">47 seats left</span>
+        Live workshop &middot; Sat 22 Aug &middot; <span className="text-red-400 font-semibold">47 seats left</span>
       </span>
       {/* Desktop Text */}
       <span className="hidden sm:inline tracking-wider">
-        Live online workshop &middot; Sunday, 23 August 2026 &middot; 11:30 AM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
+        Live online workshop &middot; Saturday, 22 August 2026 &middot; 11:30 AM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
       </span>
     </div>
   );

@@ -30,18 +30,18 @@ export default function RegistrationForm() {
     seconds: "53",
   });
 
-  // Calculate dynamic countdown to Sun, 23 Aug 2026 11:30 AM IST (or rolling date if passed)
+  // Calculate dynamic countdown to Sat, 22 Aug 2026 11:30 AM IST (or rolling date if passed)
   useEffect(() => {
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-23T11:30:00+05:30");
+      let targetDate = new Date("2026-08-22T11:30:00+05:30");
       const now = new Date();
 
-      // If target date has passed, roll forward to next Sunday 11:30 AM IST
+      // If target date has passed, roll forward to next Saturday 11:30 AM IST
       if (now > targetDate) {
-        const nextSunday = new Date();
-        nextSunday.setDate(now.getDate() + ((7 - now.getDay()) % 7 || 7));
-        nextSunday.setHours(11, 30, 0, 0);
-        targetDate = nextSunday;
+        const nextSaturday = new Date();
+        nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
+        nextSaturday.setHours(11, 30, 0, 0);
+        targetDate = nextSaturday;
       }
 
       const difference = targetDate.getTime() - now.getTime();

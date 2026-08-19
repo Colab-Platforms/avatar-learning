@@ -1,30 +1,32 @@
 "use client";
 
 import React from "react";
+import { Gift } from "lucide-react";
+import { ShinyText } from "@/components/ui";
 
 const pricingModules = [
   {
-    part: "PART 1",
-    title: "Choosing & using AI tools",
-    originalPrice: "₹699",
+    part: "BONUS 1",
+    title: "Choosing the right AI Tools",
+    originalPrice: "₹499",
     badgeStyle: "bg-[#FEF3C7] text-[#D97706]",
   },
   {
-    part: "PART 2",
-    title: "Prompt engineering that works",
-    originalPrice: "₹899",
+    part: "BONUS 2",
+    title: "Mastering prompt for better results",
+    originalPrice: "₹699",
     badgeStyle: "bg-[#E0F2FE] text-[#0369A1]",
   },
   {
-    part: "PART 3",
-    title: "Automating your daily work",
-    originalPrice: "₹999",
+    part: "BONUS 3",
+    title: "Automation for daily work with AI",
+    originalPrice: "₹799",
     badgeStyle: "bg-[#DCFCE7] text-[#15803D]",
   },
   {
-    part: "PART 4",
-    title: "AI for your career & job hunt",
-    originalPrice: "₹499",
+    part: "BONUS 4",
+    title: "AI readiness for the job market",
+    originalPrice: "₹299",
     badgeStyle: "bg-[#F3E8FF] text-[#6B21A8]",
   },
 ];
@@ -42,17 +44,15 @@ export default function PricingSection() {
     <section className="bg-white py-12 sm:py-16 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header with Line separator */}
-        <div className="flex items-center gap-4 mb-3">
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#1E6BFA] shrink-0">
-            &sect; WHAT YOU GET
-          </span>
-          <div className="h-px bg-[#E2E8F0] w-full"></div>
+        {/* Section Header */}
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white/80 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md mb-4">
+          <Gift className="h-3.5 w-3.5 text-blue-600" />
+          <ShinyText text="What You Get" color="#1d4ed8" shineColor="#93c5fd" speed={2.5} />
         </div>
 
         {/* Heading */}
         <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight mb-2 leading-snug">
-          ₹3,000+ of training. <span className="text-[#1E6BFA] italic font-black relative underline decoration-[#1E6BFA] decoration-[3px] underline-offset-6">Yours for ₹7.</span>
+          ₹2,000+ of training. <span className="text-[#1E6BFA] italic font-black relative underline decoration-[#1E6BFA] decoration-[3px] underline-offset-6">Yours for ₹7.</span>
         </h2>
         <p className="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed max-w-2xl mb-10">
           What each part of the session would normally cost on its own. You learn all of it live for ₹7 &mdash; and walk away with a certificate of participation.
@@ -74,7 +74,7 @@ export default function PricingSection() {
                 </h3>
               </div>
               <div className="border-t border-gray-50 pt-3 flex items-baseline gap-1">
-                <span className="text-slate-400 font-semibold text-[9px] sm:text-[10px] uppercase">Usually</span>
+                <span className="text-slate-400 font-semibold text-[9px] sm:text-[10px] uppercase">Worth</span>
                 <span className="text-lg sm:text-xl font-black text-[#0F172A]">{mod.originalPrice}</span>
               </div>
             </div>
@@ -90,7 +90,7 @@ export default function PricingSection() {
           <div className="hidden md:flex items-center justify-between relative z-10">
             <div>
               <h4 className="font-extrabold text-sm sm:text-base text-white">
-                Add it up &mdash; ₹3,096 of live training.
+                Add it up &mdash; ₹2,096 of live training.
               </h4>
               <p className="text-slate-400 text-xs mt-1 font-medium">
                 You take home a certificate of participation &mdash; no other materials.
@@ -114,7 +114,7 @@ export default function PricingSection() {
           {/* MOBILE VIEW BANNER */}
           <div className="block md:hidden text-center space-y-4 relative z-10">
             <h4 className="font-extrabold text-sm text-white">
-              Add it up &mdash; ₹3,096 of training, yours for <span className="text-[#10B981]">just ₹7</span>
+              Add it up &mdash; ₹2,096 of training, yours for <span className="text-[#10B981]">just ₹7</span>
             </h4>
             <p className="text-slate-400 text-xs font-medium">
               You take home a certificate of participation &middot; no other materials
