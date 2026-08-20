@@ -70,6 +70,8 @@ export interface CompleteQuizBody {
     secondaryCareerDomain?: string | null;
     recommendedCareer: string;
     matchPercentage: number;
+    answers: Record<string, { question: string; selected: string[] }>;
+    domainScores: Record<string, number>;
 }
 
 export type Role = "USER" | "ADMIN" | "SUPERADMIN";

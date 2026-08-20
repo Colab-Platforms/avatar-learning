@@ -6,6 +6,8 @@ export interface CompleteQuizPayload {
   secondaryCareerDomain?: string | null;
   recommendedCareer: string;
   matchPercentage: number;
+  answers: Record<number, { question: string; selected: string[] }>;
+  domainScores: Record<string, number>;
 }
 
 export const completeCareerQuiz = (

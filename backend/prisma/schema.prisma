@@ -57,6 +57,12 @@ enum Direct2HireStatus {
   REFUNDED
 }
 
+enum Direct2HirePlan {
+  BASIC
+  STANDARD
+  PRO
+}
+
 enum PaymentOrderStatus {
   PENDING
   PAID
@@ -211,9 +217,31 @@ model User {
   partner         Partner?
   partnerReferral PartnerReferral?
 
+  quizAssessments QuizAssessment[]
+
   @@index([email])
   @@index([isActive])
   @@map("users")
+}
+
+model QuizAssessment {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+
+  primaryCareerDomain   String  @map("primary_career_domain")
+  secondaryCareerDomain String? @map("secondary_career_domain")
+  recommendedCareer     String  @map("recommended_career")
+  matchPercentage       Float   @map("match_percentage")
+
+  answers     Json  @default("{}")
+  domainScores Json  @map("domain_scores")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("quiz_assessments")
 }
 
 model OtpVerification {
@@ -353,6 +381,7 @@ model Courses {
   whatYouLearn        Json?   @map("what_you_learn")
   audience            Json?
   isDirect2HireCourse Boolean @default(false) @map("is_direct2hire_course")
+  isDirect2HireProOnly Boolean @default(false) @map("is_direct2hire_pro_only")
   isPublished         Boolean @default(false) @map("is_published")
   isComingSoon        Boolean @default(false) @map("is_coming_soon")
 
@@ -652,6 +681,7 @@ model Direct2HireEnrollment {
   id     String            @id @default(cuid())
   userId String            @map("user_id")
   status Direct2HireStatus @default(PENDING)
+  plan   Direct2HirePlan?
 
   paidAt DateTime? @map("paid_at")
 

@@ -78,6 +78,21 @@ const completeQuizSchema = Joi.object({
         "number.min": "matchPercentage must be between 0 and 100",
         "number.max": "matchPercentage must be between 0 and 100",
     }),
+    answers: Joi.object()
+        .pattern(
+            Joi.string(),
+            Joi.object({
+                question: Joi.string().required(),
+                selected: Joi.array().items(Joi.string()).required(),
+            }),
+        )
+        .required()
+        .messages({
+            "any.required": "answers is required",
+        }),
+    domainScores: Joi.object().pattern(Joi.string(), Joi.number()).required().messages({
+        "any.required": "domainScores is required",
+    }),
 });
 
 export const validateCompleteQuizSchema = (data: unknown) => {
