@@ -41,6 +41,7 @@ export interface DBCourse {
   audience?: AudienceItem[];
   isPublished: boolean;
   isComingSoon: boolean;
+  isDirect2HireCourse?: boolean;
   category: { id: string; name: string; slug: string };
   _count: { lessons: number; enrollments: number };
 }

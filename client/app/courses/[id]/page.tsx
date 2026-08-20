@@ -12,7 +12,6 @@ import {
   Zap,
   ChevronDown,
   ArrowRight,
-  Download,
   CheckCircle,
   Loader2,
 } from "lucide-react";
@@ -33,6 +32,14 @@ import type { CreateOrderResponse } from "@/lib/paymentApi";
 interface PageProps {
   params: Promise<{ id: string }>;
 }
+
+/**
+ * Temporary: every "Enroll now" on a course page sends the user to the
+ * Direct2Hire enrollment flow instead of running the per-course checkout.
+ * Flip to false to restore the original free/paid enrollment behaviour.
+ */
+const REDIRECT_ENROLL_TO_DIRECT2HIRE: boolean = true;
+const DIRECT2HIRE_ENROLL_PATH = "/direct2hire/enroll";
 
 export default function CoursePage({ params }: PageProps) {
   const { id } = use(params);
@@ -223,6 +230,10 @@ export default function CoursePage({ params }: PageProps) {
       return;
     }
     if (isComingSoon) return;
+    if (REDIRECT_ENROLL_TO_DIRECT2HIRE) {
+      router.push(DIRECT2HIRE_ENROLL_PATH);
+      return;
+    }
     if (!user) {
       router.push("/login");
       return;
@@ -273,14 +284,12 @@ export default function CoursePage({ params }: PageProps) {
   const audience = course.audience ?? [];
 
   const enrollBtnLabel = enrolling
-    ? "Processing Payment…"
+    ? "Processing…"
     : enrolled
       ? "Go to Course →"
       : isComingSoon
         ? "Coming Soon"
-        : isFree
-          ? "Enroll Free"
-          : `Enroll Now — ₹${course.price.toLocaleString("en-IN")}`;
+        : "Enroll Now";
 
   const enrollDisabled = enrolling || (isComingSoon && !enrolled);
 
@@ -920,18 +929,11 @@ export default function CoursePage({ params }: PageProps) {
                       ? "Go to Course"
                       : isComingSoon
                         ? "Coming Soon"
-                        : isFree
-                          ? "Enroll for Free"
-                          : `Enroll Now — ₹${course.price.toLocaleString("en-IN")}`}
+                        : "Enroll Now"}
                     {!enrolling && !isComingSoon && (
                       <ArrowRight className="h-4 w-4" />
                     )}
                   </button>
-                  <Link href="/courses">
-                    <button className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors duration-200 shadow-sm cursor-pointer">
-                      View All Courses
-                    </button>
-                  </Link>
                 </div>
               </div>
             </ScrollReveal>
@@ -956,9 +958,6 @@ export default function CoursePage({ params }: PageProps) {
           {!enrolling && !enrolled && !isComingSoon && (
             <ArrowRight className="h-4 w-4" />
           )}
-        </button>
-        <button className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all duration-200 shadow-sm cursor-pointer shrink-0">
-          <Download className="h-4 w-4" />
         </button>
       </div>
 

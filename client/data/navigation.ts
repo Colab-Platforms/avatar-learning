@@ -2,7 +2,7 @@ import type { NavItem, FooterColumn, SocialLink } from "@/types";
 
 export const NAV_ITEMS: NavItem[] = [
   // { label: "Home", href: "/" },
-  { label: "Learning", href: "/courses" },
+  { label: "AI Courses", href: "/courses" },
   { label: "Direct2Hire", href: "/direct2hire" },
   // { label: "Internships", href: "/internships" },
   { label: "Marketplace", href: "/marketplace" },
