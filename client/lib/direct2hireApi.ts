@@ -7,6 +7,7 @@ export interface D2HEnrollment {
   status: "PENDING" | "PAID";
   assessmentCounsellingPaidAt: string | null;
   hasAssessmentCounsellingAccess: boolean;
+  amountPaidRupees: number | null;
   createdAt: string;
   updatedAt: string;
 }

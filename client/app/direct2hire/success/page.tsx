@@ -13,8 +13,6 @@ declare global {
   }
 }
 
-const D2H_PRICE_INR = 999;
-
 export default function Direct2HireSuccessPage() {
   const router = useRouter();
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
@@ -24,6 +22,7 @@ export default function Direct2HireSuccessPage() {
   const firedRef = useRef(false);
 
   const paid = statusData?.enrollment?.status === "PAID";
+  const amountPaid = statusData?.enrollment?.amountPaidRupees ?? null;
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -40,9 +39,9 @@ export default function Direct2HireSuccessPage() {
 
     if (!firedRef.current) {
       firedRef.current = true;
-      window.fbq?.("track", "Purchase", { value: D2H_PRICE_INR, currency: "INR" });
+      window.fbq?.("track", "Purchase", { value: amountPaid ?? undefined, currency: "INR" });
     }
-  }, [hasHydrated, user, isLoading, paid, router]);
+  }, [hasHydrated, user, isLoading, paid, amountPaid, router]);
 
   if (!paid) {
     return (
@@ -80,7 +79,9 @@ export default function Direct2HireSuccessPage() {
           </div>
           <div className="flex items-center justify-between py-1">
             <span className="text-slate-500">Amount paid</span>
-            <span className="font-medium text-slate-800">₹{D2H_PRICE_INR.toLocaleString("en-IN")}</span>
+            <span className="font-medium text-slate-800">
+              {amountPaid !== null ? `₹${amountPaid.toLocaleString("en-IN")}` : "—"}
+            </span>
           </div>
           {paidDate && (
             <div className="flex items-center justify-between py-1">

@@ -32,6 +32,21 @@ export class Direct2HireService {
     async getMyStatus(userId: string) {
         const enrollment = await this.getOrCreateEnrollment(userId);
 
+        const paidOrder =
+            enrollment.status === "PAID"
+                ? await prisma.paymentOrder.findFirst({
+                      where: {
+                          userId,
+                          direct2hireEnrollmentId: enrollment.id,
+                          productType: "DIRECT2HIRE",
+                          status: "PAID",
+                      },
+                      orderBy: { updatedAt: "desc" },
+                      select: { amount: true },
+                  })
+                : null;
+        const amountPaidRupees = paidOrder ? paidOrder.amount / 100 : null;
+
         const booking = await prisma.counsellingBooking.findUnique({
             where: { userId },
             select: { selectedCourseId: true },
@@ -71,6 +86,7 @@ export class Direct2HireService {
             enrollment: {
                 ...enrollment,
                 hasAssessmentCounsellingAccess: hasAssessmentCounsellingAccess(enrollment),
+                amountPaidRupees,
             },
             courses,
         };
