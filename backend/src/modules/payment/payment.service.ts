@@ -13,8 +13,10 @@ import {
 import { partnerService } from "@/modules/partners/partner.service.js";
 import { couponService } from "@/modules/coupon/coupon.service.js";
 import { googleSheetsService } from "@/services/googleSheets.service.js";
+import { sendPaymentConfirmationEmail } from "./payment.mail.js";
 import type {
   CreateOrderResponse,
+  CreatePaymentLinkResponse,
   RazorpayWebhookPayload,
   CashfreeWebhookPayload,
   VerifyPaymentBody,
@@ -63,7 +65,44 @@ async function markPendingOrderFailed(pendingOrderId: string): Promise<void> {
     data: { status: "FAILED" },
   });
 }
-//function to notify Pabbly on purchase
+async function sendPurchaseConfirmationEmailForOrder(order: {
+  userId: string;
+  productType: string;
+  courseId: string | null;
+  amount: number;
+}): Promise<void> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: order.userId },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    if (!user?.email) return;
+
+    let productName = "Direct2Hire Programme";
+    if (order.productType === "COURSE" && order.courseId) {
+      const course = await prisma.courses.findUnique({
+        where: { id: order.courseId },
+        select: { title: true },
+      });
+      productName = course?.title ?? "Course";
+    } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
+      productName = "Direct2Hire Assessment + Counselling";
+    }
+
+    await sendPaymentConfirmationEmail(user.email, {
+      name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+      amount: order.amount,
+      productName,
+    });
+  } catch (err) {
+    console.error(
+      "[Payment] Failed to send payment confirmation email:",
+      err,
+    );
+  }
+}
+
+// function to notify Pabbly on purchase
 // async function notifyPabblyOnPurchase(
 //   order: {
 //     userId: string;
@@ -74,11 +113,6 @@ async function markPendingOrderFailed(pendingOrderId: string): Promise<void> {
 //   },
 //   gatewayPaymentId: string,
 // ): Promise<void> {
-//   const webhookUrl = process.env.PABBLY_WEBHOOK_URL;
-//   if (!webhookUrl) {
-//     console.warn("[Payment] Pabbly webhook URL not configured");
-//     return;
-//   }
 //   try {
 //     const user = await prisma.user.findUnique({
 //       where: { id: order.userId },
@@ -106,6 +140,22 @@ async function markPendingOrderFailed(pendingOrderId: string): Promise<void> {
 //         select: { title: true },
 //       });
 //       productName = course?.title ?? "Course";
+//     } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
+//       productName = "Direct2Hire Assessment + Counselling";
+//     }
+
+//     if (email) {
+//       await sendPaymentConfirmationEmail(email, {
+//         name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+//         amount: order.amount,
+//         productName,
+//       });
+//     }
+
+//     const webhookUrl = process.env.PABBLY_WEBHOOK_URL;
+//     if (!webhookUrl) {
+//       console.warn("[Payment] Pabbly webhook URL not configured");
+//       return;
 //     }
 
 //     const payload = {
@@ -321,6 +371,7 @@ async function completePayment(params: {
       }
     }
 
+    await sendPurchaseConfirmationEmailForOrder(order);
     // await notifyPabblyOnPurchase(order, gatewayPaymentId);
   } catch (err: any) {
     if (err.code === "P2002") {
@@ -483,6 +534,92 @@ export class PaymentService {
       amountInPaise,
       pendingOrder?.id,
     );
+  }
+
+  /**
+   * Admin-only: creates a Razorpay Payment Link (hosted page, shareable via any
+   * channel) for a specific registered user's full-price D2H enrollment — no
+   * in-app checkout involved. Reuses the same completePayment()/grantCourseAccess()
+   * path as the regular checkout once "payment_link.paid" arrives on the webhook.
+   */
+  async createDirect2HirePaymentLinkForUser(
+    userId: string,
+  ): Promise<CreatePaymentLinkResponse> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
+
+    const paidEnrollment = await prisma.direct2HireEnrollment.findFirst({
+      where: { userId, status: "PAID" },
+    });
+    if (paidEnrollment) {
+      throw new ApiError(
+        "User has already enrolled in the Direct2Hire programme",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    let enrollment = await prisma.direct2HireEnrollment.findFirst({
+      where: { userId, status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!enrollment) {
+      enrollment = await prisma.direct2HireEnrollment.create({
+        data: { userId },
+      });
+    }
+
+    const pendingOrder = await prisma.paymentOrder.findFirst({
+      where: {
+        userId,
+        direct2hireEnrollmentId: enrollment.id,
+        status: "PENDING",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const amountInPaise = DIRECT2HIRE_PRICE_RUPEES * 100;
+    const razorpay = getRazorpay();
+
+    const paymentLink = await razorpay.paymentLink.create({
+      amount: amountInPaise,
+      currency: "INR",
+      description: "Direct2Hire Programme",
+      customer: {
+        name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Customer",
+        email: user.email,
+        contact: user.phoneNo?.replace(/\D/g, "") || undefined,
+      },
+      notify: { sms: false, email: false },
+      reminder_enable: true,
+      notes: {
+        userId,
+        productType: "DIRECT2HIRE",
+        direct2hireEnrollmentId: enrollment.id,
+      },
+    });
+
+    if (pendingOrder) {
+      await markPendingOrderFailed(pendingOrder.id);
+    }
+
+    const orderData: Prisma.PaymentOrderUncheckedCreateInput = {
+      userId,
+      provider: "RAZORPAY",
+      gatewayOrderId: paymentLink.id,
+      amount: amountInPaise,
+      currency: "INR",
+      status: "PENDING",
+      productType: "DIRECT2HIRE",
+      direct2hireEnrollmentId: enrollment.id,
+      discountAmount: 0,
+    };
+    await prisma.paymentOrder.create({ data: orderData });
+
+    return {
+      shortUrl: paymentLink.short_url,
+      paymentLinkId: paymentLink.id,
+      amount: amountInPaise,
+    };
   }
 
   async createDirect2HireAssessmentCounsellingOrder(
@@ -830,6 +967,24 @@ export class PaymentService {
 
   async handleRazorpayWebhook(payload: RazorpayWebhookPayload): Promise<void> {
     const event = payload.event;
+
+    if (event === "payment_link.paid") {
+      // Admin-generated Payment Link flow: the link's own id is what we stored
+      // as gatewayOrderId at creation (Payment Links don't have an order_id
+      // until paid), so match on that instead of payment.entity.order_id.
+      const paymentLink = payload.payload.payment_link?.entity;
+      const payment = payload.payload.payment?.entity;
+      if (!paymentLink || !payment) return;
+
+      await completePayment({
+        orderId: paymentLink.id,
+        gatewayPaymentId: payment.id,
+        gatewaySignature: "webhook",
+        paymentMethod: payment.method,
+        metadata: payment.notes as object,
+      });
+      return;
+    }
 
     if (event === "payment.captured") {
       const payment = payload.payload.payment?.entity;

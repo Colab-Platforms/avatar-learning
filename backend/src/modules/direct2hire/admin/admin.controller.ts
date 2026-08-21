@@ -6,9 +6,38 @@ import { validateStudentUserIdParam } from "./admin.validator.js";
 import { CounsellingService } from "../counselling/counselling.service.js";
 import { validateConfirmCounsellingBooking } from "../counselling/counselling.validator.js";
 import { validateSaveCounsellingFeedback } from "../counselling/counselling-feedback.validator.js";
+import { PaymentService } from "@/modules/payment/payment.service.js";
 
 const service = new Direct2HireAdminService();
 const counsellingService = new CounsellingService();
+const paymentService = new PaymentService();
+
+export const generatePaymentLink = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await paymentService.createDirect2HirePaymentLinkForUser(
+            value.userId,
+        );
+        sendResponse(res, true, result, "Payment link generated");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to generate payment link",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
 
 export const getAllStudents = async (
     _req: Request,
