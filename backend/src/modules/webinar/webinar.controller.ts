@@ -81,6 +81,18 @@ export const requestWebinarRecoveryOtp = async (
   }
 };
 
+export const getLiveWebinarSchedule = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const schedule = await webinarService.getLiveSchedule();
+    sendResponse(res, true, schedule, "Live webinar schedule fetched");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
+
 export const verifyWebinarRecoveryOtp = async (
   req: Request,
   res: Response,

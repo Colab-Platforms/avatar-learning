@@ -6,6 +6,7 @@ import {
   getWebinarRegistrationStatus,
   requestWebinarRecoveryOtp,
   verifyWebinarRecoveryOtp,
+  getLiveWebinarSchedule,
 } from "./webinar.controller.js";
 
 const router = Router();
@@ -16,6 +17,7 @@ const recoveryLimiter = createLimiter({
   message: "Too many attempts. Please try again later.",
 });
 
+router.get("/live-schedule", getLiveWebinarSchedule);
 router.post("/create-order", createWebinarOrder);
 router.post("/verify-payment", verifyWebinarPayment);
 router.get("/registration/:id/status", getWebinarRegistrationStatus);

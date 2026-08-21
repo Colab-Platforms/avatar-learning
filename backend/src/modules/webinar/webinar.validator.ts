@@ -4,6 +4,8 @@ import type {
   VerifyWebinarPaymentBody,
   RequestWebinarRecoveryOtpBody,
   VerifyWebinarRecoveryOtpBody,
+  CreateWebinarScheduleBody,
+  UpdateWebinarScheduleBody,
 } from "./webinar.types.js";
 
 export function validateCreateWebinarOrder(data: unknown): {
@@ -101,5 +103,46 @@ export function validateVerifyWebinarRecoveryOtp(data: unknown): {
   const { error, value } = schema.validate(data, { abortEarly: true });
   if (error)
     return { error: { message: error.message }, value: value as VerifyWebinarRecoveryOtpBody };
+  return { value };
+}
+
+export function validateCreateWebinarSchedule(data: unknown): {
+  error?: { message: string };
+  value: CreateWebinarScheduleBody;
+} {
+  const schema = Joi.object<CreateWebinarScheduleBody>({
+    title: Joi.string().trim().min(2).max(120),
+    scheduledAt: Joi.string().isoDate().required().messages({
+      "any.required": "scheduledAt is required",
+      "string.isoDate": "scheduledAt must be a valid ISO date",
+    }),
+    durationMinutes: Joi.number().integer().min(15).max(480),
+    meetLink: Joi.string().trim().uri().allow("").messages({
+      "string.uri": "meetLink must be a valid URL",
+    }),
+  });
+  const { error, value } = schema.validate(data, { abortEarly: true });
+  if (error)
+    return { error: { message: error.message }, value: value as CreateWebinarScheduleBody };
+  return { value };
+}
+
+export function validateUpdateWebinarSchedule(data: unknown): {
+  error?: { message: string };
+  value: UpdateWebinarScheduleBody;
+} {
+  const schema = Joi.object<UpdateWebinarScheduleBody>({
+    title: Joi.string().trim().min(2).max(120),
+    scheduledAt: Joi.string().isoDate().messages({
+      "string.isoDate": "scheduledAt must be a valid ISO date",
+    }),
+    durationMinutes: Joi.number().integer().min(15).max(480),
+    meetLink: Joi.string().trim().uri().allow("").messages({
+      "string.uri": "meetLink must be a valid URL",
+    }),
+  });
+  const { error, value } = schema.validate(data, { abortEarly: true });
+  if (error)
+    return { error: { message: error.message }, value: value as UpdateWebinarScheduleBody };
   return { value };
 }

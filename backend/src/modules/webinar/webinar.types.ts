@@ -34,6 +34,9 @@ export interface WebinarRegistrationStatusResponse {
   amount: number;
   currency: string;
   paidAt: Date | null;
+  webinarTitle: string | null;
+  webinarScheduledAt: Date | null;
+  isLiveWebinar: boolean;
 }
 
 export interface RequestWebinarRecoveryOtpBody {
@@ -43,4 +46,30 @@ export interface RequestWebinarRecoveryOtpBody {
 export interface VerifyWebinarRecoveryOtpBody {
   email: string;
   otp: string;
+}
+
+export interface WebinarScheduleResponse {
+  id: string;
+  title: string;
+  scheduledAt: Date;
+  durationMinutes: number;
+  meetLink: string | null;
+  isPublished: boolean;
+  isLive: boolean;
+  createdAt: Date;
+  updatedAt: Date | null;
+}
+
+export interface CreateWebinarScheduleBody {
+  title?: string;
+  scheduledAt: string;
+  durationMinutes?: number;
+  meetLink?: string;
+}
+
+export interface UpdateWebinarScheduleBody {
+  title?: string;
+  scheduledAt?: string;
+  durationMinutes?: number;
+  meetLink?: string;
 }

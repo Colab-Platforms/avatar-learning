@@ -77,4 +77,6 @@ export const queryKeys = {
     ["admin-webinar-registration", id] as const,
   webinarRegistrationStatus: (registrationId: string) =>
     ["webinar-registration-status", registrationId] as const,
+  adminWebinarSchedules: ["admin-webinar-schedules"] as const,
+  webinarLiveSchedule: ["webinar-live-schedule"] as const,
 };

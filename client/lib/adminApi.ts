@@ -909,3 +909,57 @@ export const fetchWebinarRegistrationDetail = (
   id: string,
 ): Promise<AdminWebinarRegistration> =>
   apiClient.get(`/admin/webinar/registrations/${id}`).then((r) => r.data.data);
+
+// ─── Webinar Schedules ─────────────────────────────────────────────────────
+
+export interface WebinarSchedule {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetLink: string | null;
+  isPublished: boolean;
+  isLive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface CreateWebinarScheduleInput {
+  title?: string;
+  scheduledAt: string;
+  durationMinutes?: number;
+  meetLink?: string;
+}
+
+export type UpdateWebinarScheduleInput = Partial<CreateWebinarScheduleInput>;
+
+export const fetchWebinarSchedules = (): Promise<WebinarSchedule[]> =>
+  apiClient.get("/admin/webinar/schedules").then((r) => r.data.data);
+
+export const createWebinarSchedule = (
+  body: CreateWebinarScheduleInput,
+): Promise<WebinarSchedule> =>
+  apiClient.post("/admin/webinar/schedules", body).then((r) => r.data.data);
+
+export const updateWebinarSchedule = (
+  id: string,
+  body: UpdateWebinarScheduleInput,
+): Promise<WebinarSchedule> =>
+  apiClient.patch(`/admin/webinar/schedules/${id}`, body).then((r) => r.data.data);
+
+export const deleteWebinarSchedule = (id: string): Promise<void> =>
+  apiClient.delete(`/admin/webinar/schedules/${id}`).then(() => undefined);
+
+export const publishWebinarSchedule = (
+  id: string,
+  isPublished: boolean,
+): Promise<WebinarSchedule> =>
+  apiClient
+    .patch(`/admin/webinar/schedules/${id}/publish`, { isPublished })
+    .then((r) => r.data.data);
+
+export const setWebinarScheduleLive = (id: string): Promise<WebinarSchedule> =>
+  apiClient.patch(`/admin/webinar/schedules/${id}/live`, {}).then((r) => r.data.data);
+
+export const unsetWebinarScheduleLive = (id: string): Promise<WebinarSchedule> =>
+  apiClient.patch(`/admin/webinar/schedules/${id}/unlive`, {}).then((r) => r.data.data);

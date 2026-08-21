@@ -963,13 +963,39 @@ model WebinarRegistration {
 
   paidAt DateTime? @map("paid_at")
 
+  webinarScheduleId String?          @map("webinar_schedule_id")
+  webinarSchedule    WebinarSchedule? @relation(fields: [webinarScheduleId], references: [id])
+
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @updatedAt @map("updated_at")
 
   @@index([email])
   @@index([phoneNumber])
   @@index([status])
+  @@index([webinarScheduleId])
   @@map("webinar_registrations")
+}
+
+model WebinarSchedule {
+  id String @id @default(cuid())
+
+  title String @default("AI Tools Live Workshop")
+
+  scheduledAt     DateTime @map("scheduled_at")
+  durationMinutes Int      @default(60) @map("duration_minutes")
+  meetLink        String?  @map("meet_link")
+
+  isPublished Boolean @default(false) @map("is_published")
+  isLive      Boolean @default(false) @map("is_live")
+
+  registrations WebinarRegistration[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@index([isLive])
+  @@index([isPublished])
+  @@map("webinar_schedules")
 }
 
 model Coupon {

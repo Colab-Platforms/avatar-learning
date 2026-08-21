@@ -124,6 +124,9 @@ export interface WebinarRegistrationStatusResponse {
   amount: number;
   currency: string;
   paidAt: string | null;
+  webinarTitle: string | null;
+  webinarScheduledAt: string | null;
+  isLiveWebinar: boolean;
 }
 
 export const createWebinarOrder = (
@@ -153,3 +156,16 @@ export const verifyWebinarRecoveryOtp = (
   apiClient
     .post("/webinar/recovery/verify-otp", { email, otp })
     .then((r) => r.data.data);
+
+export interface WebinarLiveSchedule {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetLink: string | null;
+  isPublished: boolean;
+  isLive: boolean;
+}
+
+export const getLiveWebinarSchedule = (): Promise<WebinarLiveSchedule | null> =>
+  apiClient.get("/webinar/live-schedule").then((r) => r.data.data);

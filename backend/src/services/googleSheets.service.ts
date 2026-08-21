@@ -54,6 +54,8 @@ export type SheetsWebinarInput = {
   phoneNumber: string;
   amountPaid: number;
   paidAt: Date;
+  webinarTitle: string | null;
+  webinarScheduledAt: Date | null;
 };
 
 export type SheetsQuizAssessmentInput = {
@@ -81,6 +83,18 @@ function formatDate(date: Date): string {
   return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(
     ist.getUTCDate(),
   )} ${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
+}
+
+function formatDateOnly(date: Date): string {
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(ist.getUTCDate())}`;
+}
+
+function formatTimeOnly(date: Date): string {
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
 }
 
 function formatUserName(
@@ -368,6 +382,9 @@ class GoogleSheetsService {
         input.phoneNumber,
         formatAmount(input.amountPaid),
         formatDate(input.paidAt),
+        input.webinarTitle ?? "",
+        input.webinarScheduledAt ? formatDateOnly(input.webinarScheduledAt) : "",
+        input.webinarScheduledAt ? formatTimeOnly(input.webinarScheduledAt) : "",
       ]);
       logSyncSuccess("Webinar Registration", input.email, WEBINAR_SHEET);
     } catch (err) {

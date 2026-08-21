@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import RegistrationForm from "./RegistrationForm";
+import { useWebinarLiveSchedule } from "@/hooks/queries/useWebinarLiveSchedule";
 
 // ── CUSTOM INLINE STICKERS (NO LIBRARIES) ──
 
@@ -196,6 +197,23 @@ const HourglassSticker = () => (
 );
 
 export default function HeroSection() {
+  const { data: schedule } = useWebinarLiveSchedule();
+  const scheduledDate = schedule ? new Date(schedule.scheduledAt) : null;
+
+  const dateLabelDesktop = scheduledDate
+    ? scheduledDate.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })
+    : "Coming soon";
+  const [dateLabelMobileDay, dateLabelMobileYear] = scheduledDate
+    ? [
+        scheduledDate.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short" }),
+        String(scheduledDate.getFullYear()),
+      ]
+    : ["Coming soon", ""];
+  const timeLabel = scheduledDate
+    ? scheduledDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true })
+    : "TBA";
+  const durationLabel = schedule ? `${Math.round(schedule.durationMinutes / 60) || 1} hour${schedule.durationMinutes > 60 ? "s" : ""}` : "1 hour";
+
   return (
     <section className="bg-white py-10 sm:py-16 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -236,7 +254,7 @@ export default function HeroSection() {
                 <CalendarSticker />
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-sm">
-                    Sat 22 Aug 2026
+                    {dateLabelDesktop}
                   </h4>
                   <p className="text-xs text-slate-400 font-medium">
                     mark your calendar
@@ -249,9 +267,9 @@ export default function HeroSection() {
                 <ClockSticker />
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-sm">
-                    8:00 PM IST
+                    {timeLabel} IST
                   </h4>
-                  <p className="text-xs text-slate-400 font-medium">1 hour</p>
+                  <p className="text-xs text-slate-400 font-medium">{durationLabel}</p>
                 </div>
               </div>
 
@@ -289,9 +307,9 @@ export default function HeroSection() {
                 <CalendarSticker />
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-xs">
-                    Sat 22 Aug
+                    {dateLabelMobileDay}
                   </h4>
-                  <p className="text-[10px] text-slate-400 font-medium">2026</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{dateLabelMobileYear}</p>
                 </div>
               </div>
 
@@ -299,7 +317,7 @@ export default function HeroSection() {
               <div className="flex items-center gap-3 bg-white border border-[#E8EFF7] p-3 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                 <ClockSticker />
                 <div>
-                  <h4 className="font-bold text-[#0F172A] text-xs">8:00 PM</h4>
+                  <h4 className="font-bold text-[#0F172A] text-xs">{timeLabel}</h4>
                   <p className="text-[10px] text-slate-400 font-medium">IST</p>
                 </div>
               </div>
@@ -308,7 +326,7 @@ export default function HeroSection() {
               <div className="flex items-center gap-3 bg-white border border-[#E8EFF7] p-3 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                 <HourglassSticker />
                 <div>
-                  <h4 className="font-bold text-[#0F172A] text-xs">1 hours</h4>
+                  <h4 className="font-bold text-[#0F172A] text-xs">{durationLabel}</h4>
                   <p className="text-[10px] text-slate-400 font-medium">
                     hands-on
                   </p>

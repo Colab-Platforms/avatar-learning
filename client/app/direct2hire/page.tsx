@@ -948,6 +948,7 @@ export default function Direct2HirePage() {
                         src={item.image}
                         alt={item.title}
                         fill
+                        quality={"100"}
                         sizes="90vw"
                         className="object-cover"
                       />

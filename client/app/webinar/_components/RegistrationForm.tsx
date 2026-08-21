@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useWebinarCheckout } from "@/hooks/useWebinarCheckout";
 import { useWebinarRegistrationStatus } from "@/hooks/queries/useWebinarRegistrationStatus";
+import { useWebinarLiveSchedule } from "@/hooks/queries/useWebinarLiveSchedule";
 import {
   getStoredWebinarRegistrationId,
   setStoredWebinarRegistrationId,
@@ -110,28 +111,23 @@ function RegistrationFormInner() {
     whatsApp?: string;
   }>({});
   const { register, processing, message } = useWebinarCheckout();
+  const { data: schedule } = useWebinarLiveSchedule();
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
-    days: "09",
-    hours: "18",
-    minutes: "05",
-    seconds: "53",
+    days: "00",
+    hours: "00",
+    minutes: "00",
+    seconds: "00",
   });
 
-  // Calculate dynamic countdown to Sat, 22 Aug 2026 8:00 PM IST (or rolling date if passed)
+  // Calculate a live countdown to the currently published/live webinar's date.
   useEffect(() => {
+    if (!schedule) return;
+
+    const targetDate = new Date(schedule.scheduledAt);
+
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-22T20:00:00+05:30");
       const now = new Date();
-
-      // If target date has passed, roll forward to next Saturday 8:00 PM IST
-      if (now > targetDate) {
-        const nextSaturday = new Date();
-        nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
-        nextSaturday.setHours(20, 0, 0, 0);
-        targetDate = nextSaturday;
-      }
-
       const difference = targetDate.getTime() - now.getTime();
 
       if (difference > 0) {
@@ -146,6 +142,8 @@ function RegistrationFormInner() {
           minutes: m.toString().padStart(2, "0"),
           seconds: s.toString().padStart(2, "0"),
         });
+      } else {
+        setTimeLeft({ days: "00", hours: "00", minutes: "00", seconds: "00" });
       }
     };
 
@@ -153,7 +151,7 @@ function RegistrationFormInner() {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [schedule]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -218,6 +216,17 @@ function RegistrationFormInner() {
         day: "numeric",
         month: "long",
         year: "numeric",
+      })
+    : undefined;
+  const webinarDateLabel = status?.webinarScheduledAt
+    ? new Date(status.webinarScheduledAt).toLocaleString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       })
     : undefined;
 
@@ -285,6 +294,25 @@ function RegistrationFormInner() {
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
               <p className="text-gray-400 text-xs">Checking your registration…</p>
             </div>
+          ) : status?.status === "PAID" && !status.isLiveWebinar ? (
+            <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-5 text-center">
+              <p className="text-amber-400 font-bold text-sm mb-1">
+                That batch has already happened
+              </p>
+              <p className="text-gray-300 text-xs mb-3">
+                {webinarDateLabel
+                  ? `You registered for the ${webinarDateLabel} session, which is no longer the upcoming one.`
+                  : "The webinar you registered for is no longer the upcoming one."}{" "}
+                Book a seat for the next live batch below.
+              </p>
+              <button
+                type="button"
+                onClick={resetToForm}
+                className="w-full bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-semibold py-2.5 rounded-lg text-xs"
+              >
+                Register for the next webinar
+              </button>
+            </div>
           ) : status?.status === "PAID" ? (
             <div className="mb-4 rounded-xl border border-[#22C55E]/20 bg-[#1F2C24] px-4 py-5 text-center">
               <p className="text-[#4ADE80] font-bold text-sm mb-1">
@@ -302,9 +330,15 @@ function RegistrationFormInner() {
                   <span className="text-gray-500">Amount paid</span>
                   <span className="font-medium">{amountLabel}</span>
                 </div>
+                {webinarDateLabel && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Webinar</span>
+                    <span className="font-medium">{webinarDateLabel}</span>
+                  </div>
+                )}
                 {paidDate && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Date</span>
+                    <span className="text-gray-500">Paid on</span>
                     <span className="font-medium">{paidDate}</span>
                   </div>
                 )}
