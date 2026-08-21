@@ -1,11 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, ShieldCheck, ShieldMinus, Search } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldMinus, Search, Link as LinkIcon, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 import {
   fetchUsersPaginated,
   setUserRole,
+  generateD2HPaymentLink,
   type AdminUser,
+  type D2HPaymentLink,
 } from "@/lib/adminApi";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -39,6 +42,9 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [linkActingId, setLinkActingId] = useState<string | null>(null);
+  const [paymentLinks, setPaymentLinks] = useState<Record<string, D2HPaymentLink>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -85,6 +91,28 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleGenerateLink = async (user: AdminUser) => {
+    setLinkActingId(user.id);
+    setError("");
+    try {
+      const link = await generateD2HPaymentLink(user.id);
+      setPaymentLinks((prev) => ({ ...prev, [user.id]: link }));
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ?? "Failed to generate payment link",
+      );
+    } finally {
+      setLinkActingId(null);
+    }
+  };
+
+  const handleCopyLink = async (userId: string, shortUrl: string) => {
+    await navigator.clipboard.writeText(shortUrl);
+    setCopiedId(userId);
+    toast.success("Link copied");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const canManageRoles = callerRole === "SUPERADMIN";
 
   return (
@@ -128,6 +156,7 @@ export default function AdminUsersPage() {
               <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Email</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Role</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Joined</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">D2H Payment Link</th>
               {canManageRoles && (
                 <th className="px-4 py-3 text-left text-xs font-semibold text-white/60">Actions</th>
               )}
@@ -136,11 +165,11 @@ export default function AdminUsersPage() {
           <tbody className="divide-y divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-white/40">Loading…</td>
+                <td colSpan={canManageRoles ? 6 : 5} className="px-4 py-6 text-center text-white/40">Loading…</td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-white/40">No users found</td>
+                <td colSpan={canManageRoles ? 6 : 5} className="px-4 py-6 text-center text-white/40">No users found</td>
               </tr>
             ) : (
               users.map((u) => {
@@ -158,6 +187,43 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3 text-white/50 text-xs">
                       {new Date(u.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      {paymentLinks[u.id] ? (
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <a
+                            href={paymentLinks[u.id].shortUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-brand-400 hover:text-brand-300 underline underline-offset-2 truncate"
+                          >
+                            {paymentLinks[u.id].shortUrl}
+                          </a>
+                          <button
+                            onClick={() => handleCopyLink(u.id, paymentLinks[u.id].shortUrl)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-white/10 text-[10px] font-medium text-white/70 hover:bg-white/5 shrink-0"
+                          >
+                            {copiedId === u.id ? (
+                              <Check size={11} className="text-emerald-400" />
+                            ) : (
+                              <Copy size={11} />
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleGenerateLink(u)}
+                          disabled={linkActingId === u.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-brand-500/30 bg-brand-500/8 text-xs font-medium text-brand-300 hover:bg-brand-500/15 disabled:opacity-50 transition-colors"
+                        >
+                          {linkActingId === u.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <LinkIcon size={12} />
+                          )}
+                          Generate Link
+                        </button>
+                      )}
                     </td>
                     {canManageRoles && (
                       <td className="px-4 py-3">

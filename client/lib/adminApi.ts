@@ -769,6 +769,19 @@ export const markCounsellingCompleted = (userId: string) =>
     .patch(`/admin/direct2hire/students/${userId}/counselling/complete`)
     .then((r) => r.data.data);
 
+export interface D2HPaymentLink {
+  shortUrl: string;
+  paymentLinkId: string;
+  amount: number;
+}
+
+export const generateD2HPaymentLink = (
+  userId: string,
+): Promise<D2HPaymentLink> =>
+  apiClient
+    .post(`/admin/direct2hire/students/${userId}/payment-link`)
+    .then((r) => r.data.data);
+
 export const uploadInvestorDocumentFile = async (
   file: File,
 ): Promise<string> => {
