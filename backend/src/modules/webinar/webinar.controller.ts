@@ -52,7 +52,7 @@ export const getWebinarRegistrationStatus = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const result = await webinarService.getRegistrationStatus(req.params.id);
+    const result = await webinarService.getRegistrationStatus(String(req.params.id));
     sendResponse(res, true, result, "Registration status fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useWebinarCheckout } from "@/hooks/useWebinarCheckout";
@@ -25,7 +25,25 @@ interface TimeLeft {
 const WEBINAR_WHATSAPP_GROUP_LINK =
   "https://chat.whatsapp.com/GzHfq8PjC0u4UyeXaMYxqP?s=cl&p=a&mlu=0";
 
+// useSearchParams() requires a Suspense boundary for static prerendering
+// (next build fails without one, even though `next dev` never hits this
+// since it doesn't statically prerender) — so the actual form is split into
+// an inner component wrapped by this default export.
 export default function RegistrationForm() {
+  return (
+    <Suspense fallback={<RegistrationFormSkeleton />}>
+      <RegistrationFormInner />
+    </Suspense>
+  );
+}
+
+function RegistrationFormSkeleton() {
+  return (
+    <div className="bg-[#1C1F22] border border-white/10 rounded-2xl p-6 text-white w-full max-w-[420px] shadow-2xl relative h-[520px] animate-pulse" />
+  );
+}
+
+function RegistrationFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlRegistrationId = searchParams.get("registrationId");
