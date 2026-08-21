@@ -70,6 +70,10 @@ export function HelpWidget() {
   if (isExcluded) return null;
 
   const isDirect2Hire = pathname === "/direct2hire";
+  // /webinar has its own sticky bottom reserve-seat bar, same as
+  // /direct2hire's — reuse the same clearance so this widget doesn't
+  // collide with it (or with the chatbot toggle, which shifts up too).
+  const hasStickyBottomBar = isDirect2Hire || pathname === "/webinar";
 
   return (
     <AnimatePresence>
@@ -82,7 +86,7 @@ export function HelpWidget() {
           exit={{ opacity: 0, scale: 0.92, y: 12 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className={`fixed right-6 md:right-8 z-50 flex flex-col items-end gap-3 ${
-            isDirect2Hire ? "bottom-[180px] md:bottom-[196px]" : "bottom-[108px] md:bottom-[132px]"
+            hasStickyBottomBar ? "bottom-[180px] md:bottom-[196px]" : "bottom-[108px] md:bottom-[132px]"
           }`}
         >
       {/* Panel */}

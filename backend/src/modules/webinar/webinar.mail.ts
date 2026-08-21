@@ -3,12 +3,22 @@ import { resend, FROM_EMAIL, APP_NAME } from "@/utils/mailer.js";
 const LOGO_URL = `${process.env.FRONTEND_URL || "http://localhost:3000"}/favicon.png`;
 
 const WEBINAR_TITLE = "AI Webinar";
-const WEBINAR_SCHEDULE = "Sunday, 23 Aug &middot; 11:30 AM IST";
+const WEBINAR_SCHEDULE = "Saturday, 22 Aug &middot; 8:00 PM IST";
 
+// General community — for interaction/networking, open to everyone.
 const WHATSAPP_COMMUNITY_LINK = process.env.WHATSAPP_COMMUNITY_LINK;
 if (!WHATSAPP_COMMUNITY_LINK) {
   throw new Error(
     "WHATSAPP_COMMUNITY_LINK is required in backend environment variables.",
+  );
+}
+
+// Webinar-specific group — where the joining link/session updates for this
+// batch are shared, only for confirmed attendees.
+const WEBINAR_WHATSAPP_GROUP_LINK = process.env.WEBINAR_WHATSAPP_GROUP_LINK;
+if (!WEBINAR_WHATSAPP_GROUP_LINK) {
+  throw new Error(
+    "WEBINAR_WHATSAPP_GROUP_LINK is required in backend environment variables.",
   );
 }
 
@@ -65,16 +75,22 @@ function buildHtml(data: WebinarPaymentConfirmationData): string {
                                 </tr>
                             </table>
 
-                            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 24px;">
-                                We'll share the joining link with you here and on WhatsApp closer to the date &mdash; or reach out to you directly if we need anything else. Keep an eye on your inbox!
+                            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 12px;">
+                                First, join the <strong>webinar group</strong> below &mdash; that's where we'll share the joining link and any session updates or reminders before we go live:
                             </p>
 
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <a href="${WEBINAR_WHATSAPP_GROUP_LINK}" style="display: inline-block; background-color: #25D366; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-align: center; box-shadow: 0 4px 6px -1px rgba(37, 211, 102, 0.15), 0 2px 4px -1px rgba(37, 211, 102, 0.1);">
+                                    Join Webinar Group &rarr;
+                                </a>
+                            </div>
+
                             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 12px;">
-                                In the meantime, join our WhatsApp community for updates, reminders, and to connect with other attendees before the session:
+                                And for ongoing interaction, networking, and updates beyond this session, you're also welcome in our general WhatsApp community:
                             </p>
 
                             <div style="text-align: center; margin-bottom: 28px;">
-                                <a href="${WHATSAPP_COMMUNITY_LINK}" style="display: inline-block; background-color: #25D366; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-align: center; box-shadow: 0 4px 6px -1px rgba(37, 211, 102, 0.15), 0 2px 4px -1px rgba(37, 211, 102, 0.1);">
+                                <a href="${WHATSAPP_COMMUNITY_LINK}" style="display: inline-block; background-color: #ffffff; color: #0f172a; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 13px; text-align: center; border: 1.5px solid #cbd5e1;">
                                     Join WhatsApp Community &rarr;
                                 </a>
                             </div>
@@ -100,6 +116,66 @@ function buildHtml(data: WebinarPaymentConfirmationData): string {
                 </td>
             </tr>
         </table>`;
+}
+
+function buildRecoveryOtpHtml(otp: string): string {
+  return `
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; width: 100%; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <tr>
+                <td align="center" style="padding: 32px 16px;">
+                    <div style="max-width: 560px; width: 100%; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; border-top: 4px solid #4f46e5; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03); overflow: hidden; text-align: left;">
+                        <div style="padding: 24px 24px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                            <img src="${LOGO_URL}" alt="${APP_NAME}" width="32" height="32" style="display: inline-block; vertical-align: middle; margin-right: 8px; border-radius: 6px;" />
+                            <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; vertical-align: middle;">${APP_NAME}</span>
+                        </div>
+                        <div style="padding: 32px 24px;">
+                            <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; line-height: 1.3;">Verify your email</h2>
+                            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 24px;">
+                                Use the code below to recover your ${WEBINAR_TITLE} registration:
+                            </p>
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <span style="display: inline-block; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 32px; font-size: 28px; font-weight: 800; letter-spacing: 8px; color: #0f172a;">${otp}</span>
+                            </div>
+                            <p style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0;">
+                                This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.
+                            </p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>`;
+}
+
+export async function sendWebinarRecoveryOtpEmail(
+  email: string,
+  otp: string,
+): Promise<void> {
+  console.log(`[Resend] Sending webinar recovery OTP email to: ${email}`);
+  try {
+    const { data: sendData, error } = await resend.emails.send({
+      from: `${APP_NAME} <${FROM_EMAIL}>`,
+      to: email,
+      subject: `Your verification code — ${WEBINAR_TITLE}`,
+      html: buildRecoveryOtpHtml(otp),
+    });
+
+    if (error) {
+      console.error(
+        `[Resend Error] Failed to send webinar recovery OTP email to ${email}:`,
+        error,
+      );
+      return;
+    }
+
+    console.log(
+      `[Resend Success] Webinar recovery OTP email sent! ID: ${sendData?.id}`,
+    );
+  } catch (err) {
+    console.error(
+      `[Resend] Error sending webinar recovery OTP email to ${email}:`,
+      err,
+    );
+  }
 }
 
 export async function sendWebinarPaymentConfirmationEmail(

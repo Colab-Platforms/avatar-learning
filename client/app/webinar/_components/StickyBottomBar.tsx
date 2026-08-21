@@ -36,13 +36,13 @@ export default function StickyBottomBar() {
   // Countdown timer calculations
   useEffect(() => {
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-22T11:30:00+05:30");
+      let targetDate = new Date("2026-08-22T20:00:00+05:30");
       const now = new Date();
 
       if (now > targetDate) {
         const nextSaturday = new Date();
         nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
-        nextSaturday.setHours(11, 30, 0, 0);
+        nextSaturday.setHours(20, 0, 0, 0);
         targetDate = nextSaturday;
       }
 
@@ -93,7 +93,7 @@ export default function StickyBottomBar() {
           </div>
           <div className="h-4 w-px bg-white/10"></div>
           <span className="text-xs text-gray-300 font-medium">
-            Sat 22 Aug &middot; 11:30 AM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
+            Sat 22 Aug &middot; 8:00 PM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
           </span>
         </div>
 

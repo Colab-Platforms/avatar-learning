@@ -175,6 +175,10 @@ function BotBubble({
 export default function ChatbotAgent() {
   const pathname = usePathname();
   const isDirect2Hire = pathname === "/direct2hire";
+  // /webinar has its own sticky bottom reserve-seat bar (StickyBottomBar),
+  // same as /direct2hire's StickyBuyBar — reuse the same clearance so the
+  // toggle button/panel don't collide with it on small screens.
+  const hasStickyBottomBar = isDirect2Hire || pathname === "/webinar";
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(DEFAULT_MESSAGES);
   const [inputValue, setInputValue] = useState("");
@@ -361,7 +365,7 @@ export default function ChatbotAgent() {
       {/* ── Toggle Button ── */}
       <div
         className={`fixed z-50 group transition-all duration-300 right-6 md:right-8 ${
-          isDirect2Hire ? "bottom-24 md:bottom-24" : "bottom-6 md:bottom-8"
+          hasStickyBottomBar ? "bottom-24 md:bottom-24" : "bottom-6 md:bottom-8"
         }`}
       >
         {!isOpen && (
@@ -436,7 +440,7 @@ export default function ChatbotAgent() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className={`fixed left-4 right-4 z-50 mx-auto flex flex-col w-[min(calc(100vw-2rem),400px)] h-[580px] max-h-[85dvh] overflow-hidden rounded-3xl chatbot-panel sm:right-8 sm:left-auto transition-all duration-300 ${
-              isDirect2Hire
+              hasStickyBottomBar
                 ? "bottom-40 sm:bottom-40"
                 : "bottom-24 sm:bottom-24"
             }`}

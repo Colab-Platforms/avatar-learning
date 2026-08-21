@@ -249,7 +249,7 @@ export default function HeroSection() {
                 <ClockSticker />
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-sm">
-                    11:30 AM IST
+                    8:00 PM IST
                   </h4>
                   <p className="text-xs text-slate-400 font-medium">1 hour</p>
                 </div>
@@ -299,7 +299,7 @@ export default function HeroSection() {
               <div className="flex items-center gap-3 bg-white border border-[#E8EFF7] p-3 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                 <ClockSticker />
                 <div>
-                  <h4 className="font-bold text-[#0F172A] text-xs">11:30 AM</h4>
+                  <h4 className="font-bold text-[#0F172A] text-xs">8:00 PM</h4>
                   <p className="text-[10px] text-slate-400 font-medium">IST</p>
                 </div>
               </div>

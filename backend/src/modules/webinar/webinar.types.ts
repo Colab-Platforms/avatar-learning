@@ -5,6 +5,7 @@ export interface CreateWebinarOrderBody {
 }
 
 export interface CreateWebinarOrderResponse {
+  alreadyRegistered?: false;
   orderId: string;
   amount: number;
   currency: string;
@@ -15,8 +16,31 @@ export interface CreateWebinarOrderResponse {
   phoneNumber: string;
 }
 
+export interface AlreadyRegisteredResponse {
+  alreadyRegistered: true;
+  registrationId: string;
+}
+
 export interface VerifyWebinarPaymentBody {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+}
+
+export interface WebinarRegistrationStatusResponse {
+  registrationId: string;
+  status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+  name: string;
+  amount: number;
+  currency: string;
+  paidAt: Date | null;
+}
+
+export interface RequestWebinarRecoveryOtpBody {
+  email: string;
+}
+
+export interface VerifyWebinarRecoveryOtpBody {
+  email: string;
+  otp: string;
 }

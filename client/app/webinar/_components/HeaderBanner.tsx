@@ -15,7 +15,7 @@ export default function HeaderBanner() {
       </span>
       {/* Desktop Text */}
       <span className="hidden sm:inline tracking-wider">
-        Live online workshop &middot; Saturday, 22 August 2026 &middot; 11:30 AM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
+        Live online workshop &middot; Saturday, 22 August 2026 &middot; 8:00 PM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
       </span>
     </div>
   );

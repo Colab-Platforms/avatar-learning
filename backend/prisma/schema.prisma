@@ -37,6 +37,7 @@ enum ResourceCategory {
 enum OtpType {
   REGISTER
   LOGIN
+  WEBINAR_RECOVERY
 }
 
 enum EmploymentType {

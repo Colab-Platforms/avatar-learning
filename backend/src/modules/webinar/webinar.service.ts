@@ -1,19 +1,35 @@
+import crypto from "crypto";
 import Razorpay from "razorpay";
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "@/modules/payment/payment.utils.js";
 import type { RazorpayWebhookPayload } from "@/modules/payment/payment.types.js";
-import { sendWebinarPaymentConfirmationEmail } from "./webinar.mail.js";
+import {
+  sendWebinarPaymentConfirmationEmail,
+  sendWebinarRecoveryOtpEmail,
+} from "./webinar.mail.js";
 import { googleSheetsService } from "@/services/googleSheets.service.js";
 import type {
   CreateWebinarOrderBody,
   CreateWebinarOrderResponse,
+  AlreadyRegisteredResponse,
+  WebinarRegistrationStatusResponse,
 } from "./webinar.types.js";
 
 const WEBINAR_PRICE_PAISE: number = process.env.WEBINAR_PRICE_PAISE
   ? parseInt(process.env.WEBINAR_PRICE_PAISE)
   : 700;
+
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+
+const hashOtp = (otp: string): string =>
+  crypto.createHash("sha256").update(otp).digest("hex");
+
+const generateOtp = (): string =>
+  Math.floor(100000 + Math.random() * 900000).toString();
 
 function getRazorpay(): Razorpay {
   const keyId = process.env.RAZORPAY_KEY_ID;
@@ -30,17 +46,17 @@ function getRazorpay(): Razorpay {
 export class WebinarService {
   async createOrder(
     body: CreateWebinarOrderBody,
-  ): Promise<CreateWebinarOrderResponse> {
-    const { name, email, phoneNumber } = body;
+  ): Promise<CreateWebinarOrderResponse | AlreadyRegisteredResponse> {
+    const { name, phoneNumber } = body;
+    const email = normalizeEmail(body.email);
 
     const paidRegistration = await prisma.webinarRegistration.findFirst({
       where: { email, status: "PAID" },
     });
     if (paidRegistration) {
-      throw new ApiError(
-        "You have already registered and paid for this webinar",
-        STATUS_CODES.CONFLICT,
-      );
+      // Already paid — let the frontend redirect straight to the success
+      // page instead of creating a second Razorpay order.
+      return { alreadyRegistered: true, registrationId: paidRegistration.id };
     }
 
     // Reuse an existing PENDING registration for this email (e.g. retry after
@@ -233,6 +249,90 @@ export class WebinarService {
         data: { status: "FAILED" },
       });
     }
+  }
+
+  async getRegistrationStatus(
+    registrationId: string,
+  ): Promise<WebinarRegistrationStatusResponse> {
+    const registration = await prisma.webinarRegistration.findUnique({
+      where: { id: registrationId },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+
+    return {
+      registrationId: registration.id,
+      status: registration.status,
+      name: registration.name,
+      amount: registration.amount,
+      currency: registration.currency,
+      paidAt: registration.paidAt,
+    };
+  }
+
+  // Always resolves — never reveals whether an email is registered, to
+  // prevent enumeration. Only actually sends an OTP when a PAID
+  // registration exists for the email; PENDING/FAILED registrations are
+  // better recovered via the normal /webinar retry flow.
+  async requestRecoveryOtp(rawEmail: string): Promise<void> {
+    const email = normalizeEmail(rawEmail);
+
+    const registration = await prisma.webinarRegistration.findFirst({
+      where: { email, status: "PAID" },
+    });
+    if (!registration) return;
+
+    const otp = generateOtp();
+    await prisma.otpVerification.create({
+      data: {
+        email,
+        otpCode: hashOtp(otp),
+        type: "WEBINAR_RECOVERY",
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      },
+    });
+
+    void sendWebinarRecoveryOtpEmail(email, otp);
+  }
+
+  async verifyRecoveryOtp(
+    rawEmail: string,
+    otp: string,
+  ): Promise<{ registrationId: string }> {
+    const email = normalizeEmail(rawEmail);
+
+    const otpRecord = await prisma.otpVerification.findFirst({
+      where: {
+        email,
+        type: "WEBINAR_RECOVERY",
+        used: false,
+        expiresAt: { gt: new Date() },
+        otpCode: hashOtp(otp),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!otpRecord)
+      throw new ApiError("Invalid or expired code", STATUS_CODES.BAD_REQUEST);
+
+    await prisma.otpVerification.update({
+      where: { id: otpRecord.id },
+      data: { used: true },
+    });
+
+    const registration = await prisma.webinarRegistration.findFirst({
+      where: { email, status: "PAID" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+
+    return { registrationId: registration.id };
   }
 }
 

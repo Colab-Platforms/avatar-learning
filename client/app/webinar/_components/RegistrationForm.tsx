@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { useWebinarCheckout } from "@/hooks/useWebinarCheckout";
+import { useWebinarRegistrationStatus } from "@/hooks/queries/useWebinarRegistrationStatus";
+import {
+  getStoredWebinarRegistrationId,
+  setStoredWebinarRegistrationId,
+  clearStoredWebinarRegistrationId,
+} from "@/lib/webinarStorage";
+import AlreadyRegisteredRecovery from "./AlreadyRegisteredRecovery";
 
 interface TimeLeft {
   days: string;
@@ -10,7 +19,68 @@ interface TimeLeft {
   seconds: string;
 }
 
+// Group for confirmed attendees only — joining link/session updates for this
+// batch. Distinct from the general WhatsApp community (interaction/
+// networking, open to everyone), which is shared via the confirmation email.
+const WEBINAR_WHATSAPP_GROUP_LINK =
+  "https://chat.whatsapp.com/GzHfq8PjC0u4UyeXaMYxqP?s=cl&p=a&mlu=0";
+
 export default function RegistrationForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlRegistrationId = searchParams.get("registrationId");
+
+  // Source of truth for "which registration are we looking at" — seeded from
+  // the URL (survives refresh) and falls back to localStorage (survives
+  // closing the tab on the same device). Either way, the actual PAID/PENDING/
+  // FAILED verdict always comes from the backend status fetch below, never
+  // from the URL or localStorage themselves.
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
+  const [checkedStorage, setCheckedStorage] = useState(false);
+
+  useEffect(() => {
+    if (urlRegistrationId) {
+      setRegistrationId(urlRegistrationId);
+      setCheckedStorage(true);
+      return;
+    }
+    setRegistrationId(getStoredWebinarRegistrationId());
+    setCheckedStorage(true);
+  }, [urlRegistrationId]);
+
+  const {
+    data: status,
+    isLoading: statusLoading,
+    isError: statusError,
+    refetch: refetchStatus,
+    isFetching: statusFetching,
+  } = useWebinarRegistrationStatus(registrationId, { enabled: checkedStorage && !!registrationId });
+
+  const resetToForm = () => {
+    clearStoredWebinarRegistrationId();
+    setRegistrationId(null);
+    if (urlRegistrationId) router.replace("/webinar", { scroll: false });
+  };
+
+  useEffect(() => {
+    if (!registrationId) return;
+    if (statusError) {
+      // Stale/invalid id — don't pretend anything succeeded.
+      resetToForm();
+      return;
+    }
+    if (status && status.status === "PAID") {
+      setStoredWebinarRegistrationId(registrationId);
+      if (!urlRegistrationId) {
+        router.replace(`/webinar?registrationId=${registrationId}`, { scroll: false });
+      }
+    } else if (status && status.status !== "PAID" && !urlRegistrationId) {
+      // A stale localStorage id that never completed payment — don't auto-show it.
+      clearStoredWebinarRegistrationId();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registrationId, status, statusError]);
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,17 +100,17 @@ export default function RegistrationForm() {
     seconds: "53",
   });
 
-  // Calculate dynamic countdown to Sat, 22 Aug 2026 11:30 AM IST (or rolling date if passed)
+  // Calculate dynamic countdown to Sat, 22 Aug 2026 8:00 PM IST (or rolling date if passed)
   useEffect(() => {
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-22T11:30:00+05:30");
+      let targetDate = new Date("2026-08-22T20:00:00+05:30");
       const now = new Date();
 
-      // If target date has passed, roll forward to next Saturday 11:30 AM IST
+      // If target date has passed, roll forward to next Saturday 8:00 PM IST
       if (now > targetDate) {
         const nextSaturday = new Date();
         nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
-        nextSaturday.setHours(11, 30, 0, 0);
+        nextSaturday.setHours(20, 0, 0, 0);
         targetDate = nextSaturday;
       }
 
@@ -73,8 +143,6 @@ export default function RegistrationForm() {
     // Clear this field's error as soon as the user edits it.
     setFieldErrors((prev) => (prev[name as keyof typeof prev] ? { ...prev, [name]: undefined } : prev));
   };
-
-  const isRegistered = message?.type === "success";
 
   const NAME_PATTERN = /^[A-Za-z][A-Za-z\s'.-]{1,59}$/;
   const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -123,6 +191,19 @@ export default function RegistrationForm() {
 
     await register({ name: fullName, email, phoneNumber: whatsApp });
   };
+
+  const amountLabel = status
+    ? `${status.currency === "INR" ? "₹" : status.currency + " "}${(status.amount / 100).toFixed(0)}`
+    : null;
+  const paidDate = status?.paidAt
+    ? new Date(status.paidAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : undefined;
+
+  const showStatusCard = checkedStorage && !!registrationId && !statusError;
 
   return (
     <div className="bg-[#1C1F22] border border-white/10 rounded-2xl p-6 text-white w-full max-w-[420px] shadow-2xl relative">
@@ -179,16 +260,88 @@ export default function RegistrationForm() {
         </div>
       </div>
 
-      {isRegistered ? (
-        /* Success state */
-        <div className="mb-4 rounded-xl border border-[#22C55E]/20 bg-[#1F2C24] px-4 py-5 text-center">
-          <p className="text-[#4ADE80] font-bold text-sm mb-1">
-            You&rsquo;re confirmed! 🎉
-          </p>
-          <p className="text-gray-300 text-xs">{message?.text}</p>
-        </div>
+      {showStatusCard ? (
+        <>
+          {statusLoading ? (
+            <div className="mb-4 rounded-xl border border-white/10 bg-[#202427] px-4 py-8 text-center">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
+              <p className="text-gray-400 text-xs">Checking your registration…</p>
+            </div>
+          ) : status?.status === "PAID" ? (
+            <div className="mb-4 rounded-xl border border-[#22C55E]/20 bg-[#1F2C24] px-4 py-5 text-center">
+              <p className="text-[#4ADE80] font-bold text-sm mb-1">
+                You&rsquo;re confirmed! 🎉
+              </p>
+              <p className="text-gray-300 text-xs mb-3">
+                Your seat for the AI Webinar is reserved — check your email/WhatsApp for details.
+              </p>
+              <div className="text-left text-xs text-gray-300 space-y-1.5 border-t border-white/10 pt-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Name</span>
+                  <span className="font-medium">{status.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Amount paid</span>
+                  <span className="font-medium">{amountLabel}</span>
+                </div>
+                {paidDate && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium">{paidDate}</span>
+                  </div>
+                )}
+              </div>
+              <a
+                href={WEBINAR_WHATSAPP_GROUP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold py-2.5 rounded-lg text-xs transition-all"
+              >
+                Join Webinar Group &rarr;
+              </a>
+              <p className="text-gray-500 text-[10px] mt-2">
+                We&rsquo;ll share the joining link and reminders in the group.
+              </p>
+            </div>
+          ) : status?.status === "PENDING" ? (
+            <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-5 text-center">
+              <p className="text-amber-400 font-bold text-sm mb-1">
+                Payment is being processed
+              </p>
+              <p className="text-gray-300 text-xs mb-3">
+                Please wait a moment — if money was deducted, your seat will confirm shortly.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchStatus()}
+                disabled={statusFetching}
+                className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-2.5 rounded-lg text-xs disabled:opacity-60"
+              >
+                {statusFetching ? "Checking…" : "Check again"}
+              </button>
+            </div>
+          ) : (
+            <div className="mb-4 rounded-xl border border-[#F87171]/20 bg-[#2C1F1F] px-4 py-5 text-center">
+              <p className="text-[#F87171] font-bold text-sm mb-1">
+                Payment didn&rsquo;t go through
+              </p>
+              <p className="text-gray-300 text-xs mb-3">
+                Your registration wasn&rsquo;t completed. You can retry below.
+              </p>
+              <button
+                type="button"
+                onClick={resetToForm}
+                className="w-full bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-semibold py-2.5 rounded-lg text-xs"
+              >
+                Retry registration
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <>
+          <AlreadyRegisteredRecovery />
+
           {/* Registration form inputs */}
           <form onSubmit={handleSubmit} className="space-y-3 mb-4">
             <div>
