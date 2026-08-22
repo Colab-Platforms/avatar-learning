@@ -103,88 +103,80 @@ async function sendPurchaseConfirmationEmailForOrder(order: {
 }
 
 // function to notify Pabbly on purchase
-// async function notifyPabblyOnPurchase(
-//   order: {
-//     userId: string;
-//     productType: string;
-//     courseId: string | null;
-//     gatewayOrderId: string;
-//     amount: number;
-//   },
-//   gatewayPaymentId: string,
-// ): Promise<void> {
-//   try {
-//     const user = await prisma.user.findUnique({
-//       where: { id: order.userId },
-//       select: { firstName: true, lastName: true, email: true, phoneNo: true },
-//     });
-//     if (!user) return;
+async function notifyPabblyOnPurchase(
+  order: {
+    userId: string;
+    productType: string;
+    courseId: string | null;
+    gatewayOrderId: string;
+    amount: number;
+  },
+  gatewayPaymentId: string,
+): Promise<void> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: order.userId },
+      select: { firstName: true, lastName: true, email: true, phoneNo: true },
+    });
+    if (!user) return;
 
-//     let phone: string | null = user.phoneNo;
-//     let email: string | null = user.email;
-//     // Fall back to the Direct2HireLead record (collected at enrollment) when
-//     // the user account itself has no phone/email on file.
-//     if (!phone || !email) {
-//       const lead = await prisma.direct2HireLead.findUnique({
-//         where: { userId: order.userId },
-//         select: { phoneNumber: true, email: true },
-//       });
-//       phone = phone || lead?.phoneNumber || null;
-//       email = email || lead?.email || null;
-//     }
+    let phone: string | null = user.phoneNo;
+    let email: string | null = user.email;
+    // Fall back to the Direct2HireLead record (collected at enrollment) when
+    // the user account itself has no phone/email on file.
+    if (!phone || !email) {
+      const lead = await prisma.direct2HireLead.findUnique({
+        where: { userId: order.userId },
+        select: { phoneNumber: true, email: true },
+      });
+      phone = phone || lead?.phoneNumber || null;
+      email = email || lead?.email || null;
+    }
 
-//     let productName = "Direct2Hire Programme";
-//     if (order.productType === "COURSE" && order.courseId) {
-//       const course = await prisma.courses.findUnique({
-//         where: { id: order.courseId },
-//         select: { title: true },
-//       });
-//       productName = course?.title ?? "Course";
-//     } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
-//       productName = "Direct2Hire Assessment + Counselling";
-//     }
+    let productName = "Direct2Hire Programme";
+    if (order.productType === "COURSE" && order.courseId) {
+      const course = await prisma.courses.findUnique({
+        where: { id: order.courseId },
+        select: { title: true },
+      });
+      productName = course?.title ?? "Course";
+    } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
+      productName = "Direct2Hire Assessment + Counselling";
+    }
 
-//     if (email) {
-//       await sendPaymentConfirmationEmail(email, {
-//         name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
-//         amount: order.amount,
-//         productName,
-//       });
-//     }
+    const webhookUrl = process.env.PABBLY_PURCHASE_WEBHOOK_URL;
+    if (!webhookUrl) {
+      console.warn("[Payment] Pabbly purchase webhook URL not configured");
+      return;
+    }
 
-//     const webhookUrl = process.env.PABBLY_WEBHOOK_URL;
-//     if (!webhookUrl) {
-//       console.warn("[Payment] Pabbly webhook URL not configured");
-//       return;
-//     }
+    const payload = {
+      customer_name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+      phone_number: phone ? `91${phone}` : "",
+      email: email ?? "",
+      product_name: productName,
+      amount: order.amount / 100,
+      order_id: order.gatewayOrderId,
+      payment_id: gatewayPaymentId,
+      purchase_date: new Date().toISOString(),
+    };
+    console.log("[Payment] Sending Pabbly webhook payload:", payload);
 
-//     const payload = {
-//       customer_name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
-//       phone_number: phone ?? "",
-//       email: email ?? "",
-//       product_name: productName,
-//       amount: order.amount / 100,
-//       order_id: order.gatewayOrderId,
-//       payment_id: gatewayPaymentId,
-//       purchase_date: new Date().toISOString(),
-//     };
-//     console.log("[Payment] Sending Pabbly webhook payload:", payload);
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-//     const response = await fetch(webhookUrl, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(payload),
-//     });
-
-//     const responseBody = await response.text();
-//     console.log(
-//       `[Payment] Pabbly webhook response: status=${response.status}`,
-//       responseBody,
-//     );
-//   } catch (err) {
-//     console.error("[Payment] Failed to notify Pabbly webhook:", err);
-//   }
-// }
+    const responseBody = await response.text();
+    console.log(
+      `[Payment] Pabbly webhook response: status=${response.status}`,
+      responseBody,
+    );
+  } catch (err) {
+    console.error("[Payment] Failed to notify Pabbly webhook:", err);
+  }
+}
 
 async function saveDirect2HireLead(
   userId: string,
@@ -372,7 +364,7 @@ async function completePayment(params: {
     }
 
     await sendPurchaseConfirmationEmailForOrder(order);
-    // await notifyPabblyOnPurchase(order, gatewayPaymentId);
+    await notifyPabblyOnPurchase(order, gatewayPaymentId);
   } catch (err: any) {
     if (err.code === "P2002") {
       // Concurrent webhook/verify call already recorded this payment — safe to ignore,

@@ -1,15 +1,25 @@
-###
+### Purchase webhook
 
 POST https://connect.pabbly.com/webhook-listener/webhook/IjU3NjMwNTZjMDYzNDA0M2M1MjY1NTUzMyI_3D_pc/IjU3NjcwNTY5MDYzZTA0MzU1MjY0NTUzYzUxMzci_pc
 Content-Type: application/json
 
 {
-  "customer_name": "Vishwaa K",
-  "phone_number": "919321614025",
-  "email": "vinayakpersonal77@gmail.com",
+  "customer_name": "John Doe",
+  "phone_number": "91NUMBER",
+  "email": "JOHN.DOE@EXAMPLE.COM",
   "product_name": "Direct2Hire Programme",
-  "amount": 99,
+  "amount": 99, 
   "order_id": "order_TSNMNjAbWKnf0C",
   "payment_id": "pay_TSNMSWbzKsy7Oz",
   "purchase_date": "2026-08-21T09:48:33.366Z"
+}
+
+### Signup webhook
+
+POST https://connect.pabbly.com/webhook-listener/webhook/IjU3NjMwNTZjMDYzNDA0M2M1MjY1NTUzMyI_3D_pc/IjU3NjcwNTY4MDYzNzA0MzI1MjY5NTUzYzUxMzEi_pc
+Content-Type: application/json
+
+{
+  "customer_name": "john doe",
+  "phone_number": "91NUMBER"
 }
