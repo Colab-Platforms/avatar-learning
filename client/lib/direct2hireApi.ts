@@ -11,6 +11,7 @@ export interface D2HEnrollment {
   assessmentCounsellingPaidAt: string | null;
   hasAssessmentCounsellingAccess: boolean;
   hasLiveCounsellingAccess: boolean;
+  amountPaidRupees: number | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -21,13 +21,13 @@ export default function FooterCtaSection() {
   // Countdown timer calculation
   useEffect(() => {
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-22T11:30:00+05:30");
+      let targetDate = new Date("2026-08-22T20:00:00+05:30");
       const now = new Date();
 
       if (now > targetDate) {
         const nextSaturday = new Date();
         nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
-        nextSaturday.setHours(11, 30, 0, 0);
+        nextSaturday.setHours(20, 0, 0, 0);
         targetDate = nextSaturday;
       }
 
@@ -73,7 +73,7 @@ export default function FooterCtaSection() {
         {/* Dynamic header tag */}
         <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-blue-300 mb-6">
           <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
-          Sat 22 Aug &middot; 11:30 AM IST &middot; 47 seats left
+          Sat 22 Aug &middot; 8:00 PM IST &middot; 47 seats left
         </div>
 
         {/* Heading */}

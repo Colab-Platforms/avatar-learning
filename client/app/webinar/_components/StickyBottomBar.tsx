@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useWebinarLiveSchedule } from "@/hooks/queries/useWebinarLiveSchedule";
 
 interface TimeLeft {
   days: string;
@@ -10,12 +11,13 @@ interface TimeLeft {
 }
 
 export default function StickyBottomBar() {
+  const { data: schedule } = useWebinarLiveSchedule();
   const [isVisible, setIsVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
-    days: "09",
-    hours: "18",
-    minutes: "05",
-    seconds: "53",
+    days: "00",
+    hours: "00",
+    minutes: "00",
+    seconds: "00",
   });
 
   // Handle scroll trigger visibility
@@ -33,19 +35,14 @@ export default function StickyBottomBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Countdown timer calculations
+  // Countdown to the currently published/live webinar's date.
   useEffect(() => {
+    if (!schedule) return;
+
+    const targetDate = new Date(schedule.scheduledAt);
+
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-22T11:30:00+05:30");
       const now = new Date();
-
-      if (now > targetDate) {
-        const nextSaturday = new Date();
-        nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
-        nextSaturday.setHours(11, 30, 0, 0);
-        targetDate = nextSaturday;
-      }
-
       const difference = targetDate.getTime() - now.getTime();
 
       if (difference > 0) {
@@ -60,6 +57,8 @@ export default function StickyBottomBar() {
           minutes: m.toString().padStart(2, "0"),
           seconds: s.toString().padStart(2, "0"),
         });
+      } else {
+        setTimeLeft({ days: "00", hours: "00", minutes: "00", seconds: "00" });
       }
     };
 
@@ -67,7 +66,12 @@ export default function StickyBottomBar() {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [schedule]);
+
+  const scheduledDate = schedule ? new Date(schedule.scheduledAt) : null;
+  const dateTimeLabel = scheduledDate
+    ? `${scheduledDate.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short" })} · ${scheduledDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true })} IST`
+    : "Coming soon";
 
   const scrollToForm = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -93,7 +97,7 @@ export default function StickyBottomBar() {
           </div>
           <div className="h-4 w-px bg-white/10"></div>
           <span className="text-xs text-gray-300 font-medium">
-            Sat 22 Aug &middot; 11:30 AM IST &middot; <span className="text-red-400 font-semibold">47 seats left</span>
+            {dateTimeLabel} &middot; <span className="text-red-400 font-semibold">47 seats left</span>
           </span>
         </div>
 

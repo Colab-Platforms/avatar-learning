@@ -341,7 +341,7 @@ class UserService {
     async completeQuiz(userId: string, data: CompleteQuizBody) {
         const user = await prisma.user.findFirst({
             where: { id: userId, isDeleted: false },
-            select: { id: true },
+            select: { id: true, firstName: true, lastName: true, email: true },
         });
 
         if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
@@ -351,18 +351,47 @@ class UserService {
                 ? data.secondaryCareerDomain.trim()
                 : null;
 
-        return prisma.user.update({
-            where: { id: userId },
-            data: {
-                quizCompleted: true,
-                quizCompletedAt: new Date(),
-                quizPrimaryCareerDomain: data.primaryCareerDomain.trim(),
-                quizSecondaryCareerDomain: secondary,
-                quizRecommendedCareer: data.recommendedCareer.trim(),
-                quizMatchPercentage: data.matchPercentage,
-            },
-            select: userSelectFields,
+        const [updatedUser] = await prisma.$transaction([
+            prisma.user.update({
+                where: { id: userId },
+                data: {
+                    quizCompleted: true,
+                    quizCompletedAt: new Date(),
+                    quizPrimaryCareerDomain: data.primaryCareerDomain.trim(),
+                    quizSecondaryCareerDomain: secondary,
+                    quizRecommendedCareer: data.recommendedCareer.trim(),
+                    quizMatchPercentage: data.matchPercentage,
+                },
+                select: userSelectFields,
+            }),
+            prisma.quizAssessment.create({
+                data: {
+                    userId,
+                    primaryCareerDomain: data.primaryCareerDomain.trim(),
+                    secondaryCareerDomain: secondary,
+                    recommendedCareer: data.recommendedCareer.trim(),
+                    matchPercentage: data.matchPercentage,
+                    answers: data.answers,
+                    domainScores: data.domainScores,
+                },
+            }),
+        ]);
+
+        const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+
+        void googleSheetsService.appendQuizAssessment({
+            name,
+            email: user.email,
+            primaryCareerDomain: data.primaryCareerDomain.trim(),
+            secondaryCareerDomain: secondary ?? "",
+            recommendedCareer: data.recommendedCareer.trim(),
+            matchPercentage: data.matchPercentage,
+            answers: data.answers,
+            domainScores: data.domainScores,
+            completedAt: new Date(),
         });
+
+        return updatedUser;
     }
 
     async deleteUser(targetId: string, callerRole: Role, callerId: string) {

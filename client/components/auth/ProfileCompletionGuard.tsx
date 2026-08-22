@@ -41,7 +41,7 @@ export function ProfileCompletionGuard({
       (p) => pathname === p || pathname.startsWith(`${p}/`),
     );
     if (isProtected) {
-      router.replace("/complete-profile");
+      router.replace(`/complete-profile?redirect=${encodeURIComponent(pathname)}`);
     }
   }, [hasHydrated, user, pathname, router]);
 

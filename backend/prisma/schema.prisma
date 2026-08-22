@@ -37,6 +37,7 @@ enum ResourceCategory {
 enum OtpType {
   REGISTER
   LOGIN
+  WEBINAR_RECOVERY
 }
 
 enum EmploymentType {
@@ -217,9 +218,31 @@ model User {
   partner         Partner?
   partnerReferral PartnerReferral?
 
+  quizAssessments QuizAssessment[]
+
   @@index([email])
   @@index([isActive])
   @@map("users")
+}
+
+model QuizAssessment {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+
+  primaryCareerDomain   String  @map("primary_career_domain")
+  secondaryCareerDomain String? @map("secondary_career_domain")
+  recommendedCareer     String  @map("recommended_career")
+  matchPercentage       Float   @map("match_percentage")
+
+  answers     Json  @default("{}")
+  domainScores Json  @map("domain_scores")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("quiz_assessments")
 }
 
 model OtpVerification {
@@ -940,13 +963,39 @@ model WebinarRegistration {
 
   paidAt DateTime? @map("paid_at")
 
+  webinarScheduleId String?          @map("webinar_schedule_id")
+  webinarSchedule    WebinarSchedule? @relation(fields: [webinarScheduleId], references: [id])
+
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @updatedAt @map("updated_at")
 
   @@index([email])
   @@index([phoneNumber])
   @@index([status])
+  @@index([webinarScheduleId])
   @@map("webinar_registrations")
+}
+
+model WebinarSchedule {
+  id String @id @default(cuid())
+
+  title String @default("AI Tools Live Workshop")
+
+  scheduledAt     DateTime @map("scheduled_at")
+  durationMinutes Int      @default(60) @map("duration_minutes")
+  meetLink        String?  @map("meet_link")
+
+  isPublished Boolean @default(false) @map("is_published")
+  isLive      Boolean @default(false) @map("is_live")
+
+  registrations WebinarRegistration[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@index([isLive])
+  @@index([isPublished])
+  @@map("webinar_schedules")
 }
 
 model Coupon {

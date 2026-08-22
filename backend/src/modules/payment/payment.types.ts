@@ -55,8 +55,22 @@ export interface RazorpayWebhookPayload {
         amount: number;
       };
     };
+    payment_link?: {
+      entity: {
+        id: string;
+        order_id?: string;
+        status: string;
+        amount: number;
+      };
+    };
   };
   created_at: number;
+}
+
+export interface CreatePaymentLinkResponse {
+  shortUrl: string;
+  paymentLinkId: string;
+  amount: number;
 }
 
 export interface CashfreeWebhookPayload {

@@ -44,6 +44,10 @@ router.get(
     "/direct2hire/students/:userId",
     direct2hireAdminController.getStudentProfile,
 );
+router.post(
+    "/direct2hire/students/:userId/payment-link",
+    direct2hireAdminController.generatePaymentLink,
+);
 router.patch(
     "/direct2hire/students/:userId/booking/confirm",
     direct2hireAdminController.confirmBooking,

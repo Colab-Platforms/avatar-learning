@@ -17,28 +17,25 @@ const SHOW_DELAY_MS = 3000;
 const SCROLL_THRESHOLD = 0.25;
 const BLOCKING_CHECK_INTERVAL_MS = 600;
 
-const EXCLUDED_PREFIXES = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-  "/dashboard",
-  "/admin",
-  "/quiz",
-  "/direct2hire",
-  "/checkout",
-  "/payment",
-  "/profile",
-  "/partner-dashboard",
-  "/onboarded",
-  "/partners/onboarding",
-];
+// const EXCLUDED_PREFIXES = [
+//   "/login",
+//   "/register",
+//   "/forgot-password",
+//   "/reset-password",
+//   "/dashboard",
+//   "/admin",
+//   "/quiz",
+//   "/direct2hire",
+//   "/checkout",
+//   "/payment",
+//   "/profile",
+//   "/partner-dashboard",
+//   "/onboarded",
+//   "/partners/onboarding",
+// ];
 
 function isExcludedPath(pathname: string | null): boolean {
-  if (!pathname) return true;
-  return EXCLUDED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  return pathname !== "/";
 }
 
 function isBlockingOverlayOpen(): boolean {

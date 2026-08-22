@@ -151,10 +151,7 @@ export class Direct2HireService {
   // Defaults to PRO (not STANDARD) as a safety net while tiered plan
   // selection is still rolling out — any enrollment paid through a path
   // that doesn't pass an explicit plan should not lose access.
-  async markPaid(
-    enrollmentId: string,
-    fallbackPlan: Direct2HirePlan = "PRO",
-  ) {
+  async markPaid(enrollmentId: string, fallbackPlan: Direct2HirePlan = "PRO") {
     const enrollment = await prisma.direct2HireEnrollment.findUnique({
       where: { id: enrollmentId },
     });

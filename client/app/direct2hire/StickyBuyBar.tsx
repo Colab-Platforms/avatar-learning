@@ -66,7 +66,7 @@ export function StickyBuyBar() {
                         From ₹99
                       </span>
                       <span className="text-xs sm:text-sm text-text-subtle line-through font-medium">
-                        ₹24,999
+                        ₹999
                       </span>
                       <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 bg-blue-50/70 border border-blue-200/40 px-1.5 py-0.5 rounded">
                         3 plans
@@ -94,7 +94,7 @@ export function StickyBuyBar() {
                       <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </>
                   ) : (
-                    <span>See plans from ₹99</span>
+                    <span>Enroll Now for ₹99</span>
                   )}
                 </Button>
               </Link>

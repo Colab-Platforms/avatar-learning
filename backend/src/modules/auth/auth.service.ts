@@ -27,6 +27,39 @@ const REFRESH_TOKEN_TTL_DAYS = 30;
 const ACCESS_TOKEN_TTL = "1d";
 const MIN_PROFILE_AGE_YEARS = 10;
 
+async function notifyPabblyOnSignup(user: {
+  firstName: string | null;
+  lastName: string | null;
+  phoneNo: string | null;
+}): Promise<void> {
+  const webhookUrl = process.env.PABBLY_SIGNUP_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.warn("[Auth] Pabbly signup webhook URL not configured");
+    return;
+  }
+  try {
+    const payload = {
+      customer_name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+      phone_number: user.phoneNo ? `91${user.phoneNo}` : "",
+    };
+    console.log("[Auth] Sending Pabbly signup webhook payload:", payload);
+
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const responseBody = await response.text();
+    console.log(
+      `[Auth] Pabbly signup webhook response: status=${response.status}`,
+      responseBody,
+    );
+  } catch (err) {
+    console.error("[Auth] Failed to notify Pabbly signup webhook:", err);
+  }
+}
+
 const getHighestRole = (
   roleNames: string[],
 ): "USER" | "ADMIN" | "SUPERADMIN" => {
@@ -253,6 +286,7 @@ class AuthService {
         data: { isEmailVerified: true },
       });
       user.isEmailVerified = true;
+      void notifyPabblyOnSignup(user);
     }
 
     const readyUser = await ensureEmailProfileCompleted(user);
@@ -320,6 +354,7 @@ class AuthService {
     });
 
     user.isPhoneVerified = true;
+    void notifyPabblyOnSignup(user);
 
     const readyUser = await ensureEmailProfileCompleted(user);
     const tokens = await issueAuthTokens(readyUser, device);
@@ -707,24 +742,27 @@ class AuthService {
       );
     }
 
-    const dob = dayjs(data.dateOfBirth);
-    if (!dob.isValid()) {
-      throw new ApiError(
-        "Enter a valid date of birth",
-        STATUS_CODES.BAD_REQUEST,
-      );
-    }
-    if (dob.isAfter(dayjs())) {
-      throw new ApiError(
-        "Date of birth cannot be in the future",
-        STATUS_CODES.BAD_REQUEST,
-      );
-    }
-    if (dayjs().diff(dob, "year") < MIN_PROFILE_AGE_YEARS) {
-      throw new ApiError(
-        `You must be at least ${MIN_PROFILE_AGE_YEARS} years old`,
-        STATUS_CODES.BAD_REQUEST,
-      );
+    let dob: dayjs.Dayjs | null = null;
+    if (data.dateOfBirth) {
+      dob = dayjs(data.dateOfBirth);
+      if (!dob.isValid()) {
+        throw new ApiError(
+          "Enter a valid date of birth",
+          STATUS_CODES.BAD_REQUEST,
+        );
+      }
+      if (dob.isAfter(dayjs())) {
+        throw new ApiError(
+          "Date of birth cannot be in the future",
+          STATUS_CODES.BAD_REQUEST,
+        );
+      }
+      if (dayjs().diff(dob, "year") < MIN_PROFILE_AGE_YEARS) {
+        throw new ApiError(
+          `You must be at least ${MIN_PROFILE_AGE_YEARS} years old`,
+          STATUS_CODES.BAD_REQUEST,
+        );
+      }
     }
 
     const phoneConflict = await prisma.user.findFirst({
@@ -750,7 +788,7 @@ class AuthService {
         state: data.state,
         country: data.country,
         city: data.city,
-        dateOfBirth: dob.startOf("day").toDate(),
+        dateOfBirth: dob ? dob.startOf("day").toDate() : undefined,
         profileCompleted: true,
       },
       include: { userRoleMappings: { include: { role: true } } },
@@ -758,6 +796,7 @@ class AuthService {
 
     // Sync to Sheets only after profile details (including phone) are collected
     void googleSheetsService.appendUser(updated);
+    void notifyPabblyOnSignup(updated);
 
     const { password: _, ...safeUser } = updated;
     return safeUser;

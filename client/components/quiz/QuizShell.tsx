@@ -42,11 +42,24 @@ export function QuizShell() {
       completedAsGuestRef.current = false;
     }
 
+    const answersWithQuestions: Record<
+      number,
+      { question: string; selected: string[] }
+    > = {};
+    for (const q of QUIZ_QUESTIONS) {
+      answersWithQuestions[q.id] = {
+        question: q.title,
+        selected: answers[q.id] ?? [],
+      };
+    }
+
     persistQuizCompletion({
       primaryCareerDomain: DOMAINS[result.role.domain].label,
       secondaryCareerDomain: DOMAINS[result.secondRole.domain].label,
       recommendedCareer: result.role.title,
       matchPercentage: result.matchPct,
+      answers: answersWithQuestions,
+      domainScores: result.domainScores,
     });
   }, [submitted, user, answers, persistQuizCompletion]);
 

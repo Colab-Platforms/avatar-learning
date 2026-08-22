@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useRazorpay } from "@/hooks/useRazorpay";
 import { useCreateWebinarOrder } from "@/hooks/mutations/useCreateWebinarOrder";
 import { useVerifyWebinarPayment } from "@/hooks/mutations/useVerifyWebinarPayment";
+import { setStoredWebinarRegistrationId } from "@/lib/webinarStorage";
 import type { CreateWebinarOrderInput } from "@/lib/paymentApi";
 
 type MessageType = "success" | "error";
@@ -11,6 +13,7 @@ type MessageType = "success" | "error";
 const RAZORPAY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export function useWebinarCheckout() {
+  const router = useRouter();
   const razorpayLoaded = useRazorpay();
   const { mutateAsync: createOrder } = useCreateWebinarOrder();
   const { mutateAsync: verifyPayment } = useVerifyWebinarPayment();
@@ -37,6 +40,12 @@ export function useWebinarCheckout() {
 
       try {
         const order = await createOrder(input);
+
+        if (order.alreadyRegistered) {
+          setStoredWebinarRegistrationId(order.registrationId);
+          router.replace(`/webinar?registrationId=${order.registrationId}`, { scroll: false });
+          return;
+        }
 
         await new Promise<void>((resolve, reject) => {
           const settle = (fn: () => void) => {
@@ -72,11 +81,11 @@ export function useWebinarCheckout() {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                 });
-                showMessage(
-                  "Payment successful! Your seat is confirmed — check your email/WhatsApp for details.",
-                  "success",
-                );
-                settle(resolve);
+                setStoredWebinarRegistrationId(order.registrationId);
+                settle(() => {
+                  resolve();
+                  router.replace(`/webinar?registrationId=${order.registrationId}`, { scroll: false });
+                });
               } catch (verifyErr: unknown) {
                 const e = verifyErr as {
                   response?: { data?: { message?: string } };
@@ -127,7 +136,7 @@ export function useWebinarCheckout() {
         setProcessing(false);
       }
     },
-    [razorpayLoaded, createOrder, verifyPayment],
+    [razorpayLoaded, createOrder, verifyPayment, router],
   );
 
   return { register, processing, message };

@@ -9,7 +9,7 @@ import QueryProvider from "@/store/QueryProvider";
 import ChatbotAgent from "@/components/ui/ChatbotAgent";
 import { HelpWidget } from "@/components/ui/HelpWidget";
 import { CareerQuizPrompt } from "@/components/quiz/CareerQuizPrompt";
-import { IndependenceDayPromo } from "@/components/ui/IndependenceDayPromo";
+// import { IndependenceDayPromo } from "@/components/ui/IndependenceDayPromo";
 import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
 
 const inter = Inter({
@@ -49,7 +49,10 @@ export default function RootLayout({
           fbq('track', 'PageView');
         `}</Script>
         <noscript>
-          <img height="1" width="1" style={{ display: "none" }}
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
             src="https://www.facebook.com/tr?id=1593452955528348&ev=PageView&noscript=1"
           />
         </noscript>
@@ -64,13 +67,11 @@ export default function RootLayout({
       <body>
         <StoreProvider>
           <QueryProvider>
-            <ProfileCompletionGuard>
-              {children}
-            </ProfileCompletionGuard>
+            <ProfileCompletionGuard>{children}</ProfileCompletionGuard>
             <ChatbotAgent />
             <HelpWidget />
             <CareerQuizPrompt />
-            <IndependenceDayPromo />
+            {/* <IndependenceDayPromo /> */}
             <Toaster richColors position="top-right" />
           </QueryProvider>
         </StoreProvider>

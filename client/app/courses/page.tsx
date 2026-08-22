@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -27,7 +27,7 @@ import { useCourses } from "@/hooks/queries/useCourses";
 /* ─────────────────────────── types / constants ─────────────────────────── */
 
 type Level = "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-type SortBy = "NEWEST" | "PRICE_ASC" | "PRICE_DESC";
+type SortBy = "NEWEST" | "TITLE_ASC";
 
 const LEVELS: { value: Level; label: string }[] = [
   { value: "ALL", label: "All Levels" },
@@ -36,46 +36,33 @@ const LEVELS: { value: Level; label: string }[] = [
   { value: "ADVANCED", label: "Advanced" },
 ];
 
-// quick-pick presets, both bounds inclusive. "" = no bound. Clicking fills the min/max inputs.
-const PRICE_PRESETS: { label: string; min: string; max: string }[] = [
-  { label: "Price", min: "", max: "" },
-  { label: "Free", min: "0", max: "0" },
-  { label: "Under ₹2,500", min: "", max: "2499" },
-  { label: "₹2,500 - ₹5,000", min: "2500", max: "5000" },
-  { label: "₹5,000 - ₹10,000", min: "5001", max: "10000" },
-  { label: "Above ₹10,000", min: "10001", max: "" },
-];
-
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "NEWEST", label: "Newest First" },
-  { value: "PRICE_ASC", label: "Price: Low → High" },
-  { value: "PRICE_DESC", label: "Price: High → Low" },
+  { value: "TITLE_ASC", label: "Title: A → Z" },
 ];
 
-const LEVEL_COLOR: Record<string, string> = {
-  BEGINNER: "bg-emerald-50 text-emerald-705 border-emerald-200",
-  INTERMEDIATE: "bg-amber-50 text-amber-705 border-amber-200",
-  ADVANCED: "bg-rose-50 text-rose-705 border-rose-200",
+// same level wording as the landing / Direct2Hire course cards
+const LEVEL_BADGES: Record<string, string> = {
+  BEGINNER: "LEARNER",
+  INTERMEDIATE: "PROFESSIONAL",
+  ADVANCED: "CAREER +",
 };
 
 /* ─────────────────────────── skeleton card ─────────────────────────────── */
 
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden animate-pulse p-5 space-y-4">
-      <div className="aspect-video w-full bg-slate-100 rounded-xl" />
-      <div className="space-y-3">
-        <div className="h-4 w-20 rounded-full bg-slate-100" />
-        <div className="h-5 w-3/4 rounded bg-slate-100" />
-        <div className="space-y-2">
-          <div className="h-3 w-full rounded bg-slate-100" />
-          <div className="h-3 w-5/6 rounded bg-slate-100" />
+    <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden animate-pulse p-5 sm:p-6 space-y-4 h-full flex flex-col">
+      <div className="aspect-[1.8/1] w-full bg-slate-100 rounded-2xl" />
+      <div className="space-y-3 flex-1 flex flex-col justify-between">
+        <div className="space-y-3">
+          <div className="h-4 w-28 rounded-md bg-slate-100" />
+          <div className="h-5 w-3/4 rounded bg-slate-100" />
         </div>
-        <div className="flex gap-2 pt-2">
-          <div className="h-3 w-16 rounded-full bg-slate-100" />
-          <div className="h-3 w-16 rounded-full bg-slate-100" />
+        <div className="flex gap-2 pt-4">
+          <div className="h-6 w-16 rounded-full bg-slate-100" />
+          <div className="h-6 w-20 rounded-full bg-slate-100" />
         </div>
-        <div className="h-9 rounded-xl bg-slate-100 mt-4" />
       </div>
     </div>
   );
@@ -84,159 +71,122 @@ function SkeletonCard() {
 /* ─────────────────────────── course card ───────────────────────────────── */
 
 function CourseCard({ course }: { course: DBCourse }) {
-  const isFree = course.price === 0;
   const isComingSoon = course.isComingSoon;
+  const levelLabel = LEVEL_BADGES[course.level] ?? course.level;
+  const coverImage =
+    course.heroImage || course.bannerImage || course.thumbnail || "";
 
   return (
     <Link
       href={`/courses/${course.slug}`}
-      className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white
-                 overflow-hidden transition-all duration-350 hover:-translate-y-1.5
-                 hover:border-blue-500/30 hover:shadow-lg"
+      className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white
+                 overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-1.5
+                 transition-all duration-300 h-full cursor-pointer"
     >
-      {/* top shimmer on hover */}
-      <div
-        className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/0
-                      to-transparent group-hover:via-blue-500/50 transition-all duration-500 z-10"
-      />
-
-      {/* thumbnail */}
-      <div className="relative aspect-video w-full overflow-hidden bg-slate-100 shrink-0">
-        {course.thumbnail ? (
+      {/* ── Thumbnail ── */}
+      <div className="relative h-[220px] w-full overflow-hidden bg-slate-50 shrink-0">
+        {coverImage ? (
           <Image
-            src={course.thumbnail}
+            src={coverImage}
             alt={course.title}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            quality={100}
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 400px"
+            quality={95}
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
             <BookOpen className="h-10 w-10 text-slate-300" />
           </div>
         )}
-        {/* gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent" />
 
-        {/* coming soon badge */}
+        {/* Watermark (top left) */}
+        <div className="absolute top-0 left-4 bg-white px-2.5 py-4 rounded-b-xl shadow-xs flex items-center justify-center z-10">
+          <div className="relative h-8 w-8">
+            <Image
+              src="/favicon.png"
+              alt="Avatar Logo"
+              fill
+              sizes="32px"
+              className="object-contain"
+            />
+          </div>
+        </div>
+
+        {/* Coming soon badge (top right) */}
         {isComingSoon && (
           <div className="absolute top-3 right-3 z-10">
             <span
               className="inline-flex items-center rounded-full border border-amber-200
-                             bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[11px]
-                             font-bold text-amber-700 shadow-sm"
+                         bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px]
+                         font-bold tracking-wider text-amber-700 shadow-xs"
             >
               COMING SOON
             </span>
           </div>
         )}
 
-        {/* category pill */}
-        {course.category && (
-          <div className="absolute bottom-3 left-3 z-10">
-            <span
-              className="inline-flex items-center rounded-full border border-slate-200
-                             bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px]
-                             font-semibold text-slate-700 shadow-sm"
-            >
-              {course.category.name}
-            </span>
-          </div>
-        )}
+        {/* Level badge (bottom right) */}
+        <div className="absolute bottom-3 right-3 bg-[#1d4ed8] text-white text-[10px] font-bold tracking-wider px-3.5 py-1.5 rounded-full shadow-xs uppercase z-10">
+          {levelLabel}
+        </div>
       </div>
 
-      {/* content */}
-      <div className="flex flex-col flex-1 p-5">
-        {/* level badge */}
+      {/* ── Content ── */}
+      <div className="p-5 sm:p-6 flex flex-col flex-1">
+        {/* Branding */}
         <div className="flex items-center gap-2 mb-3">
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-              LEVEL_COLOR[course.level] ??
-                "bg-slate-100 text-slate-650 border-slate-200",
-            )}
-          >
-            {course.level.charAt(0) + course.level.slice(1).toLowerCase()}
+          <div className="relative h-4.5 w-4.5">
+            <Image
+              src="/favicon.png"
+              alt=""
+              fill
+              sizes="20px"
+              className="object-contain"
+            />
+          </div>
+          <span className="text-xs text-slate-500 font-semibold tracking-wide">
+            Avatar Learning
           </span>
         </div>
 
-        {/* title */}
-        <h3
-          className="text-[15px] font-bold leading-snug text-slate-800 mb-2
-                       group-hover:text-blue-600 transition-colors duration-300 line-clamp-2"
-        >
+        {/* Title */}
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug mb-4 line-clamp-2 group-hover:text-blue-600 transition-colors">
           {course.title}
         </h3>
 
-        {/* meta row */}
-        <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-400 mb-3">
+        {/* Pills row */}
+        <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto">
           {course.totalWeeks > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-blue-500/65" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-100">
+              <Clock className="h-3.5 w-3.5 text-slate-400" />
               {course.totalWeeks} {course.totalWeeks === 1 ? "week" : "weeks"}
             </span>
           )}
           {course._count.lessons > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-blue-500/65" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-100">
+              <Layers className="h-3.5 w-3.5 text-slate-400" />
               {course._count.lessons}{" "}
               {course._count.lessons === 1 ? "lesson" : "lessons"}
             </span>
           )}
         </div>
 
-        {/* badges row */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span
-            className="inline-flex items-center rounded-lg border border-slate-200
-                       bg-slate-50 px-2 py-1 text-[12px] font-medium text-slate-500"
-          >
-            Course
-          </span>
-          {typeof course.rating === "number" && (
-            <span
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200
-                         bg-slate-50 px-2 py-1 text-[12px] font-semibold text-slate-700"
-            >
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              {course.rating.toFixed(1)}
-            </span>
-          )}
-          {course._count.enrollments > 0 && (
-            <span
-              className="inline-flex items-center rounded-lg border border-slate-200
-                         bg-slate-50 px-2 py-1 text-[12px] font-medium text-slate-500"
-            >
-              {course._count.enrollments.toLocaleString("en-IN")} enrolled
-            </span>
-          )}
-        </div>
+        {/* Divider */}
+        <div className="h-px bg-slate-100 my-1" />
 
-        {/* divider */}
-        <div className="h-px bg-slate-100 mb-4" />
-
-        {/* price */}
-        <div className="flex items-center justify-between">
+        {/* Footer row */}
+        <div className="flex items-center justify-between pt-3">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+            <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-400" />
+            <span>{course.rating ? course.rating.toFixed(1) : "4.8"}</span>
+            <span className="text-slate-400 font-medium text-xs ml-1">
+              ({course.reviews || "840 Reviews"})
+            </span>
+          </div>
           <span
-            className={cn(
-              "text-[16px] font-black",
-              isComingSoon
-                ? "text-slate-400"
-                : isFree
-                  ? "text-emerald-600"
-                  : "text-slate-800",
-            )}
-          >
-            {isComingSoon
-              ? "Coming Soon"
-              : isFree
-                ? "Free"
-                : `₹${course.price.toLocaleString("en-IN")}`}
-          </span>
-          <span
-            className="flex items-center gap-0.5 text-[12px] font-semibold text-slate-450
-                           group-hover:text-blue-600 transition-colors duration-250"
+            className="flex items-center gap-0.5 text-[12px] font-semibold text-slate-400
+                       group-hover:text-blue-600 transition-colors duration-250"
           >
             View Course
             <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform duration-250" />
@@ -270,134 +220,6 @@ function FilterPill({
     >
       {children}
     </button>
-  );
-}
-
-/* ─────────────────────────── price dropdown ────────────────────────────── */
-
-function PriceDropdown({
-  minPrice,
-  maxPrice,
-  setMinPrice,
-  setMaxPrice,
-}: {
-  minPrice: string;
-  maxPrice: string;
-  setMinPrice: (v: string) => void;
-  setMaxPrice: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const isActive = minPrice.trim() !== "" || maxPrice.trim() !== "";
-
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [open]);
-
-  const activePreset = PRICE_PRESETS.find(
-    (p) => p.min === minPrice && p.max === maxPrice,
-  );
-  const label = activePreset
-    ? activePreset.label
-    : isActive
-      ? `₹${minPrice || "0"} - ${maxPrice ? `₹${maxPrice}` : "Any"}`
-      : "Any Budget";
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold border transition-all duration-250 cursor-pointer",
-          isActive
-            ? "bg-blue-50 border-blue-200 text-blue-700"
-            : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:text-slate-700",
-        )}
-      >
-        {label}
-        <ChevronDown className="h-3.5 w-3.5" />
-      </button>
-
-      {open && (
-        <div
-          className="absolute left-0 top-[calc(100%+8px)] z-20 w-72 rounded-xl border border-slate-200
-                     bg-white p-3 shadow-lg"
-        >
-          <div className="flex flex-col gap-1 mb-3">
-            {PRICE_PRESETS.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => {
-                  setMinPrice(p.min);
-                  setMaxPrice(p.max);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-left text-[13px] font-medium transition-colors duration-150 cursor-pointer",
-                  minPrice === p.min && maxPrice === p.max
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-50",
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="h-px bg-slate-100 mb-3" />
-
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
-            Custom range
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">
-                ₹
-              </span>
-              <input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                placeholder="Min"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-6 pr-2 py-1.5
-                           text-[13px] text-slate-800 placeholder-slate-400
-                           focus:outline-none focus:border-blue-500/40 focus:bg-white
-                           focus:ring-2 focus:ring-blue-500/10 transition-all duration-200"
-              />
-            </div>
-            <span className="text-slate-400 text-[13px]">–</span>
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">
-                ₹
-              </span>
-              <input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                placeholder="Max"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-6 pr-2 py-1.5
-                           text-[13px] text-slate-800 placeholder-slate-400
-                           focus:outline-none focus:border-blue-500/40 focus:bg-white
-                           focus:ring-2 focus:ring-blue-500/10 transition-all duration-200"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -436,8 +258,6 @@ export default function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState<Level>("ALL");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("NEWEST");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -474,33 +294,18 @@ export default function CoursesPage() {
       list = list.filter((c) => c.level === level);
     }
 
-    const min = minPrice.trim() === "" ? null : Number(minPrice);
-    const max = maxPrice.trim() === "" ? null : Number(maxPrice);
-    if (min !== null && !Number.isNaN(min)) {
-      list = list.filter((c) => c.price >= min);
-    }
-    if (max !== null && !Number.isNaN(max)) {
-      list = list.filter((c) => c.price <= max);
-    }
-
-    if (sortBy === "PRICE_ASC") list.sort((a, b) => a.price - b.price);
-    if (sortBy === "PRICE_DESC") list.sort((a, b) => b.price - a.price);
+    if (sortBy === "TITLE_ASC")
+      list.sort((a, b) => a.title.localeCompare(b.title));
     // NEWEST: server already orders by createdAt desc
 
     return list;
-  }, [courses, search, level, minPrice, maxPrice, sortBy]);
+  }, [courses, search, level, sortBy]);
 
-  const hasActiveFilters =
-    level !== "ALL" ||
-    minPrice.trim() !== "" ||
-    maxPrice.trim() !== "" ||
-    search.trim().length > 0;
+  const hasActiveFilters = level !== "ALL" || search.trim().length > 0;
 
   const resetFilters = () => {
     setSearch("");
     setLevel("ALL");
-    setMinPrice("");
-    setMaxPrice("");
     setSortBy("NEWEST");
     setCurrentPage(1);
   };
@@ -537,8 +342,8 @@ export default function CoursesPage() {
               </h1>
               <p className="text-slate-500 text-[16px] leading-relaxed max-w-xl">
                 Explore our comprehensive curriculum designed for the next era
-                of technological mastery. Filter by level, duration, and
-                investment to find your optimal path.
+                of technological mastery. Filter by level and duration to find
+                your optimal path.
               </p>
             </ScrollReveal>
           </div>
@@ -635,16 +440,6 @@ export default function CoursesPage() {
                     </FilterPill>
                   ))}
                 </div>
-
-                <div className="hidden sm:block w-px bg-slate-200 self-stretch mx-1" />
-
-                {/* PRICE dropdown */}
-                <PriceDropdown
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  setMinPrice={setMinPrice}
-                  setMaxPrice={setMaxPrice}
-                />
 
                 {/* reset */}
                 {hasActiveFilters && (

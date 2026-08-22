@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Video,
   Tag,
+  CalendarClock,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -102,11 +103,23 @@ const NAV: NavItem[] = [
     exact: false,
   },
   {
-    kind: "link",
-    href: "/admin/webinar",
+    kind: "group",
+    id: "webinar",
     label: "Webinar",
     icon: Video,
-    exact: false,
+    href: "/admin/webinar",
+    children: [
+      {
+        href: "/admin/webinar",
+        label: "Registrations",
+        icon: Users,
+      },
+      {
+        href: "/admin/webinar/schedule",
+        label: "Schedule",
+        icon: CalendarClock,
+      },
+    ],
   },
   {
     kind: "link",
@@ -151,14 +164,27 @@ export default function AdminLayout({
   );
   const [contactUnread, setContactUnread] = useState(0);
 
-  const d2hActive =
-    pathname === "/admin/direct2hire" ||
-    pathname.startsWith("/admin/direct2hire/");
-  const [d2hOpen, setD2hOpen] = useState(d2hActive);
+  const groupItems = NAV.filter((item): item is NavGroup => item.kind === "group");
+  const groupActiveMap = Object.fromEntries(
+    groupItems.map((g) => [
+      g.id,
+      pathname === g.href ||
+        pathname.startsWith(g.href + "/") ||
+        g.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/")),
+    ]),
+  );
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(groupActiveMap);
 
   useEffect(() => {
-    if (d2hActive) setD2hOpen(true);
-  }, [d2hActive]);
+    setOpenGroups((prev) => {
+      const next = { ...prev };
+      for (const [id, active] of Object.entries(groupActiveMap)) {
+        if (active) next[id] = true;
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   useEffect(() => {
     try {
@@ -207,8 +233,16 @@ export default function AdminLayout({
       ? pathname === href
       : pathname === href || pathname.startsWith(href + "/");
 
-  const isChildActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/");
+  const isChildActive = (href: string, siblingHrefs: string[]) => {
+    if (pathname === href) return true;
+    if (pathname.startsWith(href + "/")) {
+      const hasMoreSpecificSibling = siblingHrefs.some(
+        (sh) => sh !== href && (pathname === sh || pathname.startsWith(sh + "/"))
+      );
+      return !hasMoreSpecificSibling;
+    }
+    return false;
+  };
 
   return (
     <div className="min-h-screen bg-ink-950 flex">
@@ -272,8 +306,8 @@ export default function AdminLayout({
             }
 
             const Icon = item.icon;
-            const childActive = item.children.some((c) => isChildActive(c.href));
-            const groupActive = d2hActive || childActive;
+            const groupActive = groupActiveMap[item.id];
+            const groupOpen = openGroups[item.id] ?? groupActive;
 
             return (
               <div key={item.id} className="pt-0.5">
@@ -300,22 +334,27 @@ export default function AdminLayout({
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setD2hOpen((o) => !o)}
+                    onClick={() =>
+                      setOpenGroups((prev) => ({ ...prev, [item.id]: !groupOpen }))
+                    }
                     className="px-2.5 py-2.5 text-white/35 hover:text-white/70 rounded-r-xl"
-                    aria-label={d2hOpen ? "Collapse Direct2Hire" : "Expand Direct2Hire"}
-                    aria-expanded={d2hOpen}
+                    aria-label={groupOpen ? `Collapse ${item.label}` : `Expand ${item.label}`}
+                    aria-expanded={groupOpen}
                   >
                     <ChevronDown
                       size={14}
-                      className={`transition-transform duration-200 ${d2hOpen ? "rotate-180" : ""}`}
+                      className={`transition-transform duration-200 ${groupOpen ? "rotate-180" : ""}`}
                     />
                   </button>
                 </div>
 
-                {d2hOpen && (
+                {groupOpen && (
                   <div className="mt-0.5 ml-3 pl-3 border-l border-white/8 space-y-0.5">
                     {item.children.map((child) => {
-                      const active = isChildActive(child.href);
+                      const active = isChildActive(
+                        child.href,
+                        item.children.map((c) => c.href)
+                      );
                       const ChildIcon = child.icon;
                       return (
                         <Link

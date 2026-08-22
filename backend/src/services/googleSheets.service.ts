@@ -4,6 +4,18 @@ const USERS_SHEET = "Signups";
 const LEADS_SHEET = "Leads";
 const ENROLLMENTS_SHEET = "Enrollments";
 const WEBINAR_SHEET = "Webinar Registrations";
+const QUIZ_ASSESSMENT_SHEET = "quiz-assessment";
+const QUIZ_ASSESSMENT_HEADERS = [
+  "Name",
+  "Email",
+  "Primary Career Domain",
+  "Secondary Career Domain",
+  "Recommended Career",
+  "Match Percentage",
+  "Answers",
+  "Domain Scores",
+  "Completed At",
+];
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 400;
 
@@ -42,6 +54,20 @@ export type SheetsWebinarInput = {
   phoneNumber: string;
   amountPaid: number;
   paidAt: Date;
+  webinarTitle: string | null;
+  webinarScheduledAt: Date | null;
+};
+
+export type SheetsQuizAssessmentInput = {
+  name: string;
+  email: string;
+  primaryCareerDomain: string;
+  secondaryCareerDomain: string;
+  recommendedCareer: string;
+  matchPercentage: number;
+  answers: Record<string, { question: string; selected: string[] }>;
+  domainScores: Record<string, number>;
+  completedAt: Date;
 };
 
 // Neon stores/returns timestamps as UTC instants regardless of the server's
@@ -57,6 +83,18 @@ function formatDate(date: Date): string {
   return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(
     ist.getUTCDate(),
   )} ${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
+}
+
+function formatDateOnly(date: Date): string {
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(ist.getUTCDate())}`;
+}
+
+function formatTimeOnly(date: Date): string {
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
 }
 
 function formatUserName(
@@ -82,7 +120,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 function logSyncSuccess(
-  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration",
+  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration" | "Quiz Assessment",
   email: string,
   sheet: string,
 ) {
@@ -92,7 +130,7 @@ function logSyncSuccess(
 }
 
 function logSyncFailure(
-  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration",
+  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration" | "Quiz Assessment",
   email: string,
   reason: unknown,
 ) {
@@ -113,6 +151,7 @@ class GoogleSheetsService {
   private sheets: sheets_v4.Sheets | null = null;
   private initPromise: Promise<sheets_v4.Sheets | null> | null = null;
   private verifiedSheetIds = new Set<string>();
+  private headerVerifiedSheetIds = new Set<string>();
 
   private getConfig() {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
@@ -203,7 +242,38 @@ class GoogleSheetsService {
     this.verifiedSheetIds.add(cacheKey);
   }
 
-  private async appendRow(sheetName: string, values: string[]): Promise<void> {
+  private async ensureHeaderRow(
+    sheets: sheets_v4.Sheets,
+    spreadsheetId: string,
+    sheetName: string,
+    headers: string[],
+  ): Promise<void> {
+    const cacheKey = `${spreadsheetId}:${sheetName}`;
+    if (this.headerVerifiedSheetIds.has(cacheKey)) return;
+
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A1:1`,
+    });
+
+    const firstRow = res.data.values?.[0];
+    if (!firstRow || firstRow.length === 0) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!A1`,
+        valueInputOption: "RAW",
+        requestBody: { values: [headers] },
+      });
+    }
+
+    this.headerVerifiedSheetIds.add(cacheKey);
+  }
+
+  private async appendRow(
+    sheetName: string,
+    values: string[],
+    headers?: string[],
+  ): Promise<void> {
     const client = await this.getClient();
     if (!client) {
       throw new Error("Google Sheets client is not available.");
@@ -212,6 +282,9 @@ class GoogleSheetsService {
     const { sheets, spreadsheetId } = client;
 
     await this.verifySheetAvailable(sheets, spreadsheetId, sheetName);
+    if (headers) {
+      await this.ensureHeaderRow(sheets, spreadsheetId, sheetName, headers);
+    }
 
     let lastError: unknown;
 
@@ -309,10 +382,36 @@ class GoogleSheetsService {
         input.phoneNumber,
         formatAmount(input.amountPaid),
         formatDate(input.paidAt),
+        input.webinarTitle ?? "",
+        input.webinarScheduledAt ? formatDateOnly(input.webinarScheduledAt) : "",
+        input.webinarScheduledAt ? formatTimeOnly(input.webinarScheduledAt) : "",
       ]);
       logSyncSuccess("Webinar Registration", input.email, WEBINAR_SHEET);
     } catch (err) {
       logSyncFailure("Webinar Registration", input.email, err);
+    }
+  }
+
+  async appendQuizAssessment(input: SheetsQuizAssessmentInput): Promise<void> {
+    try {
+      await this.appendRow(
+        QUIZ_ASSESSMENT_SHEET,
+        [
+          input.name,
+          input.email,
+          input.primaryCareerDomain,
+          input.secondaryCareerDomain,
+          input.recommendedCareer,
+          String(input.matchPercentage),
+          JSON.stringify(input.answers),
+          JSON.stringify(input.domainScores),
+          formatDate(input.completedAt),
+        ],
+        QUIZ_ASSESSMENT_HEADERS,
+      );
+      logSyncSuccess("Quiz Assessment", input.email, QUIZ_ASSESSMENT_SHEET);
+    } catch (err) {
+      logSyncFailure("Quiz Assessment", input.email, err);
     }
   }
 }

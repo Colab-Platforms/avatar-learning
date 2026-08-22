@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-react";
@@ -13,9 +13,6 @@ declare global {
   }
 }
 
-const D2H_PRICE_INR = 999;
-const AUTO_REDIRECT_SECONDS = 10;
-
 export default function Direct2HireSuccessPage() {
   const router = useRouter();
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
@@ -23,9 +20,9 @@ export default function Direct2HireSuccessPage() {
     enabled: hasHydrated && Boolean(user),
   });
   const firedRef = useRef(false);
-  const [secondsLeft, setSecondsLeft] = useState(AUTO_REDIRECT_SECONDS);
 
   const paid = statusData?.enrollment?.status === "PAID";
+  const amountPaid = statusData?.enrollment?.amountPaidRupees ?? null;
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -42,19 +39,9 @@ export default function Direct2HireSuccessPage() {
 
     if (!firedRef.current) {
       firedRef.current = true;
-      window.fbq?.("track", "Purchase", { value: D2H_PRICE_INR, currency: "INR" });
+      window.fbq?.("track", "Purchase", { value: amountPaid ?? undefined, currency: "INR" });
     }
-  }, [hasHydrated, user, isLoading, paid, router]);
-
-  useEffect(() => {
-    if (!paid) return;
-    if (secondsLeft <= 0) {
-      router.replace("/dashboard");
-      return;
-    }
-    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [paid, secondsLeft, router]);
+  }, [hasHydrated, user, isLoading, paid, amountPaid, router]);
 
   if (!paid) {
     return (
@@ -92,7 +79,9 @@ export default function Direct2HireSuccessPage() {
           </div>
           <div className="flex items-center justify-between py-1">
             <span className="text-slate-500">Amount paid</span>
-            <span className="font-medium text-slate-800">₹{D2H_PRICE_INR.toLocaleString("en-IN")}</span>
+            <span className="font-medium text-slate-800">
+              {amountPaid !== null ? `₹${amountPaid.toLocaleString("en-IN")}` : "—"}
+            </span>
           </div>
           {paidDate && (
             <div className="flex items-center justify-between py-1">
@@ -123,10 +112,6 @@ export default function Direct2HireSuccessPage() {
           Go to Dashboard
           <ArrowRight className="h-4 w-4" />
         </Link>
-
-        <p className="mt-3 text-xs text-slate-400">
-          Redirecting automatically in {secondsLeft}s…
-        </p>
       </div>
     </div>
   );

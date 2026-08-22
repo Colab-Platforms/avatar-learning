@@ -19,10 +19,14 @@ import {
   ExternalLink,
   FileText,
   MessageSquareWarning,
+  Copy,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAdminDirect2HireStudent } from "@/hooks/queries/useAdminDirect2HireStudent";
 import { useConfirmCounsellingBooking } from "@/hooks/mutations/useConfirmCounsellingBooking";
 import { useReviewInternshipSubmission } from "@/hooks/mutations/useReviewInternshipSubmission";
+import { useGenerateD2HPaymentLink } from "@/hooks/mutations/useGenerateD2HPaymentLink";
 import type { AdminD2HStudentProfile } from "@/lib/adminApi";
 import type { AdminStudentInternshipTask } from "@/lib/internshipApi";
 import { AdminPlacementAssessmentSection } from "@/components/admin/AdminPlacementAssessmentSection";
@@ -900,6 +904,62 @@ function InternshipProgressSection({
   );
 }
 
+function GeneratePaymentLinkSection({ userId }: { userId: string }) {
+  const generateMutation = useGenerateD2HPaymentLink(userId);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!generateMutation.data) return;
+    await navigator.clipboard.writeText(generateMutation.data.shortUrl);
+    setCopied(true);
+    toast.success("Link copied");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (generateMutation.data) {
+    return (
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3">
+        <a
+          href={generateMutation.data.shortUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-brand-400 hover:text-brand-300 underline underline-offset-2 truncate"
+        >
+          {generateMutation.data.shortUrl}
+        </a>
+        <button
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-colors shrink-0 ml-auto"
+        >
+          {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-sm text-white/40 mb-3">
+        No successful payment recorded yet. Generate a payment link to share with the student.
+      </p>
+      <button
+        onClick={() => generateMutation.mutate()}
+        disabled={generateMutation.isPending}
+        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold
+                   bg-brand-500 text-ink-950 hover:bg-brand-400 active:scale-98 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+      >
+        {generateMutation.isPending ? (
+          <Loader2 size={13} className="animate-spin" />
+        ) : (
+          <LinkIcon size={13} />
+        )}
+        Generate Payment Link
+      </button>
+    </div>
+  );
+}
+
 export default function AdminDirect2HireStudentPage() {
   const params = useParams<{ userId: string }>();
   const userId = params.userId;
@@ -1009,7 +1069,7 @@ export default function AdminDirect2HireStudentPage() {
             <Field label="Paid On" value={payment.paidAt ? formatDate(payment.paidAt) : undefined} />
           </div>
         ) : (
-          <p className="text-sm text-white/40">No successful payment recorded yet.</p>
+          <GeneratePaymentLinkSection userId={userId} />
         )}
       </Card>
 

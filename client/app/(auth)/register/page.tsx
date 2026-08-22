@@ -86,12 +86,17 @@ function RegisterForm() {
 
   useEffect(() => {
     if (!user) return;
+    const redirect = searchParams.get("redirect");
     if (user.profileCompleted === false) {
-      router.replace("/complete-profile");
+      router.replace(
+        redirect
+          ? `/complete-profile?redirect=${encodeURIComponent(redirect)}`
+          : "/complete-profile",
+      );
       return;
     }
-    router.push("/onboarded");
-  }, [user, router]);
+    router.push(redirect || "/onboarded");
+  }, [user, router, searchParams]);
 
   useEffect(() => {
     const ref = searchParams.get("ref");

@@ -25,6 +25,7 @@ import { StickyBuyBar } from "./StickyBuyBar";
 import { StickyMemoSticker } from "./StickyMemoSticker";
 import { UrgencyBanner } from "./UrgencyBanner";
 import { useOfferCountdown } from "./OfferTimerBar";
+import { D2HCoursesSection } from "./D2HCoursesSection";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 import { Testimonials } from "@/components/home/Testimonials/Testimonials";
 import { RECENT_ENROLLMENTS } from "@/data/socialProof";
@@ -285,7 +286,7 @@ export default function Direct2HirePage() {
     ? "Processing Payment…"
     : enrolled
       ? "Go to Dashboard"
-      : "Claim my seat now";
+      : "Enroll now";
 
   return (
     <>
@@ -415,6 +416,7 @@ export default function Direct2HirePage() {
                         <p className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
                           <span className="text-brand-600 font-bold text-xl sm:text-[28px]">
                             ₹99
+                            ₹99
                           </span>
                           <span className="text-text-subtle text-[12px] sm:text-[15px]">
                             worth ₹24,999
@@ -475,7 +477,7 @@ export default function Direct2HirePage() {
                           </>
                         ) : (
                           <>
-                            Claim my seat now
+                            Enroll now
                             <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" />
                           </>
                         )}
@@ -484,7 +486,7 @@ export default function Direct2HirePage() {
                     {!enrolled && (
                       <p className="text-[12px] text-text-subtle leading-tight">
                         Instant confirmation
-                        <br className="hidden sm:block" /> on WhatsApp
+                        <br className="hidden sm:block" /> on Email
                       </p>
                     )}
                   </div>
@@ -649,7 +651,7 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             WHAT YOU GET — VALUE BREAKDOWN
         ══════════════════════════════ */}
-        <section
+        {/* <section
           id="what-you-get"
           className="py-13 sm:py-16 bg-surface-alt border-t border-border"
         >
@@ -671,7 +673,7 @@ export default function Direct2HirePage() {
 
             <div className="grid lg:grid-cols-5 gap-4 sm:gap-6 items-stretch">
               {/* left — itemised value list */}
-              <div className="lg:col-span-3">
+        {/* <div className="lg:col-span-3">
                 <div className="h-full rounded-2xl border border-border bg-white overflow-hidden">
                   {VALUE_ITEMS.map((item) => (
                     <div
@@ -710,7 +712,7 @@ export default function Direct2HirePage() {
               </div>
 
               {/* right — you pay only */}
-              <div className="lg:col-span-2">
+        {/* <div className="lg:col-span-2">
                 <div className="h-full flex flex-col items-center justify-center text-center rounded-2xl bg-text px-6 py-8 sm:py-10">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-white/50 mb-2">
                     You pay only
@@ -779,7 +781,9 @@ export default function Direct2HirePage() {
               </div>
             </ScrollReveal>
           </div>
-        </section>
+        </section> */}
+
+        <D2HCoursesSection />
 
         {/* ══════════════════════════════
             DIRECT2HIRE VS OTHERS
@@ -948,6 +952,7 @@ export default function Direct2HirePage() {
                         src={item.image}
                         alt={item.title}
                         fill
+                        quality={"100"}
                         sizes="90vw"
                         className="object-cover"
                       />
@@ -1154,7 +1159,7 @@ export default function Direct2HirePage() {
                         ₹299
                       </span>
                       <span className="text-[18px] sm:text-[22px] text-slate-400/80 line-through font-medium leading-none">
-                        ₹24,999
+                        ₹999
                       </span>
                     </p>
                     <p className="text-[14px] sm:text-[15px] text-slate-500 max-w-[480px] leading-relaxed">
@@ -1178,7 +1183,7 @@ export default function Direct2HirePage() {
                 </Link>
                 {!enrolled && (
                   <p className="text-center text-[12px] text-slate-400 w-full">
-                    Instant confirmation on WhatsApp
+                    Instant confirmation on Email
                   </p>
                 )}
               </div>

@@ -137,23 +137,13 @@ const completeProfileSchema = Joi.object({
             "string.pattern.base": "Enter a valid 10-digit Indian mobile number",
             "any.required": "Phone number is required",
         }),
-    state: Joi.string().trim().required().messages({
-        "string.empty": "State is required",
-        "any.required": "State is required",
-    }),
-    country: Joi.string().trim().required().messages({
-        "string.empty": "Country is required",
-        "any.required": "Country is required",
-    }),
-    city: Joi.string().trim().required().messages({
-        "string.empty": "City is required",
-        "any.required": "City is required",
-    }),
-    dateOfBirth: Joi.date().iso().max("now").required().messages({
+    state: Joi.string().trim().optional().allow(""),
+    country: Joi.string().trim().optional().allow(""),
+    city: Joi.string().trim().optional().allow(""),
+    dateOfBirth: Joi.date().iso().max("now").optional().messages({
         "date.base": "Enter a valid date of birth",
         "date.format": "Enter a valid date of birth",
         "date.max": "Date of birth cannot be in the future",
-        "any.required": "Date of birth is required",
     }),
 });
 
