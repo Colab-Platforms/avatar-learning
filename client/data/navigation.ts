@@ -6,7 +6,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Direct2Hire", href: "/direct2hire" },
   // { label: "Internships", href: "/internships" },
   { label: "Marketplace", href: "/marketplace" },
-  { label: "Webinar", href: "/webinar" },
+  // { label: "Webinar", href: "/webinar" },
   // { label: "Investors", href: "/investors" },
   // { label: "Contact", href: "/contact" },
   {
