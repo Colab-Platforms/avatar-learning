@@ -58,12 +58,6 @@ enum Direct2HireStatus {
   REFUNDED
 }
 
-enum Direct2HirePlan {
-  BASIC
-  STANDARD
-  PRO
-}
-
 enum PaymentOrderStatus {
   PENDING
   PAID
@@ -382,7 +376,7 @@ model Courses {
   whatYouLearn        Json?   @map("what_you_learn")
   audience            Json?
   isDirect2HireCourse Boolean @default(false) @map("is_direct2hire_course")
-  isDirect2HireProOnly Boolean @default(false) @map("is_direct2hire_pro_only")
+  isDirect2HireOnly   Boolean @default(false) @map("is_direct2hire_only")
   isPublished         Boolean @default(false) @map("is_published")
   isComingSoon        Boolean @default(false) @map("is_coming_soon")
 
@@ -682,7 +676,6 @@ model Direct2HireEnrollment {
   id     String            @id @default(cuid())
   userId String            @map("user_id")
   status Direct2HireStatus @default(PENDING)
-  plan   Direct2HirePlan?
 
   paidAt DateTime? @map("paid_at")
 
