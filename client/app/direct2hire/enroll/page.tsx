@@ -37,6 +37,10 @@ const inputCls =
 
 const labelCls = "mb-1.5 block text-sm font-medium text-slate-700";
 
+// This page only ever completes the full Direct2Hire checkout — the ₹499
+// course-only option is picked and paid for from the course's own page.
+const FULL_ACCESS_PRICE = 4999;
+
 /* Fetched-from-profile values are shown read-only instead of asked again. */
 function FetchedField({ label, value }: { label: string; value: string }) {
   return (
@@ -55,7 +59,7 @@ export default function Direct2HireEnrollPage() {
   const assessmentCounsellingCredit = d2hStatus?.enrollment?.assessmentCounsellingPaidAt
     ? 99
     : 0;
-  const basePrice = 99 - assessmentCounsellingCredit;
+  const basePrice = FULL_ACCESS_PRICE - assessmentCounsellingCredit;
   const [savingLead, setSavingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
   const [couponInput, setCouponInput] = useState("");
