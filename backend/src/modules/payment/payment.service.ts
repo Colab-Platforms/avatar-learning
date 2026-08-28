@@ -397,6 +397,11 @@ export class PaymentService {
         "This course is free — use the enroll endpoint",
         STATUS_CODES.BAD_REQUEST,
       );
+    if (course.isDirect2HireOnly)
+      throw new ApiError(
+        "This course is only available through the Direct2Hire programme. Enroll in Direct2Hire to unlock it.",
+        STATUS_CODES.BAD_REQUEST,
+      );
 
     const existing = await prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId } },

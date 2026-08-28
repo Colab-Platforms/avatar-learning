@@ -230,6 +230,10 @@ export default function CoursePage({ params }: PageProps) {
       return;
     }
     if (isComingSoon) return;
+    if (course?.isDirect2HireCourse) {
+      router.push(`/courses/${id}/enroll`);
+      return;
+    }
     if (REDIRECT_ENROLL_TO_DIRECT2HIRE) {
       router.push(DIRECT2HIRE_ENROLL_PATH);
       return;
@@ -960,6 +964,7 @@ export default function CoursePage({ params }: PageProps) {
           )}
         </button>
       </div>
+
 
       <Footer />
     </>
