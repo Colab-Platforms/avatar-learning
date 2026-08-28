@@ -18,6 +18,7 @@ const router = Router();
 router.use(auth("USER"), requireCompleteProfile);
 
 router.get("/status", getStatus);
+router.get("/pricing", direct2hireController.getPricing);
 router.post("/create-order", createOrder);
 router.post(
   "/assessment-counselling/create-order",

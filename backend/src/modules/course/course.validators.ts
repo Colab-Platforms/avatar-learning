@@ -39,6 +39,7 @@ const createCourseSchema = Joi.object({
     whatYouLearn: Joi.array().items(whatYouLearnItem).optional().default([]),
     audience: Joi.array().items(audienceItem).optional().default([]),
     isDirect2HireCourse: Joi.boolean().default(false),
+    isDirect2HireOnly: Joi.boolean().default(false),
     isComingSoon: Joi.boolean().default(false),
 });
 
@@ -63,6 +64,7 @@ const updateCourseSchema = Joi.object({
     whatYouLearn: Joi.array().items(whatYouLearnItem).optional(),
     audience: Joi.array().items(audienceItem).optional(),
     isDirect2HireCourse: Joi.boolean().optional(),
+    isDirect2HireOnly: Joi.boolean().optional(),
     isComingSoon: Joi.boolean().optional(),
 });
 

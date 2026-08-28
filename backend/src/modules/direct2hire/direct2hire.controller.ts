@@ -17,6 +17,20 @@ const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
   process.env.DIRECT2HIRE_PRICE_RUPEES!,
 );
 
+// Lets the enroll page show both purchase options (course-only vs full
+// Direct2Hire) before checkout without hardcoding the flat price client-side.
+export const getPricing = async (
+  _req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  sendResponse(
+    res,
+    true,
+    { fullProgrammeRupees: DIRECT2HIRE_PRICE_RUPEES },
+    "Direct2Hire pricing",
+  );
+};
+
 // Preview-only, mirrors /coupons/apply — lets the enroll page show the
 // auto-applied referral discount before checkout without the user typing
 // anything. Actual application still happens server-side in
