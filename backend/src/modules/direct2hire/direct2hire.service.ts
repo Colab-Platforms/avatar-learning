@@ -20,17 +20,75 @@ export function hasAssessmentCounsellingAccess(enrollment: {
 }
 
 export class Direct2HireService {
-    async getOrCreateEnrollment(userId: string) {
-        const existing = await prisma.direct2HireEnrollment.findFirst({
+    /**
+     * Read-only lookup for access gates. Deliberately does NOT create a row —
+     * gates run on every request and must not litter the table with PENDING
+     * enrollments for courses the user only browsed.
+     */
+    async findEnrollment(userId: string, courseId: string) {
+        return prisma.direct2HireEnrollment.findUnique({
+            where: { userId_courseId: { userId, courseId } },
+        });
+    }
+
+    /**
+     * Resolve which enrollment an access-gated request is about.
+     *
+     * Direct2Hire is per-course now, but the existing /direct2hire pages don't
+     * carry a course id yet. Rather than break them, we resolve the single
+     * enrollment when there is only one and report ambiguity when there is
+     * genuinely a choice to make.
+     */
+    async resolveEnrollmentForRequest(userId: string, courseId?: string) {
+        if (courseId) {
+            return {
+                enrollment: await this.findEnrollment(userId, courseId),
+                ambiguous: false as const,
+            };
+        }
+
+        const enrollments = await prisma.direct2HireEnrollment.findMany({
             where: { userId },
+            orderBy: { createdAt: "desc" },
+        });
+
+        if (enrollments.length > 1) {
+            // Only genuinely ambiguous if more than one is actually usable —
+            // abandoned PENDING rows must not lock a paid student out.
+            const usable = enrollments.filter(
+                (e) => e.status === "PAID" || !!e.assessmentCounsellingPaidAt,
+            );
+            if (usable.length > 1) {
+                return { enrollment: null, ambiguous: true as const };
+            }
+            if (usable.length === 1) {
+                return { enrollment: usable[0], ambiguous: false as const };
+            }
+        }
+
+        return { enrollment: enrollments[0] ?? null, ambiguous: false as const };
+    }
+
+    async getOrCreateEnrollment(userId: string, courseId: string) {
+        const existing = await prisma.direct2HireEnrollment.findUnique({
+            where: { userId_courseId: { userId, courseId } },
         });
         if (existing) return existing;
 
-        return prisma.direct2HireEnrollment.create({ data: { userId } });
+        return prisma.direct2HireEnrollment.create({ data: { userId, courseId } });
     }
 
-    async getMyStatus(userId: string) {
-        const enrollment = await this.getOrCreateEnrollment(userId);
+    async getMyStatus(userId: string, courseId?: string) {
+        const enrollment = courseId
+            ? await this.getOrCreateEnrollment(userId, courseId)
+            : await prisma.direct2HireEnrollment.findFirst({
+                  where: { userId },
+                  orderBy: { createdAt: "desc" },
+              });
+
+        if (!enrollment) {
+            return { enrollment: null, courses: [] };
+        }
 
         const paidOrder =
             enrollment.status === "PAID"
@@ -47,20 +105,12 @@ export class Direct2HireService {
                 : null;
         const amountPaidRupees = paidOrder ? paidOrder.amount / 100 : null;
 
-        const booking = await prisma.counsellingBooking.findUnique({
-            where: { userId },
-            select: { selectedCourseId: true },
-        });
-
-        const d2hCourses = booking?.selectedCourseId
+        const targetCourseId = courseId || enrollment.courseId;
+        const d2hCourses = targetCourseId
             ? await prisma.courses.findMany({
-                where: {
-                    isDirect2HireCourse: true,
-                    id: booking.selectedCourseId,
-                },
-                include: { _count: { select: { lessons: true } } },
-                orderBy: { createdAt: "asc" },
-            })
+                  where: { id: targetCourseId },
+                  include: { _count: { select: { lessons: true } } },
+              })
             : [];
 
         const courseIds = d2hCourses.map((c) => c.id);
@@ -93,26 +143,33 @@ export class Direct2HireService {
     }
 
     /**
-     * Single entry point for granting D2H course access once payment is confirmed.
-     * The real payment webhook (Razorpay/Cashfree, built on another branch) should
-     * call this same function on successful payment instead of the admin route below.
+     * Single entry point for granting D2H or Basic course access once payment is confirmed.
+     *
+     * Access only ever moves upward. A ₹499 BASIC purchase must never overwrite
+     * a ₹4999 D2H mapper — that would revoke content the user already paid for,
+     * which is reachable both by buying BASIC after D2H and by an out-of-order
+     * webhook retry.
      */
-    async grantCourseAccess(userId: string) {
-        const d2hCourses = await prisma.courses.findMany({
-            where: { isDirect2HireCourse: true },
-            select: { id: true },
+    async grantCourseAccess(userId: string, courseId: string, tier: "BASIC" | "D2H" = "D2H") {
+        const existing = await prisma.courseUserMapper.findUnique({
+            where: { userId_courseId: { userId, courseId } },
+            select: { tier: true },
         });
 
-        for (const course of d2hCourses) {
-            const existing = await prisma.courseUserMapper.findUnique({
-                where: { userId_courseId: { userId, courseId: course.id } },
+        if (!existing) {
+            await prisma.courseUserMapper.create({
+                data: { userId, courseId, tier },
             });
-            if (!existing) {
-                await prisma.courseUserMapper.create({
-                    data: { userId, courseId: course.id },
-                });
-            }
+            return;
         }
+
+        if (existing.tier === "D2H" || existing.tier === "BOTH") return;
+        if (tier === "BASIC") return;
+
+        await prisma.courseUserMapper.update({
+            where: { userId_courseId: { userId, courseId } },
+            data: { tier },
+        });
     }
 
     async markPaid(enrollmentId: string) {
@@ -127,7 +184,9 @@ export class Direct2HireService {
             data: { status: "PAID", paidAt: enrollment.paidAt ?? new Date() },
         });
 
-        await this.grantCourseAccess(enrollment.userId);
+        if (enrollment.courseId) {
+            await this.grantCourseAccess(enrollment.userId, enrollment.courseId, "D2H");
+        }
         await this.scheduleCommission(enrollment.userId, enrollmentId);
 
         return updated;
@@ -240,13 +299,26 @@ export class Direct2HireService {
             );
         }
 
-        const enrollment = await this.getOrCreateEnrollment(userId);
+        let enrollment = await prisma.direct2HireEnrollment.findFirst({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+        });
+        if (!enrollment) {
+            const defaultCourse = await prisma.courses.findFirst({
+                where: { isDirect2HireCourse: true, isPublished: true },
+                select: { id: true },
+            });
+            if (!defaultCourse) throw new ApiError("No course found", STATUS_CODES.NOT_FOUND);
+            enrollment = await this.getOrCreateEnrollment(userId, defaultCourse.id);
+        }
         if (enrollment.status !== "PAID") {
             await prisma.direct2HireEnrollment.update({
                 where: { id: enrollment.id },
                 data: { status: "PAID", paidAt: enrollment.paidAt ?? new Date() },
             });
-            await this.grantCourseAccess(userId);
+            if (enrollment.courseId) {
+                await this.grantCourseAccess(userId, enrollment.courseId, "D2H");
+            }
             await this.scheduleCommission(userId, enrollment.id);
         }
 

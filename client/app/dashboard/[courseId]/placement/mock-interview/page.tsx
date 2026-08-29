@@ -1,5 +1,7 @@
 "use client";
 
+import { useParams } from "next/navigation";
+
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -68,11 +70,12 @@ function formatDateTime(value?: string | null) {
 }
 
 function PageShell({ children }: { children: React.ReactNode }) {
+  const { courseId } = useParams<{ courseId: string }>();
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-4xl mx-auto space-y-6">
         <Link
-          href="/dashboard/placement"
+          href={`/dashboard/${courseId}/placement`}
           className="inline-flex items-center gap-1 text-xs sm:text-sm text-slate-400 hover:text-slate-700 transition-colors"
         >
           <ChevronLeft size={14} />
@@ -144,6 +147,7 @@ function HeaderCard({
 }
 
 function LockedState() {
+  const { courseId } = useParams<{ courseId: string }>();
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -159,7 +163,7 @@ function LockedState() {
         details unlock.
       </p>
       <Link
-        href="/dashboard/placement/assessment"
+        href={`/dashboard/${courseId}/placement/assessment`}
         className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 hover:bg-brand-700"
       >
         Go to Assessment
@@ -462,6 +466,7 @@ function FeedbackReport({
 }
 
 export default function MockInterviewPage() {
+  const { courseId } = useParams<{ courseId: string }>();
   const { data, isLoading, isError, error } = useMockInterview();
 
   if (isLoading) {

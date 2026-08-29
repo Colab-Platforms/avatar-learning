@@ -188,7 +188,7 @@ export default function CoursePage({ params }: PageProps) {
     showMsg("");
 
     try {
-      const order = await createOrder(course.id);
+      const order = await createOrder({ courseId: course.id });
 
       if (order.provider === "cashfree") {
         if (!cashfreeLoaded) {
@@ -224,41 +224,14 @@ export default function CoursePage({ params }: PageProps) {
     handleCashfreeCheckout,
   ]);
 
-  const handleEnroll = useCallback(async () => {
+  const handleEnroll = useCallback((plan: "basic" | "d2h" = "basic") => {
     if (enrolled) {
       router.push(`/courses/${id}/learn`);
       return;
     }
     if (isComingSoon) return;
-    if (course?.isDirect2HireCourse) {
-      router.push(`/courses/${id}/enroll`);
-      return;
-    }
-    if (REDIRECT_ENROLL_TO_DIRECT2HIRE) {
-      router.push(DIRECT2HIRE_ENROLL_PATH);
-      return;
-    }
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    if (!course) return;
-    if (isFree) {
-      await handleFreeEnroll();
-    } else {
-      await handlePaidEnroll();
-    }
-  }, [
-    user,
-    enrolled,
-    course,
-    id,
-    router,
-    isFree,
-    isComingSoon,
-    handleFreeEnroll,
-    handlePaidEnroll,
-  ]);
+    router.push(`/courses/${id}/enroll?plan=${plan}`);
+  }, [enrolled, isComingSoon, id, router]);
 
   if (isLoading)
     return (
@@ -469,7 +442,7 @@ export default function CoursePage({ params }: PageProps) {
                     </div>
                   )}
                   <button
-                    onClick={handleEnroll}
+                    onClick={() => handleEnroll("basic")}
                     disabled={enrollDisabled}
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold
                                transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
@@ -634,7 +607,7 @@ export default function CoursePage({ params }: PageProps) {
                     {/* CTAs */}
                     <div className="flex flex-col gap-2.5 pt-1">
                       <button
-                        onClick={handleEnroll}
+                        onClick={() => handleEnroll("basic")}
                         disabled={enrollDisabled}
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
                                    transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
@@ -919,7 +892,7 @@ export default function CoursePage({ params }: PageProps) {
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
                   <button
-                    onClick={handleEnroll}
+                    onClick={() => handleEnroll("basic")}
                     disabled={enrollDisabled}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold
                                transition-colors disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
@@ -948,7 +921,7 @@ export default function CoursePage({ params }: PageProps) {
       {/* Sticky bottom bar — mobile only */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 flex gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <button
-          onClick={handleEnroll}
+          onClick={() => handleEnroll("basic")}
           disabled={enrollDisabled}
           className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
                      transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"

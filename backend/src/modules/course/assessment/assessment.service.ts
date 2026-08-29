@@ -2,6 +2,7 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { Assessment, AssessmentAttempt, AssessmentAttemptStatus } from "@prisma/client";
+import { tierFilterFor } from "../courseTier.js";
 import {
   CreateAssessmentBody,
   UpdateAssessmentBody,
@@ -53,6 +54,10 @@ export class AdminAssessmentService {
 
     const lessonId = data.type === "WEEKLY" ? data.lessonId! : null;
 
+    // Each plan gets its own assessments: the ₹499 plan has a short final
+    // assessment over its own lessons, the ₹4999 plan keeps the weekly series.
+    let tier = data.tier ?? "D2H";
+
     if (data.type === "WEEKLY") {
       const lesson = await prisma.lessons.findUnique({ where: { id: lessonId! } });
       if (!lesson || lesson.courseId !== courseId) {
@@ -62,12 +67,19 @@ export class AdminAssessmentService {
       if (existingWeekly) {
         throw new ApiError("This week already has a weekly assessment", STATUS_CODES.CONFLICT);
       }
+      // A weekly assessment belongs to whichever plan its lesson belongs to;
+      // letting the two disagree would hide the quiz from the only students
+      // who can see the lesson.
+      tier = lesson.tier;
     } else {
       const existingFinal = await prisma.assessment.findFirst({
-        where: { courseId, type: "FINAL" },
+        where: { courseId, type: "FINAL", tier },
       });
       if (existingFinal) {
-        throw new ApiError("This course already has a final assessment", STATUS_CODES.CONFLICT);
+        throw new ApiError(
+          "This course already has a final assessment for this plan",
+          STATUS_CODES.CONFLICT,
+        );
       }
     }
 
@@ -78,6 +90,7 @@ export class AdminAssessmentService {
       data: {
         courseId,
         lessonId,
+        tier,
         type,
         title,
         description: description || null,
@@ -402,6 +415,13 @@ export class UserAssessmentService {
       throw new ApiError("Assessment not available", STATUS_CODES.NOT_FOUND);
     }
 
+    // An assessment belonging to the other plan must be invisible, not merely
+    // unlisted — otherwise a ₹499 student could start a ₹4999 assessment by id.
+    const enrollment = await this.assertEnrolled(assessment.courseId, userId);
+    if (!tierFilterFor(enrollment.tier).in.includes(assessment.tier)) {
+      throw new ApiError("Assessment not available", STATUS_CODES.NOT_FOUND);
+    }
+
     if (assessment.type === "WEEKLY") {
       if (!assessment.lessonId) {
         throw new ApiError("Weekly assessment is misconfigured", STATUS_CODES.SERVER_ERROR);
@@ -624,10 +644,14 @@ export class UserAssessmentService {
   }
 
   async listAssessmentsForUser(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const enrollment = await this.assertEnrolled(courseId, userId);
 
     const assessments = await prisma.assessment.findMany({
-      where: { courseId, isPublished: true },
+      where: {
+        courseId,
+        isPublished: true,
+        tier: tierFilterFor(enrollment.tier),
+      },
       include: {
         questions: { select: { id: true } },
         lesson: { select: { id: true, title: true, weekNumber: true } },

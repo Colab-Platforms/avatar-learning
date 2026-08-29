@@ -37,8 +37,8 @@ function serialize(entry: JobPlacementEntry): JobPlacementEntryResponse {
 
 export class JobPlacementService {
   async canManage(userId: string): Promise<boolean> {
-    const interview = await prisma.mockInterview.findUnique({
-      where: { userId },
+    const interview = await prisma.mockInterview.findFirst({
+      where: { userId, completedAt: { not: null } },
       select: { completedAt: true },
     });
     return !!interview?.completedAt;

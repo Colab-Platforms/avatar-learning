@@ -1,5 +1,7 @@
 "use client";
 
+import { useParams } from "next/navigation";
+
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
@@ -64,6 +66,7 @@ function formatDateTime(value?: string | null) {
 }
 
 export default function CounsellingPage() {
+  const { courseId } = useParams<{ courseId: string }>();
   const { data: booking, isLoading: bookingLoading } = useCounsellingBooking();
   const { data: counsellingData, isLoading: profileLoading } =
     useCounsellingProfile();
@@ -114,7 +117,7 @@ export default function CounsellingPage() {
           minutes.
         </p>
         <Link
-          href="/dashboard/assessment"
+          href={`/dashboard/${courseId}/assessment`}
           className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
         >
           Go to AI Assessment <ArrowRight size={16} />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ClipboardList, Clock, HelpCircle, ShieldAlert, Target } from "lucide-react";
@@ -17,7 +17,7 @@ export default function PlacementAssessmentIntroPage() {
   const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
   const { data: selection, isLoading: selectionLoading } = useCourseSelection();
-  const courseId = selection?.selectedCourse?.id ?? "";
+  const { courseId } = useParams<{ courseId: string }>();
 
   const { data: assessment, isLoading, isError, error } = usePlacementAssessment(courseId);
   const startAttempt = useStartPlacementAttempt(courseId);
@@ -35,7 +35,7 @@ export default function PlacementAssessmentIntroPage() {
   const handleStart = async () => {
     try {
       const attempt = await startAttempt.mutateAsync();
-      router.push(`/dashboard/placement/assessment/attempt/${attempt.id}`);
+      router.push(`/dashboard/${courseId}/placement/assessment/attempt/${attempt.id}`);
     } catch {
       // surfaced via startAttempt.error below
     }
@@ -46,7 +46,7 @@ export default function PlacementAssessmentIntroPage() {
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-2xl mx-auto">
         <div className="flex items-center gap-1.5 text-xs sm:text-sm mb-6">
           <Link
-            href="/dashboard/placement"
+            href={`/dashboard/${courseId}/placement`}
             className="flex items-center gap-1 text-slate-400 hover:text-slate-700 transition-colors"
           >
             <ChevronLeft size={14} />
@@ -60,7 +60,7 @@ export default function PlacementAssessmentIntroPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
             <ShieldAlert size={32} className="mx-auto text-amber-500 mb-3" />
             <p className="text-sm text-slate-600">Select your Direct2Hire course first.</p>
-            <Link href="/dashboard/counselling" className="mt-4 inline-block text-sm text-brand-600 hover:text-brand-700">
+            <Link href={`/dashboard/${courseId}/counselling`} className="mt-4 inline-block text-sm text-brand-600 hover:text-brand-700">
               ← Go to Counselling
             </Link>
           </div>
@@ -72,7 +72,7 @@ export default function PlacementAssessmentIntroPage() {
             <p className="text-sm text-slate-600">
               {(error as any)?.response?.data?.message ?? "This assessment is not available yet."}
             </p>
-            <Link href="/dashboard/placement" className="mt-4 inline-block text-sm text-brand-600 hover:text-brand-700">
+            <Link href={`/dashboard/${courseId}/placement`} className="mt-4 inline-block text-sm text-brand-600 hover:text-brand-700">
               ← Back to Placement
             </Link>
           </div>
@@ -164,7 +164,7 @@ export default function PlacementAssessmentIntroPage() {
               <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-4 text-sm text-emerald-800">
                 <p className="font-semibold">Assessment passed — no further attempts allowed.</p>
                 <Link
-                  href={`/dashboard/placement/assessment/results/${assessment.latestAttempt?.id}`}
+                  href={`/dashboard/${courseId}/placement/assessment/results/${assessment.latestAttempt?.id}`}
                   className="text-xs text-emerald-700 underline mt-1 inline-block"
                 >
                   View your results
@@ -186,7 +186,7 @@ export default function PlacementAssessmentIntroPage() {
 
             {assessment.attempt?.status === "IN_PROGRESS" && (
               <Link
-                href={`/dashboard/placement/assessment/attempt/${assessment.attempt.id}`}
+                href={`/dashboard/${courseId}/placement/assessment/attempt/${assessment.attempt.id}`}
                 className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
               >
                 Resume Attempt

@@ -120,6 +120,7 @@ export const createLesson = (
     weekNumber: number;
     title: string;
     description?: string;
+    tier?: "BASIC" | "D2H" | "BOTH";
     modules?: string[];
     lessonOrder: number;
     isFreePreview?: boolean;

@@ -18,7 +18,8 @@
     "sync:leads": "tsx scripts/sync-exist-leads.ts",
     "sync:enrollments": "tsx scripts/sync-exist-enrollments.ts",
     "sync:webinar": "tsx scripts/sync-exist-webinar-registrations.ts",
-    "convert:ist": "tsx scripts/convert-time-to-ist.ts"
+    "convert:ist": "tsx scripts/convert-time-to-ist.ts",
+    "backfill:tiers": "tsx scripts/backfill-course-tiers.ts"
   },
   "keywords": [],
   "author": "",

@@ -27,7 +27,9 @@ export default function PublicLearnPage({ params }: PageProps) {
     enabled: hasHydrated && Boolean(authUser),
   });
 
-  const inD2H = !!d2hStatus?.courses.some((c) => c.id === id);
+  const inD2H =
+    d2hStatus?.enrollment?.status === "PAID" &&
+    d2hStatus?.courses.some((c) => c.id === id);
 
   useEffect(() => {
     if (!hasHydrated || d2hLoading) return;

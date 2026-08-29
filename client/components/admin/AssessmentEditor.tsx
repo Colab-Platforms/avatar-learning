@@ -14,6 +14,7 @@ import {
   WEEKLY_QUESTION_COUNT,
   FINAL_QUESTION_COUNT,
   type AdminAssessment,
+  type AssessmentTier,
   type AssessmentType,
   type OptionInput,
 } from "@/lib/adminAssessmentApi";
@@ -27,6 +28,7 @@ interface LessonRef {
   id: string;
   title: string;
   weekNumber: number;
+  tier: AssessmentTier;
 }
 
 function AssessmentPanel({
@@ -389,12 +391,18 @@ function AssessmentPanel({
   );
 }
 
+const TIER_LABEL: Record<Exclude<AssessmentTier, "BOTH">, string> = {
+  BASIC: "₹499 Basic",
+  D2H: "₹4999 Direct2Hire",
+};
+
 function CreateAssessmentForm({
   type,
   lessonId,
   defaultTitle,
   expectedCount,
   courseId,
+  tier,
   onCreated,
 }: {
   type: AssessmentType;
@@ -402,6 +410,7 @@ function CreateAssessmentForm({
   defaultTitle: string;
   expectedCount: number;
   courseId: string;
+  tier: AssessmentTier;
   onCreated: () => void;
 }) {
   const [creating, setCreating] = useState(false);
@@ -424,6 +433,7 @@ function CreateAssessmentForm({
         title: form.title,
         description: form.description || undefined,
         type,
+        tier,
         lessonId: type === "WEEKLY" ? lessonId : null,
         timeLimitMinutes: form.timeLimitMinutes,
         passingScorePercent:
@@ -516,6 +526,7 @@ export function AssessmentEditor({
   const [assessments, setAssessments] = useState<AdminAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTier, setActiveTier] = useState<Exclude<AssessmentTier, "BOTH">>("D2H");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -534,11 +545,21 @@ export function AssessmentEditor({
     load();
   }, [load]);
 
-  const sortedLessons = [...lessons].sort((a, b) => a.weekNumber - b.weekNumber);
+  // The two plans have entirely separate content, so the editor only ever
+  // shows one plan's weeks and assessments at a time. Without this, a Basic
+  // week and a D2H week both called "Week 1" would sit side by side with no
+  // way to tell which assessment belongs to which.
+  const visible = (t: AssessmentTier) => t === activeTier || t === "BOTH";
+
+  const sortedLessons = [...lessons]
+    .filter((l) => visible(l.tier))
+    .sort((a, b) => a.weekNumber - b.weekNumber);
+
+  const tierAssessments = assessments.filter((a) => visible(a.tier));
   const weeklyByLessonId = new Map(
-    assessments.filter((a) => a.type === "WEEKLY" && a.lessonId).map((a) => [a.lessonId!, a]),
+    tierAssessments.filter((a) => a.type === "WEEKLY" && a.lessonId).map((a) => [a.lessonId!, a]),
   );
-  const finalAssessment = assessments.find((a) => a.type === "FINAL") ?? null;
+  const finalAssessment = tierAssessments.find((a) => a.type === "FINAL") ?? null;
 
   if (loading) {
     return (
@@ -557,6 +578,23 @@ export function AssessmentEditor({
           {error}
         </div>
       )}
+
+      <div className="flex items-center gap-2">
+        {(["D2H", "BASIC"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setActiveTier(t)}
+            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
+              activeTier === t
+                ? "bg-white/10 text-white font-semibold shadow-sm"
+                : "text-white/45 hover:text-white/70"
+            }`}
+          >
+            {TIER_LABEL[t]}
+          </button>
+        ))}
+      </div>
 
       <div className="bg-ink-800 border border-white/6 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-1">
@@ -593,6 +631,7 @@ export function AssessmentEditor({
                       <CreateAssessmentForm
                         courseId={courseId}
                         type="WEEKLY"
+                        tier={activeTier}
                         lessonId={lesson.id}
                         defaultTitle={`Week ${lesson.weekNumber} Assessment`}
                         expectedCount={WEEKLY_QUESTION_COUNT}
@@ -613,8 +652,8 @@ export function AssessmentEditor({
           <h2 className="text-sm font-semibold text-white">Final Assessment</h2>
         </div>
         <p className="text-xs text-white/40 mb-5">
-          One final assessment for the course ({FINAL_QUESTION_COUNT} questions). Unlocks after all
-          weekly assessments are completed.
+          One final assessment per plan ({FINAL_QUESTION_COUNT} questions). Unlocks after all
+          weekly assessments in this plan are completed.
         </p>
         {finalAssessment ? (
           <AssessmentPanel
@@ -626,6 +665,7 @@ export function AssessmentEditor({
           <CreateAssessmentForm
             courseId={courseId}
             type="FINAL"
+            tier={activeTier}
             defaultTitle="Final Course Assessment"
             expectedCount={FINAL_QUESTION_COUNT}
             onCreated={load}

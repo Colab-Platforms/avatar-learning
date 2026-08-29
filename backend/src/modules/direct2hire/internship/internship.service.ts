@@ -223,8 +223,9 @@ export class InternshipService {
   }
 
   private async getSelectedCourseForUser(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
+    const booking = await prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
       select: {
         selectedCourseId: true,
         selectedCourse: {

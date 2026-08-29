@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { dashboardRoutes } from "@/lib/dashboardRoutes";
 import type { PlacementAttemptHistoryItem } from "@/lib/direct2hire/placementApi";
 import { formatDateTime, formatDuration } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -44,6 +46,8 @@ export function PlacementAttemptCard({
   variant = "light",
   showResultLink = false,
 }: PlacementAttemptCardProps) {
+  // Undefined on the admin screens, which never pass showResultLink.
+  const { courseId } = useParams<{ courseId?: string }>();
   const isDark = variant === "dark";
   const passed = attempt.isPassed === true;
 
@@ -94,9 +98,9 @@ export function PlacementAttemptCard({
         <Stat label="Submitted" value={formatDateTime(attempt.submittedAt)} isDark={isDark} />
       </div>
 
-      {showResultLink && (
+      {showResultLink && courseId && (
         <Link
-          href={`/dashboard/placement/assessment/results/${attempt.id}`}
+          href={dashboardRoutes(courseId).placementResults(attempt.id)}
           className={cn(
             "inline-flex text-xs font-semibold transition-colors",
             isDark ? "text-brand-400 hover:text-brand-300" : "text-blue-600 hover:text-blue-700",

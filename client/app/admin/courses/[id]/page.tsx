@@ -63,6 +63,7 @@ interface Topic {
 interface Lesson {
   id: string;
   weekNumber: number;
+  tier: "BASIC" | "D2H" | "BOTH";
   title: string;
   description?: string;
   modules: string[];
@@ -118,7 +119,7 @@ export default function CourseDetailPage() {
   };
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "weeks" | "meta" | "assessment" | "internship" | "placement"
+    "weeks" | "basic" | "meta" | "assessment" | "internship" | "placement"
   >("weeks");
   const [togglingPublish, setTogglingPublish] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
@@ -197,7 +198,10 @@ export default function CourseDetailPage() {
     setSavingLesson(true);
     setError("");
     try {
-      await createLesson(id, lessonForm);
+      await createLesson(id, {
+        ...lessonForm,
+        tier: activeTab === "basic" ? "BASIC" : "D2H",
+      });
       setLessonForm({
         weekNumber: 1,
         title: "",
@@ -255,7 +259,13 @@ export default function CourseDetailPage() {
     );
 
   const sortedLessons = [...course.lessons].sort(
-    (a, b) => a.weekNumber - b.weekNumber,
+    (a: Lesson, b: Lesson) => a.weekNumber - b.weekNumber,
+  );
+
+  const displayLessons = sortedLessons.filter((l: Lesson) =>
+    activeTab === "basic"
+      ? l.tier === "BASIC" || l.tier === "BOTH"
+      : l.tier !== "BASIC",
   );
 
   return (
@@ -473,6 +483,7 @@ export default function CourseDetailPage() {
         {(
           [
             "weeks",
+            "basic",
             "meta",
             "assessment",
             ...(course.isDirect2HireCourse ? (["internship", "placement"] as const) : []),
@@ -481,33 +492,35 @@ export default function CourseDetailPage() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 text-xs font-medium rounded-lg capitalize transition-colors ${
               activeTab === tab
-                ? "bg-ink-800 text-white border border-white/8"
-                : "text-white/35 hover:text-white/60"
+                ? "bg-white/10 text-white font-semibold shadow-sm"
+                : "text-white/45 hover:text-white/70"
             }`}
           >
             {tab === "weeks"
-              ? "Weeks & Modules"
-              : tab === "meta"
-                ? "Course Metadata"
-                : tab === "assessment"
-                  ? "Assessment"
-                  : tab === "internship"
-                    ? "Internship Tasks"
-                    : "Placement Assessment"}
+              ? "Weeks & Modules (D2H)"
+              : tab === "basic"
+                ? "₹499 Basic Content"
+                : tab === "meta"
+                  ? "Course Metadata"
+                  : tab === "assessment"
+                    ? "Assessment"
+                    : tab === "internship"
+                      ? "Internship Tasks"
+                      : "Placement Assessment"}
           </button>
         ))}
       </div>
 
-      {/* ── WEEKS TAB ── */}
-      {activeTab === "weeks" && (
+      {/* ── WEEKS / BASIC TAB ── */}
+      {(activeTab === "weeks" || activeTab === "basic") && (
         <div className="bg-ink-800 border border-white/6 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
             <h2 className="text-sm font-semibold text-white">
-              Weeks{" "}
+              {activeTab === "basic" ? "₹499 Basic Course Videos & Weeks" : "D2H 120-Day Plan Weeks"}{" "}
               <span className="text-white/30 font-normal">
-                ({sortedLessons.length} / {course.totalWeeks})
+                ({displayLessons.length} modules)
               </span>
             </h2>
             <button
@@ -625,16 +638,16 @@ export default function CourseDetailPage() {
           )}
 
           {/* Weeks List */}
-          {sortedLessons.length === 0 ? (
+          {displayLessons.length === 0 ? (
             <div className="py-14 text-center">
               <FileText size={28} className="mx-auto text-white/15 mb-3" />
               <p className="text-sm text-white/35">
-                No weeks yet. Add the first one above.
+                No weeks yet for this section. Add the first one above.
               </p>
             </div>
           ) : (
             <div className="divide-y divide-white/4">
-              {sortedLessons.map((lesson) => (
+              {displayLessons.map((lesson) => (
                 <WeekRow
                   key={lesson.id}
                   lesson={lesson}
@@ -679,6 +692,7 @@ export default function CourseDetailPage() {
             id: l.id,
             title: l.title,
             weekNumber: l.weekNumber,
+            tier: l.tier,
           }))}
         />
       )}

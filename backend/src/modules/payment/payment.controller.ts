@@ -21,7 +21,12 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
       sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
       return;
     }
-    const result = await service.createOrder(req.user!.id, value.courseId);
+    const result = await service.createOrder(
+      req.user!.id,
+      value.courseId,
+      value.plan || "BASIC",
+      value.couponCode,
+    );
     sendResponse(res, true, result, "Order created", STATUS_CODES.CREATED);
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);

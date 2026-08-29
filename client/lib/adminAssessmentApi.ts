@@ -17,11 +17,15 @@ export interface AdminAssessmentQuestion {
   options: AdminAssessmentOption[];
 }
 
+export type AssessmentTier = "BASIC" | "D2H" | "BOTH";
+
 export interface AdminAssessment {
   id: string;
   courseId: string;
   lessonId: string | null;
   type: AssessmentType;
+  /** Which plan this assessment belongs to — the plans do not share content. */
+  tier: AssessmentTier;
   title: string;
   description?: string | null;
   questionCount: number;
@@ -76,6 +80,7 @@ export const createAssessment = (
     title: string;
     description?: string;
     type: AssessmentType;
+    tier?: AssessmentTier;
     lessonId?: string | null;
     timeLimitMinutes: number;
     passingScorePercent?: number;

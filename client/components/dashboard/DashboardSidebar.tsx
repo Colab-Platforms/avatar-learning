@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard,
+  LayoutGrid,
   MessageCircleHeart,
   ClipboardCheck,
   GraduationCap,
@@ -31,6 +32,11 @@ import {
   isAssessmentsSubpath,
   isLearningSubpath,
 } from "@/lib/learningRoutes";
+import {
+  MY_COURSES_ROUTE,
+  courseIdFromPathname,
+  dashboardRoutes,
+} from "@/lib/dashboardRoutes";
 
 /** Dev escape hatch: set NEXT_PUBLIC_D2H_DEV_UNLOCK=true to skip the step-lock gate entirely. */
 const DEV_UNLOCK = process.env.NEXT_PUBLIC_D2H_DEV_UNLOCK === "true";
@@ -105,6 +111,11 @@ function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
 type NavLeaf = {
   kind: "link";
   href: string;
+  /**
+   * Stable identity for the step-lock lookup. Hrefs now carry the course id,
+   * so they can no longer double as lock keys — STEP_ORDER stays flat.
+   */
+  stepId?: string;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
@@ -122,7 +133,11 @@ type NavGroup = {
 type NavItem = NavLeaf | NavGroup;
 
 function useActiveCourseId(pathname: string): string | null {
-  const fromPath = courseIdFromDashboardLearningPath(pathname);
+  // A /dashboard/<courseId>/... route names the course outright; the learning
+  // subtree keeps its own scheme; only fall back to the D2H status when the
+  // path says nothing (e.g. the My Courses grid itself).
+  const fromRoute = courseIdFromPathname(pathname);
+  const fromPath = fromRoute ?? courseIdFromDashboardLearningPath(pathname);
   const { data: status } = useD2HStatus();
 
   return useMemo(() => {
@@ -137,25 +152,35 @@ function useActiveCourseId(pathname: string): string | null {
 
 export function buildDashboardNav(courseId: string | null): NavItem[] {
   const learningRoutes = courseId ? d2hLearningRoutes(courseId) : null;
+  const routes = courseId ? dashboardRoutes(courseId) : null;
 
   return [
     {
       kind: "link",
-      href: "/dashboard",
+      href: MY_COURSES_ROUTE,
+      label: "My Courses",
+      icon: LayoutGrid,
+      exact: true,
+    },
+    {
+      kind: "link",
+      href: routes?.root ?? MY_COURSES_ROUTE,
       label: "Dashboard",
       icon: LayoutDashboard,
       exact: true,
     },
     {
       kind: "link",
-      href: "/dashboard/assessment",
+      href: routes?.assessment ?? MY_COURSES_ROUTE,
+      stepId: "/dashboard/assessment",
       label: "AI Assessment",
       icon: ClipboardCheck,
       exact: false,
     },
     {
       kind: "link",
-      href: "/dashboard/counselling",
+      href: routes?.counselling ?? MY_COURSES_ROUTE,
+      stepId: "/dashboard/counselling",
       label: "Counselling",
       icon: MessageCircleHeart,
       exact: false,
@@ -183,30 +208,22 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
     },
     {
       kind: "link",
-      href: "/dashboard/internships",
+      href: routes?.internships ?? MY_COURSES_ROUTE,
+      stepId: "/dashboard/internships",
       label: "Internships",
       icon: Briefcase,
       exact: false,
     },
     {
       kind: "link",
-      href: "/dashboard/placement",
+      href: routes?.placement ?? MY_COURSES_ROUTE,
+      stepId: "/dashboard/placement",
       label: "Job Placement",
       icon: Trophy,
       exact: false,
     },
   ];
 }
-
-/** Flat list kept for any consumers that still import DASHBOARD_NAV. */
-export const DASHBOARD_NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/assessment", label: "AI Assessment", icon: ClipboardCheck, exact: false },
-  { href: "/dashboard/counselling", label: "Counselling", icon: MessageCircleHeart, exact: false },
-  { href: "/dashboard/learning", label: "AI Learning", icon: GraduationCap, exact: false },
-  { href: "/dashboard/internships", label: "Internships", icon: Briefcase, exact: false },
-  { href: "/dashboard/placement", label: "Job Placement", icon: Trophy, exact: false },
-];
 
 interface DashboardSidebarProps {
   user: {
@@ -293,7 +310,7 @@ export function DashboardSidebar({
           {nav.map((item) => {
             if (item.kind === "link") {
               const active = isLinkActive(item.href, item.exact);
-              const locked = stepLocks[item.href] ?? false;
+              const locked = stepLocks[item.stepId ?? item.href] ?? false;
               const Icon = item.icon;
 
               if (locked) {

@@ -105,7 +105,7 @@ export const getBooking = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const booking = await service.getBooking(req.user!.id);
+    const booking = await service.getBooking(req.user!.id, req.d2hCourseId);
     sendResponse(res, true, booking, "Counselling booking fetched");
   } catch (err: unknown) {
     const error = err as { message?: string; statusCode?: number };
@@ -130,7 +130,11 @@ export const createBooking = async (
       return;
     }
 
-    const booking = await service.createBooking(req.user!.id, value);
+    const booking = await service.createBooking(
+      req.user!.id,
+      value,
+      req.d2hCourseId!,
+    );
     sendResponse(
       res,
       true,
