@@ -226,7 +226,7 @@ export default function CoursePage({ params }: PageProps) {
 
   const handleEnroll = useCallback((plan: "basic" | "d2h" = "basic") => {
     if (enrolled) {
-      router.push(`/courses/${id}/learn`);
+      router.push(`/dashboard/${id}`);
       return;
     }
     if (isComingSoon) return;

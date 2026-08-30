@@ -13,6 +13,7 @@ export interface PaymentConfirmationData {
   name: string;
   amount: number;
   productName: string;
+  planName?: string;
 }
 
 function formatAmount(amountInPaise: number): string {
@@ -21,6 +22,40 @@ function formatAmount(amountInPaise: number): string {
 
 function buildHtml(data: PaymentConfirmationData): string {
   const amountLabel = formatAmount(data.amount);
+
+  const orderSummaryRows = `
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; margin-bottom: 24px;">
+                                    <tr>
+                                        <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                <tr>
+                                                    <td style="color: #64748b; font-size: 13px;">Programme</td>
+                                                    <td style="color: #0f172a; font-size: 13px; font-weight: 600; text-align: right;">${data.productName}</td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    ${data.planName ? `<tr>
+                                        <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                <tr>
+                                                    <td style="color: #64748b; font-size: 13px;">Plan</td>
+                                                    <td style="color: #0f172a; font-size: 13px; font-weight: 600; text-align: right;">${data.planName}</td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>` : ""}
+                                    <tr>
+                                        <td style="padding: 10px 14px;">
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                <tr>
+                                                    <td style="color: #64748b; font-size: 13px;">Amount Paid</td>
+                                                    <td style="color: #16a34a; font-size: 14px; font-weight: 700; text-align: right;">${amountLabel}</td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>`;
 
   return `
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; width: 100%; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
@@ -42,10 +77,15 @@ function buildHtml(data: PaymentConfirmationData): string {
                         <!-- Body Content -->
                         <div style="padding: 32px 24px;">
                             <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; line-height: 1.3;">Payment Received!</h2>
-                            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 8px;">Hi ${data.name},</p>
-                            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 24px;">
-                                We've received your payment of <strong>${amountLabel}</strong> for <strong>${data.productName}</strong>. Thank you for choosing ${APP_NAME}.
-                            </p>
+                            <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 24px;">Hi ${data.name}, thank you for your purchase. Your enrollment is confirmed.</p>
+
+                            <!-- Order Summary Box -->
+                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                                <div style="padding: 10px 14px; background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+                                    <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px;">Order Summary</span>
+                                </div>
+                                ${orderSummaryRows}
+                            </div>
 
                             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 12px;">
                                 Join our WhatsApp community for updates, reminders, and support:
@@ -89,7 +129,7 @@ export async function sendPaymentConfirmationEmail(
     const { data: sendData, error } = await resend.emails.send({
       from: `${APP_NAME} <${FROM_EMAIL}>`,
       to: email,
-      subject: `We've received your payment — ${data.productName}`,
+      subject: `We've received your payment — ${data.productName}${data.planName ? ` (${data.planName})` : ""}`,
       html: buildHtml(data),
     });
 

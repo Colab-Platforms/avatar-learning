@@ -1,17 +1,14 @@
 /**
- * One-time backfill for the two-plan (₹499 BASIC / ₹4999 D2H) migration.
+ * Legacy cleanup for the per-course D2H migration.
  *
- * Before this change, Direct2HireEnrollment / CounsellingBooking / MockInterview
- * were one-per-user and the chosen course lived only in
- * CounsellingBooking.selectedCourseId. They are now per-course, so every row
- * needs a course_id before the column can be made required.
+ *   1. DELETE abandoned PENDING Direct2HireEnrollment rows with no course.
+ *      (Never paid, never chose a course — pure funnel noise.)
+ *   2. MAP the 2 REFUNDED D2H rows to the flagship course.
+ *   3. MAP the 18 CounsellingBooking + 1 MockInterview NULL rows to the flagship.
  *
- * RUN ORDER — this matters:
- *   1. Push the schema with course_id still NULLABLE on those three models.
- *   2. `npm run backfill:tiers`  (this script)
- *   3. Push again with course_id REQUIRED.
+ * Real customer data is never touched — no User row is deleted, no PAID
+ * enrollment is deleted, no PaymentOrder that ever succeeded is deleted.
  *
- * Idempotent: rows that already have a course_id are left alone.
  * Pass --dry to preview without writing.
  */
 import "dotenv/config";
@@ -19,170 +16,151 @@ import prisma from "../prisma";
 
 const DRY = process.argv.includes("--dry");
 
+/** ₹4999 "AI Fundamentals & ChatGPT Mastery" — the original D2H programme. */
+const FLAGSHIP_COURSE_ID = "cmqtgomgu00081vbc7th2ga75";
+
 function log(...args: unknown[]) {
   console.log(DRY ? "[dry]" : "[run]", ...args);
 }
 
-/**
- * Best-effort guess of which course a legacy user's D2H journey belonged to.
- * Ordered most-reliable first: the course they explicitly picked in
- * counselling, then any D2H course they were actually granted access to.
- */
-async function resolveCourseIdForUser(userId: string): Promise<string | null> {
-  const booking = await prisma.counsellingBooking.findFirst({
-    where: { userId, selectedCourseId: { not: null } },
-    orderBy: { createdAt: "desc" },
-    select: { selectedCourseId: true },
-  });
-  if (booking?.selectedCourseId) return booking.selectedCourseId;
-
-  const mapper = await prisma.courseUserMapper.findFirst({
-    where: { userId, course: { isDirect2HireCourse: true } },
-    orderBy: { enrolledAt: "asc" },
-    select: { courseId: true },
-  });
-  return mapper?.courseId ?? null;
+async function countNullRows() {
+  const rows = await prisma.$queryRaw<{ table: string; count: bigint }[]>`
+    SELECT 'direct2hire_enrollments' AS table, COUNT(*)::bigint AS count
+      FROM direct2hire_enrollments WHERE course_id IS NULL
+    UNION ALL
+    SELECT 'counselling_bookings', COUNT(*)::bigint
+      FROM counselling_bookings WHERE course_id IS NULL
+    UNION ALL
+    SELECT 'mock_interviews', COUNT(*)::bigint
+      FROM mock_interviews WHERE course_id IS NULL
+  `;
+  return rows;
 }
 
-async function backfillDirect2HireEnrollments() {
-  const rows = await prisma.direct2HireEnrollment.findMany({
-    where: { courseId: null },
-    select: { id: true, userId: true, status: true },
-  });
-  log(`Direct2HireEnrollment: ${rows.length} rows without a course`);
+async function deletePendingD2H() {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id
+      FROM direct2hire_enrollments
+     WHERE course_id IS NULL
+       AND status = 'PENDING'
+  `;
+  log(`PENDING D2H with NULL course_id: ${rows.length} row(s) to delete`);
+  if (rows.length === 0 || DRY) return rows.length;
 
-  let fixed = 0;
-  const orphans: { id: string; userId: string; status: string }[] = [];
+  // PartnerReferral.direct2hireEnrollmentId is nullable but has no cascade —
+  // null it out first or the delete violates the FK.
+  const nulled = await prisma.$executeRaw`
+    UPDATE partner_referrals
+       SET direct2hire_enrollment_id = NULL
+     WHERE direct2hire_enrollment_id IN (
+       SELECT id FROM direct2hire_enrollments
+        WHERE course_id IS NULL AND status = 'PENDING'
+     )
+  `;
+  log(`  nulled ${nulled} partner_referrals FK(s)`);
 
-  for (const row of rows) {
-    const courseId = await resolveCourseIdForUser(row.userId);
-    if (!courseId) {
-      orphans.push(row);
-      continue;
-    }
-
-    // A user may already have a row for this course — the unique constraint
-    // would reject a second one, so fold the legacy row into it.
-    const clash = await prisma.direct2HireEnrollment.findFirst({
-      where: { userId: row.userId, courseId, id: { not: row.id } },
-      select: { id: true },
-    });
-    if (clash) {
-      log(`  merge duplicate enrollment ${row.id} -> ${clash.id}`);
-      if (!DRY) {
-        await prisma.paymentOrder.updateMany({
-          where: { direct2hireEnrollmentId: row.id },
-          data: { direct2hireEnrollmentId: clash.id },
-        });
-        await prisma.direct2HireEnrollment.delete({ where: { id: row.id } });
-      }
-      continue;
-    }
-
-    if (!DRY) {
-      await prisma.direct2HireEnrollment.update({
-        where: { id: row.id },
-        data: { courseId },
-      });
-    }
-    fixed++;
-  }
-
-  log(`  backfilled ${fixed}, unresolved ${orphans.length}`);
-  return orphans;
+  // PaymentOrder.direct2hireEnrollmentId cascades — abandoned/PENDING payment
+  // attempts pointing at these enrollments go with them, which is correct.
+  const deleted = await prisma.$executeRaw`
+    DELETE FROM direct2hire_enrollments
+     WHERE course_id IS NULL AND status = 'PENDING'
+  `;
+  log(`  deleted ${deleted} enrollment(s)`);
+  return deleted;
 }
 
-async function backfillCounsellingBookings() {
-  const rows = await prisma.counsellingBooking.findMany({
-    where: { courseId: null },
-    select: { id: true, userId: true, selectedCourseId: true },
-  });
-  log(`CounsellingBooking: ${rows.length} rows without a course`);
+async function mapRefundedD2H() {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id
+      FROM direct2hire_enrollments
+     WHERE course_id IS NULL
+       AND status = 'REFUNDED'
+  `;
+  log(`REFUNDED D2H with NULL course_id: ${rows.length} row(s) to map`);
+  if (rows.length === 0 || DRY) return rows.length;
 
-  let fixed = 0;
-  const orphans: { id: string; userId: string }[] = [];
-
-  for (const row of rows) {
-    const courseId =
-      row.selectedCourseId ?? (await resolveCourseIdForUser(row.userId));
-    if (!courseId) {
-      orphans.push(row);
-      continue;
-    }
-    if (!DRY) {
-      await prisma.counsellingBooking.update({
-        where: { id: row.id },
-        data: { courseId },
-      });
-    }
-    fixed++;
-  }
-
-  log(`  backfilled ${fixed}, unresolved ${orphans.length}`);
-  return orphans;
+  // Skip any user who already has a flagship enrollment (would violate
+  // @@unique([userId, courseId])). Volumes are tiny; clashes are unlikely.
+  const updated = await prisma.$executeRaw`
+    UPDATE direct2hire_enrollments
+       SET course_id = ${FLAGSHIP_COURSE_ID}
+     WHERE course_id IS NULL
+       AND status = 'REFUNDED'
+       AND user_id NOT IN (
+         SELECT user_id FROM direct2hire_enrollments
+          WHERE course_id = ${FLAGSHIP_COURSE_ID}
+       )
+  `;
+  log(`  mapped ${updated} row(s)`);
+  return updated;
 }
 
-async function backfillMockInterviews() {
-  const rows = await prisma.mockInterview.findMany({
-    where: { courseId: null },
-    select: { id: true, userId: true },
-  });
-  log(`MockInterview: ${rows.length} rows without a course`);
+async function mapCounsellingBookings() {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM counselling_bookings WHERE course_id IS NULL
+  `;
+  log(`CounsellingBooking with NULL course_id: ${rows.length} row(s) to map`);
+  if (rows.length === 0 || DRY) return rows.length;
 
-  let fixed = 0;
-  const orphans: { id: string; userId: string }[] = [];
-
-  for (const row of rows) {
-    const courseId = await resolveCourseIdForUser(row.userId);
-    if (!courseId) {
-      orphans.push(row);
-      continue;
-    }
-    if (!DRY) {
-      await prisma.mockInterview.update({
-        where: { id: row.id },
-        data: { courseId },
-      });
-    }
-    fixed++;
-  }
-
-  log(`  backfilled ${fixed}, unresolved ${orphans.length}`);
-  return orphans;
+  const updated = await prisma.$executeRaw`
+    UPDATE counselling_bookings
+       SET course_id = ${FLAGSHIP_COURSE_ID}
+     WHERE course_id IS NULL
+       AND user_id NOT IN (
+         SELECT user_id FROM counselling_bookings
+          WHERE course_id = ${FLAGSHIP_COURSE_ID}
+       )
+  `;
+  log(`  mapped ${updated} row(s)`);
+  return updated;
 }
 
-/**
- * Existing lessons were all authored for the ₹4999 programme, and the column
- * default already says D2H — this only repairs rows written before the default
- * existed (db push backfills NULLs, but be explicit rather than assume).
- */
-async function backfillLessonTiers() {
-  const count = await prisma.lessons.count();
-  log(`Lessons: ${count} total (all remain tier=D2H; ₹499 weeks are authored fresh)`);
+async function mapMockInterviews() {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM mock_interviews WHERE course_id IS NULL
+  `;
+  log(`MockInterview with NULL course_id: ${rows.length} row(s) to map`);
+  if (rows.length === 0 || DRY) return rows.length;
+
+  const updated = await prisma.$executeRaw`
+    UPDATE mock_interviews
+       SET course_id = ${FLAGSHIP_COURSE_ID}
+     WHERE course_id IS NULL
+       AND user_id NOT IN (
+         SELECT user_id FROM mock_interviews
+          WHERE course_id = ${FLAGSHIP_COURSE_ID}
+       )
+  `;
+  log(`  mapped ${updated} row(s)`);
+  return updated;
 }
 
 async function main() {
   if (DRY) console.log("\n*** DRY RUN — no writes ***\n");
 
-  const d2h = await backfillDirect2HireEnrollments();
-  const bookings = await backfillCounsellingBookings();
-  const mocks = await backfillMockInterviews();
-  await backfillLessonTiers();
+  const course = await prisma.courses.findUnique({
+    where: { id: FLAGSHIP_COURSE_ID },
+    select: { id: true, title: true, isDirect2HireCourse: true },
+  });
+  if (!course) throw new Error(`Flagship course ${FLAGSHIP_COURSE_ID} not found.`);
+  log(`Flagship course: "${course.title}" (${course.id})`);
 
-  const orphanTotal = d2h.length + bookings.length + mocks.length;
-  if (orphanTotal > 0) {
-    console.log(
-      `\n!! ${orphanTotal} row(s) could not be resolved to a course.\n` +
-        `   Making course_id required will FAIL until these are handled.\n` +
-        `   They are users who never selected a course and never got access —\n` +
-        `   usually abandoned PENDING rows that are safe to delete.\n`,
-    );
-    console.log("Direct2HireEnrollment:", d2h);
-    console.log("CounsellingBooking:", bookings);
-    console.log("MockInterview:", mocks);
-  } else {
-    console.log("\nAll rows resolved. Safe to make course_id required.\n");
-  }
+  console.log("\nBEFORE:");
+  for (const r of await countNullRows()) console.log(`  ${r.table}: ${r.count}`);
+  console.log();
+
+  await deletePendingD2H();
+  await mapRefundedD2H();
+  await mapCounsellingBookings();
+  await mapMockInterviews();
+
+  console.log("\nAFTER:");
+  for (const r of await countNullRows()) console.log(`  ${r.table}: ${r.count}`);
+  console.log(
+    DRY
+      ? "\n(dry run — nothing changed; re-run without --dry to apply)\n"
+      : "\nDone. Re-run `npx prisma db push` to make course_id required.\n",
+  );
 }
 
 main()

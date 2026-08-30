@@ -83,12 +83,22 @@ async function sendPurchaseConfirmationEmailForOrder(order: {
     if (!user?.email) return;
 
     let productName = "Direct2Hire Programme";
+    let planName: string | undefined;
+
     if (order.productType === "COURSE" && order.courseId) {
       const course = await prisma.courses.findUnique({
         where: { id: order.courseId },
         select: { title: true },
       });
       productName = course?.title ?? "Course";
+      planName = "Basic Course Plan";
+    } else if (order.productType === "DIRECT2HIRE" && order.courseId) {
+      const course = await prisma.courses.findUnique({
+        where: { id: order.courseId },
+        select: { title: true },
+      });
+      productName = course?.title ?? "Course";
+      planName = "Direct2Hire 5-Step Program";
     } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
       productName = "Direct2Hire Assessment + Counselling";
     }
@@ -97,6 +107,7 @@ async function sendPurchaseConfirmationEmailForOrder(order: {
       name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
       amount: order.amount,
       productName,
+      planName,
     });
   } catch (err) {
     console.error(

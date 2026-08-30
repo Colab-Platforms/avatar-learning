@@ -20,6 +20,16 @@ export const dashboardRoutes = (courseId: string) => {
   };
 };
 
+/** Routes for a ₹499 Basic course — only learning + certification. */
+export const basicCourseRoutes = (courseId: string) => {
+  const base = `/dashboard/${courseId}`;
+  return {
+    root: base,
+    learn: `${base}/learn`,
+    certificate: `${base}/certificate`,
+  };
+};
+
 /** The My Courses grid — where a signed-in user lands. */
 export const MY_COURSES_ROUTE = "/dashboard";
 

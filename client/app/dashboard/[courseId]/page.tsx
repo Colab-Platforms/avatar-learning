@@ -1,6 +1,6 @@
-import { useParams } from "next/navigation";
 "use client";
 
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -38,8 +38,34 @@ import PretextAnimatedHeight, {
 } from "@/components/counselling/PretextAnimatedHeight";
 import { cn } from "@/lib/utils";
 import { d2hLearningRoutes } from "@/lib/learningRoutes";
+import {
+  useEnrollmentTier,
+  useMyEnrollments,
+} from "@/hooks/queries/useMyEnrollments";
+import { BasicOverview } from "./_BasicOverview";
 
 export default function DashboardOverviewPage() {
+  const { courseId } = useParams<{ courseId: string }>();
+  const { isLoading: enrollmentsLoading } = useMyEnrollments();
+  const tier = useEnrollmentTier(courseId);
+
+  // Wait for enrollments before picking a layout — otherwise a BASIC buyer
+  // briefly sees the D2H dashboard while the tier lookup is still `null`.
+  if (enrollmentsLoading) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto space-y-6">
+        <div className="h-44 rounded-2xl bg-slate-200/50 animate-pulse" />
+        <div className="h-32 rounded-2xl bg-slate-200/50 animate-pulse" />
+      </div>
+    );
+  }
+  if (tier === "BASIC") {
+    return <BasicOverview courseId={courseId} />;
+  }
+  return <D2HOverview />;
+}
+
+function D2HOverview() {
   const { user } = useAppSelector((s) => s.auth);
 
   // ─── QUERY HOOKS ────────────────────────────────────────────────────────────

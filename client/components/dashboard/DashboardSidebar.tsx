@@ -18,6 +18,7 @@ import {
   BookOpen,
   ClipboardList,
   Lock,
+  Award,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
@@ -27,6 +28,10 @@ import { useCourseSelection } from "@/hooks/queries/useCourseSelection";
 import { useInternshipTasks } from "@/hooks/queries/useInternshipTasks";
 import { useAssessments } from "@/hooks/queries/useAssessment";
 import {
+  useEnrollmentTier,
+  useMyEnrollments,
+} from "@/hooks/queries/useMyEnrollments";
+import {
   courseIdFromDashboardLearningPath,
   d2hLearningRoutes,
   isAssessmentsSubpath,
@@ -34,9 +39,11 @@ import {
 } from "@/lib/learningRoutes";
 import {
   MY_COURSES_ROUTE,
+  basicCourseRoutes,
   courseIdFromPathname,
   dashboardRoutes,
 } from "@/lib/dashboardRoutes";
+import type { CourseTier } from "@/lib/coursesApi";
 
 /** Dev escape hatch: set NEXT_PUBLIC_D2H_DEV_UNLOCK=true to skip the step-lock gate entirely. */
 const DEV_UNLOCK = process.env.NEXT_PUBLIC_D2H_DEV_UNLOCK === "true";
@@ -134,44 +141,93 @@ type NavItem = NavLeaf | NavGroup;
 
 function useActiveCourseId(pathname: string): string | null {
   // A /dashboard/<courseId>/... route names the course outright; the learning
-  // subtree keeps its own scheme; only fall back to the D2H status when the
-  // path says nothing (e.g. the My Courses grid itself).
+  // subtree keeps its own scheme; only fall back to defaults when the path
+  // says nothing (e.g. the My Courses grid itself).
   const fromRoute = courseIdFromPathname(pathname);
   const fromPath = fromRoute ?? courseIdFromDashboardLearningPath(pathname);
+  const { data: enrollments } = useMyEnrollments();
   const { data: status } = useD2HStatus();
 
   return useMemo(() => {
     if (fromPath) return fromPath;
+    // On the My Courses grid itself we intentionally return null so the sidebar
+    // renders its "no course" variant instead of guessing.
+    if (pathname === MY_COURSES_ROUTE) return null;
+    const activeEnrollment =
+      enrollments?.find((e) => !e.isCompleted) ?? enrollments?.[0];
+    if (activeEnrollment) return activeEnrollment.course.slug;
     const active =
       status?.courses.find((c) => c.enrolled && !c.isCompleted) ??
       status?.courses.find((c) => c.enrolled) ??
       status?.courses[0];
     return active?.id ?? null;
-  }, [fromPath, status?.courses]);
+  }, [fromPath, pathname, enrollments, status?.courses]);
 }
 
-export function buildDashboardNav(courseId: string | null): NavItem[] {
-  const learningRoutes = courseId ? d2hLearningRoutes(courseId) : null;
-  const routes = courseId ? dashboardRoutes(courseId) : null;
+type SidebarVariant = "my-courses" | "basic" | "d2h";
+
+function resolveVariant(
+  pathname: string,
+  courseId: string | null,
+  tier: CourseTier | null,
+): SidebarVariant {
+  if (pathname === MY_COURSES_ROUTE || !courseId) return "my-courses";
+  if (tier === "BASIC") return "basic";
+  return "d2h";
+}
+
+export function buildDashboardNav(
+  courseId: string | null,
+  variant: SidebarVariant,
+): NavItem[] {
+  const myCoursesLink: NavItem = {
+    kind: "link",
+    href: MY_COURSES_ROUTE,
+    label: "My Courses",
+    icon: LayoutGrid,
+    exact: true,
+  };
+
+  if (variant === "my-courses" || !courseId) {
+    return [myCoursesLink];
+  }
+
+  if (variant === "basic") {
+    const basic = basicCourseRoutes(courseId);
+    return [
+      myCoursesLink,
+      {
+        kind: "link",
+        href: basic.learn,
+        label: "Learning",
+        icon: BookOpen,
+        exact: false,
+      },
+      {
+        kind: "link",
+        href: basic.certificate,
+        label: "Certification",
+        icon: Award,
+        exact: false,
+      },
+    ];
+  }
+
+  const learningRoutes = d2hLearningRoutes(courseId);
+  const routes = dashboardRoutes(courseId);
 
   return [
+    myCoursesLink,
     {
       kind: "link",
-      href: MY_COURSES_ROUTE,
-      label: "My Courses",
-      icon: LayoutGrid,
-      exact: true,
-    },
-    {
-      kind: "link",
-      href: routes?.root ?? MY_COURSES_ROUTE,
+      href: routes.root,
       label: "Dashboard",
       icon: LayoutDashboard,
       exact: true,
     },
     {
       kind: "link",
-      href: routes?.assessment ?? MY_COURSES_ROUTE,
+      href: routes.assessment,
       stepId: "/dashboard/assessment",
       label: "AI Assessment",
       icon: ClipboardCheck,
@@ -179,7 +235,7 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
     },
     {
       kind: "link",
-      href: routes?.counselling ?? MY_COURSES_ROUTE,
+      href: routes.counselling,
       stepId: "/dashboard/counselling",
       label: "Counselling",
       icon: MessageCircleHeart,
@@ -193,13 +249,13 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
       href: "/dashboard/learning",
       children: [
         {
-          href: learningRoutes?.learn ?? "/dashboard/learning",
+          href: learningRoutes.learn,
           label: "Learning",
           icon: BookOpen,
           match: "learn",
         },
         {
-          href: learningRoutes?.assessments ?? "/dashboard/learning",
+          href: learningRoutes.assessments,
           label: "Assessments",
           icon: ClipboardList,
           match: "assessments",
@@ -208,7 +264,7 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
     },
     {
       kind: "link",
-      href: routes?.internships ?? MY_COURSES_ROUTE,
+      href: routes.internships,
       stepId: "/dashboard/internships",
       label: "Internships",
       icon: Briefcase,
@@ -216,7 +272,7 @@ export function buildDashboardNav(courseId: string | null): NavItem[] {
     },
     {
       kind: "link",
-      href: routes?.placement ?? MY_COURSES_ROUTE,
+      href: routes.placement,
       stepId: "/dashboard/placement",
       label: "Job Placement",
       icon: Trophy,
@@ -244,8 +300,24 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const courseId = useActiveCourseId(pathname);
-  const nav = useMemo(() => buildDashboardNav(courseId), [courseId]);
-  const stepLocks = useStepLocks(courseId);
+  const { isLoading: enrollmentsLoading } = useMyEnrollments();
+  const tier = useEnrollmentTier(courseId);
+  const showSkeleton =
+    !!courseId &&
+    enrollmentsLoading &&
+    tier === null &&
+    pathname !== MY_COURSES_ROUTE;
+  const variant = resolveVariant(pathname, courseId, tier);
+  const nav = useMemo(
+    () => buildDashboardNav(courseId, variant),
+    [courseId, variant],
+  );
+  // Step-locks are D2H-only; BASIC and the My Courses grid always render
+  // everything unlocked, so skip the (expensive) query fan-out for them.
+  const d2hStepLocks = useStepLocks(
+    !showSkeleton && variant === "d2h" ? courseId : null,
+  );
+  const stepLocks = variant === "d2h" ? d2hStepLocks : {};
 
   const learningActive =
     pathname === "/dashboard/learning" ||
@@ -258,6 +330,13 @@ export function DashboardSidebar({
   useEffect(() => {
     if (learningActive) setLearningOpen(true);
   }, [learningActive]);
+
+  const sectionLabel =
+    variant === "basic"
+      ? "Course"
+      : variant === "d2h"
+        ? "Direct2Hire"
+        : "Dashboard";
 
   const isLinkActive = (href: string, exact?: boolean) =>
     exact
@@ -305,9 +384,41 @@ export function DashboardSidebar({
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           <p className="px-3 pb-2 text-[10px] font-semibold text-white/25 uppercase tracking-widest">
-            Direct2Hire
+            {showSkeleton ? (
+              <span className="inline-block h-2 w-16 rounded bg-white/8 animate-pulse align-middle" />
+            ) : (
+              sectionLabel
+            )}
           </p>
-          {nav.map((item) => {
+          {showSkeleton && (
+            <>
+              <Link
+                href={MY_COURSES_ROUTE}
+                onClick={onClose}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  isLinkActive(MY_COURSES_ROUTE, true)
+                    ? "bg-brand-500/8 text-brand-400 border border-brand-500/18"
+                    : "text-white/45 hover:text-white/80 hover:bg-white/4 border border-transparent"
+                }`}
+              >
+                <LayoutGrid size={16} className="text-white/35" />
+                My Courses
+              </Link>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent"
+                >
+                  <div className="w-4 h-4 rounded bg-white/8 animate-pulse" />
+                  <div
+                    className="h-2.5 rounded bg-white/8 animate-pulse"
+                    style={{ width: `${72 - i * 6}px` }}
+                  />
+                </div>
+              ))}
+            </>
+          )}
+          {!showSkeleton && nav.map((item) => {
             if (item.kind === "link") {
               const active = isLinkActive(item.href, item.exact);
               const locked = stepLocks[item.stepId ?? item.href] ?? false;

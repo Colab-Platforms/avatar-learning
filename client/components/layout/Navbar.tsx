@@ -19,7 +19,6 @@ import { buttonVariants, ConfirmationDialog } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutThunk } from "@/store/authSlice";
 import { getMyPartner } from "@/lib/partnersApi";
-import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 // import { OfferTimerBar, OFFER_BAR_HEIGHT } from "@/app/direct2hire/OfferTimerBar";
@@ -66,10 +65,6 @@ export function Navbar({
   const pathname = usePathname();
 
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
-  const { data: d2hStatus } = useD2HStatus({
-    enabled: hasHydrated && Boolean(user),
-  });
-  const isD2HEnrolled = d2hStatus?.enrollment?.status === "PAID";
 
   const showOfferBar = false && !hideOfferBar && !isOfferBarExcluded(pathname);
   const effectiveOffsetTop = offsetTop ?? (showOfferBar ? OFFER_BAR_HEIGHT : 0);
@@ -318,7 +313,7 @@ export function Navbar({
                       <User className="h-3.5 w-3.5 text-brand-500" />
                       View Profile
                     </Link>
-                    {isD2HEnrolled && (
+                    {user && (
                       <Link
                         href="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
@@ -326,7 +321,7 @@ export function Navbar({
                                    hover:text-text hover:bg-surface-alt transition-all duration-150"
                       >
                         <GraduationCap className="h-3.5 w-3.5 text-brand-500" />
-                        Direct2Hire Dashboard
+                        My Courses
                       </Link>
                     )}
                     {isApprovedPartner && (
@@ -496,14 +491,14 @@ export function Navbar({
                   <User className="h-4 w-4 text-brand-500" />
                   View Profile ({user.firstName ?? user.email})
                 </Link>
-                {isD2HEnrolled && (
+                {user && (
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileOpen(false)}
                     className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150 flex items-center gap-2"
                   >
                     <GraduationCap className="h-4 w-4 text-brand-500" />
-                    Direct2Hire Dashboard
+                    My Courses
                   </Link>
                 )}
                 {isApprovedPartner && (

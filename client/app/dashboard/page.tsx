@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   BadgeCheck,
@@ -11,38 +12,39 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
-import { fetchMyEnrollments, type MyEnrollment } from "@/lib/coursesApi";
+import type { RootState } from "@/store";
+import type { MyEnrollment } from "@/lib/coursesApi";
 import { dashboardRoutes } from "@/lib/dashboardRoutes";
+import { useMyEnrollments } from "@/hooks/queries/useMyEnrollments";
 
-/**
- * My Courses — the landing page for a signed-in student.
- *
- * Direct2Hire used to be a single journey per user, so /dashboard could show it
- * directly. Now that both plans are bought per course, a student can hold
- * several at once, and this grid is where they pick which one to open.
- */
+const SPRING = [0.16, 1, 0.3, 1] as const;
+
+const grid = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+};
+
+const card = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.42, ease: SPRING } },
+};
+
 export default function MyCoursesPage() {
-  const {
-    data: enrollments,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["my-enrollments"],
-    queryFn: fetchMyEnrollments,
-  });
+  const { data: enrollments, isLoading, isError } = useMyEnrollments();
+  const firstName = useSelector((state: RootState) => state.auth.user?.firstName ?? "");
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+      <div className="flex items-center justify-center py-40">
+        <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/8 px-5 py-4 text-sm text-red-400">
-        Failed to load your courses. Please refresh and try again.
+      <div className="p-8 lg:p-12">
+        <p className="text-sm text-red-400">Failed to load your courses. Please refresh.</p>
       </div>
     );
   }
@@ -50,128 +52,164 @@ export default function MyCoursesPage() {
   const courses = enrollments ?? [];
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold text-text">My Courses</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          {courses.length === 0
-            ? "You haven't enrolled in any courses yet."
-            : `${courses.length} ${courses.length === 1 ? "course" : "courses"} in progress.`}
-        </p>
-      </header>
+    <div className="min-h-full bg-slate-50">
+      <div className="px-6 py-10 lg:px-12">
 
-      {courses.length === 0 ? <EmptyState /> : <CourseGrid courses={courses} />}
+        {/* Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.38, ease: SPRING }}
+          className="mb-8"
+        >
+          <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">
+            {firstName ? `${firstName}'s Courses` : "My Courses"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-400">
+            {courses.length === 0
+              ? "No courses enrolled yet."
+              : `${courses.length} ${courses.length === 1 ? "course" : "courses"} enrolled`}
+          </p>
+        </motion.div>
+
+        {courses.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <motion.div
+            variants={grid}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          >
+            {courses.map((e) => (
+              <CourseCard key={e.id} enrollment={e} />
+            ))}
+          </motion.div>
+        )}
+
+      </div>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="rounded-2xl border border-border bg-surface-alt px-6 py-16 text-center">
-      <BookOpen className="mx-auto mb-4 h-10 w-10 text-text-subtle" />
-      <p className="text-sm text-text-muted">
-        Browse the catalogue to enrol in your first course.
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col items-center justify-center py-24 text-center"
+    >
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white">
+        <BookOpen className="h-6 w-6 text-slate-400" />
+      </div>
+      <h2 className="text-base font-semibold text-slate-700">No courses yet</h2>
+      <p className="mt-1.5 max-w-xs text-sm text-slate-400">
+        Browse the catalogue to enroll in your first course.
       </p>
       <Link
         href="/courses"
-        className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
+        className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
       >
-        Browse courses <ArrowRight className="h-3.5 w-3.5" />
+        Browse courses
+        <ArrowRight className="h-3.5 w-3.5" />
       </Link>
-    </div>
-  );
-}
-
-function CourseGrid({ courses }: { courses: MyEnrollment[] }) {
-  return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {courses.map((enrollment) => (
-        <CourseCard key={enrollment.id} enrollment={enrollment} />
-      ))}
-    </div>
+    </motion.div>
   );
 }
 
 function CourseCard({ enrollment }: { enrollment: MyEnrollment }) {
   const { course, tier, progress, isCompleted } = enrollment;
-  const isBasic = tier === "BASIC";
-
-  // Basic has no 5-step journey — just videos, a final assessment and a
-  // certificate — so it goes straight to the content rather than through a
-  // dashboard that would show almost nothing.
-  const href = isBasic
-    ? `/courses/${course.slug}/learn`
-    : dashboardRoutes(course.id).root;
+  const isD2H = tier === "D2H" || tier === "BOTH";
+  const href = dashboardRoutes(course.slug).root;
+  const pct = Math.min(100, Math.max(0, progress));
 
   return (
-    <Link
-      href={href}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-colors hover:border-brand-400/50"
-    >
-      <div className="relative aspect-video w-full overflow-hidden bg-surface-alt">
-        {course.thumbnail ? (
-          <Image
-            src={course.thumbnail}
-            alt={course.title}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <GraduationCap className="h-8 w-8 text-text-subtle" />
-          </div>
-        )}
-
-        <span
-          className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur ${
-            isBasic
-              ? "bg-slate-900/70 text-slate-100"
-              : "bg-brand-500/90 text-white"
-          }`}
-        >
-          {isBasic ? (
-            "Basic"
+    <motion.div variants={card}>
+      <Link
+        href={href}
+        className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-200 hover:border-slate-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
+      >
+        {/* Thumbnail */}
+        <div className="relative aspect-video overflow-hidden bg-slate-100">
+          {course.thumbnail ? (
+            <Image
+              src={course.thumbnail}
+              alt={course.title}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+            />
           ) : (
-            <>
-              <Sparkles className="h-3 w-3" /> Direct2Hire
-            </>
+            <div className="flex h-full items-center justify-center">
+              <GraduationCap className="h-8 w-8 text-slate-300" />
+            </div>
           )}
-        </span>
 
-        {isCompleted && (
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
-            <BadgeCheck className="h-3 w-3" /> Completed
+          {/* Tier pill */}
+          <span
+            className={`absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
+              isD2H
+                ? "bg-emerald-500 text-white"
+                : "bg-black/50 text-white backdrop-blur-sm"
+            }`}
+          >
+            {isD2H ? (
+              <><Sparkles className="h-2.5 w-2.5" /> Direct2Hire</>
+            ) : (
+              "Basic"
+            )}
           </span>
-        )}
-      </div>
 
-      <div className="flex flex-1 flex-col p-5">
-        <p className="text-[11px] uppercase tracking-wide text-text-subtle">
-          {course.category?.name}
-        </p>
-        <h2 className="mt-1 line-clamp-2 text-sm font-semibold text-text">
-          {course.title}
-        </h2>
+          {/* Completed pill */}
+          {isCompleted && (
+            <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+              <BadgeCheck className="h-2.5 w-2.5" /> Done
+            </span>
+          )}
 
-        <div className="mt-auto pt-5">
-          <div className="mb-1.5 flex items-center justify-between text-[11px] text-text-muted">
-            <span>{progress}% complete</span>
-            <span className="inline-flex items-center gap-1 font-medium text-brand-500 opacity-0 transition-opacity group-hover:opacity-100">
-              {isBasic ? "Continue" : "Open dashboard"}
+          {/* Progress strip — YouTube/Netflix style at bottom of thumbnail */}
+          {pct > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/15">
+              <div
+                className={`h-full ${isCompleted || isD2H ? "bg-emerald-400" : "bg-blue-500"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-1 flex-col p-4">
+          {course.category?.name && (
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {course.category.name}
+            </p>
+          )}
+
+          <h2 className="mt-1.5 line-clamp-2 text-[14px] font-semibold leading-snug text-slate-800">
+            {course.title}
+          </h2>
+
+          <div className="mt-auto flex items-center justify-between pt-4">
+            <span className="text-xs text-slate-400">
+              {isCompleted
+                ? "Completed"
+                : pct === 0
+                  ? "Not started"
+                  : `${pct}% complete`}
+            </span>
+            <span
+              className={`flex items-center gap-0.5 text-xs font-medium opacity-0 transition-opacity duration-150 group-hover:opacity-100 ${
+                isD2H ? "text-emerald-600" : "text-blue-600"
+              }`}
+            >
+              {isCompleted ? "Review" : pct === 0 ? "Start" : "Continue"}
               <ArrowRight className="h-3 w-3" />
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-alt">
-            <div
-              className={`h-full rounded-full transition-all ${
-                isCompleted ? "bg-emerald-500" : "bg-brand-500"
-              }`}
-              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-            />
-          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 }
