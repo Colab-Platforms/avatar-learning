@@ -27,13 +27,15 @@ import { useAdminDirect2HireStudent } from "@/hooks/queries/useAdminDirect2HireS
 import { useConfirmCounsellingBooking } from "@/hooks/mutations/useConfirmCounsellingBooking";
 import { useReviewInternshipSubmission } from "@/hooks/mutations/useReviewInternshipSubmission";
 import { useGenerateD2HPaymentLink } from "@/hooks/mutations/useGenerateD2HPaymentLink";
-import type { AdminD2HStudentProfile } from "@/lib/adminApi";
+import { useMarkD2HRefunded } from "@/hooks/mutations/useMarkD2HRefunded";
+import type { AdminD2HStudentProfile, AdminD2HCourseBlock } from "@/lib/adminApi";
 import type { AdminStudentInternshipTask } from "@/lib/internshipApi";
 import { AdminPlacementAssessmentSection } from "@/components/admin/AdminPlacementAssessmentSection";
 import { AdminMockInterviewSection } from "@/components/admin/AdminMockInterviewSection";
 import { AdminJobPlacementSection } from "@/components/admin/AdminJobPlacementSection";
 import { CounsellingFeedbackSection } from "@/components/admin/CounsellingFeedbackSection";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -341,7 +343,7 @@ function BookingSection({
   booking,
 }: {
   userId: string;
-  booking: NonNullable<AdminD2HStudentProfile["booking"]>;
+  booking: NonNullable<AdminD2HCourseBlock["booking"]>;
 }) {
   const isVoice = booking.preferredMode === "VOICE";
   const [isEditing, setIsEditing] = useState(false);
@@ -960,6 +962,189 @@ function GeneratePaymentLinkSection({ userId }: { userId: string }) {
   );
 }
 
+const TIER_LABEL: Record<string, string> = {
+  BASIC: "Basic ₹499",
+  D2H: "Direct2Hire ₹4999",
+  BOTH: "Upgraded · Basic + D2H",
+};
+
+function TierBadge({ tier }: { tier: string | null }) {
+  if (!tier) return null;
+  return (
+    <span
+      className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+        tier === "BOTH"
+          ? "bg-amber-500/10 text-amber-400"
+          : tier === "D2H"
+            ? "bg-brand-500/10 text-brand-400"
+            : "bg-white/6 text-white/40"
+      }`}
+    >
+      {TIER_LABEL[tier] ?? tier}
+    </span>
+  );
+}
+
+function CoursePaymentSection({
+  userId,
+  course,
+}: {
+  userId: string;
+  course: AdminD2HCourseBlock;
+}) {
+  const refundMutation = useMarkD2HRefunded(userId);
+  const [confirmRefund, setConfirmRefund] = useState(false);
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="text-sm font-semibold text-white/80">Payment</h2>
+        {course.enrollmentId && course.enrollmentStatus === "PAID" && (
+          <button
+            onClick={() => setConfirmRefund(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/30 text-red-300 hover:bg-red-500/10 transition-colors"
+          >
+            Mark Refunded
+          </button>
+        )}
+      </div>
+
+      {course.enrollmentStatus && (
+        <div className="mb-4">
+          <StatusPill
+            label={course.enrollmentStatus}
+            active={course.enrollmentStatus === "PAID"}
+          />
+        </div>
+      )}
+
+      {course.payments.length === 0 ? (
+        <GeneratePaymentLinkSection userId={userId} />
+      ) : (
+        <div className="space-y-3">
+          {course.payments.map((payment) => (
+            <div
+              key={payment.gatewayOrderId}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 rounded-xl border border-white/5 bg-white/[0.015] p-4"
+            >
+              <Field
+                label="Amount Paid"
+                value={`₹${(payment.amount / 100).toLocaleString("en-IN")}`}
+              />
+              <Field label="Product" value={payment.productType} />
+              <Field label="Provider" value={payment.provider} />
+              <Field label="Transaction ID" value={payment.gatewayPaymentId ?? undefined} />
+              <Field label="Paid On" value={payment.paidAt ? formatDate(payment.paidAt) : undefined} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <ConfirmationDialog
+        isOpen={confirmRefund}
+        onClose={() => setConfirmRefund(false)}
+        onConfirm={async () => {
+          if (course.enrollmentId) {
+            await refundMutation.mutateAsync(course.enrollmentId);
+          }
+          setConfirmRefund(false);
+        }}
+        title="Mark as Refunded"
+        message="This will mark this course's Direct2Hire enrollment as refunded. This action cannot be undone."
+        confirmText="Mark Refunded"
+        variant="danger"
+        isLoading={refundMutation.isPending}
+      />
+    </Card>
+  );
+}
+
+function CourseTrackProgressCard({ course }: { course: AdminD2HCourseBlock }) {
+  if (course.tracks.length === 0) return null;
+  return (
+    <Card>
+      <h2 className="text-sm font-semibold text-white/80 mb-4">Track Progress</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {course.tracks.map((t) => (
+          <div key={t.track} className="rounded-xl border border-white/6 bg-white/[0.015] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-white/60 uppercase tracking-wide">
+                {t.track === "D2H" ? "Direct2Hire" : "Basic"}
+              </span>
+              {t.isCompleted && (
+                <span className="text-[10px] font-bold text-emerald-400">Completed</span>
+              )}
+            </div>
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-brand-500 rounded-full"
+                style={{ width: `${t.progress}%` }}
+              />
+            </div>
+            <p className="text-xs text-white/40 mt-1.5">{t.progress}%</p>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function CoursePanel({
+  userId,
+  course,
+  feedback,
+}: {
+  userId: string;
+  course: AdminD2HCourseBlock;
+  feedback: AdminD2HStudentProfile["feedback"];
+}) {
+  const isD2HPaid = course.enrollmentStatus === "PAID";
+
+  return (
+    <div className="space-y-6">
+      <CoursePaymentSection userId={userId} course={course} />
+      <CourseTrackProgressCard course={course} />
+
+      <Card>
+        <div className="flex items-center gap-2 mb-2">
+          <CalendarClock className="text-brand-400" size={18} />
+          <h2 className="text-sm font-semibold text-white/80">1-on-1 Counselling Session</h2>
+        </div>
+        <p className="text-xs text-white/40 mb-5 leading-relaxed max-w-2xl">
+          Schedule and manage the 1-on-1 career counselling session for this course.
+        </p>
+        {!course.booking ? (
+          <p className="text-sm text-white/35">No session requested yet.</p>
+        ) : (
+          <>
+            <BookingSection userId={userId} booking={course.booking} />
+            <CounsellingFeedbackSection
+              userId={userId}
+              booking={course.booking}
+              feedback={feedback}
+            />
+          </>
+        )}
+      </Card>
+
+      {isD2HPaid ? (
+        <>
+          <AdminPlacementAssessmentSection userId={userId} courseId={course.courseId} />
+          <AdminMockInterviewSection userId={userId} courseId={course.courseId} />
+        </>
+      ) : (
+        <Card>
+          <p className="text-sm text-white/35">
+            {course.assessmentCounsellingPaidAt
+              ? "Student is on the ₹99 Assessment + Counselling tier only for this course. Placement Assessment and Mock Interview unlock after upgrading to the full Direct2Hire programme."
+              : "This course does not have a paid Direct2Hire enrollment. Placement Assessment and Mock Interview are unavailable."}
+          </p>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDirect2HireStudentPage() {
   const params = useParams<{ userId: string }>();
   const userId = params.userId;
@@ -1012,7 +1197,7 @@ export default function AdminDirect2HireStudentPage() {
 
   if (!data) return null;
 
-  const { user, lead, enrollment, counselling, recommendation, payment } = data;
+  const { user, lead, counselling, recommendation, courses } = data;
   const fullName =
     lead?.fullName ||
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
@@ -1056,24 +1241,6 @@ export default function AdminDirect2HireStudentPage() {
       </div>
 
       <Card>
-        <h2 className="text-sm font-semibold text-white/80 mb-4">Payment</h2>
-        {payment ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Field
-              label="Amount Paid"
-              value={`₹${(payment.amount / 100).toLocaleString("en-IN")}`}
-            />
-            <Field label="Provider" value={payment.provider} />
-            <Field label="Status" value={payment.status} />
-            <Field label="Transaction ID" value={payment.gatewayPaymentId ?? undefined} />
-            <Field label="Paid On" value={payment.paidAt ? formatDate(payment.paidAt) : undefined} />
-          </div>
-        ) : (
-          <GeneratePaymentLinkSection userId={userId} />
-        )}
-      </Card>
-
-      <Card>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h2 className="text-sm font-semibold text-white/80 mb-4">Basic Information</h2>
@@ -1088,7 +1255,7 @@ export default function AdminDirect2HireStudentPage() {
               />
             </div>
           </div>
-          
+
           <div className="border-t lg:border-t-0 lg:border-l border-white/6 pt-6 lg:pt-0 lg:pl-6">
             <h2 className="text-sm font-semibold text-white/80 mb-4">Personal Note</h2>
             <p className="text-sm text-white/70 whitespace-pre-wrap break-words leading-relaxed bg-white/[0.01] border border-white/5 rounded-xl p-4 min-h-[120px]">
@@ -1108,64 +1275,81 @@ export default function AdminDirect2HireStudentPage() {
         <CounsellingTabs counselling={counselling} recommendation={recommendation} />
       )}
 
+      <InternshipProgressSection
+        userId={userId}
+        internship={
+          data.internship ?? {
+            course: null,
+            progress: {
+              approved: 0,
+              underReview: 0,
+              available: 0,
+              locked: 0,
+              total: 0,
+              approvedCount: 0,
+            },
+            tasks: [],
+          }
+        }
+      />
+
+      <AdminJobPlacementSection userId={userId} />
+
+      <CoursesSection userId={userId} courses={courses} feedback={data.feedback ?? null} />
+    </div>
+  );
+}
+
+function CoursesSection({
+  userId,
+  courses,
+  feedback,
+}: {
+  userId: string;
+  courses: AdminD2HCourseBlock[];
+  feedback: AdminD2HStudentProfile["feedback"];
+}) {
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(
+    courses[0]?.courseId ?? null,
+  );
+
+  if (courses.length === 0) {
+    return (
       <Card>
-        <div className="flex items-center gap-2 mb-2">
-          <CalendarClock className="text-brand-400" size={18} />
-          <h2 className="text-sm font-semibold text-white/80">1-on-1 Counselling Session</h2>
-        </div>
-        <p className="text-xs text-white/40 mb-5 leading-relaxed max-w-2xl">
-          Schedule and manage the 1-on-1 career counselling session for this student.
-          The student will be notified of the counsellor assignment and meeting details in their dashboard.
+        <h2 className="text-sm font-semibold text-white/80 mb-2">Courses</h2>
+        <p className="text-sm text-white/35">
+          This student has not purchased any course yet.
         </p>
-        {!data.booking ? (
-          <p className="text-sm text-white/35">No session requested yet.</p>
-        ) : (
-          <>
-            <BookingSection userId={userId} booking={data.booking} />
-            <CounsellingFeedbackSection
-              userId={userId}
-              booking={data.booking}
-              feedback={data.feedback ?? null}
-            />
-          </>
-        )}
       </Card>
+    );
+  }
 
-      {enrollment?.status === "PAID" ? (
-        <>
-          <InternshipProgressSection
-            userId={userId}
-            internship={
-              data.internship ?? {
-                course: null,
-                progress: {
-                  approved: 0,
-                  underReview: 0,
-                  available: 0,
-                  locked: 0,
-                  total: 0,
-                  approvedCount: 0,
-                },
-                tasks: [],
-              }
-            }
-          />
+  const activeCourse =
+    courses.find((c) => c.courseId === activeCourseId) ?? courses[0];
 
-          <AdminPlacementAssessmentSection userId={userId} />
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-1 border-b border-white/6 overflow-x-auto scrollbar-none">
+        {courses.map((course) => (
+          <button
+            key={course.courseId}
+            onClick={() => setActiveCourseId(course.courseId)}
+            className={`relative px-4 py-2.5 text-sm font-semibold transition-colors shrink-0 flex items-center gap-2 ${
+              activeCourse.courseId === course.courseId
+                ? "text-brand-400"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            {course.courseTitle}
+            <TierBadge tier={course.tier} />
+            {activeCourse.courseId === course.courseId && (
+              <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-brand-400 rounded-full animate-in fade-in duration-200" />
+            )}
+          </button>
+        ))}
+      </div>
 
-          <AdminMockInterviewSection userId={userId} />
-
-          <AdminJobPlacementSection userId={userId} />
-        </>
-      ) : (
-        <Card>
-          <p className="text-sm text-white/35">
-            Student is on the ₹99 Assessment + Counselling tier only. Learning,
-            internship, and placement sections unlock after upgrading to the
-            full Direct2Hire programme.
-          </p>
-        </Card>
-      )}
+      <CoursePanel userId={userId} course={activeCourse} feedback={feedback} />
     </div>
   );
 }

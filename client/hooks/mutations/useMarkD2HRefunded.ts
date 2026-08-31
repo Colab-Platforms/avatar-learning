@@ -1,4 +1,4 @@
-import { cancelMockInterview } from "@/lib/direct2hire/mockInterviewApi";
+import { markD2HRefunded } from "@/lib/adminApi";
 import { queryKeys } from "@/lib/react-query/query-keys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -12,24 +12,19 @@ function getErrorMessage(error: unknown) {
     );
   }
   if (error instanceof Error) return error.message;
-  return "Failed to cancel mock interview";
+  return "Failed to mark enrollment as refunded";
 }
 
-export function useCancelMockInterview(userId: string) {
+export function useMarkD2HRefunded(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => cancelMockInterview(userId),
+    mutationFn: (enrollmentId: string) => markD2HRefunded(enrollmentId),
     onSuccess: async () => {
-      toast.success("Mock interview cancelled");
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["admin-mock-interview", userId],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.mockInterview,
-        }),
-      ]);
+      toast.success("Enrollment marked as refunded");
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.adminDirect2hireStudent(userId),
+      });
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error));

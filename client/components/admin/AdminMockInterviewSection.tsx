@@ -357,8 +357,14 @@ function FeedbackForm({
   );
 }
 
-export function AdminMockInterviewSection({ userId }: { userId: string }) {
-  const { data, isLoading, isError } = useAdminMockInterview(userId);
+export function AdminMockInterviewSection({
+  userId,
+  courseId,
+}: {
+  userId: string;
+  courseId?: string;
+}) {
+  const { data, isLoading, isError } = useAdminMockInterview(userId, courseId);
   const markCompletedMutation = useMarkMockInterviewCompleted(userId);
   const cancelMutation = useCancelMockInterview(userId);
 

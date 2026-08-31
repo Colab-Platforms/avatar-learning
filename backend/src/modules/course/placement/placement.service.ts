@@ -161,13 +161,22 @@ export class AdminPlacementService {
     return prisma.placementAttempt.delete({ where: { id: attemptId } });
   }
 
-  async getStudentPlacementSummary(userId: string) {
-    const booking = await prisma.counsellingBooking.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: { selectedCourseId: true, selectedCourse: { select: { id: true, title: true } } },
-    });
-    const courseId = booking?.selectedCourseId;
+  async getStudentPlacementSummary(userId: string, courseId?: string) {
+    let course: { id: string; title: string } | null = null;
+    if (courseId) {
+      course = await prisma.courses.findUnique({
+        where: { id: courseId },
+        select: { id: true, title: true },
+      });
+    } else {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true, selectedCourse: { select: { id: true, title: true } } },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+      course = booking?.selectedCourse ?? null;
+    }
     if (!courseId) {
       return { course: null, assessment: null, summary: null };
     }
@@ -177,7 +186,7 @@ export class AdminPlacementService {
       select: { id: true, title: true, maxAttempts: true, passingScorePercent: true },
     });
     if (!assessment) {
-      return { course: booking.selectedCourse, assessment: null, summary: null };
+      return { course, assessment: null, summary: null };
     }
 
     const allowance = await getPlacementAttemptAllowance(userId, assessment.id);
@@ -193,7 +202,7 @@ export class AdminPlacementService {
     const latestAttempt = history[0] ?? null;
 
     return {
-      course: booking.selectedCourse,
+      course,
       assessment: { id: assessment.id, title: assessment.title },
       summary: {
         ...allowance,
@@ -210,18 +219,21 @@ export class AdminPlacementService {
     };
   }
 
-  async getStudentPlacementAttempts(userId: string) {
-    const booking = await prisma.counsellingBooking.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: { selectedCourseId: true },
-    });
-    if (!booking?.selectedCourseId) {
+  async getStudentPlacementAttempts(userId: string, courseId?: string) {
+    if (!courseId) {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+    }
+    if (!courseId) {
       throw new ApiError("Student has not selected a Direct2Hire course", STATUS_CODES.BAD_REQUEST);
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId },
       select: { id: true },
     });
     if (!assessment) {
@@ -231,18 +243,21 @@ export class AdminPlacementService {
     return getPlacementAttemptHistory(userId, assessment.id);
   }
 
-  async getStudentPlacementOverrides(userId: string) {
-    const booking = await prisma.counsellingBooking.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: { selectedCourseId: true },
-    });
-    if (!booking?.selectedCourseId) {
+  async getStudentPlacementOverrides(userId: string, courseId?: string) {
+    if (!courseId) {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+    }
+    if (!courseId) {
       throw new ApiError("Student has not selected a Direct2Hire course", STATUS_CODES.BAD_REQUEST);
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId },
       select: { id: true },
     });
     if (!assessment) {
@@ -258,18 +273,26 @@ export class AdminPlacementService {
     });
   }
 
-  async grantExtraAttempts(userId: string, adminUserId: string, data: GrantPlacementAttemptsBody) {
-    const booking = await prisma.counsellingBooking.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: { selectedCourseId: true },
-    });
-    if (!booking?.selectedCourseId) {
+  async grantExtraAttempts(
+    userId: string,
+    adminUserId: string,
+    data: GrantPlacementAttemptsBody,
+    courseId?: string,
+  ) {
+    if (!courseId) {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+    }
+    if (!courseId) {
       throw new ApiError("Student has not selected a Direct2Hire course", STATUS_CODES.BAD_REQUEST);
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId },
       select: { id: true },
     });
     if (!assessment) {

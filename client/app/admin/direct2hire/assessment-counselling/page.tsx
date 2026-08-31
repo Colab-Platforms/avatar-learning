@@ -149,7 +149,7 @@ export default function AdminAssessmentCounsellingPage() {
                 </span>
                 <div className="col-span-6 sm:col-span-2 flex items-center justify-end gap-2">
                   <Link
-                    href={`/admin/direct2hire/${p.user.id}`}
+                    href={`/admin/direct2hire/enrollments/${p.user.id}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
                                border border-white/10 text-white/70 hover:border-brand-500/40 hover:text-brand-300
                                transition-colors"

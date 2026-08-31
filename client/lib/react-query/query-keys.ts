@@ -26,6 +26,8 @@ export const queryKeys = {
   adminDirect2hireStudent: (userId: string) =>
     ["admin-direct2hire-student", userId] as const,
   adminDirect2hireStudents: ["admin-direct2hire-students"] as const,
+  adminBasicStudent: (userId: string) =>
+    ["admin-basic-student", userId] as const,
   internshipTasks: ["direct2hire-internship-tasks"] as const,
   internshipTask: (taskId: string) =>
     ["direct2hire-internship-task", taskId] as const,
@@ -50,14 +52,15 @@ export const queryKeys = {
     ["placement-attempt", attemptId] as const,
   placementResult: (attemptId: string) =>
     ["placement-result", attemptId] as const,
-  adminStudentPlacementSummary: (userId: string) =>
-    ["admin-student-placement-summary", userId] as const,
-  adminStudentPlacementAttempts: (userId: string) =>
-    ["admin-student-placement-attempts", userId] as const,
-  adminStudentPlacementOverrides: (userId: string) =>
-    ["admin-student-placement-overrides", userId] as const,
+  adminStudentPlacementSummary: (userId: string, courseId?: string) =>
+    ["admin-student-placement-summary", userId, courseId ?? null] as const,
+  adminStudentPlacementAttempts: (userId: string, courseId?: string) =>
+    ["admin-student-placement-attempts", userId, courseId ?? null] as const,
+  adminStudentPlacementOverrides: (userId: string, courseId?: string) =>
+    ["admin-student-placement-overrides", userId, courseId ?? null] as const,
   mockInterview: ["mock-interview"] as const,
-  adminMockInterview: (userId: string) => ["admin-mock-interview", userId] as const,
+  adminMockInterview: (userId: string, courseId?: string) =>
+    ["admin-mock-interview", userId, courseId ?? null] as const,
   jobPlacementJourney: ["job-placement-journey"] as const,
   adminJobPlacementJourney: (userId: string) =>
     ["admin-job-placement-journey", userId] as const,

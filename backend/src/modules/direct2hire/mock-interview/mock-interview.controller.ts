@@ -66,7 +66,11 @@ export const getStudentInterview = async (
       return;
     }
 
-    const bundle = await service.getAdminBundle(value.userId);
+    const courseId =
+      typeof req.query.courseId === "string" && req.query.courseId.trim()
+        ? req.query.courseId.trim()
+        : undefined;
+    const bundle = await service.getAdminBundle(value.userId, courseId);
     sendResponse(res, true, bundle, "Student mock interview fetched");
   } catch (err: unknown) {
     const error = err as { message?: string; statusCode?: number };

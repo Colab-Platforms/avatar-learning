@@ -1,8 +1,13 @@
 import prisma from "@root/prisma.js";
+import type { CourseTier } from "@prisma/client";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import { tracksFor } from "@/modules/course/courseTier.js";
 import { InternshipService } from "../internship/internship.service.js";
 import type {
+  AdminBasicStudentProfile,
+  AdminBasicUserRow,
+  AdminD2HCourseBlock,
   AdminD2HPaymentInfo,
   AdminD2HStudentListItem,
   AdminD2HStudentProfile,
@@ -11,13 +16,20 @@ import type {
 export class Direct2HireAdminService {
   private readonly internshipService = new InternshipService();
 
-  private async getPaymentInfoForUsers(
+  /**
+   * All PAID orders (course, D2H, assessment+counselling) for the given
+   * users, grouped by userId then courseId. A course id on the order is
+   * used directly; D2H_ASSESSMENT_COUNSELLING orders don't carry one, so we
+   * resolve it via the enrollment they're attached to. Orders that resolve
+   * to no course land under the "" key.
+   */
+  private async getPaymentsByUserAndCourse(
     userIds: string[],
-  ): Promise<Map<string, AdminD2HPaymentInfo>> {
+  ): Promise<Map<string, Map<string, AdminD2HPaymentInfo[]>>> {
     const orders = await prisma.paymentOrder.findMany({
       where: {
         userId: { in: userIds },
-        productType: { in: ["DIRECT2HIRE", "D2H_ASSESSMENT_COUNSELLING"] },
+        productType: { in: ["COURSE", "DIRECT2HIRE", "D2H_ASSESSMENT_COUNSELLING"] },
         status: "PAID",
       },
       orderBy: { createdAt: "desc" },
@@ -27,21 +39,28 @@ export class Direct2HireAdminService {
           orderBy: { createdAt: "desc" },
           take: 1,
         },
+        direct2hireEnrollment: { select: { courseId: true } },
       },
     });
 
-    const map = new Map<string, AdminD2HPaymentInfo>();
+    const map = new Map<string, Map<string, AdminD2HPaymentInfo[]>>();
     for (const order of orders) {
-      if (map.has(order.userId)) continue;
+      const courseId = order.courseId ?? order.direct2hireEnrollment?.courseId ?? "";
       const transaction = order.transactions[0];
-      map.set(order.userId, {
+      const info: AdminD2HPaymentInfo = {
         provider: order.provider,
         gatewayOrderId: order.gatewayOrderId,
         gatewayPaymentId: transaction?.gatewayPaymentId ?? null,
         amount: order.amount,
+        productType: order.productType,
         status: order.status,
         paidAt: transaction?.createdAt ?? order.updatedAt,
-      });
+      };
+
+      if (!map.has(order.userId)) map.set(order.userId, new Map());
+      const byCourse = map.get(order.userId)!;
+      if (!byCourse.has(courseId)) byCourse.set(courseId, []);
+      byCourse.get(courseId)!.push(info);
     }
     return map;
   }
@@ -65,6 +84,8 @@ export class Direct2HireAdminService {
             },
             counsellingBookings: {
               select: { status: true, preferredMode: true },
+              orderBy: { createdAt: "desc" },
+              take: 1,
             },
           },
         },
@@ -72,7 +93,7 @@ export class Direct2HireAdminService {
       orderBy: { createdAt: "desc" },
     });
 
-    const paymentByUserId = await this.getPaymentInfoForUsers(
+    const paymentsByUserAndCourse = await this.getPaymentsByUserAndCourse(
       leads.map((lead) => lead.userId),
     );
 
@@ -80,7 +101,10 @@ export class Direct2HireAdminService {
       const enrollment = lead.user.direct2hireEnrollments[0];
       const counselling = lead.user.counsellingProfile;
       const recommendation = lead.user.courseRecommendation;
-      const booking = (lead.user as any).counsellingBookings?.[0];
+      const booking = lead.user.counsellingBookings?.[0];
+      const latestPayment = this.latestPaymentAcrossCourses(
+        paymentsByUserAndCourse.get(lead.userId),
+      );
 
       return {
         userId: lead.userId,
@@ -99,9 +123,159 @@ export class Direct2HireAdminService {
         recommendedCourseTitle: recommendation?.recommendedCourseTitle ?? null,
         bookingStatus: booking?.status ?? null,
         bookingMode: booking?.preferredMode ?? null,
-        payment: paymentByUserId.get(lead.userId) ?? null,
+        payment: latestPayment,
       };
     });
+  }
+
+  private latestPaymentAcrossCourses(
+    byCourse: Map<string, AdminD2HPaymentInfo[]> | undefined,
+  ): AdminD2HPaymentInfo | null {
+    if (!byCourse) return null;
+    let latest: AdminD2HPaymentInfo | null = null;
+    for (const payments of byCourse.values()) {
+      for (const payment of payments) {
+        if (!latest || (payment.paidAt && (!latest.paidAt || payment.paidAt > latest.paidAt))) {
+          latest = payment;
+        }
+      }
+    }
+    return latest;
+  }
+
+  /** Basic (₹499) purchases — one row per user holding a BASIC or BOTH tier mapper. */
+  async getAllBasicEnrollments(
+    take?: number,
+    skip?: number,
+    search?: string,
+  ): Promise<{ rows: AdminBasicUserRow[]; totalRecords: number }> {
+    const where = {
+      enrolledCourses: { some: { tier: { in: ["BASIC", "BOTH"] as CourseTier[] } } },
+      ...(search
+        ? {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" as const } },
+              { lastName: { contains: search, mode: "insensitive" as const } },
+              { email: { contains: search, mode: "insensitive" as const } },
+              { phoneNo: { contains: search, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    };
+
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNo: true,
+        enrolledCourses: {
+          where: { tier: { in: ["BASIC", "BOTH"] } },
+          orderBy: { enrolledAt: "desc" },
+          select: {
+            courseId: true,
+            tier: true,
+            enrolledAt: true,
+            progress: true,
+            isCompleted: true,
+            course: { select: { title: true, slug: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      ...(take !== undefined && { take }),
+      ...(skip !== undefined && { skip }),
+    });
+
+    const paymentsByUserAndCourse = await this.getPaymentsByUserAndCourse(
+      users.map((u) => u.id),
+    );
+
+    const rows: AdminBasicUserRow[] = users.map((u) => ({
+      user: {
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        phoneNo: u.phoneNo,
+      },
+      courses: u.enrolledCourses.map((mapper) => ({
+        courseId: mapper.courseId,
+        courseTitle: mapper.course.title,
+        courseSlug: mapper.course.slug,
+        tier: mapper.tier,
+        enrolledAt: mapper.enrolledAt,
+        progress: mapper.progress,
+        isCompleted: mapper.isCompleted,
+        payments: paymentsByUserAndCourse.get(u.id)?.get(mapper.courseId) ?? [],
+      })),
+    }));
+
+    const totalRecords = await prisma.user.count({ where });
+    return { rows, totalRecords };
+  }
+
+  /**
+   * Single-student view for the Basic (₹499) plan page — deliberately
+   * lightweight: just the student, their Basic/upgraded courses, and the
+   * payments behind them. No counselling/internship/placement journey; that
+   * belongs to the Direct2Hire profile (getStudentProfile) instead.
+   */
+  async getBasicStudentProfile(userId: string): Promise<AdminBasicStudentProfile> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNo: true,
+        profileImage: true,
+        createdAt: true,
+        enrolledCourses: {
+          where: { tier: { in: ["BASIC", "BOTH"] } },
+          orderBy: { enrolledAt: "desc" },
+          select: {
+            courseId: true,
+            tier: true,
+            enrolledAt: true,
+            progress: true,
+            isCompleted: true,
+            course: { select: { title: true, slug: true } },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new ApiError("Student not found", STATUS_CODES.NOT_FOUND);
+    }
+
+    const paymentsByCourse = (await this.getPaymentsByUserAndCourse([userId])).get(userId);
+
+    return {
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNo: user.phoneNo,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt,
+      },
+      courses: user.enrolledCourses.map((mapper) => ({
+        courseId: mapper.courseId,
+        courseTitle: mapper.course.title,
+        courseSlug: mapper.course.slug,
+        tier: mapper.tier,
+        enrolledAt: mapper.enrolledAt,
+        progress: mapper.progress,
+        isCompleted: mapper.isCompleted,
+        payments: paymentsByCourse?.get(mapper.courseId) ?? [],
+      })),
+    };
   }
 
   async getStudentProfile(userId: string): Promise<AdminD2HStudentProfile> {
@@ -135,10 +309,44 @@ export class Direct2HireAdminService {
             createdAt: true,
           },
         },
+        enrolledCourses: {
+          select: {
+            courseId: true,
+            tier: true,
+            course: { select: { id: true, title: true, slug: true } },
+          },
+        },
         direct2hireEnrollments: {
-          select: { status: true, createdAt: true },
-          orderBy: { createdAt: "desc" },
-          take: 1,
+          select: {
+            id: true,
+            courseId: true,
+            status: true,
+            assessmentCounsellingPaidAt: true,
+            course: { select: { id: true, title: true, slug: true } },
+          },
+        },
+        trackProgress: {
+          select: { courseId: true, tier: true, progress: true, isCompleted: true },
+        },
+        counsellingBookings: {
+          select: {
+            courseId: true,
+            preferredMode: true,
+            notes: true,
+            status: true,
+            counsellorName: true,
+            meetingLink: true,
+            phoneNumber: true,
+            scheduledAt: true,
+            createdAt: true,
+            counsellingCompleted: true,
+            counsellingCompletedAt: true,
+            selectedCourseId: true,
+            selectedCourseAt: true,
+            selectedCourse: {
+              select: { id: true, title: true, slug: true },
+            },
+          },
         },
         counsellingProfile: {
           select: {
@@ -175,25 +383,6 @@ export class Direct2HireAdminService {
             personalNote: true,
           },
         },
-        counsellingBookings: {
-          select: {
-            preferredMode: true,
-            notes: true,
-            status: true,
-            counsellorName: true,
-            meetingLink: true,
-            phoneNumber: true,
-            scheduledAt: true,
-            createdAt: true,
-            counsellingCompleted: true,
-            counsellingCompletedAt: true,
-            selectedCourseId: true,
-            selectedCourseAt: true,
-            selectedCourse: {
-              select: { id: true, title: true, slug: true },
-            },
-          },
-        },
         courseRecommendation: {
           select: {
             recommendedCourseTitle: true,
@@ -225,10 +414,61 @@ export class Direct2HireAdminService {
       throw new ApiError("Student not found", STATUS_CODES.NOT_FOUND);
     }
 
-    const enrollment = user.direct2hireEnrollments[0];
-    const internship =
-      await this.internshipService.getAdminStudentProgress(userId);
-    const paymentByUserId = await this.getPaymentInfoForUsers([userId]);
+    const internship = await this.internshipService.getAdminStudentProgress(userId);
+    const paymentsByCourse = (await this.getPaymentsByUserAndCourse([userId])).get(userId);
+
+    // This is the Direct2Hire (₹4999) journey page — only courses with a D2H
+    // enrollment belong in its tabs. A BASIC-only purchase (no Direct2Hire
+    // enrollment) is a different product and lives on the Basic plan page
+    // instead (getBasicStudentProfile below), not mixed in here.
+    const mapperByCourseId = new Map(user.enrolledCourses.map((m) => [m.courseId, m]));
+    const enrollmentByCourseId = new Map(
+      user.direct2hireEnrollments.map((e) => [e.courseId, e]),
+    );
+    const courseIds = new Set(enrollmentByCourseId.keys());
+
+    const bookingByCourseId = new Map(
+      user.counsellingBookings
+        .filter((b) => b.courseId)
+        .map((b) => [b.courseId as string, b]),
+    );
+
+    const courses: AdminD2HCourseBlock[] = Array.from(courseIds).map((courseId) => {
+      const mapper = mapperByCourseId.get(courseId);
+      const enrollment = enrollmentByCourseId.get(courseId);
+      const course = mapper?.course ?? enrollment?.course;
+      const tracks = mapper
+        ? tracksFor(mapper.tier).map((track) => {
+            const progressRow = user.trackProgress.find(
+              (p) => p.courseId === courseId && p.tier === track,
+            );
+            return {
+              track,
+              progress: progressRow?.progress ?? 0,
+              isCompleted: progressRow?.isCompleted ?? false,
+            };
+          })
+        : [];
+
+      return {
+        courseId,
+        courseTitle: course?.title ?? "Unknown course",
+        courseSlug: course?.slug ?? "",
+        tier: mapper?.tier ?? null,
+        enrollmentId: enrollment?.id ?? null,
+        enrollmentStatus: enrollment?.status ?? null,
+        assessmentCounsellingPaidAt: enrollment?.assessmentCounsellingPaidAt ?? null,
+        tracks,
+        payments: paymentsByCourse?.get(courseId) ?? [],
+        booking: bookingByCourseId.get(courseId) ?? null,
+      };
+    });
+
+    // Newest activity first: prefer enrollment createdAt implicitly via
+    // insertion order from direct2hireEnrollments (already desc by nothing
+    // guaranteed) — sort explicitly by enrollmentStatus presence then title
+    // for a stable, predictable tab order.
+    courses.sort((a, b) => a.courseTitle.localeCompare(b.courseTitle));
 
     return {
       user: {
@@ -247,15 +487,11 @@ export class Direct2HireAdminService {
         createdAt: user.createdAt,
       },
       lead: user.direct2HireLead ?? null,
-      enrollment: enrollment
-        ? { status: enrollment.status, createdAt: enrollment.createdAt }
-        : null,
       counselling: user.counsellingProfile ?? null,
-      booking: user.counsellingBookings?.[0] ?? null,
       recommendation: user.courseRecommendation ?? null,
       feedback: user.counsellingFeedback ?? null,
-      payment: paymentByUserId.get(userId) ?? null,
       internship,
+      courses,
     };
   }
 }

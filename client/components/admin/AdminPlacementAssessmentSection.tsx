@@ -71,14 +71,16 @@ function GrantAttemptsDialog({
   open,
   onClose,
   userId,
+  courseId,
 }: {
   open: boolean;
   onClose: () => void;
   userId: string;
+  courseId?: string;
 }) {
   const [attemptsGranted, setAttemptsGranted] = useState(1);
   const [reason, setReason] = useState("");
-  const grantMutation = useGrantPlacementAttempts(userId);
+  const grantMutation = useGrantPlacementAttempts(userId, courseId);
 
   const handleSubmit = async () => {
     try {
@@ -163,11 +165,17 @@ function GrantAttemptsDialog({
   );
 }
 
-export function AdminPlacementAssessmentSection({ userId }: { userId: string }) {
+export function AdminPlacementAssessmentSection({
+  userId,
+  courseId,
+}: {
+  userId: string;
+  courseId?: string;
+}) {
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
-  const { data: placementData, isLoading: summaryLoading } = useAdminStudentPlacementSummary(userId);
-  const { data: attempts, isLoading: attemptsLoading } = useAdminStudentPlacementAttempts(userId);
-  const { data: overrides, isLoading: overridesLoading } = useAdminStudentPlacementOverrides(userId);
+  const { data: placementData, isLoading: summaryLoading } = useAdminStudentPlacementSummary(userId, courseId);
+  const { data: attempts, isLoading: attemptsLoading } = useAdminStudentPlacementAttempts(userId, courseId);
+  const { data: overrides, isLoading: overridesLoading } = useAdminStudentPlacementOverrides(userId, courseId);
 
   if (summaryLoading) {
     return (
@@ -337,7 +345,12 @@ export function AdminPlacementAssessmentSection({ userId }: { userId: string }) 
 
       <AnimatePresence>
         {grantDialogOpen && (
-          <GrantAttemptsDialog open={grantDialogOpen} onClose={() => setGrantDialogOpen(false)} userId={userId} />
+          <GrantAttemptsDialog
+            open={grantDialogOpen}
+            onClose={() => setGrantDialogOpen(false)}
+            userId={userId}
+            courseId={courseId}
+          />
         )}
       </AnimatePresence>
     </>

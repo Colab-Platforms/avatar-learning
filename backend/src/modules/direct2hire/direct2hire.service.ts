@@ -228,33 +228,49 @@ export class Direct2HireService {
         }
     }
 
+    /**
+     * One row per user, not per enrollment — a student who bought multiple D2H
+     * courses shows once with all their paid enrollments nested underneath.
+     * Pagination therefore counts users, ordered by their most recent paid
+     * enrollment.
+     */
     async getAllEnrollments(take?: number, skip?: number, search?: string) {
         const where = {
-            status: "PAID" as const,
+            direct2hireEnrollments: { some: { status: "PAID" as const } },
             ...(search
                 ? {
-                    user: {
-                        OR: [
-                            { firstName: { contains: search, mode: "insensitive" as const } },
-                            { lastName: { contains: search, mode: "insensitive" as const } },
-                            { email: { contains: search, mode: "insensitive" as const } },
-                            { phoneNo: { contains: search, mode: "insensitive" as const } },
-                        ],
-                    },
+                    OR: [
+                        { firstName: { contains: search, mode: "insensitive" as const } },
+                        { lastName: { contains: search, mode: "insensitive" as const } },
+                        { email: { contains: search, mode: "insensitive" as const } },
+                        { phoneNo: { contains: search, mode: "insensitive" as const } },
+                    ],
                 }
                 : {}),
         };
 
-        const enrollments = await prisma.direct2HireEnrollment.findMany({
+        // Ordered by the user's own createdAt (their join date), which is a
+        // stable, DB-level sort — matters because take/skip determine which
+        // users land on this page, so the ordering used for pagination and the
+        // ordering shown must be the same one.
+        const users = await prisma.user.findMany({
             where,
-            include: {
-                user: {
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phoneNo: true,
+                direct2hireEnrollments: {
+                    where: { status: "PAID" },
+                    orderBy: { createdAt: "desc" },
                     select: {
                         id: true,
-                        firstName: true,
-                        lastName: true,
-                        email: true,
-                        phoneNo: true,
+                        courseId: true,
+                        status: true,
+                        paidAt: true,
+                        createdAt: true,
+                        course: { select: { id: true, title: true, slug: true } },
                     },
                 },
             },
@@ -263,8 +279,58 @@ export class Direct2HireService {
             ...(skip !== undefined && { skip }),
         });
 
-        const totalRecords = await prisma.direct2HireEnrollment.count({ where });
-        return { enrollments, totalRecords };
+        const courseIds = Array.from(
+            new Set(
+                users.flatMap((u) => u.direct2hireEnrollments.map((e) => e.courseId)),
+            ),
+        );
+        const userIds = users.map((u) => u.id);
+        const paidOrders = courseIds.length
+            ? await prisma.paymentOrder.findMany({
+                where: {
+                    userId: { in: userIds },
+                    courseId: { in: courseIds },
+                    productType: "DIRECT2HIRE",
+                    status: "PAID",
+                },
+                select: { userId: true, amount: true },
+            })
+            : [];
+        const totalPaidByUserId = new Map<string, number>();
+        for (const order of paidOrders) {
+            totalPaidByUserId.set(
+                order.userId,
+                (totalPaidByUserId.get(order.userId) ?? 0) + order.amount,
+            );
+        }
+
+        const rows = users.map((u) => ({
+            user: {
+                id: u.id,
+                firstName: u.firstName,
+                lastName: u.lastName,
+                email: u.email,
+                phoneNo: u.phoneNo,
+            },
+            courseCount: u.direct2hireEnrollments.length,
+            totalPaid: totalPaidByUserId.get(u.id) ?? 0,
+            firstPaidAt:
+                u.direct2hireEnrollments.reduce<Date | null>((earliest, e) => {
+                    if (!e.paidAt) return earliest;
+                    return !earliest || e.paidAt < earliest ? e.paidAt : earliest;
+                }, null) ?? null,
+            courses: u.direct2hireEnrollments.map((e) => ({
+                enrollmentId: e.id,
+                courseId: e.courseId,
+                courseTitle: e.course.title,
+                courseSlug: e.course.slug,
+                status: e.status,
+                paidAt: e.paidAt,
+            })),
+        }));
+
+        const totalRecords = await prisma.user.count({ where });
+        return { rows, totalRecords };
     }
 
     async getAllAssessmentCounsellingPurchases(take?: number, skip?: number) {
