@@ -28,7 +28,7 @@ export function usePublishMockInterviewFeedback(userId: string) {
       toast.success("Interview feedback published");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queryKeys.adminMockInterview(userId),
+          queryKey: ["admin-mock-interview", userId],
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.mockInterview,

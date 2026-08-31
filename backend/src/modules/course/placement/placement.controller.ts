@@ -138,9 +138,17 @@ export const resetAttempt = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+const queryCourseId = (req: Request): string | undefined => {
+  const courseId = req.query.courseId;
+  return typeof courseId === "string" && courseId.trim() ? courseId.trim() : undefined;
+};
+
 export const getStudentPlacementSummary = async (req: Request, res: Response): Promise<void> => {
   try {
-    const summary = await adminService.getStudentPlacementSummary(param(req, "userId"));
+    const summary = await adminService.getStudentPlacementSummary(
+      param(req, "userId"),
+      queryCourseId(req),
+    );
     sendResponse(res, true, summary, "Placement summary fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
@@ -149,7 +157,10 @@ export const getStudentPlacementSummary = async (req: Request, res: Response): P
 
 export const getStudentPlacementAttempts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const attempts = await adminService.getStudentPlacementAttempts(param(req, "userId"));
+    const attempts = await adminService.getStudentPlacementAttempts(
+      param(req, "userId"),
+      queryCourseId(req),
+    );
     sendResponse(res, true, attempts, "Placement attempts fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
@@ -158,7 +169,10 @@ export const getStudentPlacementAttempts = async (req: Request, res: Response): 
 
 export const getStudentPlacementOverrides = async (req: Request, res: Response): Promise<void> => {
   try {
-    const overrides = await adminService.getStudentPlacementOverrides(param(req, "userId"));
+    const overrides = await adminService.getStudentPlacementOverrides(
+      param(req, "userId"),
+      queryCourseId(req),
+    );
     sendResponse(res, true, overrides, "Placement overrides fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
@@ -176,6 +190,7 @@ export const grantStudentPlacementAttempts = async (req: AuthRequest, res: Respo
       param(req, "userId"),
       req.user!.id,
       value,
+      queryCourseId(req),
     );
     sendResponse(res, true, override, "Extra attempts granted", STATUS_CODES.CREATED);
   } catch (err: any) {

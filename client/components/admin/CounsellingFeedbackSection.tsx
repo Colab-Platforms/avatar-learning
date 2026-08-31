@@ -19,7 +19,7 @@ import {
   counsellingFeedbackSchema,
   type CounsellingFeedbackFormValues,
 } from "@/lib/counselling/counsellingFeedbackSchema";
-import type { AdminD2HStudentProfile } from "@/lib/adminApi";
+import type { AdminD2HStudentProfile, AdminD2HCourseBlock } from "@/lib/adminApi";
 
 function AdminRadioGroup({
   label,
@@ -86,7 +86,7 @@ function ReadOnlyFeedback({
   booking,
 }: {
   feedback: NonNullable<AdminD2HStudentProfile["feedback"]>;
-  booking: NonNullable<AdminD2HStudentProfile["booking"]>;
+  booking: NonNullable<AdminD2HCourseBlock["booking"]>;
 }) {
   const fields = [
     {
@@ -168,7 +168,7 @@ export function CounsellingFeedbackSection({
   feedback,
 }: {
   userId: string;
-  booking: NonNullable<AdminD2HStudentProfile["booking"]>;
+  booking: NonNullable<AdminD2HCourseBlock["booking"]>;
   feedback: AdminD2HStudentProfile["feedback"];
 }) {
   const saveMutation = useSaveCounsellingFeedback(userId);

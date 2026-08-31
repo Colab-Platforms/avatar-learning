@@ -5,6 +5,7 @@ export interface AdminD2HPaymentInfo {
   gatewayOrderId: string;
   gatewayPaymentId: string | null;
   amount: number;
+  productType: string;
   status: string;
   paidAt: Date | null;
 }
@@ -27,6 +28,100 @@ export interface AdminD2HStudentListItem {
   bookingStatus: string | null;
   bookingMode: string | null;
   payment: AdminD2HPaymentInfo | null;
+}
+
+/** One row in the D2H enrollments table — one per user, courses nested. */
+export interface AdminD2HUserRow {
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phoneNo: string | null;
+  };
+  courseCount: number;
+  totalPaid: number; // paise
+  firstPaidAt: Date | null;
+  courses: {
+    enrollmentId: string;
+    courseId: string;
+    courseTitle: string;
+    courseSlug: string;
+    status: string;
+    paidAt: Date | null;
+  }[];
+}
+
+/** One row in the Basic (₹499) purchases table — one per user, courses nested. */
+export interface AdminBasicUserRow {
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phoneNo: string | null;
+  };
+  courses: {
+    courseId: string;
+    courseTitle: string;
+    courseSlug: string;
+    tier: string; // BASIC | BOTH
+    enrolledAt: Date;
+    progress: number;
+    isCompleted: boolean;
+    payments: AdminD2HPaymentInfo[];
+  }[];
+}
+
+/** Single-student view for the Basic (₹499) plan page. */
+export interface AdminBasicStudentProfile {
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phoneNo: string | null;
+    profileImage: string | null;
+    createdAt: Date;
+  };
+  courses: {
+    courseId: string;
+    courseTitle: string;
+    courseSlug: string;
+    tier: string; // BASIC | BOTH
+    enrolledAt: Date;
+    progress: number;
+    isCompleted: boolean;
+    payments: AdminD2HPaymentInfo[];
+  }[];
+}
+
+/** Everything genuinely scoped to a single course for one student. */
+export interface AdminD2HCourseBlock {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  tier: string | null; // BASIC | D2H | BOTH, null if no CourseUserMapper yet
+  enrollmentId: string | null;
+  enrollmentStatus: string | null;
+  assessmentCounsellingPaidAt: Date | null;
+  tracks: { track: string; progress: number; isCompleted: boolean }[];
+  payments: AdminD2HPaymentInfo[];
+  booking: {
+    preferredMode: string;
+    notes: string | null;
+    status: string;
+    counsellorName: string | null;
+    meetingLink: string | null;
+    phoneNumber: string | null;
+    scheduledAt: Date | null;
+    createdAt: Date;
+    counsellingCompleted: boolean;
+    counsellingCompletedAt: Date | null;
+    selectedCourseId: string | null;
+    selectedCourseAt: Date | null;
+    selectedCourse: { id: string; title: string; slug: string } | null;
+  } | null;
 }
 
 export interface AdminD2HStudentProfile {
@@ -57,26 +152,7 @@ export interface AdminD2HStudentProfile {
     paymentCompleted: boolean;
     createdAt: Date;
   } | null;
-  enrollment: {
-    status: string;
-    createdAt: Date;
-  } | null;
   counselling: Record<string, unknown> | null;
-  booking: {
-    preferredMode: string;
-    notes: string | null;
-    status: string;
-    counsellorName: string | null;
-    meetingLink: string | null;
-    phoneNumber: string | null;
-    scheduledAt: Date | null;
-    createdAt: Date;
-    counsellingCompleted: boolean;
-    counsellingCompletedAt: Date | null;
-    selectedCourseId: string | null;
-    selectedCourseAt: Date | null;
-    selectedCourse: { id: string; title: string; slug: string } | null;
-  } | null;
   recommendation: {
     recommendedCourseTitle: string;
     recommendedCourseSlug: string;
@@ -97,6 +173,6 @@ export interface AdminD2HStudentProfile {
     createdAt: Date;
     updatedAt: Date;
   } | null;
-  payment: AdminD2HPaymentInfo | null;
   internship: AdminStudentInternshipProgressDto;
+  courses: AdminD2HCourseBlock[];
 }

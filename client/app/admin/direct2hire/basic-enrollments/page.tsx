@@ -2,26 +2,23 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Wallet, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
-  fetchD2HEnrollmentsPaginated,
-  type AdminD2HUserRow,
+  fetchD2HBasicEnrollmentsPaginated,
+  type AdminBasicUserRow,
 } from "@/lib/adminApi";
 import type { PaginatedResponse } from "@/lib/coursesApi";
 
-export default function AdminDirect2HirePage() {
-  const [rows, setRows] = useState<AdminD2HUserRow[]>([]);
+export default function AdminBasicPlanPage() {
+  const [rows, setRows] = useState<AdminBasicUserRow[]>([]);
   const [pagination, setPagination] = useState<Omit<
-    PaginatedResponse<AdminD2HUserRow>,
+    PaginatedResponse<AdminBasicUserRow>,
     "data"
   > | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Search box value updates every keystroke; debouncedSearch only catches up
-  // 400ms after typing stops, so `load` (and the API call it makes) doesn't
-  // fire on every keystroke — see explanation below.
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -32,9 +29,6 @@ export default function AdminDirect2HirePage() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  // Jump back to page 1 whenever the effective search term changes, so a
-  // stale currentPage (e.g. page 4) doesn't request an out-of-range page
-  // against the new, smaller filtered result set.
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch]);
@@ -42,7 +36,7 @@ export default function AdminDirect2HirePage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchD2HEnrollmentsPaginated(
+      const res = await fetchD2HBasicEnrollmentsPaginated(
         currentPage,
         20,
         debouncedSearch || undefined,
@@ -57,7 +51,7 @@ export default function AdminDirect2HirePage() {
         hasPreviousPage: res.hasPreviousPage,
       });
     } catch {
-      setError("Failed to load Direct2Hire enrollments.");
+      setError("Failed to load Basic plan enrollments.");
     } finally {
       setLoading(false);
     }
@@ -70,9 +64,9 @@ export default function AdminDirect2HirePage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Enrollments</h1>
+        <h1 className="text-2xl font-bold text-white">Basic Plan</h1>
         <p className="text-sm text-white/40 mt-0.5">
-          Direct2Hire · {pagination?.totalRecords ?? 0} students
+          ₹499 Basic course purchases · {pagination?.totalRecords ?? 0} students
         </p>
       </div>
 
@@ -100,7 +94,7 @@ export default function AdminDirect2HirePage() {
         <div className="hidden sm:grid grid-cols-12 px-6 py-2.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest border-b border-white/4">
           <span className="col-span-4">Student</span>
           <span className="col-span-4">Courses</span>
-          <span className="col-span-2">Total Paid</span>
+          <span className="col-span-2">Progress</span>
           <span className="col-span-2 text-right">Actions</span>
         </div>
 
@@ -115,11 +109,11 @@ export default function AdminDirect2HirePage() {
           </div>
         ) : rows.length === 0 ? (
           <div className="py-16 text-center">
-            <Users size={32} className="mx-auto text-white/15 mb-3" />
+            <Wallet size={32} className="mx-auto text-white/15 mb-3" />
             <p className="text-sm text-white/35">
               {debouncedSearch
                 ? `No students match "${debouncedSearch}".`
-                : "No enrollments yet."}
+                : "No Basic plan purchases yet."}
             </p>
           </div>
         ) : (
@@ -141,29 +135,30 @@ export default function AdminDirect2HirePage() {
                 <div className="col-span-12 sm:col-span-4 flex flex-wrap gap-1.5">
                   {row.courses.map((c) => (
                     <span
-                      key={c.enrollmentId}
+                      key={c.courseId}
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit ${
-                        c.status === "PAID"
-                          ? "bg-brand-500/10 text-brand-400"
-                          : c.status === "REFUNDED"
-                            ? "bg-red-500/10 text-red-400"
-                            : "bg-white/5 text-white/30"
+                        c.tier === "BOTH"
+                          ? "bg-amber-500/10 text-amber-400"
+                          : "bg-white/6 text-white/50"
                       }`}
-                      title={c.status}
+                      title={c.tier === "BOTH" ? "Upgraded to D2H" : "Basic plan"}
                     >
                       {c.courseTitle}
+                      {c.tier === "BOTH" && " · Upgraded"}
                     </span>
                   ))}
                 </div>
                 <span className="col-span-8 sm:col-span-2 text-xs text-white/60 font-semibold">
-                  ₹{(row.totalPaid / 100).toLocaleString("en-IN")}
-                  <span className="block text-[10px] text-white/30 font-normal">
-                    {row.courseCount} course{row.courseCount === 1 ? "" : "s"}
-                  </span>
+                  {row.courses.length > 0
+                    ? `${Math.round(
+                        row.courses.reduce((sum, c) => sum + c.progress, 0) /
+                          row.courses.length,
+                      )}%`
+                    : "—"}
                 </span>
                 <div className="col-span-4 sm:col-span-2 flex items-center justify-end gap-2">
                   <Link
-                    href={`/admin/direct2hire/enrollments/${row.user.id}`}
+                    href={`/admin/direct2hire/basic-enrollments/${row.user.id}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
                                border border-white/10 text-white/70 hover:border-brand-500/40 hover:text-brand-300
                                transition-colors"
