@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -39,15 +39,22 @@ import PretextAnimatedHeight, {
 import { cn } from "@/lib/utils";
 import { d2hLearningRoutes } from "@/lib/learningRoutes";
 import {
+  basicCourseRoutes,
+  trackFromSearchParams,
+} from "@/lib/dashboardRoutes";
+import {
   useEnrollmentTier,
   useMyEnrollments,
 } from "@/hooks/queries/useMyEnrollments";
 import { BasicOverview } from "./_BasicOverview";
 
-export default function DashboardOverviewPage() {
+function DashboardOverviewContent() {
   const { courseId } = useParams<{ courseId: string }>();
   const { isLoading: enrollmentsLoading } = useMyEnrollments();
   const tier = useEnrollmentTier(courseId);
+  // ?track= decides the shell for someone who owns both plans. Without it we
+  // keep the old behaviour, so existing links and bookmarks land unchanged.
+  const requestedTrack = trackFromSearchParams(useSearchParams());
 
   // Wait for enrollments before picking a layout — otherwise a BASIC buyer
   // briefly sees the D2H dashboard while the tier lookup is still `null`.
@@ -59,10 +66,30 @@ export default function DashboardOverviewPage() {
       </div>
     );
   }
-  if (tier === "BASIC") {
+  // Clamp to what they own: ?track= only decides for someone holding both.
+  // The layout redirects an unowned track, but this keeps the wrong shell from
+  // flashing in the meantime.
+  const showBasic =
+    tier === "BASIC" || (tier === "BOTH" && requestedTrack === "BASIC");
+  if (showBasic) {
     return <BasicOverview courseId={courseId} />;
   }
   return <D2HOverview />;
+}
+
+export default function DashboardOverviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 max-w-7xl mx-auto space-y-6">
+          <div className="h-44 rounded-2xl bg-slate-200/50 animate-pulse" />
+          <div className="h-32 rounded-2xl bg-slate-200/50 animate-pulse" />
+        </div>
+      }
+    >
+      <DashboardOverviewContent />
+    </Suspense>
+  );
 }
 
 function D2HOverview() {
@@ -92,6 +119,7 @@ function D2HOverview() {
 
   const { data: courseDetail, isLoading: courseLoading } = useLearnCourse(
     activeCourseSummary?.id ?? "",
+    { track: "D2H" },
   );
 
   // ─── LOCAL STATE FOR GREETING ───────────────────────────────────────────────
@@ -107,7 +135,11 @@ function D2HOverview() {
   const firstName = user?.firstName || "there";
 
   // ─── DYNAMIC PROGRESS & PILLARS CALCULATIONS ───────────────────────────────
+  const ownsBasicToo = useEnrollmentTier(courseId) === "BOTH";
   const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
+  // Course-scoped so the upgrade applies to the course being viewed, rather
+  // than the global Direct2Hire flow picking a default course.
+  const upgradeHref = `/courses/${courseId}/enroll?plan=d2h`;
   const profile = counsellingData?.profile ?? null;
   const recommendation = counsellingData?.recommendation ?? null;
 
@@ -260,7 +292,7 @@ function D2HOverview() {
     if (!hasFullAccess) {
       return {
         label: "Unlock Full Programme — ₹900",
-        href: "/direct2hire/enroll",
+        href: upgradeHref,
       };
     }
     if (!hasLearning) {
@@ -353,7 +385,7 @@ function D2HOverview() {
         completed: hasLearning,
         active: hasCounselling && hasFullAccess && !hasLearning,
         locked: !hasCounselling || !hasFullAccess,
-        href: hasFullAccess ? "/dashboard/learning" : "/direct2hire/enroll",
+        href: hasFullAccess ? "/dashboard/learning" : upgradeHref,
         icon: GraduationCap,
       },
       {
@@ -369,7 +401,7 @@ function D2HOverview() {
         completed: hasInternship,
         active: hasLearning && hasFullAccess && !hasInternship,
         locked: !hasLearning || !hasFullAccess,
-        href: hasFullAccess ? `/dashboard/${courseId}/internships` : "/direct2hire/enroll",
+        href: hasFullAccess ? `/dashboard/${courseId}/internships` : upgradeHref,
         icon: Briefcase,
       },
       {
@@ -397,7 +429,7 @@ function D2HOverview() {
         completed: hasPlacement,
         active: hasInternship && hasFullAccess && !hasPlacement,
         locked: !hasInternship || !hasFullAccess,
-        href: hasFullAccess ? `/dashboard/${courseId}/placement` : "/direct2hire/enroll",
+        href: hasFullAccess ? `/dashboard/${courseId}/placement` : upgradeHref,
         icon: Trophy,
       },
     ];
@@ -534,6 +566,20 @@ function D2HOverview() {
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6 text-slate-800">
+      {/* Only a student who bought both plans has somewhere to switch to. */}
+      {ownsBasicToo && (
+        <Link
+          href={basicCourseRoutes(courseId).root}
+          className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 transition hover:border-blue-300 hover:shadow-sm"
+        >
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-slate-800">
+            <BookOpen size={16} className="text-blue-600" />
+            Switch to your Basic course track
+          </span>
+          <ArrowRight size={16} className="text-slate-400" />
+        </Link>
+      )}
+
       {/* ─── HERO BANNER CARD ─────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 p-6 sm:p-8 text-white shadow-xl shadow-blue-900/10">
         {/* Decorative Grid Overlays */}
@@ -909,7 +955,7 @@ function D2HOverview() {
                   !hasAssessment
                     ? `/dashboard/${courseId}/assessment`
                     : hasCounselling && !hasFullAccess
-                      ? "/direct2hire/enroll"
+                      ? upgradeHref
                       : `/dashboard/${courseId}/counselling`
                 }
                 className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shadow-blue-500/10"

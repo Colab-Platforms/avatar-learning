@@ -87,6 +87,14 @@ export const createAssessmentCounsellingOrder = (): Promise<CreateOrderResponse>
 export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
   apiClient.post("/coupons/apply", { code }).then((r) => r.data.data);
 
+export interface PricingResponse {
+  fullProgrammeRupees: number;
+  basicCourseRupees: number;
+}
+
+export const getPricing = (): Promise<PricingResponse> =>
+  apiClient.get("/direct2hire/pricing").then((r) => r.data.data);
+
 export const getReferralDiscount = (): Promise<ReferralDiscountResponse | null> =>
   apiClient.get("/direct2hire/referral-discount").then((r) => r.data.data);
 

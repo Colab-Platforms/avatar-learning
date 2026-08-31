@@ -159,7 +159,15 @@ export const resetAttempt = async (req: Request, res: Response): Promise<void> =
 
 export const listAssessmentsForUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const assessments = await userService.listAssessmentsForUser(param(req, "courseId"), req.user!.id);
+    const track =
+      typeof req.query.track === "string" && req.query.track.trim()
+        ? req.query.track.trim()
+        : undefined;
+    const assessments = await userService.listAssessmentsForUser(
+      param(req, "courseId"),
+      req.user!.id,
+      track,
+    );
     sendResponse(res, true, assessments, "Assessments fetched");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);

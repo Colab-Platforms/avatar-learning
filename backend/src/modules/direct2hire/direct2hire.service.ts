@@ -149,6 +149,10 @@ export class Direct2HireService {
      * a ₹4999 D2H mapper — that would revoke content the user already paid for,
      * which is reachable both by buying BASIC after D2H and by an out-of-order
      * webhook retry.
+     *
+     * The two plans are separate tracks, not nested (see courseTier.ts), and an
+     * upgrader pays the full ₹4999. So BASIC + D2H lands on BOTH — overwriting
+     * with plain D2H would take away the Basic track they already bought.
      */
     async grantCourseAccess(userId: string, courseId: string, tier: "BASIC" | "D2H" = "D2H") {
         const existing = await prisma.courseUserMapper.findUnique({
@@ -168,7 +172,7 @@ export class Direct2HireService {
 
         await prisma.courseUserMapper.update({
             where: { userId_courseId: { userId, courseId } },
-            data: { tier },
+            data: { tier: existing.tier === "BASIC" ? "BOTH" : tier },
         });
     }
 

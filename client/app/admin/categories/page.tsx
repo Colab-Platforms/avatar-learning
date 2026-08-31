@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, FolderOpen, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { createCategory } from "@/lib/adminApi";
@@ -10,7 +10,7 @@ import { queryKeys } from "@/lib/react-query/query-keys";
 
 const PAGE_SIZE = 10;
 
-export default function CategoriesPage() {
+function CategoriesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -262,6 +262,21 @@ export default function CategoriesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CategoriesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-6">
+          <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
+          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+        </div>
+      }
+    >
+      <CategoriesContent />
+    </Suspense>
   );
 }
 

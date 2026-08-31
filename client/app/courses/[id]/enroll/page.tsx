@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { Suspense, use, useCallback, useEffect, useState } from "react";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,12 +13,14 @@ import {
   Award,
   ShieldCheck,
   Loader2,
-  Sparkles,
   Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { canUpgrade, type EnrolledTier } from "@/lib/courseTier";
+import { dashboardRoutes } from "@/lib/dashboardRoutes";
 import { useCourse } from "@/hooks/queries/useCourse";
 import { useEnrollment } from "@/hooks/queries/useEnrollment";
+import { usePricing } from "@/hooks/queries/usePricing";
 import { useAppSelector } from "@/store/hooks";
 import { useRazorpay } from "@/hooks/useRazorpay";
 import { useCashfree } from "@/hooks/useCashfree";
@@ -34,7 +36,7 @@ interface PageProps {
 const DEFAULT_BASIC_PRICE = 499;
 const DEFAULT_D2H_PRICE = 4999;
 
-export default function CourseEnrollPage({ params }: PageProps) {
+function CourseEnrollContent({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,13 +49,16 @@ export default function CourseEnrollPage({ params }: PageProps) {
   const { mutateAsync: verifyPayment } = useVerifyPayment();
 
   const { data: course, isLoading, isError } = useCourse(id);
+  const { data: pricing } = usePricing(!!user);
   const { data: enrollmentData, refetch: refetchEnrollment } = useEnrollment(
     course?.id ?? "",
   );
   const enrolled = enrollmentData?.enrolled ?? false;
   const enrolledTier =
-    (enrollmentData?.enrollment as { tier?: "BASIC" | "D2H" | "BOTH" } | null)
-      ?.tier ?? null;
+    (enrollmentData?.enrollment as { tier?: EnrolledTier } | null)?.tier ??
+    null;
+  // Owns the ₹499 track already: this page becomes a pure upgrade screen.
+  const isUpgrade = enrolled && canUpgrade(enrolledTier);
 
   const [selectedPlan, setSelectedPlan] = useState<"BASIC" | "D2H">(
     initialPlan,
@@ -89,19 +94,28 @@ export default function CourseEnrollPage({ params }: PageProps) {
   useEffect(() => {
     if (checkoutStarted) return;
     if (enrolled && enrolledTier && enrolledTier !== "BASIC") {
-      router.replace(`/dashboard/${id}`);
+      // They already hold D2H for this course — send them to that track.
+      router.replace(dashboardRoutes(id).root);
     }
   }, [enrolled, enrolledTier, id, router, checkoutStarted]);
 
+  // An upgrader can only buy D2H — force it even if they arrived with ?plan=basic.
+  useEffect(() => {
+    if (isUpgrade) setSelectedPlan("D2H");
+  }, [isUpgrade]);
+
   const handlePlanSelect = (plan: "BASIC" | "D2H") => {
+    if (isUpgrade && plan === "BASIC") return;
     setSelectedPlan(plan);
     const url = new URL(window.location.href);
     url.searchParams.set("plan", plan.toLowerCase());
     window.history.replaceState({}, "", url.toString());
   };
 
-  const basicPrice = DEFAULT_BASIC_PRICE;
-  const d2hPrice = DEFAULT_D2H_PRICE;
+  // Prices come from backend env; the constants are only a first-paint
+  // fallback while /direct2hire/pricing is in flight.
+  const basicPrice = pricing?.basicCourseRupees ?? DEFAULT_BASIC_PRICE;
+  const d2hPrice = pricing?.fullProgrammeRupees ?? DEFAULT_D2H_PRICE;
   const originalPrice = selectedPlan === "BASIC" ? basicPrice : d2hPrice;
 
   const discountAmount = appliedDiscountPercent
@@ -306,34 +320,51 @@ export default function CourseEnrollPage({ params }: PageProps) {
       {/* Main Payment Overview Container */}
       <main className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 sm:pt-8">
         <div className="mb-6 sm:mb-8">
-          <span className="text-xs font-bold uppercase tracking-widest text-blue-600">
-            Checkout & Payment
+          <span className="text-xs font-bold uppercase tracking-widest text-brand-600">
+            {isUpgrade ? "Upgrade & Payment" : "Checkout & Payment"}
           </span>
           <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-900">
-            Choose Your Learning Track
+            {isUpgrade
+              ? "Upgrade to Direct2Hire"
+              : "Choose Your Learning Track"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Select the plan for{" "}
+            {isUpgrade ? "Add the full programme to" : "Select the plan for"}{" "}
             <span className="text-slate-900 font-medium">{course.title}</span>.
           </p>
         </div>
 
+        {isUpgrade && (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
+            <p className="text-sm text-slate-800">
+              <span className="font-semibold text-slate-900">You own the Basic plan.</span>{" "}
+              Direct2Hire is a separate track with its own mentors, projects and
+              assessments — it is a full ₹{d2hPrice} programme, and you keep
+              everything from your Basic plan.
+            </p>
+          </div>
+        )}
+
         <div className="grid gap-6 lg:gap-8 lg:grid-cols-12 items-start">
           {/* LEFT SIDE: Plan Selector Cards (7 cols) */}
           <div className="lg:col-span-7 space-y-4 sm:space-y-5">
-            {/* PLAN 1: BASIC COURSE (₹499) */}
+            {/* PLAN 1: BASIC COURSE (price from backend) */}
             <div
               onClick={() => handlePlanSelect("BASIC")}
+              aria-disabled={isUpgrade}
               className={cn(
-                "relative rounded-2xl border-2 p-4 sm:p-6 cursor-pointer transition-all duration-300",
-                selectedPlan === "BASIC"
-                  ? "border-blue-500 bg-blue-50/60 shadow-xl ring-2 ring-blue-500/20"
-                  : "border-slate-200 bg-white hover:border-slate-300 shadow-sm",
+                "relative rounded-2xl border-2 p-4 sm:p-6 transition-all duration-300",
+                isUpgrade
+                  ? "cursor-not-allowed opacity-60 border-slate-200 bg-slate-50"
+                  : selectedPlan === "BASIC"
+                    ? "cursor-pointer border-brand-500 bg-brand-50/50 shadow-md ring-2 ring-brand-500/20"
+                    : "cursor-pointer border-slate-200 bg-white hover:border-slate-300 shadow-sm",
               )}
             >
               {/* flex-wrap lets price drop below on very narrow screens; min-w-0 prevents title overflow */}
               <div className="flex items-start gap-3 sm:gap-4">
-                <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 border border-blue-200 text-blue-600">
+                <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-200 text-brand-600">
                   <BookOpen className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -341,12 +372,17 @@ export default function CourseEnrollPage({ params }: PageProps) {
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                       Direct Course Learning
                     </h3>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full shrink-0">
                       Basic Plan
                     </span>
+                    {isUpgrade && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full shrink-0">
+                        <CheckCircle2 className="h-3 w-3" /> Already owned
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Compact 60–90 min course videos + assessment
+                    Compact course videos + assessment
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -362,38 +398,38 @@ export default function CourseEnrollPage({ params }: PageProps) {
               {/* Features List */}
               <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5 border-t border-slate-200 pt-3 sm:pt-4 text-xs text-slate-700">
                 <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
                   <span>Full access to compact course video series</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
                   <span>Course learning assessment & quiz evaluation</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
                   <span>Verified Course Completion Certificate</span>
                 </li>
               </ul>
             </div>
 
-            {/* PLAN 2: DIRECT2HIRE 5-STEP (₹4999) */}
+            {/* PLAN 2: DIRECT2HIRE 5-STEP (price from backend) */}
             <div
               onClick={() => handlePlanSelect("D2H")}
               className={cn(
                 "relative rounded-2xl border-2 p-4 sm:p-6 cursor-pointer transition-all duration-300 overflow-hidden",
                 selectedPlan === "D2H"
-                  ? "border-emerald-500 bg-emerald-50/60 shadow-xl ring-2 ring-emerald-500/20"
+                  ? "border-brand-500 bg-brand-50/50 shadow-md ring-2 ring-brand-500/20"
                   : "border-slate-200 bg-white hover:border-slate-300 shadow-sm",
               )}
             >
               {/* Recommended Badge — slightly smaller on mobile so it doesn't crowd the header */}
-              <div className="absolute top-0 right-0 bg-linear-to-l from-emerald-500 to-teal-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-bl-xl shadow-md flex items-center gap-1">
-                <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Career Transformation
+              <div className="absolute top-0 right-0 bg-brand-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-bl-xl shadow-xs">
+                Career Transformation
               </div>
 
               {/* mt-5 on mobile so the absolute badge doesn't overlap the heading */}
               <div className="flex items-start gap-3 sm:gap-4 mt-5 sm:mt-2">
-                <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-600">
+                <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-200 text-brand-600">
                   <Briefcase className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -401,7 +437,7 @@ export default function CourseEnrollPage({ params }: PageProps) {
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                       Direct2Hire 5-Step Program
                     </h3>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full shrink-0">
                       Full Track
                     </span>
                   </div>
@@ -421,25 +457,30 @@ export default function CourseEnrollPage({ params }: PageProps) {
 
               {/* Features List */}
               <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5 border-t border-slate-200 pt-3 sm:pt-4 text-xs text-slate-700">
-                <li className="flex items-center gap-2.5 font-medium text-emerald-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Everything in Basic Plan + 120-Day Detailed Curriculum</span>
+                <li className="flex items-center gap-2.5">
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
+                  <span>
+                    1-on-1 Career Counselling Session & Personal Roadmap
+                  </span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>1-on-1 Career Counselling Session & Personal Roadmap</span>
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
+                  <span>
+                    8-Week Real Industry Internship Tasks & Professional Review
+                  </span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>8-Week Real Industry Internship Tasks & Professional Review</span>
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
+                  <span>
+                    Retakeable Placement Assessment & Hiring Qualification
+                  </span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Retakeable Placement Assessment & Hiring Qualification</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Mock Technical Interview with Expert Feedback & Placement Support</span>
+                  <Check className="h-4 w-4 text-brand-500 shrink-0" />
+                  <span>
+                    Mock Technical Interview with Expert Feedback & Placement
+                    Support
+                  </span>
                 </li>
               </ul>
             </div>
@@ -463,7 +504,7 @@ export default function CourseEnrollPage({ params }: PageProps) {
                     className="rounded-lg object-cover shrink-0"
                   />
                 ) : (
-                  <div className="h-14 w-14 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                  <div className="h-14 w-14 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
                     <BookOpen className="h-6 w-6" />
                   </div>
                 )}
@@ -473,8 +514,8 @@ export default function CourseEnrollPage({ params }: PageProps) {
                   </p>
                   <p className="text-sm font-bold text-slate-900 truncate">
                     {selectedPlan === "BASIC"
-                      ? "Basic Course Plan (₹499)"
-                      : "Direct2Hire 5-Step Program (₹4999)"}
+                      ? `Basic Course Plan (₹${basicPrice})`
+                      : `Direct2Hire 5-Step Program (₹${d2hPrice})`}
                   </p>
                 </div>
               </div>
@@ -482,7 +523,7 @@ export default function CourseEnrollPage({ params }: PageProps) {
               {/* Coupon Input */}
               <div className="mt-5">
                 <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-1.5">
-                  <Tag className="h-3.5 w-3.5 text-blue-600" /> Have a Coupon
+                  <Tag className="h-3.5 w-3.5 text-brand-600" /> Have a Coupon
                   Code?
                 </label>
                 <div className="flex gap-2">
@@ -493,12 +534,12 @@ export default function CourseEnrollPage({ params }: PageProps) {
                     onChange={(e) =>
                       setCouponCode(e.target.value.toUpperCase())
                     }
-                    className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono uppercase text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono uppercase text-slate-800 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                   />
                   <button
                     type="button"
                     onClick={handleApplyCoupon}
-                    className="shrink-0 rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition"
+                    className="shrink-0 rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition cursor-pointer"
                   >
                     Apply
                   </button>
@@ -531,7 +572,7 @@ export default function CourseEnrollPage({ params }: PageProps) {
                 </div>
                 <div className="flex justify-between items-baseline border-t border-slate-200 pt-3 text-base font-bold text-slate-900">
                   <span>Total Amount</span>
-                  <span className="text-2xl font-black text-blue-600">
+                  <span className="text-2xl font-black text-brand-500">
                     ₹{finalPrice}
                   </span>
                 </div>
@@ -542,7 +583,7 @@ export default function CourseEnrollPage({ params }: PageProps) {
                 type="button"
                 disabled={processing}
                 onClick={handleCheckout}
-                className="mt-6 w-full rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-98 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-base font-semibold py-3.5 px-6 shadow-md shadow-brand-500/20 transition-all duration-200 active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {processing ? (
                   <>
@@ -569,10 +610,6 @@ export default function CourseEnrollPage({ params }: PageProps) {
 
               {/* Trust Badges */}
               <div className="mt-5 border-t border-slate-200 pt-4 flex items-center justify-center gap-4 text-[11px] text-slate-500">
-                {/* <span className="flex items-center gap-1">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Razorpay / Cashfree
-                </span>
-                <span>•</span> */}
                 <span className="flex items-center gap-1">
                   <Award className="h-3.5 w-3.5 text-amber-500" /> Certificate
                   Included
@@ -582,7 +619,20 @@ export default function CourseEnrollPage({ params }: PageProps) {
           </div>
         </div>
       </main>
-
     </div>
+  );
+}
+
+export default function CourseEnrollPage(props: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+        </div>
+      }
+    >
+      <CourseEnrollContent {...props} />
+    </Suspense>
   );
 }

@@ -471,39 +471,6 @@ export class PaymentService {
     );
   }
 
-  /**
-   * How much a user has already paid for the ₹499 Basic plan on this course,
-   * in rupees, to be credited against a ₹4999 upgrade. Returns 0 if they never
-   * bought Basic here.
-   *
-   * Reads the settled PaymentOrder rather than the env price so a user who paid
-   * a discounted amount is credited what they actually paid.
-   */
-  private async getBasicPlanCredit(
-    userId: string,
-    courseId: string,
-  ): Promise<number> {
-    const mapper = await prisma.courseUserMapper.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-      select: { tier: true },
-    });
-    if (!mapper || mapper.tier !== "BASIC") return 0;
-
-    const basicOrder = await prisma.paymentOrder.findFirst({
-      where: {
-        userId,
-        courseId,
-        productType: "COURSE",
-        status: "PAID",
-      },
-      orderBy: { updatedAt: "desc" },
-      select: { amount: true },
-    });
-    if (!basicOrder) return 0;
-
-    return Math.round(basicOrder.amount / 100);
-  }
-
   async createDirect2HireOrder(
     userId: string,
     courseId?: string,
@@ -572,13 +539,9 @@ export class PaymentService {
       discountRupees += DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES;
     }
 
-    // Same idea for the ₹499 Basic plan: someone upgrading this course pays
-    // only the difference. Credit what they actually paid (coupons and partner
-    // discounts may have made it less than the list price), not the list price.
-    const basicCredit = await this.getBasicPlanCredit(userId, targetCourseId);
-    if (basicCredit > 0) {
-      discountRupees += basicCredit;
-    }
+    // Note: no credit for the ₹499 Basic plan. The two plans are separate
+    // tracks with their own mentors, videos and assessments, so an upgrader is
+    // buying a second product at full price, not topping up the first.
 
     discountRupees = Math.min(discountRupees, DIRECT2HIRE_PRICE_RUPEES);
 
