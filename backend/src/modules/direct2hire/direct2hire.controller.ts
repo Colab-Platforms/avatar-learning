@@ -17,6 +17,10 @@ const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
   process.env.DIRECT2HIRE_PRICE_RUPEES!,
 );
 
+const COURSE_BASIC_PRICE_RUPEES: number = parseInt(
+  process.env.COURSE_BASIC_PRICE_RUPEES || "499",
+);
+
 // Lets the enroll page show both purchase options (course-only vs full
 // Direct2Hire) before checkout without hardcoding the flat price client-side.
 export const getPricing = async (
@@ -26,7 +30,10 @@ export const getPricing = async (
   sendResponse(
     res,
     true,
-    { fullProgrammeRupees: DIRECT2HIRE_PRICE_RUPEES },
+    {
+      fullProgrammeRupees: DIRECT2HIRE_PRICE_RUPEES,
+      basicCourseRupees: COURSE_BASIC_PRICE_RUPEES,
+    },
     "Direct2Hire pricing",
   );
 };
@@ -81,8 +88,13 @@ export const createOrder = async (
       typeof req.body?.couponCode === "string" && req.body.couponCode.trim()
         ? req.body.couponCode.trim()
         : undefined;
+    const courseId =
+      typeof req.body?.courseId === "string" && req.body.courseId.trim()
+        ? req.body.courseId.trim()
+        : undefined;
     const result = await paymentService.createDirect2HireOrder(
       req.user!.id,
+      courseId,
       couponCode,
     );
     sendResponse(res, true, result, "Order created", STATUS_CODES.CREATED);
@@ -93,7 +105,8 @@ export const createOrder = async (
       res,
       false,
       null,
-      err.error.description,
+      // ApiError has no `.error`; only the gateway SDK errors do.
+      err?.error?.description ?? err?.message ?? "Failed to create order",
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
   }

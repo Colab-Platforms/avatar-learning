@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -42,6 +42,7 @@ import {
   basicCourseRoutes,
   courseIdFromPathname,
   dashboardRoutes,
+  trackFromSearchParams,
 } from "@/lib/dashboardRoutes";
 import type { CourseTier } from "@/lib/coursesApi";
 
@@ -170,10 +171,25 @@ function resolveVariant(
   pathname: string,
   courseId: string | null,
   tier: CourseTier | null,
+  requestedTrack: "BASIC" | "D2H" | null,
 ): SidebarVariant {
   if (pathname === MY_COURSES_ROUTE || !courseId) return "my-courses";
+  // A student who owns both plans is wherever ?track= says; the Basic-only
+  // pages under /dashboard/<course>/learn are Basic regardless.
+  if (requestedTrack === "BASIC") return "basic";
+  if (requestedTrack === "D2H") return "d2h";
   if (tier === "BASIC") return "basic";
+  if (tier === "BOTH" && isBasicOnlyPath(pathname, courseId)) return "basic";
   return "d2h";
+}
+
+/** The two routes that exist only in the Basic track. */
+function isBasicOnlyPath(pathname: string, courseId: string): boolean {
+  return (
+    pathname === `/dashboard/${courseId}/learn` ||
+    pathname.startsWith(`/dashboard/${courseId}/learn/`) ||
+    pathname === `/dashboard/${courseId}/certificate`
+  );
 }
 
 export function buildDashboardNav(
@@ -307,7 +323,12 @@ export function DashboardSidebar({
     enrollmentsLoading &&
     tier === null &&
     pathname !== MY_COURSES_ROUTE;
-  const variant = resolveVariant(pathname, courseId, tier);
+  const variant = resolveVariant(
+    pathname,
+    courseId,
+    tier,
+    trackFromSearchParams(useSearchParams()),
+  );
   const nav = useMemo(
     () => buildDashboardNav(courseId, variant),
     [courseId, variant],
@@ -338,10 +359,13 @@ export function DashboardSidebar({
         ? "Direct2Hire"
         : "Dashboard";
 
-  const isLinkActive = (href: string, exact?: boolean) =>
-    exact
-      ? pathname === href
-      : pathname === href || pathname.startsWith(href + "/");
+  // Hrefs carry ?track=, which is not part of the path being matched.
+  const isLinkActive = (href: string, exact?: boolean) => {
+    const path = href.split("?")[0];
+    return exact
+      ? pathname === path
+      : pathname === path || pathname.startsWith(path + "/");
+  };
 
   return (
     <>

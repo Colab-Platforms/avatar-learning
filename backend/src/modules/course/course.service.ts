@@ -2,7 +2,12 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { CourseTier } from "@prisma/client";
-import { tierFilterFor } from "./courseTier.js";
+import {
+  contentFilterForTrack,
+  resolveTrack,
+  tracksFor,
+  type CourseTrack,
+} from "./courseTier.js";
 import {
   createBunnyVideo,
   deleteBunnyVideo,
@@ -554,10 +559,46 @@ export class PublicCourseService {
     const totalRecords = await prisma.courseUserMapper.count({
       where: { userId },
     });
-    return { enrollments, totalRecords };
+
+    // One card per course, but a BOTH student needs a row per track behind it
+    // so the card can offer each one with its own progress.
+    const trackRows = await prisma.courseTrackProgress.findMany({
+      where: { userId, courseId: { in: enrollments.map((e) => e.courseId) } },
+      select: {
+        courseId: true,
+        tier: true,
+        progress: true,
+        isCompleted: true,
+      },
+    });
+
+    const withTracks = enrollments.map((enrollment) => ({
+      ...enrollment,
+      tracks: tracksFor(enrollment.tier).map((track) => {
+        const row = trackRows.find(
+          (r: (typeof trackRows)[number]) =>
+            r.courseId === enrollment.courseId && r.tier === track,
+        );
+        // Same fallback as getTrackProgress: before the first recalculation
+        // the mapper still holds the primary track's numbers.
+        const isPrimary = resolveTrack(enrollment.tier) === track;
+        return {
+          track,
+          progress: row?.progress ?? (isPrimary ? enrollment.progress : 0),
+          isCompleted:
+            row?.isCompleted ?? (isPrimary ? enrollment.isCompleted : false),
+        };
+      }),
+    }));
+
+    return { enrollments: withTracks, totalRecords };
   }
 
-  async getEnrolledCourseDetail(slugOrId: string, userId: string) {
+  async getEnrolledCourseDetail(
+    slugOrId: string,
+    userId: string,
+    requestedTrack?: string | null,
+  ) {
     const course = await this.resolveCourse(slugOrId);
 
     const enrollment = await prisma.courseUserMapper.findUnique({
@@ -569,7 +610,8 @@ export class PublicCourseService {
         STATUS_CODES.FORBIDDEN,
       );
 
-    const tierFilter = tierFilterFor(enrollment.tier);
+    const track = resolveTrack(enrollment.tier, requestedTrack);
+    const tierFilter = contentFilterForTrack(track);
 
     const full = await prisma.courses.findUnique({
       where: { id: course.id },
@@ -605,7 +647,9 @@ export class PublicCourseService {
     const completedTopicIds = new Set(topicProgressRows.map((p) => p.topicId));
 
     const courseAssessments = await prisma.assessment.findMany({
-      where: { courseId: course.id, isPublished: true },
+      // Track-filtered: a two-track course has a FINAL per track, and picking
+      // the wrong one would hand a Basic student the Direct2Hire exam.
+      where: { courseId: course.id, isPublished: true, tier: tierFilter },
       select: {
         id: true,
         type: true,
@@ -798,24 +842,77 @@ export class PublicCourseService {
       allWeekliesSubmitted,
     );
 
+    // Progress belongs to the track being viewed, not to the enrolment row —
+    // someone who owns both plans has two independent progress bars.
+    const trackProgress = await this.getTrackProgress(userId, course.id, track);
+
     return {
       ...full,
       lessons: lessonsWithState,
-      enrollment,
+      enrollment: {
+        ...enrollment,
+        progress: trackProgress.progress,
+        isCompleted: trackProgress.isCompleted,
+        completedAt: trackProgress.completedAt,
+      },
+      track,
+      availableTracks: tracksFor(enrollment.tier),
       finalAssessment,
     };
+  }
+
+  /**
+   * Per-track progress.
+   *
+   * Track rows are only written by recalculateProgress, so a student who has
+   * not touched the course since tracks existed has none. Rather than a
+   * backfill migration, we fall back to the mapper's own numbers for that
+   * student's primary track — which is exactly what those numbers meant before
+   * the split. The first topic they watch writes the real row.
+   */
+  private async getTrackProgress(
+    userId: string,
+    courseId: string,
+    track: CourseTrack,
+  ) {
+    const row = await prisma.courseTrackProgress.findUnique({
+      where: {
+        userId_courseId_tier: { userId, courseId, tier: track },
+      },
+      select: { progress: true, isCompleted: true, completedAt: true },
+    });
+    if (row) return row;
+
+    const mapper = await prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+      select: {
+        tier: true,
+        progress: true,
+        isCompleted: true,
+        completedAt: true,
+      },
+    });
+    if (mapper && resolveTrack(mapper.tier) === track) {
+      return {
+        progress: mapper.progress,
+        isCompleted: mapper.isCompleted,
+        completedAt: mapper.completedAt,
+      };
+    }
+
+    return { progress: 0, isCompleted: false, completedAt: null };
   }
 
   // ─── Topic progress / locking ──────────────────────────────────────────────
 
   private async getOrderedLessonsWithTopics(
     courseId: string,
-    tier?: CourseTier,
+    track?: CourseTrack,
   ) {
     return prisma.lessons.findMany({
       where: {
         courseId,
-        ...(tier ? { tier: tierFilterFor(tier) } : {}),
+        ...(track ? { tier: contentFilterForTrack(track) } : {}),
       },
       orderBy: { weekNumber: "asc" },
       include: {
@@ -899,16 +996,33 @@ export class PublicCourseService {
     return !completed.has(lesson.topics[idx - 1].id);
   }
 
+  /**
+   * Recomputes every track the student owns. The caller only knows a topic or
+   * an attempt changed, and a BOTH-tier lesson counts toward both tracks, so
+   * working out "which track did this belong to" would be guesswork — two cheap
+   * recalculations are the honest answer.
+   */
   private async recalculateProgress(userId: string, courseId: string) {
     const mapper = await prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId } },
+      select: { tier: true },
     });
     if (!mapper) return;
 
+    for (const track of tracksFor(mapper.tier)) {
+      await this.recalculateTrackProgress(userId, courseId, track);
+    }
+  }
+
+  private async recalculateTrackProgress(
+    userId: string,
+    courseId: string,
+    track: CourseTrack,
+  ) {
     // Progress must be measured against the plan the student actually bought.
     // Counting the ₹4999 weeks in a ₹499 student's denominator would leave them
     // permanently short of 100% and so never eligible for their certificate.
-    const lessons = await this.getOrderedLessonsWithTopics(courseId, mapper.tier);
+    const lessons = await this.getOrderedLessonsWithTopics(courseId, track);
     const allTopicIds = lessons.flatMap((l) => l.topics.map((t) => t.id));
 
     const publishedWeeklies = lessons
@@ -921,7 +1035,7 @@ export class PublicCourseService {
         courseId,
         type: "FINAL",
         isPublished: true,
-        tier: tierFilterFor(mapper.tier),
+        tier: contentFilterForTrack(track),
       },
       select: { id: true },
     });
@@ -950,14 +1064,33 @@ export class PublicCourseService {
       completedTopics === allTopicIds.length &&
       publishedWeeklies.every((w) => submittedAssessments.has(w.id));
 
-    await prisma.courseUserMapper.update({
-      where: { userId_courseId: { userId, courseId } },
-      data: {
-        progress,
-        isCompleted,
-        completedAt: isCompleted ? (mapper?.completedAt ?? new Date()) : null,
-      },
+    const existing = await prisma.courseTrackProgress.findUnique({
+      where: { userId_courseId_tier: { userId, courseId, tier: track } },
+      select: { completedAt: true },
     });
+    const completedAt = isCompleted
+      ? (existing?.completedAt ?? new Date())
+      : null;
+
+    await prisma.courseTrackProgress.upsert({
+      where: { userId_courseId_tier: { userId, courseId, tier: track } },
+      create: { userId, courseId, tier: track, progress, isCompleted, completedAt },
+      update: { progress, isCompleted, completedAt },
+    });
+
+    // CourseUserMapper keeps carrying the primary track's numbers so the
+    // enrolment lists, admin views and anything else reading the mapper stay
+    // correct for the (overwhelmingly common) single-track student.
+    const mapper = await prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+      select: { tier: true },
+    });
+    if (mapper && resolveTrack(mapper.tier) === track) {
+      await prisma.courseUserMapper.update({
+        where: { userId_courseId: { userId, courseId } },
+        data: { progress, isCompleted, completedAt },
+      });
+    }
   }
 
   /** Recalculate progress after an assessment attempt is submitted. */
@@ -1164,7 +1297,11 @@ export class PublicCourseService {
     };
   }
 
-  async getCertificateData(slugOrId: string, userId: string) {
+  async getCertificateData(
+    slugOrId: string,
+    userId: string,
+    requestedTrack?: string | null,
+  ) {
     const course = await this.resolveCourse(slugOrId);
 
     const enrollment = await prisma.courseUserMapper.findUnique({
@@ -1175,7 +1312,12 @@ export class PublicCourseService {
         "You are not enrolled in this course",
         STATUS_CODES.FORBIDDEN,
       );
-    if (!enrollment.isCompleted)
+
+    // Each track earns its own certificate, so completion is read per track —
+    // finishing Basic must not wait on the Direct2Hire weeks, or vice versa.
+    const track = resolveTrack(enrollment.tier, requestedTrack);
+    const trackProgress = await this.getTrackProgress(userId, course.id, track);
+    if (!trackProgress.isCompleted)
       throw new ApiError("Course not completed yet", STATUS_CODES.BAD_REQUEST);
     if (!course.certificate)
       throw new ApiError(
@@ -1193,9 +1335,12 @@ export class PublicCourseService {
     return {
       studentName,
       courseTitle: course.title,
-      completedAt: enrollment.completedAt ?? new Date(),
+      track,
+      completedAt: trackProgress.completedAt ?? new Date(),
+      // Track-suffixed so a student who finishes both plans holds two distinct
+      // certificate numbers rather than one id claimed twice.
       certificateId:
-        `AVT-${course.id.slice(-6)}-${userId.slice(-6)}`.toUpperCase(),
+        `AVT-${course.id.slice(-6)}-${userId.slice(-6)}-${track}`.toUpperCase(),
     };
   }
 }

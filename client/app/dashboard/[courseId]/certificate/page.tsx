@@ -13,7 +13,9 @@ interface PageProps {
 
 export default function BasicCertificatePage({ params }: PageProps) {
   const { courseId } = use(params);
-  const { data: course, isLoading } = useLearnCourse(courseId);
+  const { data: course, isLoading } = useLearnCourse(courseId, {
+    track: "BASIC",
+  });
   const [downloading, setDownloading] = useState(false);
   const routes = basicCourseRoutes(courseId);
 
@@ -24,6 +26,7 @@ export default function BasicCertificatePage({ params }: PageProps) {
       await downloadCourseCertificate(
         course.id,
         `Certificate - ${course.title}.pdf`,
+        "BASIC",
       );
     } catch {
       window.alert("Download failed. Please try again.");

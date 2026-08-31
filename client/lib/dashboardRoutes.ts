@@ -6,7 +6,9 @@
 export const dashboardRoutes = (courseId: string) => {
   const base = `/dashboard/${courseId}`;
   return {
-    root: base,
+    // The overview is the one route both plans share, so it names its track.
+    // Everything below is Direct2Hire-only and needs no marker.
+    root: `${base}?track=d2h`,
     assessment: `${base}/assessment`,
     counselling: `${base}/counselling`,
     internships: `${base}/internships`,
@@ -20,15 +22,70 @@ export const dashboardRoutes = (courseId: string) => {
   };
 };
 
-/** Routes for a ₹499 Basic course — only learning + certification. */
+/**
+ * Routes for a ₹499 Basic course — only learning + certification.
+ *
+ * `?track=basic` is carried explicitly rather than inferred: a student who
+ * upgraded owns both plans, and without it these paths are ambiguous. Links
+ * built before tracks existed keep working — the server falls back to the
+ * track such a student would have seen anyway.
+ */
 export const basicCourseRoutes = (courseId: string) => {
   const base = `/dashboard/${courseId}`;
+  const q = `?${TRACK_PARAM}=basic`;
   return {
-    root: base,
-    learn: `${base}/learn`,
-    certificate: `${base}/certificate`,
+    root: `${base}${q}`,
+    learn: `${base}/learn${q}`,
+    certificate: `${base}/certificate${q}`,
   };
 };
+
+export const TRACK_PARAM = "track";
+
+export type DashboardTrack = "BASIC" | "D2H";
+
+/**
+ * Which plan a dashboard path belongs to, or null when it works for either.
+ *
+ * The two plans are separate purchases, so a Basic student must not reach the
+ * Direct2Hire journey and a Direct2Hire student must not reach the Basic
+ * course. This is the single answer the layout guard enforces; the server
+ * enforces the same rule on the data itself.
+ */
+export function requiredTrackForPath(
+  pathname: string,
+  courseId: string | null,
+  requestedTrack: DashboardTrack | null,
+): DashboardTrack | null {
+  // The Direct2Hire learning subtree.
+  if (pathname === "/dashboard/learning" || pathname.startsWith("/dashboard/learning/")) {
+    return "D2H";
+  }
+  if (!courseId) return null;
+
+  const base = `/dashboard/${courseId}`;
+  // Basic students only ever get these two.
+  if (
+    pathname === `${base}/learn` ||
+    pathname.startsWith(`${base}/learn/`) ||
+    pathname === `${base}/certificate`
+  ) {
+    return "BASIC";
+  }
+  // The overview serves both plans and says which one it means.
+  if (pathname === base) return requestedTrack;
+  // Everything else under a course — assessment, counselling, internships,
+  // placement — is the Direct2Hire journey.
+  return "D2H";
+}
+
+/** Track a /dashboard URL is addressing, if it says. */
+export function trackFromSearchParams(
+  params: { get(key: string): string | null } | null | undefined,
+): "BASIC" | "D2H" | null {
+  const raw = params?.get(TRACK_PARAM)?.toUpperCase();
+  return raw === "BASIC" || raw === "D2H" ? raw : null;
+}
 
 /** The My Courses grid — where a signed-in user lands. */
 export const MY_COURSES_ROUTE = "/dashboard";

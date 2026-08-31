@@ -13,7 +13,7 @@ export default function DashboardCourseLearnPage({ params }: PageProps) {
 
   return (
     <LearningRouteProvider courseId={courseId} scope="dashboard">
-      <CourseLearnPlayer courseId={courseId} />
+      <CourseLearnPlayer courseId={courseId} track="D2H" />
     </LearningRouteProvider>
   );
 }

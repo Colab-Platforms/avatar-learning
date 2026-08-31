@@ -180,7 +180,7 @@ export default function AILearningPage() {
   const handleDownloadCertificate = async (courseId: string, title: string) => {
     setDownloadingCert(true);
     try {
-      await downloadCourseCertificate(courseId, `Certificate - ${title}.pdf`);
+      await downloadCourseCertificate(courseId, `Certificate - ${title}.pdf`, "D2H");
     } catch {
       window.alert("Download failed. Please try again.");
     } finally {
@@ -195,7 +195,7 @@ export default function AILearningPage() {
 
   const { data: course, isLoading: courseLoading } = useLearnCourse(
     activeCourseSummary?.id ?? "",
-    { enabled: Boolean(activeCourseSummary?.id) },
+    { enabled: Boolean(activeCourseSummary?.id), track: "D2H" },
   );
 
   const courseId = activeCourseSummary?.id ?? "";

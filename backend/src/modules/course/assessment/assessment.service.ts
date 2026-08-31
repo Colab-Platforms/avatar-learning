@@ -2,7 +2,11 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { Assessment, AssessmentAttempt, AssessmentAttemptStatus } from "@prisma/client";
-import { tierFilterFor } from "../courseTier.js";
+import {
+  contentFilterForTrack,
+  ownedContentTiers,
+  resolveTrack,
+} from "../courseTier.js";
 import {
   CreateAssessmentBody,
   UpdateAssessmentBody,
@@ -418,7 +422,7 @@ export class UserAssessmentService {
     // An assessment belonging to the other plan must be invisible, not merely
     // unlisted — otherwise a ₹499 student could start a ₹4999 assessment by id.
     const enrollment = await this.assertEnrolled(assessment.courseId, userId);
-    if (!tierFilterFor(enrollment.tier).in.includes(assessment.tier)) {
+    if (!ownedContentTiers(enrollment.tier).includes(assessment.tier)) {
       throw new ApiError("Assessment not available", STATUS_CODES.NOT_FOUND);
     }
 
@@ -643,14 +647,19 @@ export class UserAssessmentService {
     });
   }
 
-  async listAssessmentsForUser(courseId: string, userId: string) {
+  async listAssessmentsForUser(
+    courseId: string,
+    userId: string,
+    requestedTrack?: string | null,
+  ) {
     const enrollment = await this.assertEnrolled(courseId, userId);
+    const track = resolveTrack(enrollment.tier, requestedTrack);
 
     const assessments = await prisma.assessment.findMany({
       where: {
         courseId,
         isPublished: true,
-        tier: tierFilterFor(enrollment.tier),
+        tier: contentFilterForTrack(track),
       },
       include: {
         questions: { select: { id: true } },

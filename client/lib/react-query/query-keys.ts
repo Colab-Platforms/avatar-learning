@@ -2,7 +2,8 @@ export const queryKeys = {
   courses: ["courses"] as const,
   coursesPage: (page: number) => ["courses", page] as const,
   course: (slug: string) => ["course", slug] as const,
-  enrolledCourse: (slug: string) => ["enrolled-course", slug] as const,
+  enrolledCourse: (slug: string, track?: string | null) =>
+    ["enrolled-course", slug, track ?? null] as const,
   enrollment: (courseId: string) => ["course-enrollment", courseId] as const,
   myEnrollments: ["my-enrollments"] as const,
   internships: ["internships"] as const,
@@ -14,6 +15,7 @@ export const queryKeys = {
   myApplications: ["my-applications"] as const,
   internshipCategories: ["internship-categories"] as const,
   direct2hireStatus: ["direct2hire-status"] as const,
+  pricing: ["pricing"] as const,
   currentUser: ["current-user"] as const,
   profile: ["profile"] as const,
   counsellingProfile: ["counselling-profile"] as const,
@@ -30,7 +32,8 @@ export const queryKeys = {
   adminInternshipTasks: (courseId: string) =>
     ["admin-internship-tasks", courseId] as const,
   assessment: (courseId: string) => ["assessment", courseId] as const,
-  assessments: (courseId: string) => ["assessments", courseId] as const,
+  assessments: (courseId: string, track?: string | null) =>
+    ["assessments", courseId, track ?? null] as const,
   assessmentDetail: (courseId: string, assessmentId: string) =>
     ["assessment", courseId, assessmentId] as const,
   assessmentHistory: (courseId: string, assessmentId: string) =>

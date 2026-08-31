@@ -187,6 +187,7 @@ model User {
 
   userRoleMappings UserRoleMapping[]
   enrolledCourses  CourseUserMapper[]
+  trackProgress    CourseTrackProgress[]
   sessions         Session[]
   otpVerifications OtpVerification[]
   passwordResets   PasswordResetToken[]
@@ -397,6 +398,7 @@ model Courses {
 
   lessons               Lessons[]
   enrollments           CourseUserMapper[]
+  trackProgress         CourseTrackProgress[]
   paymentOrders         PaymentOrder[]
   assessments           Assessment[]
   placementAssessment   PlacementAssessment?
@@ -437,6 +439,40 @@ model CourseUserMapper {
   @@index([userId])
   @@index([courseId])
   @@map("course_user_mapper")
+}
+
+/// Progress for one track (₹499 Basic or ₹4999 Direct2Hire) of one course.
+///
+/// The two plans are separate courses that happen to share a title, so a
+/// student who bought both needs two independent progress bars, completion
+/// dates and certificates. CourseUserMapper.progress cannot express that — it
+/// is one number per user+course — so per-track state lives here.
+///
+/// `tier` is only ever BASIC or D2H: it names a track, never an entitlement.
+model CourseTrackProgress {
+  id String @id @default(cuid())
+
+  userId   String @map("user_id")
+  courseId String @map("course_id")
+
+  tier CourseTier
+
+  progress Int @default(0)
+
+  isCompleted Boolean @default(false) @map("is_completed")
+
+  completedAt DateTime? @map("completed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Courses @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId, tier])
+  @@index([userId])
+  @@index([courseId])
+  @@map("course_track_progress")
 }
 
 model Lessons {
