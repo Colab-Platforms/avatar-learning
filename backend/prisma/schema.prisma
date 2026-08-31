@@ -27,6 +27,12 @@ enum CourseLevel {
   ADVANCED
 }
 
+enum CourseTier {
+  BASIC
+  D2H
+  BOTH
+}
+
 enum ResourceCategory {
   DOCUMENT
   VIDEO
@@ -198,7 +204,7 @@ model User {
   paymentOrders             PaymentOrder[]
   counsellingProfile        CounsellingProfile?
   courseRecommendation      CourseRecommendation?
-  counsellingBooking        CounsellingBooking?
+  counsellingBookings       CounsellingBooking[]
   counsellingFeedback       CounsellingFeedback?
   assessmentAttempts        AssessmentAttempt[]
   placementAttempts         PlacementAttempt[]
@@ -206,7 +212,7 @@ model User {
   grantedPlacementOverrides PlacementAttemptOverride[] @relation("PlacementOverrideAdmin")
   internshipSubmissions     InternshipSubmission[]
   reviewedInternshipSubs    InternshipSubmission[]     @relation("InternshipSubmissionReviewer")
-  mockInterview             MockInterview?
+  mockInterviews            MockInterview[]
   jobPlacementEntries       JobPlacementEntry[]
 
   partner         Partner?
@@ -394,8 +400,11 @@ model Courses {
   paymentOrders         PaymentOrder[]
   assessments           Assessment[]
   placementAssessment   PlacementAssessment?
-  counsellingSelections CounsellingBooking[]
+  counsellingSelections CounsellingBooking[]       @relation("SelectedCounsellingCourse")
+  counsellingBookings   CounsellingBooking[]       @relation("CourseCounsellingBooking")
   internshipTasks       InternshipTask[]
+  direct2hireEnrollments Direct2HireEnrollment[]
+  mockInterviews        MockInterview[]
 
   @@index([categoryId])
   @@index([createdBy])
@@ -410,6 +419,8 @@ model CourseUserMapper {
 
   userId   String @map("user_id")
   courseId String @map("course_id")
+
+  tier CourseTier @default(D2H)
 
   enrolledAt DateTime @default(now()) @map("enrolled_at")
 
@@ -432,6 +443,8 @@ model Lessons {
   id String @id @default(cuid())
 
   courseId String @map("course_id")
+
+  tier CourseTier @default(D2H)
 
   weekNumber Int @map("week_number")
 
@@ -464,8 +477,9 @@ model Lessons {
 
   weeklyAssessment Assessment?
 
-  @@unique([courseId, weekNumber])
+  @@unique([courseId, tier, weekNumber])
   @@index([courseId])
+  @@index([courseId, tier])
   @@index([courseId, releaseDate])
   @@map("lessons")
 }
@@ -673,9 +687,10 @@ model InvestorDocument {
 }
 
 model Direct2HireEnrollment {
-  id     String            @id @default(cuid())
-  userId String            @map("user_id")
-  status Direct2HireStatus @default(PENDING)
+  id       String            @id @default(cuid())
+  userId   String            @map("user_id")
+  courseId String            @map("course_id")
+  status   Direct2HireStatus @default(PENDING)
 
   paidAt DateTime? @map("paid_at")
 
@@ -685,10 +700,13 @@ model Direct2HireEnrollment {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Courses          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   paymentOrders   PaymentOrder[]
   partnerReferral PartnerReferral?
 
+  @@unique([userId, courseId])
   @@index([userId])
+  @@index([courseId])
   @@map("direct2hire_enrollments")
 }
 
@@ -1059,7 +1077,8 @@ model LessonProgress {
 
 model CounsellingBooking {
   id            String  @id @default(cuid())
-  userId        String  @unique @map("user_id")
+  userId        String  @map("user_id")
+  courseId      String  @map("course_id")
   preferredMode String  @map("preferred_mode") // "VOICE" or "VIDEO"
   notes         String? @db.Text
   status        String  @default("PENDING") // "PENDING", "CONFIRMED"
@@ -1073,14 +1092,18 @@ model CounsellingBooking {
   counsellingCompletedAt DateTime? @map("counselling_completed_at")
 
   selectedCourseId String?   @map("selected_course_id")
-  selectedCourse   Courses?  @relation(fields: [selectedCourseId], references: [id])
+  selectedCourse   Courses?  @relation("SelectedCounsellingCourse", fields: [selectedCourseId], references: [id])
   selectedCourseAt DateTime? @map("selected_course_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Courses  @relation("CourseCounsellingBooking", fields: [courseId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
   @@index([selectedCourseId])
   @@map("counselling_bookings")
 }
@@ -1124,6 +1147,7 @@ model Assessment {
   courseId String         @map("course_id")
   lessonId String?        @unique @map("lesson_id")
   type     AssessmentType @default(FINAL)
+  tier     CourseTier     @default(D2H)
 
   title         String
   description   String?
@@ -1147,6 +1171,7 @@ model Assessment {
 
   @@index([courseId])
   @@index([courseId, type])
+  @@index([courseId, tier])
   @@index([isPublished])
   @@map("assessments")
 }
@@ -1500,8 +1525,9 @@ model PlacementAttemptOverride {
 }
 
 model MockInterview {
-  id     String @id @default(cuid())
-  userId String @unique @map("user_id")
+  id       String  @id @default(cuid())
+  userId   String  @map("user_id")
+  courseId String @map("course_id")
 
   status MockInterviewStatus @default(REQUESTED)
 
@@ -1521,8 +1547,12 @@ model MockInterview {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Courses @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
   @@index([status])
   @@map("mock_interviews")
 }

@@ -70,6 +70,7 @@ export interface CreateLessonBody {
     weekNumber: number;
     title: string;
     description?: string;
+    tier?: "BASIC" | "D2H" | "BOTH";
     modules?: string[];
     duration?: number;
     lessonOrder: number;
@@ -82,6 +83,7 @@ export interface UpdateLessonBody {
     weekNumber?: number;
     title?: string;
     description?: string;
+    tier?: "BASIC" | "D2H" | "BOTH";
     modules?: string[];
     duration?: number;
     lessonOrder?: number;

@@ -62,8 +62,12 @@ export interface PaymentConfigResponse {
 export const getPaymentConfig = (): Promise<PaymentConfigResponse> =>
   apiClient.get("/payment/config").then((r) => r.data.data);
 
-export const createPaymentOrder = (courseId: string): Promise<CreateOrderResponse> =>
-  apiClient.post("/payment/create-order", { courseId }).then((r) => r.data.data);
+export const createPaymentOrder = (
+  courseId: string,
+  plan: "BASIC" | "D2H" = "BASIC",
+  couponCode?: string,
+): Promise<CreateOrderResponse> =>
+  apiClient.post("/payment/create-order", { courseId, plan, couponCode }).then((r) => r.data.data);
 
 export const verifyPayment = (payload: VerifyPaymentPayload): Promise<void> =>
   apiClient.post("/payment/verify", payload).then((r) => r.data);

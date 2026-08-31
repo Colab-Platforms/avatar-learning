@@ -1,5 +1,6 @@
 "use client";
 
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useCallback } from "react";
 import { motion } from "framer-motion";
@@ -141,7 +142,7 @@ function getMockInterviewCardContent(status?: MockInterviewStatus | null) {
 export default function DashboardPlacementPage() {
   const queryClient = useQueryClient();
   const { data: selection, isLoading: selectionLoading } = useCourseSelection();
-  const courseId = selection?.selectedCourse?.id ?? "";
+  const { courseId } = useParams<{ courseId: string }>();
 
   const {
     data: placement,
@@ -190,7 +191,7 @@ export default function DashboardPlacementPage() {
             complete and you choose a course.
           </p>
           <Link
-            href="/dashboard/counselling"
+            href={`/dashboard/${courseId}/counselling`}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 hover:bg-blue-500"
           >
             Go to Counselling
@@ -228,22 +229,22 @@ export default function DashboardPlacementPage() {
   const canStart = placement.canStartNewAttempt && !attempt;
 
   const assessmentAction = attempt
-    ? { label: "Resume Assessment", href: `/dashboard/placement/assessment/attempt/${attempt.id}`, show: true }
+    ? { label: "Resume Assessment", href: `/dashboard/${courseId}/placement/assessment/attempt/${attempt.id}`, show: true }
     : assessmentPassed && latestAttempt
       ? {
           label: "View Results",
-          href: `/dashboard/placement/assessment/results/${latestAttempt.id}`,
+          href: `/dashboard/${courseId}/placement/assessment/results/${latestAttempt.id}`,
           show: true,
         }
       : canStart
-        ? { label: placement.attemptsUsed > 0 ? "Retake Assessment" : "Start Assessment", href: `/dashboard/placement/assessment`, show: true }
+        ? { label: placement.attemptsUsed > 0 ? "Retake Assessment" : "Start Assessment", href: `/dashboard/${courseId}/placement/assessment`, show: true }
         : latestAttempt
           ? {
               label: "View Last Results",
-              href: `/dashboard/placement/assessment/results/${latestAttempt.id}`,
+              href: `/dashboard/${courseId}/placement/assessment/results/${latestAttempt.id}`,
               show: !exhausted || inCooldown,
             }
-          : { label: "Start Assessment", href: `/dashboard/placement/assessment`, show: false };
+          : { label: "Start Assessment", href: `/dashboard/${courseId}/placement/assessment`, show: false };
 
   const stagesCompleted = (() => {
     let count = 0;
@@ -494,7 +495,7 @@ export default function DashboardPlacementPage() {
                 </div>
                 {assessmentPassed ? (
                   <Link
-                    href="/dashboard/placement/mock-interview"
+                    href={`/dashboard/${courseId}/placement/mock-interview`}
                     className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] hover:bg-blue-700 text-white text-sm font-bold py-2.5 transition-colors shadow-sm shadow-blue-100"
                   >
                     {mockCard.cta}

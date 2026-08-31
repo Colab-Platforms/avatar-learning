@@ -68,9 +68,13 @@ export interface DBTopic {
   isLocked?: boolean;
 }
 
+export type CourseTier = "BASIC" | "D2H" | "BOTH";
+
 export interface DBLesson {
   id: string;
   weekNumber: number;
+  /** Which plan this week belongs to — ₹499 Basic, ₹4999 D2H, or both. */
+  tier: CourseTier;
   title: string;
   description?: string;
   modules: string[];
@@ -108,6 +112,8 @@ export interface MyEnrollment {
   id: string;
   userId: string;
   courseId: string;
+  /** Which plan the user bought — decides where their card links to. */
+  tier: CourseTier;
   enrolledAt: string;
   completedAt: string | null;
   progress: number;

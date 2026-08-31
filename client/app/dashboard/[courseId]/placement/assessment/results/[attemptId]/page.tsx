@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, RotateCcw } from "lucide-react";
@@ -24,7 +24,7 @@ export default function PlacementResultPage({ params }: PageProps) {
   const queryClient = useQueryClient();
   const { user: authUser } = useAppSelector((s) => s.auth);
   const { data: selection } = useCourseSelection();
-  const courseId = selection?.selectedCourse?.id ?? "";
+  const { courseId } = useParams<{ courseId: string }>();
 
   const { data: result, isLoading, isError, error } = usePlacementResult(attemptId);
   const { data: placement } = usePlacementAssessment(courseId);
@@ -43,7 +43,7 @@ export default function PlacementResultPage({ params }: PageProps) {
   const handleRetake = async () => {
     try {
       const attempt = await startAttempt.mutateAsync();
-      router.push(`/dashboard/placement/assessment/attempt/${attempt.id}`);
+      router.push(`/dashboard/${courseId}/placement/assessment/attempt/${attempt.id}`);
     } catch {
       // surfaced via startAttempt.error below
     }
@@ -66,7 +66,7 @@ export default function PlacementResultPage({ params }: PageProps) {
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-2xl mx-auto">
         <div className="flex items-center gap-1.5 text-xs sm:text-sm mb-6">
           <Link
-            href="/dashboard/placement"
+            href={`/dashboard/${courseId}/placement`}
             className="flex items-center gap-1 text-slate-400 hover:text-slate-700 transition-colors"
           >
             <ChevronLeft size={14} />
@@ -133,7 +133,7 @@ export default function PlacementResultPage({ params }: PageProps) {
 
             {passed === true && (
               <Link
-                href="/dashboard/placement/mock-interview"
+                href={`/dashboard/${courseId}/placement/mock-interview`}
                 className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
               >
                 Continue to Mock Interview

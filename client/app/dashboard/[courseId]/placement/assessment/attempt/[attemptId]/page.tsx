@@ -23,11 +23,11 @@ import { useTabVisibility } from "@/hooks/useTabVisibility";
 import { useAppSelector } from "@/store/hooks";
 
 interface PageProps {
-  params: Promise<{ attemptId: string }>;
+  params: Promise<{ attemptId: string; courseId: string }>;
 }
 
 export default function PlacementAssessmentAttemptPage({ params }: PageProps) {
-  const { attemptId } = use(params);
+  const { attemptId, courseId } = use(params);
   const router = useRouter();
   const { user: authUser } = useAppSelector((s) => s.auth);
 
@@ -54,7 +54,7 @@ export default function PlacementAssessmentAttemptPage({ params }: PageProps) {
 
   useEffect(() => {
     if (attempt && attempt.status !== "IN_PROGRESS" && !autoSubmitReason) {
-      router.replace(`/dashboard/placement/assessment/results/${attemptId}`);
+      router.replace(`/dashboard/${courseId}/placement/assessment/results/${attemptId}`);
     }
   }, [attempt, autoSubmitReason, router, attemptId]);
 
@@ -65,7 +65,7 @@ export default function PlacementAssessmentAttemptPage({ params }: PageProps) {
           if (result.autoSubmitted) {
             setAutoSubmitReason("violation");
             setTimeout(
-              () => router.replace(`/dashboard/placement/assessment/results/${attemptId}`),
+              () => router.replace(`/dashboard/${courseId}/placement/assessment/results/${attemptId}`),
               2000,
             );
           } else {
@@ -83,7 +83,7 @@ export default function PlacementAssessmentAttemptPage({ params }: PageProps) {
       onSuccess: () => {
         setAutoSubmitReason("timeout");
         setTimeout(
-          () => router.replace(`/dashboard/placement/assessment/results/${attemptId}`),
+          () => router.replace(`/dashboard/${courseId}/placement/assessment/results/${attemptId}`),
           2000,
         );
       },
@@ -119,7 +119,7 @@ export default function PlacementAssessmentAttemptPage({ params }: PageProps) {
 
   const handleManualSubmit = () => {
     submitAttempt.mutate(undefined, {
-      onSuccess: () => router.replace(`/dashboard/placement/assessment/results/${attemptId}`),
+      onSuccess: () => router.replace(`/dashboard/${courseId}/placement/assessment/results/${attemptId}`),
     });
   };
 

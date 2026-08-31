@@ -16,7 +16,7 @@ export const getMyInterview = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const bundle = await service.getBundle(req.user!.id);
+    const bundle = await service.getBundle(req.user!.id, req.d2hCourseId!);
     sendResponse(res, true, bundle, "Mock interview fetched");
   } catch (err: unknown) {
     const error = err as { message?: string; statusCode?: number };
@@ -35,7 +35,7 @@ export const requestInterview = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const interview = await service.request(req.user!.id);
+    const interview = await service.request(req.user!.id, req.d2hCourseId!);
     sendResponse(
       res,
       true,

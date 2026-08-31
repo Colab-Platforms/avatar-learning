@@ -265,20 +265,29 @@ export class CounsellingService {
     });
   }
 
-  async getBooking(userId: string) {
-    return prisma.counsellingBooking.findUnique({
+  async getBooking(userId: string, courseId?: string) {
+    if (courseId) {
+      return prisma.counsellingBooking.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+      });
+    }
+    // Admin/legacy callers that have no course in hand still get the most
+    // recent booking so existing dashboards keep working.
+    return prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
     });
   }
 
   async createBooking(
     userId: string,
     data: { preferredMode: string; notes?: string },
+    courseId: string,
   ) {
-    const existing = await this.getBooking(userId);
+    const existing = await this.getBooking(userId, courseId);
     if (existing) {
       throw new ApiError(
-        "Counselling booking already exists",
+        "Counselling booking already exists for this course",
         STATUS_CODES.CONFLICT,
       );
     }
@@ -286,6 +295,7 @@ export class CounsellingService {
     return prisma.counsellingBooking.create({
       data: {
         userId,
+        courseId,
         preferredMode: data.preferredMode,
         notes: data.notes || null,
         status: "PENDING",
@@ -315,7 +325,7 @@ export class CounsellingService {
     const isVoice = existing.preferredMode === "VOICE";
 
     const booking = await prisma.counsellingBooking.update({
-      where: { userId },
+      where: { id: existing.id },
       data: {
         counsellorName: data.counsellorName,
         scheduledAt: new Date(data.scheduledAt),
@@ -381,7 +391,7 @@ export class CounsellingService {
     }
 
     return prisma.counsellingBooking.update({
-      where: { userId },
+      where: { id: existing.id },
       data: {
         counsellingCompleted: true,
         counsellingCompletedAt: new Date(),
@@ -437,7 +447,7 @@ export class CounsellingService {
         update: feedbackData,
       }),
       prisma.counsellingBooking.update({
-        where: { userId },
+        where: { id: booking.id },
         data: {
           counsellingCompleted: true,
           counsellingCompletedAt: booking.counsellingCompletedAt ?? new Date(),
@@ -509,7 +519,7 @@ export class CounsellingService {
     // Selecting a course immediately grants access to its content
     // (courseUserMapper upsert below) — only full ₹999 access may do that.
     // ₹99 Assessment + Counselling buyers must upgrade first.
-    const enrollment = await direct2hireService.getOrCreateEnrollment(userId);
+    const enrollment = await direct2hireService.getOrCreateEnrollment(userId, courseId);
     if (enrollment.status !== "PAID") {
       throw new ApiError(
         "Upgrade to the full Direct2Hire programme (₹900 more) to select your course",
@@ -526,7 +536,7 @@ export class CounsellingService {
     }
 
     const updatedBooking = await prisma.counsellingBooking.update({
-      where: { userId },
+      where: { id: booking.id },
       data: {
         selectedCourseId: course.id,
         selectedCourseAt: new Date(),

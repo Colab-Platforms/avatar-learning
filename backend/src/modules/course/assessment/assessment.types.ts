@@ -12,6 +12,7 @@ export const ATTEMPT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 export const FINAL_ATTEMPT_COOLDOWN_MS = ATTEMPT_COOLDOWN_MS;
 
 export interface CreateAssessmentBody {
+    tier?: "BASIC" | "D2H" | "BOTH";
   title: string;
   description?: string;
   type: AssessmentTypeValue;

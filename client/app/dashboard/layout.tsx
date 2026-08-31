@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import Link from "next/link";
-import { GraduationCap, Menu } from "lucide-react";
-import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
+import { Loader2, Menu } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import {
+  useEnrollmentTier,
+  useMyEnrollments,
+} from "@/hooks/queries/useMyEnrollments";
+import {
+  MY_COURSES_ROUTE,
+  courseIdFromPathname,
+} from "@/lib/dashboardRoutes";
 import type { RootState } from "@/store";
 
 export default function DashboardLayout({
@@ -15,13 +21,28 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user: authUser, hasHydrated } = useSelector(
     (state: RootState) => state.auth,
   );
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { data: d2hStatus, isLoading: d2hLoading } = useD2HStatus({
-    enabled: hasHydrated && Boolean(authUser),
-  });
+  const activeCourseId =
+    pathname === MY_COURSES_ROUTE ? null : courseIdFromPathname(pathname);
+  // isFetching (not isLoading) so the guard also waits for background
+  // refetches after a payment invalidation — otherwise it fires against
+  // stale cache and bounces a just-enrolled user back to the course page.
+  const { isFetching: enrollmentsFetching } = useMyEnrollments();
+  const tier = useEnrollmentTier(activeCourseId);
+  const notEnrolled =
+    !!activeCourseId && !enrollmentsFetching && tier === null;
+  const enrollmentPending =
+    !!activeCourseId && (enrollmentsFetching || tier === null);
+  const mobileHeaderLabel =
+    pathname === MY_COURSES_ROUTE
+      ? "My Courses"
+      : tier === "BASIC"
+        ? "Course"
+        : "Direct2Hire";
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -31,8 +52,12 @@ export default function DashboardLayout({
     }
     if (authUser.profileCompleted === false) {
       router.replace("/complete-profile");
+      return;
     }
-  }, [hasHydrated, authUser, router]);
+    if (notEnrolled && activeCourseId) {
+      router.replace(`/courses/${activeCourseId}`);
+    }
+  }, [hasHydrated, authUser, notEnrolled, activeCourseId, router]);
 
   const authorized = hasHydrated && Boolean(authUser);
   const user = authUser
@@ -47,42 +72,10 @@ export default function DashboardLayout({
       }
     : null;
 
-  if (!authorized || d2hLoading) {
+  if (!authorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-ink-950">
         <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!d2hStatus?.enrollment?.hasAssessmentCounsellingAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-lime-50 px-6">
-        <div className="max-w-md text-center">
-          <GraduationCap size={36} className="mx-auto text-brand-400 mb-4" />
-          <h1 className="text-lg font-bold text-black mb-2">
-            Direct2Hire dashboard locked
-          </h1>
-          <p className="text-sm text-black/45 mb-6">
-            This dashboard unlocks once you buy Assessment + Counselling
-            (₹99) or the full Direct2Hire programme (₹999) — learning,
-            internship, and placement tracking need the full programme.
-          </p>
-          <div className="flex flex-col items-center gap-2.5">
-            <Link
-              href="/direct2hire/enroll"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-ink-950 text-sm font-semibold hover:bg-brand-400 transition-colors"
-            >
-              Get the full programme — ₹999
-            </Link>
-            <Link
-              href="/direct2hire/assessment-counselling"
-              className="text-sm font-semibold text-black/60 hover:text-black transition-colors"
-            >
-              Or try Assessment + Counselling for ₹99
-            </Link>
-          </div>
-        </div>
       </div>
     );
   }
@@ -107,10 +100,18 @@ export default function DashboardLayout({
             <Menu size={20} />
           </button>
           <span className="text-sm font-semibold text-slate-700">
-            Direct2Hire
+            {mobileHeaderLabel}
           </span>
         </div>
-        <main className="flex-1 min-w-0 overflow-auto">{children}</main>
+        <main className="flex-1 min-w-0 overflow-auto">
+          {enrollmentPending ? (
+            <div className="flex min-h-full items-center justify-center py-40">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   );

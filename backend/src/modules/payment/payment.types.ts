@@ -1,5 +1,7 @@
 export interface CreateOrderBody {
   courseId: string;
+  plan?: "BASIC" | "D2H";
+  couponCode?: string;
 }
 
 export interface Direct2HireLeadInput {

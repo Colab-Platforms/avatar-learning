@@ -1,6 +1,8 @@
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import type { CourseTier } from "@prisma/client";
+import { tierFilterFor } from "./courseTier.js";
 import {
   createBunnyVideo,
   deleteBunnyVideo,
@@ -228,18 +230,20 @@ export class AdminCourseService {
     const course = await prisma.courses.findUnique({ where: { id: courseId } });
     if (!course) throw new ApiError("Course not found", STATUS_CODES.NOT_FOUND);
 
+    const tier = data.tier || "D2H";
     const existing = await prisma.lessons.findUnique({
-      where: { courseId_weekNumber: { courseId, weekNumber: data.weekNumber } },
+      where: { courseId_tier_weekNumber: { courseId, tier, weekNumber: data.weekNumber } },
     });
     if (existing)
       throw new ApiError(
-        "A lesson for this week already exists",
+        "A lesson for this week already exists in this plan tier",
         STATUS_CODES.CONFLICT,
       );
 
     return prisma.lessons.create({
       data: {
         ...data,
+        tier,
         courseId,
         releaseDate: data.releaseDate ? new Date(data.releaseDate) : null,
       },
@@ -565,11 +569,14 @@ export class PublicCourseService {
         STATUS_CODES.FORBIDDEN,
       );
 
+    const tierFilter = tierFilterFor(enrollment.tier);
+
     const full = await prisma.courses.findUnique({
       where: { id: course.id },
       include: {
         category: { select: { id: true, name: true } },
         lessons: {
+          where: { tier: tierFilter },
           include: {
             resources: true,
             topics: {
@@ -801,9 +808,15 @@ export class PublicCourseService {
 
   // ─── Topic progress / locking ──────────────────────────────────────────────
 
-  private async getOrderedLessonsWithTopics(courseId: string) {
+  private async getOrderedLessonsWithTopics(
+    courseId: string,
+    tier?: CourseTier,
+  ) {
     return prisma.lessons.findMany({
-      where: { courseId },
+      where: {
+        courseId,
+        ...(tier ? { tier: tierFilterFor(tier) } : {}),
+      },
       orderBy: { weekNumber: "asc" },
       include: {
         topics: { orderBy: { topicOrder: "asc" }, select: { id: true } },
@@ -887,7 +900,15 @@ export class PublicCourseService {
   }
 
   private async recalculateProgress(userId: string, courseId: string) {
-    const lessons = await this.getOrderedLessonsWithTopics(courseId);
+    const mapper = await prisma.courseUserMapper.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+    if (!mapper) return;
+
+    // Progress must be measured against the plan the student actually bought.
+    // Counting the ₹4999 weeks in a ₹499 student's denominator would leave them
+    // permanently short of 100% and so never eligible for their certificate.
+    const lessons = await this.getOrderedLessonsWithTopics(courseId, mapper.tier);
     const allTopicIds = lessons.flatMap((l) => l.topics.map((t) => t.id));
 
     const publishedWeeklies = lessons
@@ -896,7 +917,12 @@ export class PublicCourseService {
         Boolean(a?.isPublished),
       );
     const finalAssessment = await prisma.assessment.findFirst({
-      where: { courseId, type: "FINAL", isPublished: true },
+      where: {
+        courseId,
+        type: "FINAL",
+        isPublished: true,
+        tier: tierFilterFor(mapper.tier),
+      },
       select: { id: true },
     });
 
@@ -923,10 +949,6 @@ export class PublicCourseService {
       weekUnits > 0 &&
       completedTopics === allTopicIds.length &&
       publishedWeeklies.every((w) => submittedAssessments.has(w.id));
-
-    const mapper = await prisma.courseUserMapper.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-    });
 
     await prisma.courseUserMapper.update({
       where: { userId_courseId: { userId, courseId } },

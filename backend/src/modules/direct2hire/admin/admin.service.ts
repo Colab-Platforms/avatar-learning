@@ -63,7 +63,7 @@ export class Direct2HireAdminService {
             courseRecommendation: {
               select: { recommendedCourseTitle: true },
             },
-            counsellingBooking: {
+            counsellingBookings: {
               select: { status: true, preferredMode: true },
             },
           },
@@ -80,7 +80,7 @@ export class Direct2HireAdminService {
       const enrollment = lead.user.direct2hireEnrollments[0];
       const counselling = lead.user.counsellingProfile;
       const recommendation = lead.user.courseRecommendation;
-      const booking = lead.user.counsellingBooking;
+      const booking = (lead.user as any).counsellingBookings?.[0];
 
       return {
         userId: lead.userId,
@@ -175,7 +175,7 @@ export class Direct2HireAdminService {
             personalNote: true,
           },
         },
-        counsellingBooking: {
+        counsellingBookings: {
           select: {
             preferredMode: true,
             notes: true,
@@ -251,7 +251,7 @@ export class Direct2HireAdminService {
         ? { status: enrollment.status, createdAt: enrollment.createdAt }
         : null,
       counselling: user.counsellingProfile ?? null,
-      booking: user.counsellingBooking ?? null,
+      booking: user.counsellingBookings?.[0] ?? null,
       recommendation: user.courseRecommendation ?? null,
       feedback: user.counsellingFeedback ?? null,
       payment: paymentByUserId.get(userId) ?? null,

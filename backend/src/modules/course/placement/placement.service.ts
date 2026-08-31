@@ -162,8 +162,9 @@ export class AdminPlacementService {
   }
 
   async getStudentPlacementSummary(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
+    const booking = await prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
       select: { selectedCourseId: true, selectedCourse: { select: { id: true, title: true } } },
     });
     const courseId = booking?.selectedCourseId;
@@ -210,8 +211,9 @@ export class AdminPlacementService {
   }
 
   async getStudentPlacementAttempts(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
+    const booking = await prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
       select: { selectedCourseId: true },
     });
     if (!booking?.selectedCourseId) {
@@ -230,8 +232,9 @@ export class AdminPlacementService {
   }
 
   async getStudentPlacementOverrides(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
+    const booking = await prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
       select: { selectedCourseId: true },
     });
     if (!booking?.selectedCourseId) {
@@ -256,8 +259,9 @@ export class AdminPlacementService {
   }
 
   async grantExtraAttempts(userId: string, adminUserId: string, data: GrantPlacementAttemptsBody) {
-    const booking = await prisma.counsellingBooking.findUnique({
+    const booking = await prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
       select: { selectedCourseId: true },
     });
     if (!booking?.selectedCourseId) {
