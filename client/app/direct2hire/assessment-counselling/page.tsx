@@ -168,10 +168,10 @@ export default function AssessmentCounsellingPage() {
         <p className="mt-6 text-center text-sm text-slate-500">
           Want the full learning path, internship & placement too?{" "}
           <Link
-            href="/direct2hire/enroll"
+            href="/courses"
             className="font-semibold text-blue-600 hover:text-blue-700"
           >
-            Get the full Direct2Hire programme for ₹999
+            Browse the AI courses
           </Link>
         </p>
       </div>

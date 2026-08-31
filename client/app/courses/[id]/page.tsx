@@ -37,14 +37,6 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-/**
- * Temporary: every "Enroll now" on a course page sends the user to the
- * Direct2Hire enrollment flow instead of running the per-course checkout.
- * Flip to false to restore the original free/paid enrollment behaviour.
- */
-const REDIRECT_ENROLL_TO_DIRECT2HIRE: boolean = true;
-const DIRECT2HIRE_ENROLL_PATH = "/direct2hire/enroll";
-
 export default function CoursePage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();

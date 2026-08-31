@@ -325,7 +325,7 @@ function CourseEnrollContent({ params }: PageProps) {
           </span>
           <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-900">
             {isUpgrade
-              ? "Upgrade to Direct2Hire"
+              ? "Upgrade to Career+"
               : "Choose Your Learning Track"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -338,10 +338,10 @@ function CourseEnrollContent({ params }: PageProps) {
           <div className="mb-6 flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
             <p className="text-sm text-slate-800">
-              <span className="font-semibold text-slate-900">You own the Basic plan.</span>{" "}
-              Direct2Hire is a separate track with its own mentors, projects and
+              <span className="font-semibold text-slate-900">You own the Practitioner plan.</span>{" "}
+              Career+ is a separate track with its own mentors, projects and
               assessments — it is a full ₹{d2hPrice} programme, and you keep
-              everything from your Basic plan.
+              everything from your Practitioner plan.
             </p>
           </div>
         )}
@@ -373,7 +373,7 @@ function CourseEnrollContent({ params }: PageProps) {
                       Direct Course Learning
                     </h3>
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full shrink-0">
-                      Basic Plan
+                      Practitioner
                     </span>
                     {isUpgrade && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full shrink-0">
@@ -435,7 +435,7 @@ function CourseEnrollContent({ params }: PageProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                      Direct2Hire 5-Step Program
+                      Career+
                     </h3>
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full shrink-0">
                       Full Track
@@ -514,8 +514,8 @@ function CourseEnrollContent({ params }: PageProps) {
                   </p>
                   <p className="text-sm font-bold text-slate-900 truncate">
                     {selectedPlan === "BASIC"
-                      ? `Basic Course Plan (₹${basicPrice})`
-                      : `Direct2Hire 5-Step Program (₹${d2hPrice})`}
+                      ? `Practitioner Plan (₹${basicPrice})`
+                      : `Career+ Full Track (₹${d2hPrice})`}
                   </p>
                 </div>
               </div>

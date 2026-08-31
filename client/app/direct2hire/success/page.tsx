@@ -27,13 +27,13 @@ export default function Direct2HireSuccessPage() {
   useEffect(() => {
     if (!hasHydrated) return;
     if (!user) {
-      router.replace("/login?redirect=/direct2hire/enroll");
+      router.replace("/login?redirect=/courses");
       return;
     }
     if (isLoading) return;
     if (!paid) {
       // Someone landed here without a verified payment — don't claim success.
-      router.replace("/direct2hire/enroll");
+      router.replace("/courses");
       return;
     }
 

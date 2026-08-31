@@ -218,10 +218,10 @@ export function CourseSelectionPanel() {
           </div>
         </div>
         <Link
-          href="/direct2hire/enroll"
+          href="/courses"
           className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
         >
-          Unlock Full Programme — ₹900 <ArrowRight size={14} />
+          Browse Courses <ArrowRight size={14} />
         </Link>
       </motion.div>
     );
