@@ -24,7 +24,7 @@ export function useMarkMockInterviewCompleted(userId: string) {
       toast.success("Mock interview marked as completed");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queryKeys.adminMockInterview(userId),
+          queryKey: ["admin-mock-interview", userId],
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.mockInterview,

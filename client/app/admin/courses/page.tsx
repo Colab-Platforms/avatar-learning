@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
@@ -37,7 +37,7 @@ const LEVEL_COLOR: Record<string, string> = {
     ADVANCED: "text-red-400 bg-red-400/10",
 };
 
-export default function AdminCoursesPage() {
+function AdminCoursesContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();
@@ -421,6 +421,21 @@ export default function AdminCoursesPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AdminCoursesPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-8 space-y-6">
+                    <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
+                    <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+                </div>
+            }
+        >
+            <AdminCoursesContent />
+        </Suspense>
     );
 }
 

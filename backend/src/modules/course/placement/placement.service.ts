@@ -18,6 +18,7 @@ import {
   resolvePlacementCurrentStatus,
   selectQuestionIdsForAttempt,
 } from "./placement.attempt-policy.js";
+import { resolveCourseId } from "../resolveCourse.js";
 
 // ─── Admin Service ────────────────────────────────────────────────────────────
 
@@ -161,12 +162,22 @@ export class AdminPlacementService {
     return prisma.placementAttempt.delete({ where: { id: attemptId } });
   }
 
-  async getStudentPlacementSummary(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
-      where: { userId },
-      select: { selectedCourseId: true, selectedCourse: { select: { id: true, title: true } } },
-    });
-    const courseId = booking?.selectedCourseId;
+  async getStudentPlacementSummary(userId: string, courseId?: string) {
+    let course: { id: string; title: string } | null = null;
+    if (courseId) {
+      course = await prisma.courses.findUnique({
+        where: { id: courseId },
+        select: { id: true, title: true },
+      });
+    } else {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true, selectedCourse: { select: { id: true, title: true } } },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+      course = booking?.selectedCourse ?? null;
+    }
     if (!courseId) {
       return { course: null, assessment: null, summary: null };
     }
@@ -176,7 +187,7 @@ export class AdminPlacementService {
       select: { id: true, title: true, maxAttempts: true, passingScorePercent: true },
     });
     if (!assessment) {
-      return { course: booking.selectedCourse, assessment: null, summary: null };
+      return { course, assessment: null, summary: null };
     }
 
     const allowance = await getPlacementAttemptAllowance(userId, assessment.id);
@@ -192,7 +203,7 @@ export class AdminPlacementService {
     const latestAttempt = history[0] ?? null;
 
     return {
-      course: booking.selectedCourse,
+      course,
       assessment: { id: assessment.id, title: assessment.title },
       summary: {
         ...allowance,
@@ -209,17 +220,21 @@ export class AdminPlacementService {
     };
   }
 
-  async getStudentPlacementAttempts(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
-      where: { userId },
-      select: { selectedCourseId: true },
-    });
-    if (!booking?.selectedCourseId) {
+  async getStudentPlacementAttempts(userId: string, courseId?: string) {
+    if (!courseId) {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+    }
+    if (!courseId) {
       throw new ApiError("Student has not selected a Direct2Hire course", STATUS_CODES.BAD_REQUEST);
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId },
       select: { id: true },
     });
     if (!assessment) {
@@ -229,17 +244,21 @@ export class AdminPlacementService {
     return getPlacementAttemptHistory(userId, assessment.id);
   }
 
-  async getStudentPlacementOverrides(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
-      where: { userId },
-      select: { selectedCourseId: true },
-    });
-    if (!booking?.selectedCourseId) {
+  async getStudentPlacementOverrides(userId: string, courseId?: string) {
+    if (!courseId) {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+    }
+    if (!courseId) {
       throw new ApiError("Student has not selected a Direct2Hire course", STATUS_CODES.BAD_REQUEST);
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId },
       select: { id: true },
     });
     if (!assessment) {
@@ -255,17 +274,26 @@ export class AdminPlacementService {
     });
   }
 
-  async grantExtraAttempts(userId: string, adminUserId: string, data: GrantPlacementAttemptsBody) {
-    const booking = await prisma.counsellingBooking.findUnique({
-      where: { userId },
-      select: { selectedCourseId: true },
-    });
-    if (!booking?.selectedCourseId) {
+  async grantExtraAttempts(
+    userId: string,
+    adminUserId: string,
+    data: GrantPlacementAttemptsBody,
+    courseId?: string,
+  ) {
+    if (!courseId) {
+      const booking = await prisma.counsellingBooking.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { selectedCourseId: true },
+      });
+      courseId = booking?.selectedCourseId ?? undefined;
+    }
+    if (!courseId) {
       throw new ApiError("Student has not selected a Direct2Hire course", STATUS_CODES.BAD_REQUEST);
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId },
       select: { id: true },
     });
     if (!assessment) {
@@ -297,11 +325,18 @@ export class UserPlacementService {
     return attempt;
   }
 
-  private async assertEnrolled(courseId: string, userId: string) {
+  /**
+   * Resolves `courseId` (routes actually pass a slug-or-id — see
+   * resolveCourse.ts) and asserts the user is enrolled in it. Returns the
+   * resolved id so callers filter Prisma queries with a real course id.
+   */
+  private async assertEnrolled(courseId: string, userId: string): Promise<string> {
+    const resolvedCourseId = await resolveCourseId(courseId);
     const enrollment = await prisma.courseUserMapper.findUnique({
-      where: { userId_courseId: { userId, courseId } },
+      where: { userId_courseId: { userId, courseId: resolvedCourseId } },
     });
     if (!enrollment) throw new ApiError("You are not enrolled in this course", STATUS_CODES.FORBIDDEN);
+    return resolvedCourseId;
   }
 
   /** Scores every answer (within the attempt's randomized question set) and closes the attempt. */
@@ -366,10 +401,10 @@ export class UserPlacementService {
   }
 
   async getAssessmentForUser(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const resolvedCourseId = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.placementAssessment.findFirst({
-      where: { courseId, isPublished: true },
+      where: { courseId: resolvedCourseId, isPublished: true },
       select: {
         id: true,
         title: true,
@@ -440,10 +475,10 @@ export class UserPlacementService {
   }
 
   async listAttemptHistory(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const resolvedCourseId = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.placementAssessment.findFirst({
-      where: { courseId, isPublished: true },
+      where: { courseId: resolvedCourseId, isPublished: true },
       select: { id: true },
     });
     if (!assessment) throw new ApiError("Placement assessment not available for this course", STATUS_CODES.NOT_FOUND);
@@ -452,10 +487,10 @@ export class UserPlacementService {
   }
 
   async startAttempt(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const resolvedCourseId = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.placementAssessment.findFirst({
-      where: { courseId, isPublished: true },
+      where: { courseId: resolvedCourseId, isPublished: true },
       include: { questions: { select: { id: true } } },
     });
     if (!assessment) throw new ApiError("Placement assessment not available for this course", STATUS_CODES.NOT_FOUND);

@@ -18,6 +18,7 @@ import {
   Video,
   Tag,
   CalendarClock,
+  Wallet,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -55,7 +56,13 @@ type NavGroup = {
 type NavItem = NavLink | NavGroup;
 
 const NAV: NavItem[] = [
-  { kind: "link", href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  {
+    kind: "link",
+    href: "/admin",
+    label: "Overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
   {
     kind: "link",
     href: "/admin/categories",
@@ -63,7 +70,13 @@ const NAV: NavItem[] = [
     icon: FolderOpen,
     exact: false,
   },
-  { kind: "link", href: "/admin/courses", label: "Courses", icon: BookOpen, exact: false },
+  {
+    kind: "link",
+    href: "/admin/courses",
+    label: "Courses",
+    icon: BookOpen,
+    exact: false,
+  },
   {
     kind: "link",
     href: "/admin/internships",
@@ -84,10 +97,15 @@ const NAV: NavItem[] = [
         icon: Users,
       },
       {
-        href: "/admin/direct2hire/assessment-counselling",
-        label: "Assessment + Counselling",
-        icon: Tag,
+        href: "/admin/direct2hire/basic-enrollments",
+        label: "Basic Plan (₹499)",
+        icon: Wallet,
       },
+      // {
+      //   href: "/admin/direct2hire/assessment-counselling",
+      //   label: "Assessment + Counselling",
+      //   icon: Tag,
+      // },
       {
         href: "/admin/direct2hire/intro-video",
         label: "Intro Video",
@@ -164,16 +182,21 @@ export default function AdminLayout({
   );
   const [contactUnread, setContactUnread] = useState(0);
 
-  const groupItems = NAV.filter((item): item is NavGroup => item.kind === "group");
+  const groupItems = NAV.filter(
+    (item): item is NavGroup => item.kind === "group",
+  );
   const groupActiveMap = Object.fromEntries(
     groupItems.map((g) => [
       g.id,
       pathname === g.href ||
         pathname.startsWith(g.href + "/") ||
-        g.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/")),
+        g.children.some(
+          (c) => pathname === c.href || pathname.startsWith(c.href + "/"),
+        ),
     ]),
   );
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(groupActiveMap);
+  const [openGroups, setOpenGroups] =
+    useState<Record<string, boolean>>(groupActiveMap);
 
   useEffect(() => {
     setOpenGroups((prev) => {
@@ -214,7 +237,9 @@ export default function AdminLayout({
   useEffect(() => {
     if (!authorized) return;
     const fetchUnread = () =>
-      fetchContactUnreadCount().then(setContactUnread).catch(() => {});
+      fetchContactUnreadCount()
+        .then(setContactUnread)
+        .catch(() => {});
     fetchUnread();
     const id = setInterval(fetchUnread, 30_000);
     return () => clearInterval(id);
@@ -237,7 +262,8 @@ export default function AdminLayout({
     if (pathname === href) return true;
     if (pathname.startsWith(href + "/")) {
       const hasMoreSpecificSibling = siblingHrefs.some(
-        (sh) => sh !== href && (pathname === sh || pathname.startsWith(sh + "/"))
+        (sh) =>
+          sh !== href && (pathname === sh || pathname.startsWith(sh + "/")),
       );
       return !hasMoreSpecificSibling;
     }
@@ -328,17 +354,26 @@ export default function AdminLayout({
                   >
                     <Icon
                       size={16}
-                      className={groupActive ? "text-brand-400" : "text-white/35"}
+                      className={
+                        groupActive ? "text-brand-400" : "text-white/35"
+                      }
                     />
                     {item.label}
                   </Link>
                   <button
                     type="button"
                     onClick={() =>
-                      setOpenGroups((prev) => ({ ...prev, [item.id]: !groupOpen }))
+                      setOpenGroups((prev) => ({
+                        ...prev,
+                        [item.id]: !groupOpen,
+                      }))
                     }
                     className="px-2.5 py-2.5 text-white/35 hover:text-white/70 rounded-r-xl"
-                    aria-label={groupOpen ? `Collapse ${item.label}` : `Expand ${item.label}`}
+                    aria-label={
+                      groupOpen
+                        ? `Collapse ${item.label}`
+                        : `Expand ${item.label}`
+                    }
                     aria-expanded={groupOpen}
                   >
                     <ChevronDown
@@ -353,7 +388,7 @@ export default function AdminLayout({
                     {item.children.map((child) => {
                       const active = isChildActive(
                         child.href,
-                        item.children.map((c) => c.href)
+                        item.children.map((c) => c.href),
                       );
                       const ChildIcon = child.icon;
                       return (
@@ -368,7 +403,9 @@ export default function AdminLayout({
                         >
                           <ChildIcon
                             size={14}
-                            className={active ? "text-brand-400" : "text-white/30"}
+                            className={
+                              active ? "text-brand-400" : "text-white/30"
+                            }
                           />
                           {child.label}
                           {active && (

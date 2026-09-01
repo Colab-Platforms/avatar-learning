@@ -28,6 +28,8 @@ export function validateCreateOrder(data: unknown): {
       "any.required": "courseId is required",
       "string.empty": "courseId cannot be empty",
     }),
+    plan: Joi.string().valid("BASIC", "D2H").optional().default("BASIC"),
+    couponCode: Joi.string().trim().optional(),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });
   if (error) return { error: { message: error.message }, value: value as CreateOrderBody };

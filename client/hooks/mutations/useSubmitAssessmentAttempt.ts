@@ -13,9 +13,9 @@ export function useSubmitAssessmentAttempt(attemptId: string, courseId?: string)
       queryClient.invalidateQueries({ queryKey: queryKeys.assessmentAttempt(attemptId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.assessmentResult(attemptId) });
       if (courseId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.assessment(courseId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourse(courseId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourseAll(courseId) });
         queryClient.invalidateQueries({ queryKey: ["assessment-history", courseId] });
       }
     },

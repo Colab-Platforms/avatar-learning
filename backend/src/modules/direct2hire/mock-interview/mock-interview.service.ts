@@ -50,19 +50,36 @@ function emptyToNull(value: string | null | undefined): string | null {
 }
 
 export class MockInterviewService {
-  async getByUserId(userId: string) {
-    return prisma.mockInterview.findUnique({ where: { userId } });
+  async getByUserId(userId: string, courseId?: string) {
+    if (courseId) {
+      return prisma.mockInterview.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+      });
+    }
+    return prisma.mockInterview.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
   }
 
   async getAssessmentContext(
     userId: string,
+    courseId?: string,
   ): Promise<MockInterviewAssessmentContext> {
-    const booking = await prisma.counsellingBooking.findUnique({
-      where: { userId },
-      select: { selectedCourseId: true },
-    });
+    // No explicit course param → fall back to the user's booking course
+    // (fixed at enrollment now), but only once counselling is complete.
+    const targetCourseId = courseId
+      ? courseId
+      : await (async () => {
+          const booking = await prisma.counsellingBooking.findFirst({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+            select: { counsellingCompleted: true, courseId: true },
+          });
+          return booking?.counsellingCompleted ? booking.courseId : undefined;
+        })();
 
-    if (!booking?.selectedCourseId) {
+    if (!targetCourseId) {
       return {
         assessmentCompleted: false,
         assessmentCompletionDate: null,
@@ -72,7 +89,7 @@ export class MockInterviewService {
     }
 
     const assessment = await prisma.placementAssessment.findUnique({
-      where: { courseId: booking.selectedCourseId },
+      where: { courseId: targetCourseId },
       select: { id: true },
     });
 
@@ -132,10 +149,13 @@ export class MockInterviewService {
     };
   }
 
-  async getBundle(userId: string): Promise<MockInterviewBundle> {
+  async getBundle(
+    userId: string,
+    courseId: string,
+  ): Promise<MockInterviewBundle> {
     const [interview, assessment] = await Promise.all([
-      this.getByUserId(userId),
-      this.getAssessmentContext(userId),
+      this.getByUserId(userId, courseId),
+      this.getAssessmentContext(userId, courseId),
     ]);
 
     const activeInterview =
@@ -157,10 +177,13 @@ export class MockInterviewService {
     };
   }
 
-  async getAdminBundle(userId: string): Promise<MockInterviewBundle> {
+  async getAdminBundle(
+    userId: string,
+    courseId?: string,
+  ): Promise<MockInterviewBundle> {
     const [interview, assessment] = await Promise.all([
-      this.getByUserId(userId),
-      this.getAssessmentContext(userId),
+      this.getByUserId(userId, courseId),
+      this.getAssessmentContext(userId, courseId),
     ]);
 
     return {
@@ -175,8 +198,8 @@ export class MockInterviewService {
     };
   }
 
-  async request(userId: string) {
-    const assessment = await this.getAssessmentContext(userId);
+  async request(userId: string, courseId: string) {
+    const assessment = await this.getAssessmentContext(userId, courseId);
     if (!assessment.assessmentCompleted) {
       throw new ApiError(
         "Complete the Pre-Placement Assessment before requesting a mock interview",
@@ -184,7 +207,7 @@ export class MockInterviewService {
       );
     }
 
-    const existing = await this.getByUserId(userId);
+    const existing = await this.getByUserId(userId, courseId);
     if (existing && existing.status !== "CANCELLED") {
       throw new ApiError(
         "A mock interview has already been requested",
@@ -193,12 +216,13 @@ export class MockInterviewService {
     }
 
     if (existing?.status === "CANCELLED") {
-      await prisma.mockInterview.delete({ where: { userId } });
+      await prisma.mockInterview.delete({ where: { id: existing.id } });
     }
 
     const interview = await prisma.mockInterview.create({
       data: {
         userId,
+        courseId,
         status: "REQUESTED",
       },
     });
@@ -206,8 +230,12 @@ export class MockInterviewService {
     return serialize(interview);
   }
 
-  async schedule(userId: string, data: ScheduleMockInterviewInput) {
-    const existing = await this.getByUserId(userId);
+  async schedule(
+    userId: string,
+    data: ScheduleMockInterviewInput,
+    courseId?: string,
+  ) {
+    const existing = await this.getByUserId(userId, courseId);
     if (!existing) {
       throw new ApiError(
         "Student has not requested a mock interview yet",
@@ -234,7 +262,7 @@ export class MockInterviewService {
     const wasAlreadyScheduled = existing.status === "SCHEDULED";
 
     const interview = await prisma.mockInterview.update({
-      where: { userId },
+      where: { id: existing.id },
       data: {
         status: "SCHEDULED",
         interviewerName: data.interviewerName.trim(),
@@ -263,8 +291,8 @@ export class MockInterviewService {
     return serialize(interview);
   }
 
-  async markCompleted(userId: string) {
-    const existing = await this.getByUserId(userId);
+  async markCompleted(userId: string, courseId?: string) {
+    const existing = await this.getByUserId(userId, courseId);
     if (!existing) {
       throw new ApiError("Mock interview not found", STATUS_CODES.NOT_FOUND);
     }
@@ -276,7 +304,7 @@ export class MockInterviewService {
     }
 
     const interview = await prisma.mockInterview.update({
-      where: { userId },
+      where: { id: existing.id },
       data: {
         status: "COMPLETED",
         completedAt: new Date(),
@@ -289,8 +317,9 @@ export class MockInterviewService {
   async publishFeedback(
     userId: string,
     data: PublishMockInterviewFeedbackInput,
+    courseId?: string,
   ) {
-    const existing = await this.getByUserId(userId);
+    const existing = await this.getByUserId(userId, courseId);
     if (!existing) {
       throw new ApiError("Mock interview not found", STATUS_CODES.NOT_FOUND);
     }
@@ -305,7 +334,7 @@ export class MockInterviewService {
     }
 
     const interview = await prisma.mockInterview.update({
-      where: { userId },
+      where: { id: existing.id },
       data: {
         status: "FEEDBACK_PUBLISHED",
         performanceGrade: data.performanceGrade,
@@ -318,8 +347,8 @@ export class MockInterviewService {
     return serialize(interview);
   }
 
-  async cancel(userId: string) {
-    const existing = await this.getByUserId(userId);
+  async cancel(userId: string, courseId?: string) {
+    const existing = await this.getByUserId(userId, courseId);
     if (!existing) {
       throw new ApiError("Mock interview not found", STATUS_CODES.NOT_FOUND);
     }
@@ -334,7 +363,7 @@ export class MockInterviewService {
     }
 
     const interview = await prisma.mockInterview.update({
-      where: { userId },
+      where: { id: existing.id },
       data: {
         status: "CANCELLED",
         cancelledAt: new Date(),

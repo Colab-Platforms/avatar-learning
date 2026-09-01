@@ -24,7 +24,7 @@ export function useCancelMockInterview(userId: string) {
       toast.success("Mock interview cancelled");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queryKeys.adminMockInterview(userId),
+          queryKey: ["admin-mock-interview", userId],
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.mockInterview,

@@ -39,6 +39,7 @@ const createCourseSchema = Joi.object({
     whatYouLearn: Joi.array().items(whatYouLearnItem).optional().default([]),
     audience: Joi.array().items(audienceItem).optional().default([]),
     isDirect2HireCourse: Joi.boolean().default(false),
+    isDirect2HireOnly: Joi.boolean().default(false),
     isComingSoon: Joi.boolean().default(false),
 });
 
@@ -63,6 +64,7 @@ const updateCourseSchema = Joi.object({
     whatYouLearn: Joi.array().items(whatYouLearnItem).optional(),
     audience: Joi.array().items(audienceItem).optional(),
     isDirect2HireCourse: Joi.boolean().optional(),
+    isDirect2HireOnly: Joi.boolean().optional(),
     isComingSoon: Joi.boolean().optional(),
 });
 
@@ -70,6 +72,7 @@ const createLessonSchema = Joi.object({
     weekNumber: Joi.number().integer().min(1).required().messages({ "any.required": "Week number is required" }),
     title: Joi.string().trim().required().messages({ "any.required": "Title is required" }),
     description: Joi.string().trim().optional().allow(""),
+    tier: Joi.string().valid("BASIC", "D2H", "BOTH").optional().default("D2H"),
     modules: Joi.array().items(Joi.string().trim()).optional().default([]),
     duration: Joi.number().integer().min(0).optional(),
     lessonOrder: Joi.number().integer().min(1).required().messages({ "any.required": "Lesson order is required" }),
@@ -82,6 +85,7 @@ const updateLessonSchema = Joi.object({
     weekNumber: Joi.number().integer().min(1).optional(),
     title: Joi.string().trim().optional(),
     description: Joi.string().trim().optional().allow(""),
+    tier: Joi.string().valid("BASIC", "D2H", "BOTH").optional(),
     modules: Joi.array().items(Joi.string().trim()).optional(),
     duration: Joi.number().integer().min(0).optional(),
     lessonOrder: Joi.number().integer().min(1).optional(),

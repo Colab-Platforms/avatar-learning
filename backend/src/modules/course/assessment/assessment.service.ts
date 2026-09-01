@@ -3,6 +3,12 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { Assessment, AssessmentAttempt, AssessmentAttemptStatus } from "@prisma/client";
 import {
+  contentFilterForTrack,
+  ownedContentTiers,
+  resolveTrack,
+} from "../courseTier.js";
+import { resolveCourseId } from "../resolveCourse.js";
+import {
   CreateAssessmentBody,
   UpdateAssessmentBody,
   CreateQuestionBody,
@@ -53,6 +59,10 @@ export class AdminAssessmentService {
 
     const lessonId = data.type === "WEEKLY" ? data.lessonId! : null;
 
+    // Each plan gets its own assessments: the ₹499 plan has a short final
+    // assessment over its own lessons, the ₹4999 plan keeps the weekly series.
+    let tier = data.tier ?? "D2H";
+
     if (data.type === "WEEKLY") {
       const lesson = await prisma.lessons.findUnique({ where: { id: lessonId! } });
       if (!lesson || lesson.courseId !== courseId) {
@@ -62,12 +72,19 @@ export class AdminAssessmentService {
       if (existingWeekly) {
         throw new ApiError("This week already has a weekly assessment", STATUS_CODES.CONFLICT);
       }
+      // A weekly assessment belongs to whichever plan its lesson belongs to;
+      // letting the two disagree would hide the quiz from the only students
+      // who can see the lesson.
+      tier = lesson.tier;
     } else {
       const existingFinal = await prisma.assessment.findFirst({
-        where: { courseId, type: "FINAL" },
+        where: { courseId, type: "FINAL", tier },
       });
       if (existingFinal) {
-        throw new ApiError("This course already has a final assessment", STATUS_CODES.CONFLICT);
+        throw new ApiError(
+          "This course already has a final assessment for this plan",
+          STATUS_CODES.CONFLICT,
+        );
       }
     }
 
@@ -78,6 +95,7 @@ export class AdminAssessmentService {
       data: {
         courseId,
         lessonId,
+        tier,
         type,
         title,
         description: description || null,
@@ -389,16 +407,30 @@ export class UserAssessmentService {
     return attempt;
   }
 
+  /**
+   * Resolves `courseId` (which routes actually pass as a slug-or-id — see
+   * resolveCourse.ts) and asserts the user is enrolled in it. Returns the
+   * enrollment plus the resolved id so callers filter Prisma queries with a
+   * real course id, not the raw param.
+   */
   private async assertEnrolled(courseId: string, userId: string) {
+    const resolvedCourseId = await resolveCourseId(courseId);
     const enrollment = await prisma.courseUserMapper.findUnique({
-      where: { userId_courseId: { userId, courseId } },
+      where: { userId_courseId: { userId, courseId: resolvedCourseId } },
     });
     if (!enrollment) throw new ApiError("You are not enrolled in this course", STATUS_CODES.FORBIDDEN);
-    return enrollment;
+    return { ...enrollment, courseId: resolvedCourseId };
   }
 
   private async assertCanAccessAssessment(assessment: Assessment, userId: string) {
     if (!assessment.isPublished) {
+      throw new ApiError("Assessment not available", STATUS_CODES.NOT_FOUND);
+    }
+
+    // An assessment belonging to the other plan must be invisible, not merely
+    // unlisted — otherwise a ₹499 student could start a ₹4999 assessment by id.
+    const enrollment = await this.assertEnrolled(assessment.courseId, userId);
+    if (!ownedContentTiers(enrollment.tier).includes(assessment.tier)) {
       throw new ApiError("Assessment not available", STATUS_CODES.NOT_FOUND);
     }
 
@@ -623,11 +655,20 @@ export class UserAssessmentService {
     });
   }
 
-  async listAssessmentsForUser(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+  async listAssessmentsForUser(
+    courseId: string,
+    userId: string,
+    requestedTrack?: string | null,
+  ) {
+    const enrollment = await this.assertEnrolled(courseId, userId);
+    const track = resolveTrack(enrollment.tier, requestedTrack);
 
     const assessments = await prisma.assessment.findMany({
-      where: { courseId, isPublished: true },
+      where: {
+        courseId: enrollment.courseId,
+        isPublished: true,
+        tier: contentFilterForTrack(track),
+      },
       include: {
         questions: { select: { id: true } },
         lesson: { select: { id: true, title: true, weekNumber: true } },
@@ -686,10 +727,10 @@ export class UserAssessmentService {
   }
 
   async getAttemptHistory(courseId: string, assessmentId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const enrollment = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.assessment.findFirst({
-      where: { id: assessmentId, courseId, isPublished: true },
+      where: { id: assessmentId, courseId: enrollment.courseId, isPublished: true },
       include: { lesson: { select: { weekNumber: true, title: true } } },
     });
     if (!assessment) throw new ApiError("Assessment not found", STATUS_CODES.NOT_FOUND);
@@ -743,10 +784,10 @@ export class UserAssessmentService {
   }
 
   async startAttempt(courseId: string, userId: string, assessmentId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const enrollment = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.assessment.findFirst({
-      where: { id: assessmentId, courseId, isPublished: true },
+      where: { id: assessmentId, courseId: enrollment.courseId, isPublished: true },
       include: { _count: { select: { questions: true } } },
     });
     if (!assessment) throw new ApiError("Assessment not available for this course", STATUS_CODES.NOT_FOUND);

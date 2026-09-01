@@ -44,9 +44,9 @@ export interface CourseRecommendation {
   id: string;
   userId: string;
   counsellingProfileId: string;
-  recommendedCourseId: string;
-  recommendedCourseSlug: string;
-  recommendedCourseTitle: string;
+  recommendedCourseId: string | null;
+  recommendedCourseSlug: string | null;
+  recommendedCourseTitle: string | null;
   confidenceScore: number | null;
   reasoning: string;
   studentStrengths: string[] | null;
@@ -84,9 +84,13 @@ export type CounsellingSubmissionResponse = {
   recommendationStatus: "ready" | "pending";
 };
 
-export const fetchCounsellingProfile = (): Promise<CounsellingBundle> =>
+export const fetchCounsellingProfile = (
+  courseId?: string,
+): Promise<CounsellingBundle> =>
   apiClient
-    .get("/direct2hire/counselling")
+    .get("/direct2hire/counselling", {
+      params: courseId ? { courseId } : undefined,
+    })
     .then((response) => response.data.data);
 
 export const submitCounsellingProfile = (
@@ -121,16 +125,22 @@ export interface CounsellingBooking {
   updatedAt: string;
 }
 
-export const fetchCounsellingBooking = (): Promise<CounsellingBooking | null> =>
+export const fetchCounsellingBooking = (
+  courseId?: string,
+): Promise<CounsellingBooking | null> =>
   apiClient
-    .get("/direct2hire/counselling/booking")
+    .get("/direct2hire/counselling/booking", {
+      params: courseId ? { courseId } : undefined,
+    })
     .then((response) => response.data.data);
 
 export const createCounsellingBooking = (payload: {
   preferredMode: string;
   notes?: string;
+  courseId?: string;
 }): Promise<CounsellingBooking> =>
   apiClient
     .post("/direct2hire/counselling/booking", payload)
     .then((response) => response.data.data);
+
 

@@ -27,7 +27,7 @@ export function useSubmitCounselling() {
     onSuccess: async (result) => {
       if (result.recommendationStatus === "pending") {
         toast.success(
-          "Assessment submitted. AI recommendation is being generated.",
+          "Assessment submitted. Your AI profile summary is being generated.",
         );
       } else {
         toast.success("Assessment submitted successfully");

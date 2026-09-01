@@ -68,9 +68,13 @@ export interface DBTopic {
   isLocked?: boolean;
 }
 
+export type CourseTier = "BASIC" | "D2H" | "BOTH";
+
 export interface DBLesson {
   id: string;
   weekNumber: number;
+  /** Which plan this week belongs to — ₹499 Basic, ₹4999 D2H, or both. */
+  tier: CourseTier;
   title: string;
   description?: string;
   modules: string[];
@@ -100,18 +104,39 @@ export interface Enrollment {
 }
 
 export interface EnrolledCourseDetail extends DBCourseDetail {
+  /** Progress here is the viewed track's, not the enrolment row's. */
   enrollment: Enrollment;
+  /** Which plan's content this payload contains. */
+  track: CourseTrack;
+  /** Every plan the user owns for this course — one entry, or two after upgrading. */
+  availableTracks: CourseTrack[];
   finalAssessment?: import("./assessmentApi").LessonAssessmentCard | null;
+}
+
+/** A plan you can be studying in. Never "BOTH" — that is an entitlement. */
+export type CourseTrack = "BASIC" | "D2H";
+
+export interface EnrollmentTrack {
+  track: CourseTrack;
+  progress: number;
+  isCompleted: boolean;
 }
 
 export interface MyEnrollment {
   id: string;
   userId: string;
   courseId: string;
+  /** Which plan the user bought — decides where their card links to. */
+  tier: CourseTier;
   enrolledAt: string;
   completedAt: string | null;
   progress: number;
   isCompleted: boolean;
+  /**
+   * One entry per plan owned — two for a BOTH enrolment, each with its own
+   * progress, so the single course card can offer both.
+   */
+  tracks: EnrollmentTrack[];
   course: DBCourse;
 }
 
@@ -144,8 +169,13 @@ export const checkEnrollment = (
 
 export const fetchEnrolledCourseDetail = (
   courseId: string,
+  track?: CourseTrack | null,
 ): Promise<EnrolledCourseDetail> =>
-  apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
+  apiClient
+    .get(`/courses/${courseId}/learn`, {
+      params: track ? { track } : undefined,
+    })
+    .then((r) => r.data.data);
 
 export const markTopicWatched = (topicId: string): Promise<Enrollment> =>
   apiClient
@@ -203,9 +233,11 @@ export const downloadResourceFile = async (
 export const downloadCourseCertificate = async (
   courseId: string,
   filename: string,
+  track?: CourseTrack | null,
 ): Promise<void> => {
   const response = await apiClient.get(`/courses/${courseId}/certificate`, {
     responseType: "blob",
+    params: track ? { track } : undefined,
   });
 
   const disposition = response.headers["content-disposition"] as

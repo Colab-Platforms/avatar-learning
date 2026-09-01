@@ -20,12 +20,12 @@ const INCLUDED = [
   {
     icon: ClipboardCheck,
     title: "AI Assessment",
-    desc: "A short, LLM-evaluated profile questionnaire that maps your interests and goals to the right Direct2Hire learning path.",
+    desc: "A short, LLM-evaluated profile questionnaire that summarises your interests, strengths and growth areas.",
   },
   {
     icon: MessageCircleHeart,
     title: "1-on-1 Counselling",
-    desc: "A 30-minute voice or video session with a career counsellor, plus your personalised course recommendation.",
+    desc: "A 30-minute voice or video session with a career counsellor, informed by your personalised profile summary.",
   },
 ];
 
@@ -168,10 +168,10 @@ export default function AssessmentCounsellingPage() {
         <p className="mt-6 text-center text-sm text-slate-500">
           Want the full learning path, internship & placement too?{" "}
           <Link
-            href="/direct2hire/enroll"
+            href="/courses"
             className="font-semibold text-blue-600 hover:text-blue-700"
           >
-            Get the full Direct2Hire programme for ₹999
+            Browse the AI courses
           </Link>
         </p>
       </div>

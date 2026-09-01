@@ -2,28 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, ChevronLeft, ChevronRight, CheckCircle2, Search } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
   fetchD2HEnrollmentsPaginated,
-  markD2HPaid,
-  markD2HRefunded,
-  type AdminD2HEnrollment,
+  type AdminD2HUserRow,
 } from "@/lib/adminApi";
 import type { PaginatedResponse } from "@/lib/coursesApi";
-import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 export default function AdminDirect2HirePage() {
-  const [enrollments, setEnrollments] = useState<AdminD2HEnrollment[]>([]);
+  const [rows, setRows] = useState<AdminD2HUserRow[]>([]);
   const [pagination, setPagination] = useState<Omit<
-    PaginatedResponse<AdminD2HEnrollment>,
+    PaginatedResponse<AdminD2HUserRow>,
     "data"
   > | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [markingId, setMarkingId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [refundConfirmId, setRefundConfirmId] = useState<string | null>(null);
-  const [refundSuccess, setRefundSuccess] = useState(false);
 
   // Search box value updates every keystroke; debouncedSearch only catches up
   // 400ms after typing stops, so `load` (and the API call it makes) doesn't
@@ -53,7 +47,7 @@ export default function AdminDirect2HirePage() {
         20,
         debouncedSearch || undefined,
       );
-      setEnrollments(res.data);
+      setRows(res.data);
       setPagination({
         currentPage: res.currentPage,
         pageSize: res.pageSize,
@@ -73,39 +67,12 @@ export default function AdminDirect2HirePage() {
     load();
   }, [load]);
 
-  const handleMarkPaid = async (id: string) => {
-    setMarkingId(id);
-    try {
-      await markD2HPaid(id);
-      await load();
-    } catch {
-      setError("Failed to mark enrollment as paid.");
-    } finally {
-      setMarkingId(null);
-    }
-  };
-
-  const handleMarkRefunded = async (id: string) => {
-    setMarkingId(id);
-    try {
-      await markD2HRefunded(id);
-      await load();
-      setRefundConfirmId(null);
-      setRefundSuccess(true);
-    } catch {
-      setError("Failed to mark enrollment as refunded.");
-      setRefundConfirmId(null);
-    } finally {
-      setMarkingId(null);
-    }
-  };
-
   return (
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Enrollments</h1>
         <p className="text-sm text-white/40 mt-0.5">
-          Direct2Hire · {pagination?.totalRecords ?? 0} enrollments
+          Direct2Hire · {pagination?.totalRecords ?? 0} students
         </p>
       </div>
 
@@ -132,9 +99,9 @@ export default function AdminDirect2HirePage() {
       <div className="bg-ink-800 border border-white/6 rounded-2xl overflow-hidden">
         <div className="hidden sm:grid grid-cols-12 px-6 py-2.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest border-b border-white/4">
           <span className="col-span-4">Student</span>
-          <span className="col-span-2">Phone</span>
-          <span className="col-span-2">Status</span>
-          <span className="col-span-4 text-right">Actions</span>
+          <span className="col-span-4">Courses</span>
+          <span className="col-span-2">Total Paid</span>
+          <span className="col-span-2 text-right">Actions</span>
         </div>
 
         {loading ? (
@@ -146,84 +113,63 @@ export default function AdminDirect2HirePage() {
               />
             ))}
           </div>
-        ) : enrollments.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="py-16 text-center">
             <Users size={32} className="mx-auto text-white/15 mb-3" />
             <p className="text-sm text-white/35">
               {debouncedSearch
-                ? `No enrollments match "${debouncedSearch}".`
+                ? `No students match "${debouncedSearch}".`
                 : "No enrollments yet."}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-white/4">
-            {enrollments.map((e) => (
+            {rows.map((row) => (
               <div
-                key={e.id}
-                className="grid grid-cols-12 items-center px-6 py-4 hover:bg-ink-700/25 transition-colors gap-y-1"
+                key={row.user.id}
+                className="grid grid-cols-12 items-center px-6 py-4 hover:bg-ink-700/25 transition-colors gap-y-2"
               >
                 <div className="col-span-12 sm:col-span-4 min-w-0">
                   <p className="text-sm font-semibold text-white/90 truncate">
-                    {`${e.user.firstName ?? ""} ${e.user.lastName ?? ""}`.trim() ||
+                    {`${row.user.firstName ?? ""} ${row.user.lastName ?? ""}`.trim() ||
                       "Unnamed"}
                   </p>
                   <p className="text-[11px] text-white/35 truncate">
-                    {e.user.email}
+                    {row.user.email}
                   </p>
                 </div>
-                <span className="hidden sm:block col-span-2 text-xs text-white/45">
-                  {e.user.phoneNo ?? "—"}
+                <div className="col-span-12 sm:col-span-4 flex flex-wrap gap-1.5">
+                  {row.courses.map((c) => (
+                    <span
+                      key={c.enrollmentId}
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit ${
+                        c.status === "PAID"
+                          ? "bg-brand-500/10 text-brand-400"
+                          : c.status === "REFUNDED"
+                            ? "bg-red-500/10 text-red-400"
+                            : "bg-white/5 text-white/30"
+                      }`}
+                      title={c.status}
+                    >
+                      {c.courseTitle}
+                    </span>
+                  ))}
+                </div>
+                <span className="col-span-8 sm:col-span-2 text-xs text-white/60 font-semibold">
+                  ₹{(row.totalPaid / 100).toLocaleString("en-IN")}
+                  <span className="block text-[10px] text-white/30 font-normal">
+                    {row.courseCount} course{row.courseCount === 1 ? "" : "s"}
+                  </span>
                 </span>
-                <span
-                  className={`col-span-4 sm:col-span-2 text-[10px] font-bold px-2 py-0.5 rounded-full w-fit ${
-                    e.status === "PAID"
-                      ? "bg-brand-500/10 text-brand-400"
-                      : e.status === "REFUNDED"
-                        ? "bg-red-500/10 text-red-400"
-                        : "bg-white/5 text-white/30"
-                  }`}
-                >
-                  {e.status}
-                </span>
-                <div className="col-span-8 sm:col-span-4 flex items-center justify-end gap-2">
+                <div className="col-span-4 sm:col-span-2 flex items-center justify-end gap-2">
                   <Link
-                    href={`/admin/direct2hire/${e.user.id}`}
+                    href={`/admin/direct2hire/enrollments/${row.user.id}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
                                border border-white/10 text-white/70 hover:border-brand-500/40 hover:text-brand-300
                                transition-colors"
                   >
                     View Profile
                   </Link>
-                  {/* <button
-                    onClick={() => handleMarkPaid(e.id)}
-                    disabled={e.status !== "PENDING" || markingId === e.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                               bg-brand-500 text-ink-950 hover:bg-brand-400 transition-colors
-                               disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    {markingId === e.id ? (
-                      <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
-                    ) : e.status === "PENDING" ? (
-                      "Mark Paid"
-                    ) : (
-                      e.status.charAt(0) + e.status.slice(1).toLowerCase()
-                    )}
-                  </button> */}
-                  {e.status === "PAID" && (
-                    <button
-                      onClick={() => setRefundConfirmId(e.id)}
-                      disabled={markingId === e.id}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                                 border border-red-500/30 text-red-300 hover:bg-red-500/10 transition-colors
-                                 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      {markingId === e.id ? (
-                        <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        "Mark Refunded"
-                      )}
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
@@ -257,46 +203,6 @@ export default function AdminDirect2HirePage() {
             Next
             <ChevronRight size={16} />
           </button>
-        </div>
-      )}
-
-      <ConfirmationDialog
-        isOpen={!!refundConfirmId}
-        onClose={() => setRefundConfirmId(null)}
-        onConfirm={async () => {
-          if (refundConfirmId) await handleMarkRefunded(refundConfirmId);
-        }}
-        title="Mark as Refunded"
-        message="This will mark the enrollment as refunded. This action cannot be undone."
-        confirmText="Mark Refunded"
-        variant="danger"
-        isLoading={markingId === refundConfirmId}
-      />
-
-      {refundSuccess && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-          <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
-            onClick={() => setRefundSuccess(false)}
-          />
-          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.15)] z-10 flex flex-col items-center text-center">
-            <div className="mb-4 mt-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 border border-brand-200 text-brand-600">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
-            <h3 className="text-[17px] font-semibold text-text tracking-tight mb-2 px-1">
-              Enrollment Refunded
-            </h3>
-            <p className="text-[13px] text-text-muted leading-relaxed mb-6 px-2">
-              Enrollment has been marked as refunded successfully.
-            </p>
-            <button
-              type="button"
-              onClick={() => setRefundSuccess(false)}
-              className="w-full inline-flex items-center justify-center rounded-xl bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 text-[13px] font-semibold transition-all duration-150 active:scale-[0.98] select-none cursor-pointer"
-            >
-              OK
-            </button>
-          </div>
         </div>
       )}
     </div>

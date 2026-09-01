@@ -1,9 +1,5 @@
 import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import Joi from "joi";
-import {
-  DIRECT2HIRE_COURSE_SLUGS,
-  type Direct2HireCourseCatalogItem,
-} from "./recommendation.constants.js";
 import type {
   AiRecommendationOutput,
   QuestionnaireSnapshot,
@@ -11,28 +7,17 @@ import type {
 
 export const recommendationOutputParser =
   StructuredOutputParser.fromNamesAndDescriptions({
-    recommendedCourseSlug:
-      "The slug of the single best recommended course from the provided catalog",
-    recommendedCourseTitle:
-      "The exact title of the recommended course from the catalog",
-    confidenceScore:
-      "A number between 0 and 1 representing recommendation confidence",
     summary:
-      "A concise 2-3 sentence overview of why this course fits the student",
+      "A concise 2-3 sentence overview of the student — their motivations, direction and readiness",
     reasoning:
-      "Detailed explanation comparing the student's answers with the chosen course",
+      "A detailed narrative analysis of the student's interests, personality, learning style and career direction, drawn from their questionnaire answers",
     studentStrengths:
-      "JSON array of 3-5 student strengths inferred from the questionnaire",
+      "JSON array of 3-5 concrete strengths inferred from the questionnaire",
     growthAreas:
-      "JSON array of 2-4 growth areas the recommended course will help address",
+      "JSON array of 2-4 growth areas or skills the student should focus on developing",
   });
 
 const aiRecommendationSchema = Joi.object({
-  recommendedCourseSlug: Joi.string()
-    .valid(...DIRECT2HIRE_COURSE_SLUGS)
-    .required(),
-  recommendedCourseTitle: Joi.string().trim().required(),
-  confidenceScore: Joi.number().min(0).max(1).required(),
   summary: Joi.string().trim().required(),
   reasoning: Joi.string().trim().required(),
   studentStrengths: Joi.array().items(Joi.string().trim()).min(1).required(),
@@ -99,12 +84,6 @@ export function buildQuestionnaireContext(
   );
 }
 
-export function buildCoursesContext(
-  courses: Direct2HireCourseCatalogItem[],
-): string {
-  return JSON.stringify(courses, null, 2);
-}
-
 export function parseRecommendationResponse(
   rawText: string,
 ): AiRecommendationOutput {
@@ -129,14 +108,12 @@ export function parseRecommendationResponse(
           growthAreas: coerceStringArray(
             (parsed as Record<string, unknown>).growthAreas,
           ),
-          confidenceScore: Number(
-            (parsed as Record<string, unknown>).confidenceScore,
-          ),
         }
       : parsed;
 
   const { error, value } = aiRecommendationSchema.validate(normalized, {
     abortEarly: false,
+    stripUnknown: true,
   });
 
   if (error) {

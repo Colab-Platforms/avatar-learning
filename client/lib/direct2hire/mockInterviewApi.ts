@@ -123,9 +123,12 @@ export const requestMockInterview = (): Promise<MockInterview> =>
 
 export const fetchAdminMockInterview = (
   userId: string,
+  courseId?: string,
 ): Promise<MockInterviewBundle> =>
   apiClient
-    .get(`/admin/direct2hire/students/${userId}/mock-interview`)
+    .get(`/admin/direct2hire/students/${userId}/mock-interview`, {
+      params: courseId ? { courseId } : undefined,
+    })
     .then((r) => r.data.data);
 
 export const scheduleMockInterview = (

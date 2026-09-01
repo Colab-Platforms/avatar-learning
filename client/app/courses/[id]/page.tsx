@@ -9,6 +9,7 @@ import {
   Clock,
   Users,
   BadgeCheck,
+  Sparkles,
   Zap,
   ChevronDown,
   ArrowRight,
@@ -28,18 +29,13 @@ import { useCashfree } from "@/hooks/useCashfree";
 import { useCreateOrder } from "@/hooks/mutations/useCreateOrder";
 import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
 import type { CreateOrderResponse } from "@/lib/paymentApi";
+import { usePricing } from "@/hooks/queries/usePricing";
+import { canUpgrade, hasD2H, type EnrolledTier } from "@/lib/courseTier";
+import { basicCourseRoutes, dashboardRoutes } from "@/lib/dashboardRoutes";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
-
-/**
- * Temporary: every "Enroll now" on a course page sends the user to the
- * Direct2Hire enrollment flow instead of running the per-course checkout.
- * Flip to false to restore the original free/paid enrollment behaviour.
- */
-const REDIRECT_ENROLL_TO_DIRECT2HIRE: boolean = true;
-const DIRECT2HIRE_ENROLL_PATH = "/direct2hire/enroll";
 
 export default function CoursePage({ params }: PageProps) {
   const { id } = use(params);
@@ -60,6 +56,12 @@ export default function CoursePage({ params }: PageProps) {
     course?.id ?? "",
   );
   const enrolled = enrollmentData?.enrolled ?? false;
+  const enrolledTier =
+    (enrollmentData?.enrollment as { tier?: EnrolledTier } | null)?.tier ?? null;
+  // Basic-plan owners get a second CTA to buy the ₹4999 track.
+  const showUpgrade = enrolled && canUpgrade(enrolledTier);
+  const { data: pricing } = usePricing(!!user);
+  const d2hPrice = pricing?.fullProgrammeRupees;
   const isFree = course?.price === 0;
   const isComingSoon = course?.isComingSoon ?? false;
 
@@ -188,7 +190,7 @@ export default function CoursePage({ params }: PageProps) {
     showMsg("");
 
     try {
-      const order = await createOrder(course.id);
+      const order = await createOrder({ courseId: course.id });
 
       if (order.provider === "cashfree") {
         if (!cashfreeLoaded) {
@@ -224,37 +226,22 @@ export default function CoursePage({ params }: PageProps) {
     handleCashfreeCheckout,
   ]);
 
-  const handleEnroll = useCallback(async () => {
-    if (enrolled) {
-      router.push(`/courses/${id}/learn`);
+  const handleEnroll = useCallback((plan: "basic" | "d2h" = "basic") => {
+    // A Basic owner upgrading is the one enrolled user who still goes to
+    // checkout; everyone else already enrolled belongs in the dashboard.
+    if (enrolled && !(plan === "d2h" && showUpgrade)) {
+      // Name the track rather than letting /dashboard/{id} guess: someone who
+      // owns both plans lands on Direct2Hire, a Basic-only owner on Basic.
+      router.push(
+        hasD2H(enrolledTier)
+          ? dashboardRoutes(id).root
+          : basicCourseRoutes(id).root,
+      );
       return;
     }
     if (isComingSoon) return;
-    if (REDIRECT_ENROLL_TO_DIRECT2HIRE) {
-      router.push(DIRECT2HIRE_ENROLL_PATH);
-      return;
-    }
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    if (!course) return;
-    if (isFree) {
-      await handleFreeEnroll();
-    } else {
-      await handlePaidEnroll();
-    }
-  }, [
-    user,
-    enrolled,
-    course,
-    id,
-    router,
-    isFree,
-    isComingSoon,
-    handleFreeEnroll,
-    handlePaidEnroll,
-  ]);
+    router.push(`/courses/${id}/enroll?plan=${plan}`);
+  }, [enrolled, enrolledTier, showUpgrade, isComingSoon, id, router]);
 
   if (isLoading)
     return (
@@ -292,6 +279,20 @@ export default function CoursePage({ params }: PageProps) {
         : "Enroll Now";
 
   const enrollDisabled = enrolling || (isComingSoon && !enrolled);
+
+  // Secondary CTA shown beside "Go to Course" for Basic-plan owners. Rendered
+  // at every CTA block, so keep it one definition.
+  const upgradeButton = (extraClass = "") =>
+    showUpgrade ? (
+      <button
+        onClick={() => handleEnroll("d2h")}
+        className={`inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-500 bg-emerald-50 px-6 py-3 text-sm font-semibold
+                    text-emerald-700 transition-all duration-250 hover:bg-emerald-100 active:scale-95 cursor-pointer ${extraClass}`}
+      >
+        <Sparkles className="h-4 w-4" />
+        Upgrade to Direct2Hire{d2hPrice ? ` — ₹${d2hPrice}` : ""}
+      </button>
+    ) : null;
 
   return (
     <>
@@ -412,7 +413,12 @@ export default function CoursePage({ params }: PageProps) {
                         className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200
                                        bg-emerald-50 px-3 py-0.5 text-[11px] font-semibold text-emerald-700"
                       >
-                        <CheckCircle className="h-3 w-3" /> Enrolled
+                        <CheckCircle className="h-3 w-3" />{" "}
+                        {enrolledTier === "BASIC"
+                          ? "Enrolled — Basic"
+                          : enrolledTier
+                            ? "Enrolled — Direct2Hire"
+                            : "Enrolled"}
                       </span>
                     )}
                   </div>
@@ -465,7 +471,7 @@ export default function CoursePage({ params }: PageProps) {
                     </div>
                   )}
                   <button
-                    onClick={handleEnroll}
+                    onClick={() => handleEnroll("basic")}
                     disabled={enrollDisabled}
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold
                                transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
@@ -483,6 +489,7 @@ export default function CoursePage({ params }: PageProps) {
                       <ArrowRight className="h-4 w-4" />
                     )}
                   </button>
+                  {upgradeButton("w-full")}
                   {/* <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all duration-200 shadow-sm cursor-pointer">
                     <Download className="h-4 w-4" /> Download Syllabus
                   </button> */}
@@ -630,7 +637,7 @@ export default function CoursePage({ params }: PageProps) {
                     {/* CTAs */}
                     <div className="flex flex-col gap-2.5 pt-1">
                       <button
-                        onClick={handleEnroll}
+                        onClick={() => handleEnroll("basic")}
                         disabled={enrollDisabled}
                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
                                    transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
@@ -650,6 +657,7 @@ export default function CoursePage({ params }: PageProps) {
                           <ArrowRight className="h-4 w-4" />
                         )}
                       </button>
+                      {upgradeButton("w-full")}
                       {/* <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 active:scale-98 shadow-sm cursor-pointer">
                         <Download className="h-4 w-4" /> Download Syllabus
                       </button> */}
@@ -915,7 +923,7 @@ export default function CoursePage({ params }: PageProps) {
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
                   <button
-                    onClick={handleEnroll}
+                    onClick={() => handleEnroll("basic")}
                     disabled={enrollDisabled}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold
                                transition-colors disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
@@ -934,6 +942,7 @@ export default function CoursePage({ params }: PageProps) {
                       <ArrowRight className="h-4 w-4" />
                     )}
                   </button>
+                  {upgradeButton()}
                 </div>
               </div>
             </ScrollReveal>
@@ -944,7 +953,7 @@ export default function CoursePage({ params }: PageProps) {
       {/* Sticky bottom bar — mobile only */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 flex gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <button
-          onClick={handleEnroll}
+          onClick={() => handleEnroll("basic")}
           disabled={enrollDisabled}
           className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
                      transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
@@ -959,7 +968,20 @@ export default function CoursePage({ params }: PageProps) {
             <ArrowRight className="h-4 w-4" />
           )}
         </button>
+        {/* Compact label — the full "Upgrade to Direct2Hire" wraps in this bar. */}
+        {showUpgrade && (
+          <button
+            onClick={() => handleEnroll("d2h")}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold
+                       border-2 border-emerald-500 bg-emerald-50 text-emerald-700 transition-all duration-250
+                       hover:bg-emerald-100 active:scale-95 cursor-pointer"
+          >
+            <Sparkles className="h-4 w-4" />
+            Upgrade{d2hPrice ? ` ₹${d2hPrice}` : ""}
+          </button>
+        )}
       </div>
+
 
       <Footer />
     </>

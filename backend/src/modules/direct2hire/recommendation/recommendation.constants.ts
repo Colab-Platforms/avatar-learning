@@ -1,6 +1,6 @@
 import coursesData from "./data/direct2hire-courses.json" with { type: "json" };
 
-export const RECOMMENDATION_PROMPT_VERSION = "direct2hire-course-v1";
+export const RECOMMENDATION_PROMPT_VERSION = "direct2hire-profile-v1";
 
 export interface Direct2HireCourseCatalogItem {
   id: string;

@@ -120,6 +120,7 @@ export const createLesson = (
     weekNumber: number;
     title: string;
     description?: string;
+    tier?: "BASIC" | "D2H" | "BOTH";
     modules?: string[];
     lessonOrder: number;
     isFreePreview?: boolean;
@@ -544,27 +545,34 @@ export const markClaimPaid = (claimId: string): Promise<AdminPartnerClaim> =>
 
 // ─── Direct2Hire ──────────────────────────────────────────────────────────────
 
-export interface AdminD2HEnrollment {
-  id: string;
-  userId: string;
-  status: "PENDING" | "PAID" | "REFUNDED";
-  paidAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+// One row per user — a student who bought multiple D2H courses shows once,
+// with each paid enrollment nested under `courses`.
+export interface AdminD2HUserRow {
   user: {
     id: string;
-    firstName?: string;
-    lastName?: string;
+    firstName?: string | null;
+    lastName?: string | null;
     email: string;
-    phoneNo?: string;
+    phoneNo?: string | null;
   };
+  courseCount: number;
+  totalPaid: number; // paise
+  firstPaidAt: string | null;
+  courses: {
+    enrollmentId: string;
+    courseId: string;
+    courseTitle: string;
+    courseSlug: string;
+    status: "PENDING" | "PAID" | "REFUNDED";
+    paidAt: string | null;
+  }[];
 }
 
 export const fetchD2HEnrollmentsPaginated = (
   page: number = 1,
   pageSize: number = 20,
   search?: string,
-): Promise<PaginatedResponse<AdminD2HEnrollment>> =>
+): Promise<PaginatedResponse<AdminD2HUserRow>> =>
   apiClient
     .get("/admin/direct2hire", {
       params: { page, pageSize, ...(search ? { search } : {}) },
@@ -610,16 +618,79 @@ export const fetchD2HAssessmentCounsellingPaginated = (
     })
     .then((r) => r.data.data);
 
-// ─── Direct2Hire Student Profiles (read-only) ─────────────────────────────────
+// ─── Basic (₹499) plan purchases ────────────────────────────────────────────
 
 export interface AdminD2HPaymentInfo {
   provider: string;
   gatewayOrderId: string;
   gatewayPaymentId: string | null;
   amount: number;
+  productType: string;
   status: string;
   paidAt: string | null;
 }
+
+export interface AdminBasicUserRow {
+  user: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+    phoneNo?: string | null;
+  };
+  courses: {
+    courseId: string;
+    courseTitle: string;
+    courseSlug: string;
+    tier: "BASIC" | "BOTH";
+    enrolledAt: string;
+    progress: number;
+    isCompleted: boolean;
+    payments: AdminD2HPaymentInfo[];
+  }[];
+}
+
+export const fetchD2HBasicEnrollmentsPaginated = (
+  page: number = 1,
+  pageSize: number = 20,
+  search?: string,
+): Promise<PaginatedResponse<AdminBasicUserRow>> =>
+  apiClient
+    .get("/admin/direct2hire/basic-enrollments", {
+      params: { page, pageSize, ...(search ? { search } : {}) },
+    })
+    .then((r) => r.data.data);
+
+export interface AdminBasicStudentProfile {
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phoneNo: string | null;
+    profileImage: string | null;
+    createdAt: string;
+  };
+  courses: {
+    courseId: string;
+    courseTitle: string;
+    courseSlug: string;
+    tier: "BASIC" | "BOTH";
+    enrolledAt: string;
+    progress: number;
+    isCompleted: boolean;
+    payments: AdminD2HPaymentInfo[];
+  }[];
+}
+
+export const fetchD2HBasicStudentProfile = (
+  userId: string,
+): Promise<AdminBasicStudentProfile> =>
+  apiClient
+    .get(`/admin/direct2hire/basic-enrollments/${userId}`)
+    .then((r) => r.data.data);
+
+// ─── Direct2Hire Student Profiles (read-only) ─────────────────────────────────
 
 export interface AdminD2HStudentListItem {
   userId: string;
@@ -665,10 +736,6 @@ export interface AdminD2HStudentProfile {
     paymentCompleted: boolean;
     createdAt: string;
   } | null;
-  enrollment: {
-    status: string;
-    createdAt: string;
-  } | null;
   counselling: {
     careerField: string;
     careerFieldOther: string | null;
@@ -702,24 +769,9 @@ export interface AdminD2HStudentProfile {
     proudMomentOther: string | null;
     personalNote: string | null;
   } | null;
-  booking: {
-    preferredMode: string;
-    notes: string | null;
-    status: string;
-    counsellorName: string | null;
-    meetingLink: string | null;
-    phoneNumber: string | null;
-    scheduledAt: string | null;
-    createdAt: string;
-    counsellingCompleted: boolean;
-    counsellingCompletedAt: string | null;
-    selectedCourseId: string | null;
-    selectedCourseAt: string | null;
-    selectedCourse: { id: string; title: string; slug: string } | null;
-  } | null;
   recommendation: {
-    recommendedCourseTitle: string;
-    recommendedCourseSlug: string;
+    recommendedCourseTitle: string | null;
+    recommendedCourseSlug: string | null;
     confidenceScore: number | null;
     reasoning: string;
     studentStrengths: unknown;
@@ -737,8 +789,35 @@ export interface AdminD2HStudentProfile {
     createdAt: string;
     updatedAt: string;
   } | null;
-  payment: AdminD2HPaymentInfo | null;
   internship?: AdminStudentInternshipProgress;
+  courses: AdminD2HCourseBlock[];
+}
+
+export interface AdminD2HCourseBlock {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  tier: "BASIC" | "D2H" | "BOTH" | null;
+  enrollmentId: string | null;
+  enrollmentStatus: "PENDING" | "PAID" | "REFUNDED" | null;
+  assessmentCounsellingPaidAt: string | null;
+  tracks: { track: "BASIC" | "D2H"; progress: number; isCompleted: boolean }[];
+  payments: AdminD2HPaymentInfo[];
+  booking: {
+    preferredMode: string;
+    notes: string | null;
+    status: string;
+    counsellorName: string | null;
+    meetingLink: string | null;
+    phoneNumber: string | null;
+    scheduledAt: string | null;
+    createdAt: string;
+    counsellingCompleted: boolean;
+    counsellingCompletedAt: string | null;
+    selectedCourseId: string | null;
+    selectedCourseAt: string | null;
+    selectedCourse: { id: string; title: string; slug: string } | null;
+  } | null;
 }
 
 export const fetchD2HStudents = (): Promise<AdminD2HStudentListItem[]> =>

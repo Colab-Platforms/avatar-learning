@@ -28,7 +28,7 @@ export function useScheduleMockInterview(userId: string) {
       toast.success("Mock interview scheduled");
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queryKeys.adminMockInterview(userId),
+          queryKey: ["admin-mock-interview", userId],
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.mockInterview,

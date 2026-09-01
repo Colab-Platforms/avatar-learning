@@ -172,21 +172,43 @@ export interface AdminPlacementOverride {
   };
 }
 
-export const fetchAdminStudentPlacementSummary = (userId: string): Promise<AdminStudentPlacementSummary> =>
-  apiClient.get(`/admin/direct2hire/students/${userId}/placement/summary`).then((r) => r.data.data);
+export const fetchAdminStudentPlacementSummary = (
+  userId: string,
+  courseId?: string,
+): Promise<AdminStudentPlacementSummary> =>
+  apiClient
+    .get(`/admin/direct2hire/students/${userId}/placement/summary`, {
+      params: courseId ? { courseId } : undefined,
+    })
+    .then((r) => r.data.data);
 
 export const fetchAdminStudentPlacementAttempts = (
   userId: string,
+  courseId?: string,
 ): Promise<AdminPlacementAttemptHistoryItem[]> =>
-  apiClient.get(`/admin/direct2hire/students/${userId}/placement/attempts`).then((r) => r.data.data);
+  apiClient
+    .get(`/admin/direct2hire/students/${userId}/placement/attempts`, {
+      params: courseId ? { courseId } : undefined,
+    })
+    .then((r) => r.data.data);
 
-export const fetchAdminStudentPlacementOverrides = (userId: string): Promise<AdminPlacementOverride[]> =>
-  apiClient.get(`/admin/direct2hire/students/${userId}/placement/overrides`).then((r) => r.data.data);
+export const fetchAdminStudentPlacementOverrides = (
+  userId: string,
+  courseId?: string,
+): Promise<AdminPlacementOverride[]> =>
+  apiClient
+    .get(`/admin/direct2hire/students/${userId}/placement/overrides`, {
+      params: courseId ? { courseId } : undefined,
+    })
+    .then((r) => r.data.data);
 
 export const grantAdminStudentPlacementAttempts = (
   userId: string,
   payload: { attemptsGranted: number; reason: string },
+  courseId?: string,
 ): Promise<AdminPlacementOverride> =>
   apiClient
-    .post(`/admin/direct2hire/students/${userId}/placement/grant-attempts`, payload)
+    .post(`/admin/direct2hire/students/${userId}/placement/grant-attempts`, payload, {
+      params: courseId ? { courseId } : undefined,
+    })
     .then((r) => r.data.data);

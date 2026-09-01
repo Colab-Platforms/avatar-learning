@@ -7,6 +7,10 @@ import { CounsellingService } from "../counselling/counselling.service.js";
 import { validateConfirmCounsellingBooking } from "../counselling/counselling.validator.js";
 import { validateSaveCounsellingFeedback } from "../counselling/counselling-feedback.validator.js";
 import { PaymentService } from "@/modules/payment/payment.service.js";
+import {
+    getPaginationOptions,
+    formatPaginationResponse,
+} from "@/utils/paginationUtils.js";
 
 const service = new Direct2HireAdminService();
 const counsellingService = new CounsellingService();
@@ -53,6 +57,58 @@ export const getAllStudents = async (
             false,
             null,
             error.message ?? "Failed to fetch students",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getAllBasicEnrollments = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { page, pageSize, take, skip } = getPaginationOptions(req.query, 20);
+        const search =
+            typeof req.query.search === "string" ? req.query.search.trim() : undefined;
+        const { rows, totalRecords } = await service.getAllBasicEnrollments(
+            take,
+            skip,
+            search || undefined,
+        );
+        const response = formatPaginationResponse(rows, totalRecords, page, pageSize);
+        sendResponse(res, true, response, "Basic plan enrollments fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch basic plan enrollments",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getBasicStudentProfile = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const profile = await service.getBasicStudentProfile(value.userId);
+        sendResponse(res, true, profile, "Basic plan student profile fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch basic plan student profile",
             error.statusCode ?? STATUS_CODES.SERVER_ERROR,
         );
     }

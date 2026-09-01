@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Video, ChevronLeft, ChevronRight, Search } from "lucide-react";
@@ -27,7 +27,7 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-export default function AdminWebinarPage() {
+function AdminWebinarContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -235,5 +235,20 @@ export default function AdminWebinarPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminWebinarPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-6">
+          <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
+          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+        </div>
+      }
+    >
+      <AdminWebinarContent />
+    </Suspense>
   );
 }

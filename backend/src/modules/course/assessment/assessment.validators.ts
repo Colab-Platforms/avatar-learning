@@ -3,6 +3,7 @@ import Joi from "joi";
 const createAssessmentSchema = Joi.object({
   title: Joi.string().trim().required().messages({ "any.required": "Title is required" }),
   description: Joi.string().trim().optional().allow(""),
+  tier: Joi.string().valid("BASIC", "D2H", "BOTH").optional().default("D2H"),
   type: Joi.string().valid("WEEKLY", "FINAL").required().messages({
     "any.required": "Assessment type is required",
     "any.only": "Type must be WEEKLY or FINAL",

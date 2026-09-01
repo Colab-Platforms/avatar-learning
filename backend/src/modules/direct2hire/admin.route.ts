@@ -37,6 +37,14 @@ router.patch(
     direct2hireController.markRefunded,
 );
 router.get(
+    "/direct2hire/basic-enrollments",
+    direct2hireAdminController.getAllBasicEnrollments,
+);
+router.get(
+    "/direct2hire/basic-enrollments/:userId",
+    direct2hireAdminController.getBasicStudentProfile,
+);
+router.get(
     "/direct2hire/students",
     direct2hireAdminController.getAllStudents,
 );

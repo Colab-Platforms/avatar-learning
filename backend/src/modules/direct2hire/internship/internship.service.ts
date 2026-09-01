@@ -222,17 +222,22 @@ export class InternshipService {
     return enrollment;
   }
 
+  // The Direct2Hire course is fixed at enrollment now (no post-counselling
+  // pick), so the booking's own course is the internship course — but only
+  // once counselling is complete, matching the previous "selected course" gate.
   private async getSelectedCourseForUser(userId: string) {
-    const booking = await prisma.counsellingBooking.findUnique({
+    const booking = await prisma.counsellingBooking.findFirst({
       where: { userId },
+      orderBy: { createdAt: "desc" },
       select: {
-        selectedCourseId: true,
-        selectedCourse: {
+        counsellingCompleted: true,
+        course: {
           select: { id: true, title: true, slug: true },
         },
       },
     });
-    return booking?.selectedCourse ?? null;
+    if (!booking?.counsellingCompleted) return null;
+    return booking.course ?? null;
   }
 
   // ─── Admin task CRUD ───────────────────────────────────────────────────────

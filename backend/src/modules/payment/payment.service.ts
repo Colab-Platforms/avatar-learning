@@ -29,8 +29,12 @@ const DIRECT2HIRE_PRICE_RUPEES: number = parseInt(
   process.env.DIRECT2HIRE_PRICE_RUPEES!,
 );
 
+const COURSE_BASIC_PRICE_RUPEES: number = parseInt(
+  process.env.COURSE_BASIC_PRICE_RUPEES || "499",
+);
+
 const DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES: number = parseInt(
-  process.env.DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES!,
+  process.env.DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES || "99",
 );
 
 interface OrderContext {
@@ -79,12 +83,22 @@ async function sendPurchaseConfirmationEmailForOrder(order: {
     if (!user?.email) return;
 
     let productName = "Direct2Hire Programme";
+    let planName: string | undefined;
+
     if (order.productType === "COURSE" && order.courseId) {
       const course = await prisma.courses.findUnique({
         where: { id: order.courseId },
         select: { title: true },
       });
       productName = course?.title ?? "Course";
+      planName = "Basic Course Plan";
+    } else if (order.productType === "DIRECT2HIRE" && order.courseId) {
+      const course = await prisma.courses.findUnique({
+        where: { id: order.courseId },
+        select: { title: true },
+      });
+      productName = course?.title ?? "Course";
+      planName = "Direct2Hire 5-Step Program";
     } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
       productName = "Direct2Hire Assessment + Counselling";
     }
@@ -93,6 +107,7 @@ async function sendPurchaseConfirmationEmailForOrder(order: {
       name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
       amount: order.amount,
       productName,
+      planName,
     });
   } catch (err) {
     console.error(
@@ -319,13 +334,23 @@ async function completePayment(params: {
           data: { assessmentCounsellingPaidAt: new Date() },
         });
       } else if (order.courseId) {
-        await tx.courseUserMapper.upsert({
+        // ₹499 BASIC purchase. Never downgrade an existing D2H mapper — see
+        // direct2hireService.grantCourseAccess for why this is not an upsert.
+        const existingMapper = await tx.courseUserMapper.findUnique({
           where: {
             userId_courseId: { userId: order.userId, courseId: order.courseId },
           },
-          create: { userId: order.userId, courseId: order.courseId },
-          update: {},
+          select: { tier: true },
         });
+        if (!existingMapper) {
+          await tx.courseUserMapper.create({
+            data: {
+              userId: order.userId,
+              courseId: order.courseId,
+              tier: "BASIC",
+            },
+          });
+        }
       }
     });
 
@@ -349,7 +374,9 @@ async function completePayment(params: {
       // partnerService.scheduleReferralCredit). Best-effort — a hiccup here
       // must never fail a payment that has already been captured.
       try {
-        await direct2hireService.grantCourseAccess(order.userId);
+        if (order.courseId) {
+          await direct2hireService.grantCourseAccess(order.userId, order.courseId, "D2H");
+        }
         await partnerService.scheduleReferralCredit(
           order.userId,
           order.direct2hireEnrollmentId,
@@ -382,7 +409,13 @@ export class PaymentService {
   async createOrder(
     userId: string,
     courseId: string,
+    plan: "BASIC" | "D2H" = "BASIC",
+    couponCode?: string,
   ): Promise<CreateOrderResponse> {
+    if (plan === "D2H") {
+      return this.createDirect2HireOrder(userId, courseId, couponCode);
+    }
+
     const course = await prisma.courses.findUnique({ where: { id: courseId } });
     if (!course) throw new ApiError("Course not found", STATUS_CODES.NOT_FOUND);
     if (!course.isPublished)
@@ -392,32 +425,31 @@ export class PaymentService {
         "This course is coming soon",
         STATUS_CODES.BAD_REQUEST,
       );
-    if (course.price <= 0)
-      throw new ApiError(
-        "This course is free — use the enroll endpoint",
-        STATUS_CODES.BAD_REQUEST,
-      );
 
     const existing = await prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId } },
     });
-    if (existing)
+    if (existing) {
       throw new ApiError(
-        "You are already enrolled in this course",
+        existing.tier === "BASIC"
+          ? "You already own the Basic plan for this course"
+          : "You already have full Direct2Hire access to this course",
         STATUS_CODES.CONFLICT,
       );
+    }
 
     const pendingOrder = await prisma.paymentOrder.findFirst({
-      where: { userId, courseId, status: "PENDING" },
+      where: { userId, courseId, productType: "COURSE", status: "PENDING" },
       orderBy: { createdAt: "desc" },
     });
 
+    const priceRupees = COURSE_BASIC_PRICE_RUPEES;
     const provider = getPaymentProvider();
-    const amountInPaise = course.price * 100;
+    const amountInPaise = priceRupees * 100;
     const ctx: OrderContext = {
       productType: "COURSE",
       courseId,
-      description: course.title,
+      description: `${course.title} (Basic Plan)`,
       returnPath: `/courses/${courseId}`,
     };
 
@@ -425,7 +457,7 @@ export class PaymentService {
       return this.createCashfreeOrder(
         userId,
         ctx,
-        course.price,
+        priceRupees,
         amountInPaise,
         pendingOrder?.id,
       );
@@ -441,25 +473,36 @@ export class PaymentService {
 
   async createDirect2HireOrder(
     userId: string,
+    courseId?: string,
     couponCode?: string,
   ): Promise<CreateOrderResponse> {
-    const paidEnrollment = await prisma.direct2HireEnrollment.findFirst({
-      where: { userId, status: "PAID" },
+    let targetCourseId = courseId;
+    if (!targetCourseId) {
+      const defaultCourse = await prisma.courses.findFirst({
+        where: { isDirect2HireCourse: true, isPublished: true },
+        select: { id: true },
+      });
+      targetCourseId = defaultCourse?.id;
+    }
+
+    if (!targetCourseId) {
+      throw new ApiError("No course specified for Direct2Hire enrollment", STATUS_CODES.BAD_REQUEST);
+    }
+
+    const paidEnrollment = await prisma.direct2HireEnrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: targetCourseId } },
     });
-    if (paidEnrollment) {
+    if (paidEnrollment && paidEnrollment.status === "PAID") {
       throw new ApiError(
-        "You have already enrolled in the Direct2Hire programme",
+        "You have already enrolled in the Direct2Hire programme for this course",
         STATUS_CODES.CONFLICT,
       );
     }
 
-    let enrollment = await prisma.direct2HireEnrollment.findFirst({
-      where: { userId, status: "PENDING" },
-      orderBy: { createdAt: "desc" },
-    });
+    let enrollment = paidEnrollment;
     if (!enrollment) {
       enrollment = await prisma.direct2HireEnrollment.create({
-        data: { userId },
+        data: { userId, courseId: targetCourseId },
       });
     }
 
@@ -495,6 +538,11 @@ export class PaymentService {
     if (enrollment.assessmentCounsellingPaidAt) {
       discountRupees += DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES;
     }
+
+    // Note: no credit for the ₹499 Basic plan. The two plans are separate
+    // tracks with their own mentors, videos and assessments, so an upgrader is
+    // buying a second product at full price, not topping up the first.
+
     discountRupees = Math.min(discountRupees, DIRECT2HIRE_PRICE_RUPEES);
 
     const priceRupees = DIRECT2HIRE_PRICE_RUPEES - discountRupees;
@@ -503,9 +551,10 @@ export class PaymentService {
     const amountInPaise = priceRupees * 100;
     const ctx: OrderContext = {
       productType: "DIRECT2HIRE",
+      courseId: targetCourseId,
       direct2hireEnrollmentId: enrollment.id,
-      description: "Direct2Hire Programme",
-      returnPath: "/direct2hire",
+      description: "Direct2Hire 5-Step Programme",
+      returnPath: `/courses/${targetCourseId}`,
       couponId,
       discountAmount: discountRupees * 100,
     };
@@ -536,27 +585,35 @@ export class PaymentService {
    */
   async createDirect2HirePaymentLinkForUser(
     userId: string,
+    courseId?: string,
   ): Promise<CreatePaymentLinkResponse> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new ApiError("User not found", STATUS_CODES.NOT_FOUND);
 
-    const paidEnrollment = await prisma.direct2HireEnrollment.findFirst({
-      where: { userId, status: "PAID" },
+    let targetCourseId = courseId;
+    if (!targetCourseId) {
+      const defaultCourse = await prisma.courses.findFirst({
+        where: { isDirect2HireCourse: true, isPublished: true },
+        select: { id: true },
+      });
+      targetCourseId = defaultCourse?.id;
+    }
+    if (!targetCourseId) throw new ApiError("No course specified", STATUS_CODES.BAD_REQUEST);
+
+    const paidEnrollment = await prisma.direct2HireEnrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: targetCourseId } },
     });
-    if (paidEnrollment) {
+    if (paidEnrollment && paidEnrollment.status === "PAID") {
       throw new ApiError(
         "User has already enrolled in the Direct2Hire programme",
         STATUS_CODES.CONFLICT,
       );
     }
 
-    let enrollment = await prisma.direct2HireEnrollment.findFirst({
-      where: { userId, status: "PENDING" },
-      orderBy: { createdAt: "desc" },
-    });
+    let enrollment = paidEnrollment;
     if (!enrollment) {
       enrollment = await prisma.direct2HireEnrollment.create({
-        data: { userId },
+        data: { userId, courseId: targetCourseId },
       });
     }
 
@@ -616,8 +673,19 @@ export class PaymentService {
 
   async createDirect2HireAssessmentCounsellingOrder(
     userId: string,
+    courseId?: string,
   ): Promise<CreateOrderResponse> {
-    const enrollment = await direct2hireService.getOrCreateEnrollment(userId);
+    let targetCourseId = courseId;
+    if (!targetCourseId) {
+      const defaultCourse = await prisma.courses.findFirst({
+        where: { isDirect2HireCourse: true, isPublished: true },
+        select: { id: true },
+      });
+      targetCourseId = defaultCourse?.id;
+    }
+    if (!targetCourseId) throw new ApiError("No course specified", STATUS_CODES.BAD_REQUEST);
+
+    const enrollment = await direct2hireService.getOrCreateEnrollment(userId, targetCourseId);
 
     if (enrollment.status === "PAID") {
       throw new ApiError(

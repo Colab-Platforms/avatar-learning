@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import type { CourseTrack } from "./coursesApi";
 
 export type AttemptStatus =
   | "IN_PROGRESS"
@@ -227,11 +228,18 @@ export interface AttemptHistoryResponse {
   attempts: AttemptHistoryItem[];
 }
 
-export const fetchAssessments = (courseId: string): Promise<AssessmentSummary[]> =>
-  apiClient.get(`/courses/${courseId}/assessments`).then((r) => {
-    const data = r.data.data;
-    return Array.isArray(data) ? data : data ? [data] : [];
-  });
+export const fetchAssessments = (
+  courseId: string,
+  track?: CourseTrack | null,
+): Promise<AssessmentSummary[]> =>
+  apiClient
+    .get(`/courses/${courseId}/assessments`, {
+      params: track ? { track } : undefined,
+    })
+    .then((r) => {
+      const data = r.data.data;
+      return Array.isArray(data) ? data : data ? [data] : [];
+    });
 
 export const fetchAssessment = (courseId: string): Promise<AssessmentSummary[]> =>
   fetchAssessments(courseId);

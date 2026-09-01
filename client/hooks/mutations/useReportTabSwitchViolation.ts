@@ -12,8 +12,8 @@ export function useReportTabSwitchViolation(attemptId: string, courseId?: string
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.assessmentAttempt(attemptId) });
       if (result.autoSubmitted && courseId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourse(courseId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourseAll(courseId) });
       }
     },
   });

@@ -25,6 +25,15 @@ const publicService = new PublicCourseService();
 
 const param = (req: Request, key: string): string => String(req.params[key]);
 
+/**
+ * `?track=basic|d2h` — which plan's content to read for a student who owns
+ * both. Absent means "the one they'd have seen before tracks existed".
+ */
+const trackParam = (req: Request): string | undefined =>
+  typeof req.query.track === "string" && req.query.track.trim()
+    ? req.query.track.trim()
+    : undefined;
+
 //ADMIN Endpoints
 // Categories
 
@@ -652,6 +661,7 @@ export const getEnrolledCourseDetail = async (
     const course = await publicService.getEnrolledCourseDetail(
       param(req, "courseId"),
       req.user!.id,
+      trackParam(req),
     );
     sendResponse(res, true, course, "Course fetched");
   } catch (err: any) {
@@ -715,6 +725,7 @@ export const downloadCertificate = async (
     const data = await publicService.getCertificateData(
       param(req, "courseId"),
       req.user!.id,
+      trackParam(req),
     );
 
     const doc = buildCertificatePdf(data);

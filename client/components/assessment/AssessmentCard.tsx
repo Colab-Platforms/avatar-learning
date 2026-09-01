@@ -53,7 +53,7 @@ export function AssessmentCard({
     !!assessment.nextAttemptAvailableAt;
 
   const handleCooldownExpire = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
     void queryClient.invalidateQueries({
       queryKey: queryKeys.assessmentDetail(courseId, assessment.id),
     });

@@ -180,7 +180,7 @@ export default function AILearningPage() {
   const handleDownloadCertificate = async (courseId: string, title: string) => {
     setDownloadingCert(true);
     try {
-      await downloadCourseCertificate(courseId, `Certificate - ${title}.pdf`);
+      await downloadCourseCertificate(courseId, `Certificate - ${title}.pdf`, "D2H");
     } catch {
       window.alert("Download failed. Please try again.");
     } finally {
@@ -188,14 +188,15 @@ export default function AILearningPage() {
     }
   };
 
+  // Only ever pick a course the user is actually enrolled in — course[0] can be
+  // an unpaid/browsed course, and querying assessments for it 403s.
   const activeCourseSummary =
     status?.courses.find((c) => c.enrolled && !c.isCompleted) ??
-    status?.courses.find((c) => c.enrolled) ??
-    status?.courses[0];
+    status?.courses.find((c) => c.enrolled);
 
   const { data: course, isLoading: courseLoading } = useLearnCourse(
     activeCourseSummary?.id ?? "",
-    { enabled: Boolean(activeCourseSummary?.id) },
+    { enabled: Boolean(activeCourseSummary?.id), track: "D2H" },
   );
 
   const courseId = activeCourseSummary?.id ?? "";

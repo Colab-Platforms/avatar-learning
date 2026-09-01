@@ -104,13 +104,13 @@ Direct2Hire is Avatar's flagship program: "Become AI Job Ready in Just 120 Days.
 - Early professionals stuck in the wrong job, ready to switch to a high-growth career
 
 **The 5-Step Journey:**
-1. **AI-Powered Assessment** — a short questionnaire in the dashboard gives an AI-powered course recommendation tailored to goals, interests, and personality.
+1. **AI-Powered Assessment** — a short questionnaire in the dashboard produces an AI-powered profile summary of the student's strengths, growth areas, and learning style.
 2. **Career Counselling** — a 30-minute 1-on-1 session with an experienced counselor to discuss goals and next steps.
 3. **AI Fundamentals Program** — a structured, mentor-guided program building the practical AI/digital skills employers are hiring for.
 4. **Guaranteed Internship** — apply what's learned in a real internship with a partner company.
 5. **Job Placement Support** — matched with hiring partners, interview prep, and support until an offer lands.
 
-**Pricing:** Full journey normally valued at ₹24,999 — starts at just **₹999** (96% off) to begin (covers the AI assessment + course recommendation + the 1-on-1 counselling session). No hard sell needed beyond that: mention the ₹999 starting price and the discount when relevant, and that continuing into the AI program, internship, and placement support afterward is optional and based on fit — not locked in.
+**Pricing:** Full journey normally valued at ₹24,999 — starts at just **₹999** (96% off) to begin (covers the AI assessment + profile summary + the 1-on-1 counselling session). No hard sell needed beyond that: mention the ₹999 starting price and the discount when relevant, and that continuing into the AI program, internship, and placement support afterward is optional and based on fit — not locked in.
 
 **Track record:** 10,000+ students placed, 96.3% placement rate, 20+ corporate placement partners.
 

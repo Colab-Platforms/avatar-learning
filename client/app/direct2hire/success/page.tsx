@@ -27,13 +27,13 @@ export default function Direct2HireSuccessPage() {
   useEffect(() => {
     if (!hasHydrated) return;
     if (!user) {
-      router.replace("/login?redirect=/direct2hire/enroll");
+      router.replace("/login?redirect=/courses");
       return;
     }
     if (isLoading) return;
     if (!paid) {
       // Someone landed here without a verified payment — don't claim success.
-      router.replace("/direct2hire/enroll");
+      router.replace("/courses");
       return;
     }
 
@@ -63,8 +63,8 @@ export default function Direct2HireSuccessPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 py-16">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
-          <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 border border-brand-200">
+          <CheckCircle2 className="h-8 w-8 text-brand-500" />
         </div>
 
         <h1 className="text-2xl font-bold text-slate-900">Payment successful!</h1>
@@ -97,9 +97,9 @@ export default function Direct2HireSuccessPage() {
           )}
         </div>
 
-        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 p-3.5 text-left">
-          <Mail className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
-          <p className="text-xs text-blue-800 leading-relaxed">
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-brand-100 bg-brand-50 p-3.5 text-left">
+          <Mail className="h-4 w-4 shrink-0 text-brand-600 mt-0.5" />
+          <p className="text-xs text-slate-700 leading-relaxed">
             A payment receipt has been sent to your email by our payment partner.
             Check your inbox (and spam folder) for the confirmation.
           </p>
@@ -107,7 +107,7 @@ export default function Direct2HireSuccessPage() {
 
         <Link
           href="/dashboard"
-          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 hover:bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white transition-all shadow-md shadow-brand-500/20 cursor-pointer"
         >
           Go to Dashboard
           <ArrowRight className="h-4 w-4" />

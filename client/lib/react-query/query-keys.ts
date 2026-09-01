@@ -2,7 +2,12 @@ export const queryKeys = {
   courses: ["courses"] as const,
   coursesPage: (page: number) => ["courses", page] as const,
   course: (slug: string) => ["course", slug] as const,
-  enrolledCourse: (slug: string) => ["enrolled-course", slug] as const,
+  enrolledCourse: (slug: string, track?: string | null) =>
+    ["enrolled-course", slug, track ?? null] as const,
+  // Prefix form — pass to invalidateQueries to match every track variant of
+  // enrolledCourse(slug, track) in one call (a full-length key with track
+  // omitted only matches the `track: null` cache entry, not "D2H"/"BASIC").
+  enrolledCourseAll: (slug: string) => ["enrolled-course", slug] as const,
   enrollment: (courseId: string) => ["course-enrollment", courseId] as const,
   myEnrollments: ["my-enrollments"] as const,
   internships: ["internships"] as const,
@@ -14,6 +19,7 @@ export const queryKeys = {
   myApplications: ["my-applications"] as const,
   internshipCategories: ["internship-categories"] as const,
   direct2hireStatus: ["direct2hire-status"] as const,
+  pricing: ["pricing"] as const,
   currentUser: ["current-user"] as const,
   profile: ["profile"] as const,
   counsellingProfile: ["counselling-profile"] as const,
@@ -24,13 +30,18 @@ export const queryKeys = {
   adminDirect2hireStudent: (userId: string) =>
     ["admin-direct2hire-student", userId] as const,
   adminDirect2hireStudents: ["admin-direct2hire-students"] as const,
+  adminBasicStudent: (userId: string) =>
+    ["admin-basic-student", userId] as const,
   internshipTasks: ["direct2hire-internship-tasks"] as const,
   internshipTask: (taskId: string) =>
     ["direct2hire-internship-task", taskId] as const,
   adminInternshipTasks: (courseId: string) =>
     ["admin-internship-tasks", courseId] as const,
   assessment: (courseId: string) => ["assessment", courseId] as const,
-  assessments: (courseId: string) => ["assessments", courseId] as const,
+  assessments: (courseId: string, track?: string | null) =>
+    ["assessments", courseId, track ?? null] as const,
+  // Prefix form — see enrolledCourseAll; matches every track variant.
+  assessmentsAll: (courseId: string) => ["assessments", courseId] as const,
   assessmentDetail: (courseId: string, assessmentId: string) =>
     ["assessment", courseId, assessmentId] as const,
   assessmentHistory: (courseId: string, assessmentId: string) =>
@@ -47,14 +58,15 @@ export const queryKeys = {
     ["placement-attempt", attemptId] as const,
   placementResult: (attemptId: string) =>
     ["placement-result", attemptId] as const,
-  adminStudentPlacementSummary: (userId: string) =>
-    ["admin-student-placement-summary", userId] as const,
-  adminStudentPlacementAttempts: (userId: string) =>
-    ["admin-student-placement-attempts", userId] as const,
-  adminStudentPlacementOverrides: (userId: string) =>
-    ["admin-student-placement-overrides", userId] as const,
+  adminStudentPlacementSummary: (userId: string, courseId?: string) =>
+    ["admin-student-placement-summary", userId, courseId ?? null] as const,
+  adminStudentPlacementAttempts: (userId: string, courseId?: string) =>
+    ["admin-student-placement-attempts", userId, courseId ?? null] as const,
+  adminStudentPlacementOverrides: (userId: string, courseId?: string) =>
+    ["admin-student-placement-overrides", userId, courseId ?? null] as const,
   mockInterview: ["mock-interview"] as const,
-  adminMockInterview: (userId: string) => ["admin-mock-interview", userId] as const,
+  adminMockInterview: (userId: string, courseId?: string) =>
+    ["admin-mock-interview", userId, courseId ?? null] as const,
   jobPlacementJourney: ["job-placement-journey"] as const,
   adminJobPlacementJourney: (userId: string) =>
     ["admin-job-placement-journey", userId] as const,

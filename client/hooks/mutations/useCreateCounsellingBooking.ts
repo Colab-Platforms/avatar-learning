@@ -21,8 +21,11 @@ export function useCreateCounsellingBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { preferredMode: string; notes?: string }) =>
-      createCounsellingBooking(payload),
+    mutationFn: (payload: {
+      preferredMode: string;
+      notes?: string;
+      courseId?: string;
+    }) => createCounsellingBooking(payload),
     onSuccess: async () => {
       toast.success("Counselling session requested successfully");
       await queryClient.invalidateQueries({

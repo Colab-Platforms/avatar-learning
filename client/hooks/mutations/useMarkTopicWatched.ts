@@ -10,10 +10,10 @@ export function useMarkTopicWatched(courseId: string) {
   return useMutation({
     mutationFn: (topicId: string) => markTopicWatched(topicId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourse(courseId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourseAll(courseId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.myEnrollments });
       queryClient.invalidateQueries({ queryKey: queryKeys.direct2hireStatus });
-      queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
     },
   });
 }

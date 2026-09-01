@@ -62,8 +62,12 @@ export interface PaymentConfigResponse {
 export const getPaymentConfig = (): Promise<PaymentConfigResponse> =>
   apiClient.get("/payment/config").then((r) => r.data.data);
 
-export const createPaymentOrder = (courseId: string): Promise<CreateOrderResponse> =>
-  apiClient.post("/payment/create-order", { courseId }).then((r) => r.data.data);
+export const createPaymentOrder = (
+  courseId: string,
+  plan: "BASIC" | "D2H" = "BASIC",
+  couponCode?: string,
+): Promise<CreateOrderResponse> =>
+  apiClient.post("/payment/create-order", { courseId, plan, couponCode }).then((r) => r.data.data);
 
 export const verifyPayment = (payload: VerifyPaymentPayload): Promise<void> =>
   apiClient.post("/payment/verify", payload).then((r) => r.data);
@@ -82,6 +86,14 @@ export const createAssessmentCounsellingOrder = (): Promise<CreateOrderResponse>
 
 export const applyCoupon = (code: string): Promise<ApplyCouponResponse> =>
   apiClient.post("/coupons/apply", { code }).then((r) => r.data.data);
+
+export interface PricingResponse {
+  fullProgrammeRupees: number;
+  basicCourseRupees: number;
+}
+
+export const getPricing = (): Promise<PricingResponse> =>
+  apiClient.get("/direct2hire/pricing").then((r) => r.data.data);
 
 export const getReferralDiscount = (): Promise<ReferralDiscountResponse | null> =>
   apiClient.get("/direct2hire/referral-discount").then((r) => r.data.data);

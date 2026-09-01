@@ -27,6 +27,7 @@ import {
   type DBLesson,
   type DBTopic,
   type DBResource,
+  type CourseTrack,
 } from "@/lib/coursesApi";
 import { fetchIntroPlaybackUrl } from "@/lib/direct2hire/introVideoApi";
 import { useLearnCourse } from "@/hooks/queries/useLearnCourse";
@@ -293,7 +294,15 @@ function SidebarAssessmentRow({
   );
 }
 
-export function CourseLearnPlayer({ courseId }: { courseId: string }) {
+export function CourseLearnPlayer({
+  courseId,
+  track,
+}: {
+  courseId: string;
+  /** Which plan's weeks to play. Omitted on the public LMS, where the server
+   *  picks the student's default track. */
+  track?: CourseTrack;
+}) {
   const id = courseId;
   const routes = useLearningRoutes();
   const inDashboard = routes.scope === "dashboard";
@@ -323,9 +332,11 @@ export function CourseLearnPlayer({ courseId }: { courseId: string }) {
     isError,
   } = useLearnCourse(id, {
     enabled: hasHydrated && Boolean(authUser),
+    track,
   });
   const { data: assessments = [] } = useAssessments(id, {
     enabled: hasHydrated && Boolean(authUser),
+    track,
   });
   const {
     data: introData,
