@@ -154,8 +154,8 @@ export interface AdminD2HStudentProfile {
   } | null;
   counselling: Record<string, unknown> | null;
   recommendation: {
-    recommendedCourseTitle: string;
-    recommendedCourseSlug: string;
+    recommendedCourseTitle: string | null;
+    recommendedCourseSlug: string | null;
     confidenceScore: number | null;
     reasoning: string;
     studentStrengths: unknown;

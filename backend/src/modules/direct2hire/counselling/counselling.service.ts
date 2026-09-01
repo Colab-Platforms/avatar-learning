@@ -7,7 +7,6 @@ import type {
   UpdateCounsellingProfileInput,
 } from "./counselling.types.js";
 import { RecommendationService } from "../recommendation/recommendation.service.js";
-import { direct2hireService } from "../direct2hire.service.js";
 import type { CourseRecommendationResponse } from "../recommendation/recommendation.types.js";
 import type { CounsellingProfile, CounsellingBooking } from "@prisma/client";
 import { sendCounsellingScheduleEmail } from "./counselling.mail.js";
@@ -458,6 +457,12 @@ export class CounsellingService {
     return { feedback, booking: updatedBooking };
   }
 
+  // The Direct2Hire course is fixed at enrollment now — students no longer
+  // pick one after counselling. This mirrors the booking's own course as the
+  // "selected" course once counselling is complete and the full programme is
+  // paid (₹99 Assessment + Counselling buyers must still upgrade). Kept on the
+  // same response shape so existing dashboard / placement / sidebar gates work
+  // unchanged.
   async getCourseSelectionState(userId: string) {
     const booking = await this.getBooking(userId);
 
@@ -476,9 +481,17 @@ export class CounsellingService {
       orderBy: { createdAt: "asc" },
     });
 
-    const selectedCourse = booking?.selectedCourseId
-      ? await prisma.courses.findUnique({
-          where: { id: booking.selectedCourseId },
+    const courseId = booking?.selectedCourseId ?? booking?.courseId ?? null;
+
+    let selectedCourse: (typeof availableCourses)[number] | null = null;
+    if (booking?.counsellingCompleted && courseId) {
+      const enrollment = await prisma.direct2HireEnrollment.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+        select: { status: true },
+      });
+      if (enrollment?.status === "PAID") {
+        selectedCourse = await prisma.courses.findUnique({
+          where: { id: courseId },
           select: {
             id: true,
             title: true,
@@ -489,67 +502,18 @@ export class CounsellingService {
             totalWeeks: true,
             whatYouLearn: true,
           },
-        })
-      : null;
+        });
+      }
+    }
 
     return {
       counsellingCompleted: booking?.counsellingCompleted ?? false,
-      selectedCourseId: booking?.selectedCourseId ?? null,
-      selectedCourseAt: booking?.selectedCourseAt ?? null,
+      selectedCourseId: selectedCourse ? courseId : null,
+      selectedCourseAt:
+        booking?.selectedCourseAt ?? booking?.counsellingCompletedAt ?? null,
       selectedCourse,
       availableCourses,
     };
-  }
-
-  async selectCourse(userId: string, courseId: string) {
-    const booking = await this.getBooking(userId);
-    if (!booking || !booking.counsellingCompleted) {
-      throw new ApiError(
-        "Counselling must be completed before selecting a course",
-        STATUS_CODES.FORBIDDEN,
-      );
-    }
-    if (booking.selectedCourseId) {
-      throw new ApiError(
-        "A Direct2Hire course has already been selected",
-        STATUS_CODES.CONFLICT,
-      );
-    }
-
-    // Selecting a course immediately grants access to its content
-    // (courseUserMapper upsert below) — only full ₹999 access may do that.
-    // ₹99 Assessment + Counselling buyers must upgrade first.
-    const enrollment = await direct2hireService.getOrCreateEnrollment(userId, courseId);
-    if (enrollment.status !== "PAID") {
-      throw new ApiError(
-        "Upgrade to the full Direct2Hire programme (₹900 more) to select your course",
-        402,
-      );
-    }
-
-    const course = await prisma.courses.findUnique({ where: { id: courseId } });
-    if (!course || !course.isDirect2HireCourse || !course.isPublished) {
-      throw new ApiError(
-        "Selected course is not a valid Direct2Hire course",
-        STATUS_CODES.NOT_FOUND,
-      );
-    }
-
-    const updatedBooking = await prisma.counsellingBooking.update({
-      where: { id: booking.id },
-      data: {
-        selectedCourseId: course.id,
-        selectedCourseAt: new Date(),
-      },
-    });
-
-    await prisma.courseUserMapper.upsert({
-      where: { userId_courseId: { userId, courseId: course.id } },
-      update: {},
-      create: { userId, courseId: course.id },
-    });
-
-    return { booking: updatedBooking, course };
   }
 
   private async notifyStudentOfSchedule(

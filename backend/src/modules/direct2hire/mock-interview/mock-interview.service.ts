@@ -66,15 +66,18 @@ export class MockInterviewService {
     userId: string,
     courseId?: string,
   ): Promise<MockInterviewAssessmentContext> {
+    // No explicit course param → fall back to the user's booking course
+    // (fixed at enrollment now), but only once counselling is complete.
     const targetCourseId = courseId
       ? courseId
-      : (
-          await prisma.counsellingBooking.findFirst({
+      : await (async () => {
+          const booking = await prisma.counsellingBooking.findFirst({
             where: { userId },
             orderBy: { createdAt: "desc" },
-            select: { selectedCourseId: true },
-          })
-        )?.selectedCourseId;
+            select: { counsellingCompleted: true, courseId: true },
+          });
+          return booking?.counsellingCompleted ? booking.courseId : undefined;
+        })();
 
     if (!targetCourseId) {
       return {

@@ -7,7 +7,8 @@ const router = Router();
 
 router.use(auth("USER"), requireAssessmentCounsellingAccess);
 
+// Read-only: the Direct2Hire course is fixed at enrollment; students no longer
+// pick one after counselling, so there is no POST here anymore.
 router.get("/", courseSelectionController.getState);
-router.post("/", courseSelectionController.select);
 
 export default router;
