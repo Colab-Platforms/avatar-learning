@@ -42,7 +42,9 @@ function buildGate(
     next: NextFunction,
   ): Promise<void> {
     try {
-      const requestedCourseId = readCourseId(req);
+      const requestedCourseId = await direct2hireService.resolveCourseId(
+        readCourseId(req),
+      );
 
       // The client is not required to name a course yet. Almost every student
       // has exactly one D2H enrollment, so resolve it for them; only a student
@@ -88,10 +90,60 @@ function buildGate(
   };
 }
 
-export const requireAssessmentCounsellingAccess = buildGate(
-  hasAssessmentCounsellingAccess,
-  "Purchase the Assessment + Counselling (₹99) or the full Direct2Hire programme for this course to continue.",
-);
+/**
+ * Gate for AI Assessment and Counselling.
+ * AI Assessment is a one-time questionnaire and profile analysis across all
+ * courses. If the user has purchased Direct2Hire (₹4999) or Assessment + Counselling (₹99)
+ * for ANY course, access is granted.
+ */
+export const requireAssessmentCounsellingAccess = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const requestedCourseId = await direct2hireService.resolveCourseId(
+      readCourseId(req),
+    );
+    const userId = req.user!.id;
+
+    let enrollment = null;
+    if (requestedCourseId) {
+      enrollment = await direct2hireService.findEnrollment(userId, requestedCourseId);
+    }
+
+    if (!enrollment || !hasAssessmentCounsellingAccess(enrollment)) {
+      // Fallback: check if the user has any usable enrollment across all courses
+      const usable = await direct2hireService.findUsableEnrollments(userId);
+      if (usable.length > 0) {
+        enrollment = usable[0];
+      }
+    }
+
+    if (!enrollment || !hasAssessmentCounsellingAccess(enrollment)) {
+      sendResponse(
+        res,
+        false,
+        null,
+        "Purchase the Assessment + Counselling (₹99) or the full Direct2Hire programme for this course to continue.",
+        402,
+      );
+      return;
+    }
+
+    req.d2hCourseId = requestedCourseId || enrollment.courseId;
+    next();
+  } catch (err: unknown) {
+    const error = err as { message?: string; statusCode?: number };
+    sendResponse(
+      res,
+      false,
+      null,
+      error.message ?? "Failed to verify access",
+      error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
 
 // Stricter gate for the post-enrollment journey (internship tasks, mock
 // interview, job placement). The ₹99 add-on does NOT unlock these, and neither
@@ -101,3 +153,4 @@ export const requireDirect2HireAccess = buildGate(
   (enrollment) => enrollment.status === "PAID",
   "Enroll in the full Direct2Hire programme for this course to access this.",
 );
+

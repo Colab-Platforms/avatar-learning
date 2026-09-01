@@ -1,5 +1,6 @@
 "use client";
 
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ClipboardCheck, Loader2, ArrowRight } from "lucide-react";
 import CounsellingForm from "@/components/counselling/CounsellingForm";
@@ -8,7 +9,8 @@ import { useCounsellingProfile } from "@/hooks/queries/useCounsellingProfile";
 import { AdvisorIllustration } from "@/components/illustrations/AdvisorIllustration";
 
 export default function AssessmentPage() {
-  const { data, isLoading } = useCounsellingProfile();
+  const { courseId } = useParams<{ courseId: string }>();
+  const { data, isLoading } = useCounsellingProfile(courseId);
   const [showForm, setShowForm] = useState(false);
 
   if (isLoading) {

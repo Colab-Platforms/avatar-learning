@@ -67,9 +67,10 @@ function formatDateTime(value?: string | null) {
 
 export default function CounsellingPage() {
   const { courseId } = useParams<{ courseId: string }>();
-  const { data: booking, isLoading: bookingLoading } = useCounsellingBooking();
+  const { data: booking, isLoading: bookingLoading } =
+    useCounsellingBooking(courseId);
   const { data: counsellingData, isLoading: profileLoading } =
-    useCounsellingProfile();
+    useCounsellingProfile(courseId);
   const createBookingMutation = useCreateCounsellingBooking();
   const { data: d2hStatus } = useD2HStatus();
   const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
@@ -87,6 +88,7 @@ export default function CounsellingPage() {
     createBookingMutation.mutate({
       preferredMode,
       notes,
+      courseId,
     });
   };
 

@@ -25,6 +25,25 @@ export class Direct2HireService {
      * gates run on every request and must not litter the table with PENDING
      * enrollments for courses the user only browsed.
      */
+    /**
+     * Dashboard routes are addressed by slug (/dashboard/:slug/counselling),
+     * while every enrollment and booking lookup keys off the course cuid.
+     * Accept either and hand back the cuid.
+     *
+     * Returns undefined for an unknown identifier so callers fall back to
+     * "no course specified" rather than querying with a value that can never
+     * match — which is exactly how a slug used to silently resolve to no
+     * booking while still passing the access gate.
+     */
+    async resolveCourseId(identifier?: string): Promise<string | undefined> {
+        if (!identifier) return undefined;
+        const course = await prisma.courses.findFirst({
+            where: { OR: [{ id: identifier }, { slug: identifier }] },
+            select: { id: true },
+        });
+        return course?.id;
+    }
+
     async findEnrollment(userId: string, courseId: string) {
         return prisma.direct2HireEnrollment.findUnique({
             where: { userId_courseId: { userId, courseId } },
@@ -32,12 +51,24 @@ export class Direct2HireService {
     }
 
     /**
+     * Return all usable (PAID or assessmentCounsellingPaidAt) Direct2Hire enrollments for a user.
+     */
+    async findUsableEnrollments(userId: string) {
+        const enrollments = await prisma.direct2HireEnrollment.findMany({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+        });
+        return enrollments.filter(
+            (e) => e.status === "PAID" || !!e.assessmentCounsellingPaidAt,
+        );
+    }
+
+    /**
      * Resolve which enrollment an access-gated request is about.
      *
-     * Direct2Hire is per-course now, but the existing /direct2hire pages don't
-     * carry a course id yet. Rather than break them, we resolve the single
-     * enrollment when there is only one and report ambiguity when there is
-     * genuinely a choice to make.
+     * Direct2Hire is per-course now. When a courseId is provided, we fetch that
+     * course's enrollment. When omitted, we resolve to the most recent usable
+     * enrollment so user-level actions (e.g. AI assessment profile) never fail.
      */
     async resolveEnrollmentForRequest(userId: string, courseId?: string) {
         if (courseId) {
@@ -53,15 +84,10 @@ export class Direct2HireService {
         });
 
         if (enrollments.length > 1) {
-            // Only genuinely ambiguous if more than one is actually usable —
-            // abandoned PENDING rows must not lock a paid student out.
             const usable = enrollments.filter(
                 (e) => e.status === "PAID" || !!e.assessmentCounsellingPaidAt,
             );
-            if (usable.length > 1) {
-                return { enrollment: null, ambiguous: true as const };
-            }
-            if (usable.length === 1) {
+            if (usable.length > 0) {
                 return { enrollment: usable[0], ambiguous: false as const };
             }
         }

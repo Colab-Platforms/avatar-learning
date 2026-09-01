@@ -88,11 +88,9 @@ export default function CounsellingRecommendation({
             <p className="text-sm font-semibold text-emerald-800">
               Assessment Completed Successfully
             </p>
-            {submittedAt && (
-              <p className="mt-0.5 text-xs text-emerald-700/80">
-                Submitted on {submittedAt}
-              </p>
-            )}
+            <p className="mt-0.5 text-xs text-emerald-700/80">
+              {submittedAt ? `Submitted on ${submittedAt} · ` : ""}Your assessment is complete and saved across all your enrolled courses.
+            </p>
           </div>
         </div>
         <button

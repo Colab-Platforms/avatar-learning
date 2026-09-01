@@ -95,16 +95,17 @@ export default function DashboardOverviewPage() {
 function D2HOverview() {
   const { user } = useAppSelector((s) => s.auth);
 
+  const { courseId } = useParams<{ courseId: string }>();
   // ─── QUERY HOOKS ────────────────────────────────────────────────────────────
   const { data: d2hStatus, isLoading: d2hLoading } = useD2HStatus();
   const { data: counsellingData, isLoading: profileLoading } =
-    useCounsellingProfile();
-  const { data: booking, isLoading: bookingLoading } = useCounsellingBooking();
+    useCounsellingProfile(courseId);
+  const { data: booking, isLoading: bookingLoading } =
+    useCounsellingBooking(courseId);
   const { data: selection, isLoading: selectionLoading } = useCourseSelection();
   const { data: internshipDashboard, isLoading: internshipLoading } =
     useInternshipTasks();
 
-  const { courseId } = useParams<{ courseId: string }>();
   const { data: placement, isLoading: placementLoading } =
     usePlacementAssessment(courseId);
   const { data: mockInterviewBundle } = useMockInterview();
