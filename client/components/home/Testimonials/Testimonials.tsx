@@ -11,10 +11,13 @@ import { TESTIMONIALS } from "./testimonials.data";
 const SWIPE_THRESHOLD = 48;
 const SWIPE_VELOCITY = 400;
 
+const AUTOPLAY_INTERVAL_MS = 2000;
+
 export function Testimonials({ className }: { className?: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoOpenIndex, setVideoOpenIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const total = TESTIMONIALS.length;
 
@@ -41,6 +44,17 @@ export function Testimonials({ className }: { className?: string }) {
   const goNext = useCallback(() => {
     goToSlide(activeIndex + 1);
   }, [activeIndex, goToSlide]);
+
+  useEffect(() => {
+    if (isPaused || videoOpenIndex !== null) return;
+    const interval = setInterval(() => {
+      setActiveIndex((current) => (current + 1) % total);
+    }, AUTOPLAY_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [activeIndex, isPaused, videoOpenIndex, total]);
+
+  const pauseAutoplay = useCallback(() => setIsPaused(true), []);
+  const resumeAutoplay = useCallback(() => setIsPaused(false), []);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -75,6 +89,10 @@ export function Testimonials({ className }: { className?: string }) {
         className,
       )}
       aria-label="Learner testimonials"
+      onMouseEnter={pauseAutoplay}
+      onMouseLeave={resumeAutoplay}
+      onFocus={pauseAutoplay}
+      onBlur={resumeAutoplay}
     >
       <div className="absolute inset-0 pointer-events-none">
         <div

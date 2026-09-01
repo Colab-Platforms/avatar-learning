@@ -102,7 +102,7 @@ const STATS = [
   },
   {
     icon: Award,
-    value: "96.3%",
+    value: "90.34%",
     label: "Placement Rate",
     subtext: "Highest success ratio in industry",
     badge: "Industry Top",
