@@ -50,12 +50,8 @@ export interface CourseSelectionState {
   availableCourses: CourseSelectionCourse[];
 }
 
+// Read-only now — the Direct2Hire course is fixed at enrollment, so there is
+// no post-counselling course pick. `selectedCourse` mirrors the enrolled
+// course once counselling is complete and the full programme is paid.
 export const fetchCourseSelectionState = (): Promise<CourseSelectionState> =>
   apiClient.get("/direct2hire/course-selection").then((r) => r.data.data);
-
-export const selectDirect2HireCourse = (
-  courseId: string,
-): Promise<{ booking: unknown; course: CourseSelectionCourse }> =>
-  apiClient
-    .post("/direct2hire/course-selection", { courseId })
-    .then((r) => r.data.data);

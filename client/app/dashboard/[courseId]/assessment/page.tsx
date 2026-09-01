@@ -55,9 +55,9 @@ export default function AssessmentPage() {
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 A short, ten-question assessment so we can map your interests,
-                goals, and personality to the right learning path. Takes about 5
-                minutes — then our AI will recommend the best Direct2Hire course
-                for you.
+                goals, and personality. Takes about 5 minutes — then our AI
+                builds a summary of your strengths and growth areas to guide
+                your counselling session.
               </p>
               <button
                 type="button"
@@ -79,11 +79,11 @@ export default function AssessmentPage() {
               <AdvisorIllustration className="h-auto w-full max-w-[240px]" />
             </div>
             <h3 className="mt-4 text-center text-base font-semibold text-slate-800">
-              Personalized Course Match
+              Personalized Profile Summary
             </h3>
             <p className="mt-2 text-center text-xs leading-relaxed text-slate-500">
-              Your answers power an AI recommendation that compares your profile
-              against our Direct2Hire courses and picks the single best fit.
+              Your answers power an AI summary of your strengths, growth areas
+              and learning style — ready for your counsellor before the session.
             </p>
           </div>
         </div>

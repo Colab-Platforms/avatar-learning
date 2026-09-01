@@ -770,8 +770,8 @@ export interface AdminD2HStudentProfile {
     personalNote: string | null;
   } | null;
   recommendation: {
-    recommendedCourseTitle: string;
-    recommendedCourseSlug: string;
+    recommendedCourseTitle: string | null;
+    recommendedCourseSlug: string | null;
     confidenceScore: number | null;
     reasoning: string;
     studentStrengths: unknown;

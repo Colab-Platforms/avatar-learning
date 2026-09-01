@@ -107,7 +107,7 @@ const COUNSELLING_TABS = [
   { key: "career", label: "Career Goals" },
   { key: "ai", label: "AI Awareness" },
   { key: "personality", label: "Personality" },
-  { key: "recommendation", label: "AI Recommendation" },
+  { key: "recommendation", label: "Assessment Analysis" },
 ] as const;
 
 type CounsellingTabKey = (typeof COUNSELLING_TABS)[number]["key"];
@@ -218,53 +218,34 @@ function CounsellingTabs({
       {active === "recommendation" ? (
         !recommendation ? (
           <div className="py-8 text-center text-sm text-white/35 animate-in fade-in duration-200">
-            AI recommendation has not been generated yet.
+            Assessment analysis has not been generated yet.
           </div>
         ) : (
           <div className="space-y-6 animate-in fade-in slide-in-from-left-1 duration-200">
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-brand-500/5 border border-brand-500/10 rounded-2xl p-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center shrink-0">
-                  <Sparkles size={18} className="text-brand-400" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-brand-400 uppercase tracking-widest block mb-0.5">
-                    Recommended Course
-                  </span>
-                  <p className="text-base font-bold text-white">
-                    {recommendation.recommendedCourseTitle}
-                  </p>
-                </div>
+            <div className="flex items-center gap-3 bg-brand-500/5 border border-brand-500/10 rounded-2xl p-5">
+              <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center shrink-0">
+                <Sparkles size={18} className="text-brand-400" />
               </div>
-              
-              {recommendation.confidenceScore != null && (
-                <div className="flex items-center gap-3 bg-white/[0.02] border border-white/5 px-4 py-2 rounded-xl">
-                  <div className="text-right">
-                    <span className="text-[9px] font-semibold text-white/30 uppercase tracking-wider block">Confidence</span>
-                    <span className="text-sm font-bold text-white/90">
-                      {Math.round(recommendation.confidenceScore * 100)}%
-                    </span>
-                  </div>
-                  <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full bg-brand-500 rounded-full"
-                      style={{ width: `${recommendation.confidenceScore * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+              <div>
+                <span className="text-[10px] font-bold text-brand-400 uppercase tracking-widest block mb-0.5">
+                  AI Assessment Analysis
+                </span>
+                <p className="text-sm text-white/60">
+                  Student profile summary from the questionnaire
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Summary</span>
+                <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Overview</span>
                 <div className="text-sm text-white/80 bg-white/[0.01] border border-white/5 rounded-xl p-4 leading-relaxed whitespace-pre-wrap break-words">
                   {recommendation.summary || "—"}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Reasoning</span>
+                <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest block">Profile Analysis</span>
                 <div className="text-sm text-white/80 bg-white/[0.01] border border-white/5 rounded-xl p-4 leading-relaxed whitespace-pre-wrap break-words">
                   {recommendation.reasoning || "—"}
                 </div>

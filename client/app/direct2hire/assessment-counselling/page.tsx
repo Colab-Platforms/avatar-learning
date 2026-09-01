@@ -20,12 +20,12 @@ const INCLUDED = [
   {
     icon: ClipboardCheck,
     title: "AI Assessment",
-    desc: "A short, LLM-evaluated profile questionnaire that maps your interests and goals to the right Direct2Hire learning path.",
+    desc: "A short, LLM-evaluated profile questionnaire that summarises your interests, strengths and growth areas.",
   },
   {
     icon: MessageCircleHeart,
     title: "1-on-1 Counselling",
-    desc: "A 30-minute voice or video session with a career counsellor, plus your personalised course recommendation.",
+    desc: "A 30-minute voice or video session with a career counsellor, informed by your personalised profile summary.",
   },
 ];
 

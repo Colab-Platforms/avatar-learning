@@ -141,7 +141,6 @@ function D2HOverview() {
   // than the global Direct2Hire flow picking a default course.
   const upgradeHref = `/courses/${courseId}/enroll?plan=d2h`;
   const profile = counsellingData?.profile ?? null;
-  const recommendation = counsellingData?.recommendation ?? null;
 
   const hasAssessment = !!profile?.isSubmitted;
   const assessmentProgress = hasAssessment ? 100 : 0;
@@ -222,7 +221,7 @@ function D2HOverview() {
   // ─── DYNAMIC TEXTS & CONTEXTUAL CTA ──────────────────────────────────────────
   const encouragementText = useMemo(() => {
     if (!hasAssessment) {
-      return "Get started by completing your AI Assessment. It takes just 5 minutes and helps us recommend the perfect Direct2Hire learning path for you!";
+      return "Get started by completing your AI Assessment. It takes just 5 minutes and builds a summary of your strengths and growth areas!";
     }
     if (!hasCounselling) {
       if (booking?.status === "CONFIRMED") {
@@ -346,7 +345,7 @@ function D2HOverview() {
         number: 1,
         title: "AI Assessment",
         statusText: hasAssessment
-          ? `Completed - Recommended: ${recommendation?.recommendedCourseTitle || "AI Fundamentals"}`
+          ? "Completed - View your profile summary"
           : "Get started with your profile mapping",
         completed: hasAssessment,
         active: !hasAssessment,
@@ -435,7 +434,6 @@ function D2HOverview() {
     ];
   }, [
     hasAssessment,
-    recommendation,
     hasCounselling,
     hasFullAccess,
     booking,
@@ -619,7 +617,7 @@ function D2HOverview() {
                   href={`/dashboard/${courseId}/assessment`}
                   className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-white/15 active:scale-[0.98]"
                 >
-                  View Assessment Recommendation
+                  View Assessment Summary
                 </Link>
               )}
             </div>
@@ -945,7 +943,7 @@ function D2HOverview() {
               </h3>
               <p className="text-xs text-slate-500 max-w-xs mt-1">
                 {!hasAssessment
-                  ? "Complete your AI Assessment first to get your personalised course recommendation."
+                  ? "Complete your AI Assessment first to get your personalised profile summary."
                   : hasCounselling && !hasFullAccess
                     ? "You've finished assessment + counselling. Upgrade to the full Direct2Hire programme to unlock your course."
                     : "Complete your 1-on-1 Counselling session to select and unlock your course path."}

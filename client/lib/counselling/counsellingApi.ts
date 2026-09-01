@@ -44,9 +44,9 @@ export interface CourseRecommendation {
   id: string;
   userId: string;
   counsellingProfileId: string;
-  recommendedCourseId: string;
-  recommendedCourseSlug: string;
-  recommendedCourseTitle: string;
+  recommendedCourseId: string | null;
+  recommendedCourseSlug: string | null;
+  recommendedCourseTitle: string | null;
   confidenceScore: number | null;
   reasoning: string;
   studentStrengths: string[] | null;

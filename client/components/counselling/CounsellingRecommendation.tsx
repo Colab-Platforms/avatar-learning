@@ -9,20 +9,17 @@ import type {
 import { buildCounsellingResponseSections } from "@/lib/counselling/counsellingResponses";
 import {
   Sparkles,
-  BookOpen,
   TrendingUp,
   Target,
   FileText,
   X,
   Check,
-  Award,
   Calendar,
   ArrowRight,
   Compass,
   AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 
 interface CounsellingRecommendationProps {
   profile: CounsellingProfile;
@@ -188,26 +185,13 @@ export default function CounsellingRecommendation({
           <div className="flex items-center gap-2.5">
             <div>
               <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                AI Analysis & Match
+                Your Assessment Analysis
               </h2>
               <p className="text-xs text-slate-500">
-                Personalized educational recommendation & assessment summary
+                A summary of your profile, strengths and growth areas
               </p>
             </div>
           </div>
-          {/* {recommendation?.confidenceScore && (
-            <div className="hidden sm:flex items-center gap-2 rounded-full bg-blue-50/70 border border-blue-100/50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-2xs">
-              <Award className="h-3.5 w-3.5" />
-              <span>
-                {(() => {
-                  const score = recommendation.confidenceScore;
-                  const pct =
-                    score <= 1 ? Math.round(score * 100) : Math.round(score);
-                  return `${pct}% Match Rate`;
-                })()}
-              </span>
-            </div>
-          )} */}
         </motion.div>
 
         {recommendationStatus === "pending" && !recommendation && (
@@ -218,12 +202,12 @@ export default function CounsellingRecommendation({
             <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-amber-800">
-                AI Recommendation In Progress
+                Analysis In Progress
               </p>
               <p className="mt-1 text-xs text-amber-700 leading-normal">
-                Your responses have been saved successfully. Our AI
-                recommendation is being generated. Please refresh this page
-                after a few moments.
+                Your responses have been saved successfully. Your AI assessment
+                analysis is being generated. Please refresh this page after a
+                few moments.
               </p>
             </div>
           </motion.div>
@@ -231,62 +215,25 @@ export default function CounsellingRecommendation({
 
         {recommendation && (
           <div className="space-y-6 sm:space-y-8">
-            {/* Recommended Course Card */}
-            <motion.div
-              variants={itemVariants}
-              className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-gradient-to-br from-blue-500/5 via-blue-500/0 to-indigo-500/5 p-6 sm:p-8"
-            >
-              {/* Decorative background gradient orb */}
-              <div className="absolute -right-16 -top-16 h-36 w-36 rounded-full bg-blue-400/10 blur-xl pointer-events-none" />
-
-              <div className="flex flex-col sm:flex-row sm:items-start gap-5 relative z-10">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/20">
-                  <BookOpen className="h-6 w-6" />
+            {/* Overview */}
+            {recommendation.summary && (
+              <motion.div
+                variants={itemVariants}
+                className="rounded-2xl border border-blue-500/10 bg-blue-50/40 p-5 sm:p-6"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4.5 w-4.5 text-blue-500" />
+                  <h4 className="text-sm font-bold text-slate-800 tracking-tight">
+                    Overview
+                  </h4>
                 </div>
-                <div className="flex-1 space-y-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                        Recommended Path
-                      </span>
-                      {recommendation.confidenceScore && (
-                        <span className="sm:hidden text-[9px] font-bold uppercase tracking-wider bg-blue-50 border border-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
-                          {(() => {
-                            const score = recommendation.confidenceScore;
-                            const pct =
-                              score <= 1
-                                ? Math.round(score * 100)
-                                : Math.round(score);
-                            return `${pct}% Match`;
-                          })()}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mt-1 text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                      {recommendation.recommendedCourseTitle}
-                    </h3>
-                  </div>
+                <p className="mt-3 text-sm leading-relaxed text-slate-700 font-medium">
+                  {recommendation.summary}
+                </p>
+              </motion.div>
+            )}
 
-                  {/* {recommendation.summary && (
-                    <p className="text-sm leading-relaxed text-slate-600 font-medium">
-                      {recommendation.summary}
-                    </p>
-                  )} */}
-
-                  {/* <div className="pt-1 flex flex-wrap gap-3">
-                    <Link
-                      href="/dashboard/learning"
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                      Start Learning Path
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </div> */}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* AI Reasoning Section */}
+            {/* Profile Analysis Section */}
             <motion.div
               variants={itemVariants}
               className="rounded-xl border border-slate-100 bg-slate-50/50 p-5 sm:p-6"
@@ -294,7 +241,7 @@ export default function CounsellingRecommendation({
               <div className="flex items-center gap-2">
                 <Target className="h-4.5 w-4.5 text-slate-500" />
                 <h4 className="text-sm font-bold text-slate-800 tracking-tight">
-                  AI Reasoning
+                  Profile Analysis
                 </h4>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-slate-600 font-normal">

@@ -26,7 +26,7 @@ import { useCounsellingBooking } from "@/hooks/queries/useCounsellingBooking";
 import { useCounsellingFeedback } from "@/hooks/queries/useCounsellingFeedback";
 import { useCounsellingProfile } from "@/hooks/queries/useCounsellingProfile";
 import { useCreateCounsellingBooking } from "@/hooks/mutations/useCreateCounsellingBooking";
-import { CourseSelectionPanel } from "@/components/counselling/CourseSelectionPanel";
+import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
 import { CounsellorFeedbackCard } from "@/components/counselling/CounsellorFeedbackCard";
 import { cn } from "@/lib/utils";
 import { AnimateOnScroll } from "@/components/ui";
@@ -71,6 +71,8 @@ export default function CounsellingPage() {
   const { data: counsellingData, isLoading: profileLoading } =
     useCounsellingProfile();
   const createBookingMutation = useCreateCounsellingBooking();
+  const { data: d2hStatus } = useD2HStatus();
+  const hasFullAccess = d2hStatus?.enrollment?.status === "PAID";
   const counsellingCompleted = booking?.counsellingCompleted ?? false;
   const { data: feedback, isLoading: feedbackLoading } = useCounsellingFeedback(
     counsellingCompleted,
@@ -113,7 +115,7 @@ export default function CounsellingPage() {
         </h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
           We use your assessment answers to match you with the right
-          counsellor and course recommendation. It only takes about 5
+          counsellor and build your profile summary. It only takes about 5
           minutes.
         </p>
         <Link
@@ -139,14 +141,56 @@ export default function CounsellingPage() {
         </div>
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Choose Your Course
+            Counselling Complete
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Pick the Direct2Hire learning track that&apos;s right for you.
+            Your 1-on-1 session is done. Here&apos;s your counsellor&apos;s
+            feedback — continue with your enrolled course whenever you&apos;re
+            ready.
           </p>
         </div>
         {feedback ? <CounsellorFeedbackCard feedback={feedback} /> : null}
-        <CourseSelectionPanel />
+        {hasFullAccess ? (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <CheckCircle size={20} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  You&apos;re all set
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  Your Direct2Hire course is available in your AI Learning
+                  section.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/learning"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Go to Learning <ArrowRight size={14} />
+            </Link>
+          </div>
+        ) : (
+          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50/60 p-6">
+            <h2 className="text-base font-bold text-slate-900">
+              Unlock the full programme
+            </h2>
+            <p className="mt-1 text-sm text-slate-600 leading-relaxed">
+              Assessment and counselling are done. Learning, internship and
+              placement need the full Direct2Hire programme — you&apos;ve already
+              paid ₹99, so it&apos;s just ₹900 more.
+            </p>
+            <Link
+              href={`/courses/${courseId}/enroll?plan=d2h`}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Upgrade Now <ArrowRight size={14} />
+            </Link>
+          </div>
+        )}
       </div>
     );
   }
