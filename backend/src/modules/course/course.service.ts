@@ -585,9 +585,26 @@ export class PublicCourseService {
   ) {
     const course = await this.resolveCourse(slugOrId);
 
-    const enrollment = await prisma.courseUserMapper.findUnique({
+    let enrollment = await prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId: course.id } },
     });
+
+    // Self-heal: PAID Direct2Hire students used to get their course mapper when
+    // they picked a course after counselling. That step is gone now, so a PAID
+    // enrollment (manual / seeded / out-of-order webhook) can be left without a
+    // mapper — which would 403 the learning player. Grant it on first access.
+    if (!enrollment && course.isDirect2HireCourse) {
+      const d2hEnrollment = await prisma.direct2HireEnrollment.findUnique({
+        where: { userId_courseId: { userId, courseId: course.id } },
+        select: { status: true },
+      });
+      if (d2hEnrollment?.status === "PAID") {
+        enrollment = await prisma.courseUserMapper.create({
+          data: { userId, courseId: course.id, tier: "D2H" },
+        });
+      }
+    }
+
     if (!enrollment)
       throw new ApiError(
         "You are not enrolled in this course",

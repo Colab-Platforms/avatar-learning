@@ -935,9 +935,11 @@ model CourseRecommendation {
   userId               String @unique @map("user_id")
   counsellingProfileId String @unique @map("counselling_profile_id")
 
-  recommendedCourseId    String @map("recommended_course_id")
-  recommendedCourseSlug  String @map("recommended_course_slug")
-  recommendedCourseTitle String @map("recommended_course_title")
+  // Legacy course-pick fields — no longer populated. The assessment now
+  // produces a student profile analysis, not a course recommendation.
+  recommendedCourseId    String? @map("recommended_course_id")
+  recommendedCourseSlug  String? @map("recommended_course_slug")
+  recommendedCourseTitle String? @map("recommended_course_title")
 
   confidenceScore  Float?  @map("confidence_score")
   reasoning        String  @db.Text

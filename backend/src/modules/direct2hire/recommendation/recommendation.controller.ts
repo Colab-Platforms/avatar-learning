@@ -12,7 +12,7 @@ export const getMyRecommendation = async (
 ): Promise<void> => {
   try {
     const recommendation = await service.getResponseByUserId(req.user!.id);
-    sendResponse(res, true, recommendation, "Course recommendation fetched");
+    sendResponse(res, true, recommendation, "Assessment analysis fetched");
   } catch (err: unknown) {
     const error = err as { message?: string; statusCode?: number };
     sendResponse(

@@ -114,9 +114,28 @@ export class Direct2HireService {
             : [];
 
         const courseIds = d2hCourses.map((c) => c.id);
-        const mappers = await prisma.courseUserMapper.findMany({
+        let mappers = await prisma.courseUserMapper.findMany({
             where: { userId, courseId: { in: courseIds } },
         });
+
+        // Self-heal: a PAID enrollment must have a course mapper. Historically
+        // that row was created when the student picked a course after
+        // counselling; that step is gone now, and some PAID users (manual /
+        // seeded / out-of-order webhook) can be left without one. Grant it here
+        // so learning, assessments and internship stop 403-ing.
+        if (enrollment.status === "PAID" && courseIds.length > 0) {
+            const mapped = new Set(mappers.map((m) => m.courseId));
+            const missing = courseIds.filter((id) => !mapped.has(id));
+            if (missing.length > 0) {
+                await Promise.all(
+                    missing.map((id) => this.grantCourseAccess(userId, id, "D2H")),
+                );
+                mappers = await prisma.courseUserMapper.findMany({
+                    where: { userId, courseId: { in: courseIds } },
+                });
+            }
+        }
+
         const mapperByCourseId = new Map(mappers.map((m) => [m.courseId, m]));
 
         const courses: D2HCourseSummary[] = d2hCourses.map((c) => {
