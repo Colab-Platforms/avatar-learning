@@ -4,6 +4,10 @@ export const queryKeys = {
   course: (slug: string) => ["course", slug] as const,
   enrolledCourse: (slug: string, track?: string | null) =>
     ["enrolled-course", slug, track ?? null] as const,
+  // Prefix form — pass to invalidateQueries to match every track variant of
+  // enrolledCourse(slug, track) in one call (a full-length key with track
+  // omitted only matches the `track: null` cache entry, not "D2H"/"BASIC").
+  enrolledCourseAll: (slug: string) => ["enrolled-course", slug] as const,
   enrollment: (courseId: string) => ["course-enrollment", courseId] as const,
   myEnrollments: ["my-enrollments"] as const,
   internships: ["internships"] as const,
@@ -36,6 +40,8 @@ export const queryKeys = {
   assessment: (courseId: string) => ["assessment", courseId] as const,
   assessments: (courseId: string, track?: string | null) =>
     ["assessments", courseId, track ?? null] as const,
+  // Prefix form — see enrolledCourseAll; matches every track variant.
+  assessmentsAll: (courseId: string) => ["assessments", courseId] as const,
   assessmentDetail: (courseId: string, assessmentId: string) =>
     ["assessment", courseId, assessmentId] as const,
   assessmentHistory: (courseId: string, assessmentId: string) =>

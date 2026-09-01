@@ -10,7 +10,7 @@ export function useStartAssessmentAttempt(courseId: string) {
   return useMutation({
     mutationFn: (assessmentId: string) => startAssessmentAttempt(courseId, assessmentId),
     onSuccess: (_data, assessmentId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.assessment(courseId) });
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessmentDetail(courseId, assessmentId),
@@ -18,7 +18,7 @@ export function useStartAssessmentAttempt(courseId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.assessmentHistory(courseId, assessmentId),
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourse(courseId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.enrolledCourseAll(courseId) });
     },
   });
 }

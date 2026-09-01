@@ -34,6 +34,7 @@ import {
   getSubmittedAssessmentIds,
   isAttemptSubmitted,
 } from "./assessment/assessment.service.js";
+import { resolveCourseRecord } from "./resolveCourse.js";
 
 const DOCUMENT_EXTENSIONS = new Set([
   "pdf",
@@ -478,24 +479,7 @@ export class PublicCourseService {
 
   /** Accepts either a UUID (course id) or a slug — always returns the course record */
   private async resolveCourse(slugOrId: string) {
-    const isUuid =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        slugOrId,
-      ) || /^[a-z0-9]{20,}$/.test(slugOrId); // cuid
-
-    const course = isUuid
-      ? await prisma.courses.findFirst({
-          where: {
-            OR: [{ id: slugOrId }, { slug: slugOrId }],
-            isPublished: true,
-          },
-        })
-      : await prisma.courses.findUnique({
-          where: { slug: slugOrId, isPublished: true },
-        });
-
-    if (!course) throw new ApiError("Course not found", STATUS_CODES.NOT_FOUND);
-    return course;
+    return resolveCourseRecord(slugOrId);
   }
 
   async enrollUser(slugOrId: string, userId: string) {

@@ -7,6 +7,7 @@ import {
   ownedContentTiers,
   resolveTrack,
 } from "../courseTier.js";
+import { resolveCourseId } from "../resolveCourse.js";
 import {
   CreateAssessmentBody,
   UpdateAssessmentBody,
@@ -406,12 +407,19 @@ export class UserAssessmentService {
     return attempt;
   }
 
+  /**
+   * Resolves `courseId` (which routes actually pass as a slug-or-id — see
+   * resolveCourse.ts) and asserts the user is enrolled in it. Returns the
+   * enrollment plus the resolved id so callers filter Prisma queries with a
+   * real course id, not the raw param.
+   */
   private async assertEnrolled(courseId: string, userId: string) {
+    const resolvedCourseId = await resolveCourseId(courseId);
     const enrollment = await prisma.courseUserMapper.findUnique({
-      where: { userId_courseId: { userId, courseId } },
+      where: { userId_courseId: { userId, courseId: resolvedCourseId } },
     });
     if (!enrollment) throw new ApiError("You are not enrolled in this course", STATUS_CODES.FORBIDDEN);
-    return enrollment;
+    return { ...enrollment, courseId: resolvedCourseId };
   }
 
   private async assertCanAccessAssessment(assessment: Assessment, userId: string) {
@@ -657,7 +665,7 @@ export class UserAssessmentService {
 
     const assessments = await prisma.assessment.findMany({
       where: {
-        courseId,
+        courseId: enrollment.courseId,
         isPublished: true,
         tier: contentFilterForTrack(track),
       },
@@ -719,10 +727,10 @@ export class UserAssessmentService {
   }
 
   async getAttemptHistory(courseId: string, assessmentId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const enrollment = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.assessment.findFirst({
-      where: { id: assessmentId, courseId, isPublished: true },
+      where: { id: assessmentId, courseId: enrollment.courseId, isPublished: true },
       include: { lesson: { select: { weekNumber: true, title: true } } },
     });
     if (!assessment) throw new ApiError("Assessment not found", STATUS_CODES.NOT_FOUND);
@@ -776,10 +784,10 @@ export class UserAssessmentService {
   }
 
   async startAttempt(courseId: string, userId: string, assessmentId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const enrollment = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.assessment.findFirst({
-      where: { id: assessmentId, courseId, isPublished: true },
+      where: { id: assessmentId, courseId: enrollment.courseId, isPublished: true },
       include: { _count: { select: { questions: true } } },
     });
     if (!assessment) throw new ApiError("Assessment not available for this course", STATUS_CODES.NOT_FOUND);

@@ -53,8 +53,12 @@ function DashboardLayoutContent({
   const tier = useEnrollmentTier(activeCourseId);
   const notEnrolled =
     !!activeCourseId && !enrollmentsFetching && tier === null;
+  // Only block on the *first* resolution of enrollment (tier still unknown) —
+  // once we have it, keep rendering through background refetches (e.g. the
+  // invalidation a "mark topic watched" mutation triggers), or the player
+  // gets torn down and the video restarts.
   const enrollmentPending =
-    !!activeCourseId && (enrollmentsFetching || tier === null);
+    !!activeCourseId && tier === null && enrollmentsFetching;
   // Track protection: a plan the student did not buy must not open, whichever
   // direction they came from. The server refuses the data too; this keeps them
   // out of the shell rather than dropping them on an error state.

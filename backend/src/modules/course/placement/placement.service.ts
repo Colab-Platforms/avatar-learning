@@ -18,6 +18,7 @@ import {
   resolvePlacementCurrentStatus,
   selectQuestionIdsForAttempt,
 } from "./placement.attempt-policy.js";
+import { resolveCourseId } from "../resolveCourse.js";
 
 // ─── Admin Service ────────────────────────────────────────────────────────────
 
@@ -324,11 +325,18 @@ export class UserPlacementService {
     return attempt;
   }
 
-  private async assertEnrolled(courseId: string, userId: string) {
+  /**
+   * Resolves `courseId` (routes actually pass a slug-or-id — see
+   * resolveCourse.ts) and asserts the user is enrolled in it. Returns the
+   * resolved id so callers filter Prisma queries with a real course id.
+   */
+  private async assertEnrolled(courseId: string, userId: string): Promise<string> {
+    const resolvedCourseId = await resolveCourseId(courseId);
     const enrollment = await prisma.courseUserMapper.findUnique({
-      where: { userId_courseId: { userId, courseId } },
+      where: { userId_courseId: { userId, courseId: resolvedCourseId } },
     });
     if (!enrollment) throw new ApiError("You are not enrolled in this course", STATUS_CODES.FORBIDDEN);
+    return resolvedCourseId;
   }
 
   /** Scores every answer (within the attempt's randomized question set) and closes the attempt. */
@@ -393,10 +401,10 @@ export class UserPlacementService {
   }
 
   async getAssessmentForUser(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const resolvedCourseId = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.placementAssessment.findFirst({
-      where: { courseId, isPublished: true },
+      where: { courseId: resolvedCourseId, isPublished: true },
       select: {
         id: true,
         title: true,
@@ -467,10 +475,10 @@ export class UserPlacementService {
   }
 
   async listAttemptHistory(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const resolvedCourseId = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.placementAssessment.findFirst({
-      where: { courseId, isPublished: true },
+      where: { courseId: resolvedCourseId, isPublished: true },
       select: { id: true },
     });
     if (!assessment) throw new ApiError("Placement assessment not available for this course", STATUS_CODES.NOT_FOUND);
@@ -479,10 +487,10 @@ export class UserPlacementService {
   }
 
   async startAttempt(courseId: string, userId: string) {
-    await this.assertEnrolled(courseId, userId);
+    const resolvedCourseId = await this.assertEnrolled(courseId, userId);
 
     const assessment = await prisma.placementAssessment.findFirst({
-      where: { courseId, isPublished: true },
+      where: { courseId: resolvedCourseId, isPublished: true },
       include: { questions: { select: { id: true } } },
     });
     if (!assessment) throw new ApiError("Placement assessment not available for this course", STATUS_CODES.NOT_FOUND);

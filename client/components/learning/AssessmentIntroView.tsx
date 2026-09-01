@@ -44,7 +44,7 @@ export function AssessmentIntroView({
     void queryClient.invalidateQueries({
       queryKey: queryKeys.assessmentDetail(courseId, assessmentId),
     });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
   }, [assessmentId, courseId, queryClient]);
 
   if (!authUser) {

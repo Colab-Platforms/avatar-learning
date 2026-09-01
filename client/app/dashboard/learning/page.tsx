@@ -188,10 +188,11 @@ export default function AILearningPage() {
     }
   };
 
+  // Only ever pick a course the user is actually enrolled in — course[0] can be
+  // an unpaid/browsed course, and querying assessments for it 403s.
   const activeCourseSummary =
     status?.courses.find((c) => c.enrolled && !c.isCompleted) ??
-    status?.courses.find((c) => c.enrolled) ??
-    status?.courses[0];
+    status?.courses.find((c) => c.enrolled);
 
   const { data: course, isLoading: courseLoading } = useLearnCourse(
     activeCourseSummary?.id ?? "",

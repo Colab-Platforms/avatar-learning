@@ -50,7 +50,7 @@ export function AssessmentResultsView({
     void queryClient.invalidateQueries({
       queryKey: queryKeys.assessmentDetail(courseId, result.assessment.id),
     });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.assessments(courseId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.assessmentsAll(courseId) });
   }, [attemptId, courseId, queryClient, result]);
 
   if (!authUser) {
