@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Star,
-  Play,
-  Check,
-  X,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Star, Play, Check, X } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button, ScrollReveal } from "@/components/ui";
@@ -441,13 +434,6 @@ export default function Direct2HirePage() {
                     <p className="text-[13px] font-bold text-text">
                       Pick your plan
                     </p>
-                    <Link
-                      href={ctaHref}
-                      className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-brand-600 hover:text-brand-700"
-                    >
-                      Enroll Now
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-5 max-w-lg">
@@ -491,7 +477,7 @@ export default function Direct2HirePage() {
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={140}>
-                  <div className="flex items-center gap-2 mb-4 max-w-lg">
+                  <div className="hidden sm:flex items-center gap-2 mb-4 max-w-lg">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
                       <Play className="h-3 w-3 fill-current" />
                     </span>

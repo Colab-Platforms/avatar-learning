@@ -71,7 +71,7 @@ function CourseCard({ course }: { course: DBCourse }) {
     course.heroImage || course.bannerImage || course.thumbnail || "";
   const shortDescription = courseShortDescription(course);
   const detailHref = `/courses/${course.slug}`;
-  const enrollHref = `/courses/${course.slug}/enroll`;
+  const enrollHref = `/courses/${course.slug}/enroll?plan=basic`;
 
   return (
     <div

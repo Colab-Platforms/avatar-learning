@@ -174,7 +174,7 @@ export function D2HCoursesSection() {
               "/placeholder.jpg";
             const shortDescription = courseShortDescription(course);
             const detailHref = `/courses/${course.slug}`;
-            const enrollHref = `/courses/${course.slug}/enroll`;
+            const enrollHref = `/courses/${course.slug}/enroll?plan=basic`;
 
             return (
               <ScrollReveal

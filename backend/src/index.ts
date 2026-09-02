@@ -22,6 +22,7 @@ const allowedOrigins = [
   "https://avatar-learning.vercel.app/",
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://avatar-test-theta.vercel.app",
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL?.replace(/\/$/, ""),
 ].filter(Boolean) as string[];
@@ -53,7 +54,7 @@ app.use(
     verify: (req: any, _res: any, buf) => {
       (req as any).rawBody = buf.toString("utf8");
     },
-  })
+  }),
 );
 app.use(sanitizeMiddleware);
 
