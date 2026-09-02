@@ -72,6 +72,17 @@ export const createPaymentOrder = (
 export const verifyPayment = (payload: VerifyPaymentPayload): Promise<void> =>
   apiClient.post("/payment/verify", payload).then((r) => r.data);
 
+// Fire-and-forget: user opened the gateway from course enroll but didn't pay.
+// Backend appends them to the "Abandoned Checkouts" Google Sheet tab.
+export const reportAbandonedCheckout = (
+  courseId: string,
+  plan: "BASIC" | "D2H" = "BASIC",
+): void => {
+  void apiClient
+    .post("/payment/abandoned-checkout", { courseId, plan })
+    .catch(() => {});
+};
+
 export const createDirect2HireOrder = (
   couponCode?: string,
 ): Promise<CreateOrderResponse> =>

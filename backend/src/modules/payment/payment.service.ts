@@ -1,5 +1,5 @@
 import Razorpay from "razorpay";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PaymentProductType } from "@prisma/client";
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
@@ -1023,6 +1023,85 @@ export class PaymentService {
       razorpayBody.courseId,
       razorpayBody.lead,
     );
+  }
+
+  /**
+   * A user opened the payment gateway from course enroll and left without
+   * paying (cancelled the modal, or the attempt failed). Appends one row to
+   * the "Abandoned Checkouts" sheet tab per abandonment — best effort, never
+   * blocks the caller.
+   *
+   * Tracking is per user + course + plan: the ₹499 Basic and Career+ tracks
+   * are separate products, so abandoning each is its own lead, and a repeat
+   * abandonment of the same plan is logged again since it's a fresh signal
+   * for the sales team to chase.
+   *
+   * Skips only when the user has actually paid for / been granted the exact
+   * plan they're abandoning — owning Basic never suppresses a Career+ lead.
+   */
+  async reportAbandonedCheckout(
+    userId: string,
+    courseId: string,
+    plan: "BASIC" | "D2H",
+  ): Promise<void> {
+    const productType: PaymentProductType =
+      plan === "D2H" ? "DIRECT2HIRE" : "COURSE";
+
+    // Already paid for this exact plan on this course — not a lead.
+    const paidOrder = await prisma.paymentOrder.findFirst({
+      where: { userId, courseId, productType, status: "PAID" },
+      select: { id: true },
+    });
+    if (paidOrder) return;
+
+    if (plan === "D2H") {
+      const d2h = await prisma.direct2HireEnrollment.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+        select: { status: true },
+      });
+      if (d2h?.status === "PAID") return;
+    } else {
+      // Owning Basic (or the bundled Both tier) means they already hold it.
+      const mapper = await prisma.courseUserMapper.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+        select: { tier: true },
+      });
+      if (mapper && (mapper.tier === "BASIC" || mapper.tier === "BOTH")) return;
+    }
+
+    const orders = await prisma.paymentOrder.findMany({
+      where: {
+        userId,
+        courseId,
+        productType,
+        status: { in: ["PENDING", "FAILED"] },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { amount: true, createdAt: true },
+      take: 1,
+    });
+    if (orders.length === 0) return;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true, email: true, phoneNo: true },
+    });
+    if (!user?.email) return;
+
+    const course = await prisma.courses.findUnique({
+      where: { id: courseId },
+      select: { title: true },
+    });
+
+    void googleSheetsService.appendAbandonedCheckout({
+      fullName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+      email: user.email,
+      phoneNumber: user.phoneNo,
+      courseTitle: course?.title ?? "Unknown course",
+      plan: plan === "D2H" ? "Career+" : "Basic (₹499)",
+      amountPaise: orders[0].amount,
+      lastAttemptAt: orders[0].createdAt,
+    });
   }
 
   async handleRazorpayWebhook(payload: RazorpayWebhookPayload): Promise<void> {

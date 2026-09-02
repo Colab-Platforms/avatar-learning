@@ -26,7 +26,7 @@ import { useRazorpay } from "@/hooks/useRazorpay";
 import { useCashfree } from "@/hooks/useCashfree";
 import { useCreateOrder } from "@/hooks/mutations/useCreateOrder";
 import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
-import { applyCoupon } from "@/lib/paymentApi";
+import { applyCoupon, reportAbandonedCheckout } from "@/lib/paymentApi";
 import type { CreateOrderResponse } from "@/lib/paymentApi";
 
 interface PageProps {
@@ -266,9 +266,11 @@ function CourseEnrollContent({ params }: PageProps) {
         router.push(`/dashboard/${id}`);
       } else if (msg === "cancelled") {
         setCheckoutStarted(false);
+        if (course) reportAbandonedCheckout(course.id, selectedPlan);
         showMsg("Payment was cancelled. You can retry anytime.", "error");
       } else {
         setCheckoutStarted(false);
+        if (course) reportAbandonedCheckout(course.id, selectedPlan);
         console.error("[Enroll] Checkout error:", err);
         showMsg(msg, "error");
       }

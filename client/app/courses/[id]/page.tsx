@@ -15,6 +15,7 @@ import {
   ArrowRight,
   CheckCircle,
   Loader2,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Button, ScrollReveal, AnimateOnScroll } from "@/components/ui";
@@ -36,6 +37,48 @@ import { basicCourseRoutes, dashboardRoutes } from "@/lib/dashboardRoutes";
 interface PageProps {
   params: Promise<{ id: string }>;
 }
+
+// Same for every course — not fetched from the API.
+const OUTCOME_STATS = [
+  {
+    value: "100%",
+    label: "Placement assistance",
+    desc: "Dedicated support until you are hired.",
+  },
+  {
+    value: "90.34%",
+    label: "Placement rate",
+    desc: "Across learners who complete a program.",
+  },
+  {
+    value: "10,000+",
+    label: "Learners guided",
+    desc: "Counselled into an AI career so far.",
+  },
+  {
+    value: "4.5",
+    label: "Average learner rating",
+    desc: "Rated across our AI programs.",
+  },
+];
+
+const OUTCOME_CARDS = [
+  {
+    eyebrow: "After you complete",
+    title: "Guaranteed internship",
+    desc: "Live projects with our partner companies on strong completion.",
+  },
+  {
+    eyebrow: "Proof of skill",
+    title: "Recognised certificate",
+    desc: "Industry-recognised, issued by NSE-listed Avatar India.",
+  },
+  {
+    eyebrow: "Built in class",
+    title: "Portfolio-ready projects",
+    desc: "Real work you can show in an interview, not exercises.",
+  },
+];
 
 export default function CoursePage({ params }: PageProps) {
   const { id } = use(params);
@@ -816,9 +859,98 @@ export default function CoursePage({ params }: PageProps) {
                   </AnimateOnScroll>
                 ))}
               </div>
+
+              <div className="mt-6 max-w-3xl mx-auto flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3.5">
+                <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-[12.5px] text-slate-500 leading-relaxed">
+                  <strong className="text-slate-600 font-semibold">
+                    Note:
+                  </strong>{" "}
+                  This week-by-week structure is the ₹4,999 plan. The ₹499
+                  plan covers the same program in a shorter, simplified
+                  recorded format.
+                </p>
+              </div>
             </div>
           </section>
         )}
+
+        {/* ── OUTCOME ── */}
+        <section
+          className="py-10 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FFFFFF" }}
+        >
+          <div className="relative container-x">
+            <ScrollReveal animation="fade-up" duration={700}>
+              <div className="text-center mb-10">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
+                  Outcomes
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-850">
+                  What is the outcome?
+                </h2>
+                <p className="mt-3 text-slate-500 max-w-xl mx-auto">
+                  Skills you can prove, and support to put them to work.
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              {OUTCOME_STATS.map((s, i) => (
+                <AnimateOnScroll key={s.label} delay={i * 80}>
+                  <div className="h-full rounded-2xl border border-slate-200 p-5">
+                    <p className="text-3xl font-bold text-blue-600">
+                      {s.value}
+                    </p>
+                    <p className="mt-1 font-semibold text-[13px] text-slate-800">
+                      {s.label}
+                    </p>
+                    <p className="mt-1 text-[12.5px] text-slate-500 leading-relaxed">
+                      {s.desc}
+                    </p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-4">
+              {OUTCOME_CARDS.map((c, i) => (
+                <AnimateOnScroll key={c.title} delay={i * 80}>
+                  <div
+                    className="h-full rounded-2xl p-6 text-white"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                    }}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
+                      {c.eyebrow}
+                    </p>
+                    <h3 className="text-[17px] font-bold mb-1.5">
+                      {c.title}
+                    </h3>
+                    <p className="text-[13px] text-white/80 leading-relaxed">
+                      {c.desc}
+                    </p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
+            </div>
+
+            <div className="max-w-3xl mx-auto flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3.5">
+              <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-[12.5px] text-slate-500 leading-relaxed">
+                <strong className="text-slate-600 font-semibold">
+                  Note:
+                </strong>{" "}
+                Guaranteed internship, 100% placement assistance, and
+                portfolio-ready projects are included with the ₹4,999 plan.
+                The ₹499 plan includes a week of recorded sessions, followed
+                by an assessment and the certificate.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* ── WHO THIS IS FOR ── */}
         {audience.length > 0 && (

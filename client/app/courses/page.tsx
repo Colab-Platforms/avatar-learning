@@ -49,13 +49,6 @@ const LEVEL_BADGES: Record<string, string> = {
   ADVANCED: "CAREER +",
 };
 
-const COURSE_LANGUAGES: Record<string, string> = {
-  "ai-fundamentals-chatgpt-mastery": "Hinglish",
-  "ai-mastery-for-social-media-executives": "Hinglish",
-  "prompt-engineering-advanced": "Hinglish",
-  "building-ai-agents": "English & Hindi",
-};
-
 function courseShortDescription(course: DBCourse) {
   const fromApi = course.description?.trim();
   if (!fromApi)
@@ -93,7 +86,6 @@ function CourseCard({ course }: { course: DBCourse }) {
   const levelLabel = LEVEL_BADGES[course.level] ?? course.level;
   const coverImage =
     course.heroImage || course.bannerImage || course.thumbnail || "";
-  const language = COURSE_LANGUAGES[course.slug] || "Hinglish";
   const shortDescription = courseShortDescription(course);
   const detailHref = `/courses/${course.slug}`;
   const enrollHref = `/courses/${course.slug}/enroll`;
@@ -189,7 +181,7 @@ function CourseCard({ course }: { course: DBCourse }) {
         <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-100">
             <Globe className="h-3.5 w-3.5 text-slate-400" />
-            {language}
+            Hinglish
           </span>
           {course.certificate && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-100">

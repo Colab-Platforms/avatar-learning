@@ -4,6 +4,7 @@ import { requireCompleteProfile } from "@/middlewares/requireCompleteProfile.js"
 import {
   createOrder,
   verifyPayment,
+  reportAbandonedCheckout,
   getPaymentConfig,
   handleRazorpayWebhook,
   handleCashfreeWebhook,
@@ -17,5 +18,6 @@ router.post("/webhook/cashfree", handleCashfreeWebhook);
 router.get("/config", getPaymentConfig);
 router.post("/create-order", auth("USER"), requireCompleteProfile, createOrder);
 router.post("/verify", auth("USER"), requireCompleteProfile, verifyPayment);
+router.post("/abandoned-checkout", auth("USER"), reportAbandonedCheckout);
 
 export default router;

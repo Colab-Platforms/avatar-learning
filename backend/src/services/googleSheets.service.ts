@@ -5,6 +5,16 @@ const LEADS_SHEET = "Leads";
 const ENROLLMENTS_SHEET = "Enrollments";
 const WEBINAR_SHEET = "Webinar Registrations";
 const QUIZ_ASSESSMENT_SHEET = "quiz-assessment";
+const ABANDONED_CHECKOUT_SHEET = "Abandoned Checkouts";
+const ABANDONED_CHECKOUT_HEADERS = [
+  "Name",
+  "Email",
+  "Phone",
+  "Course",
+  "Plan",
+  "Amount",
+  "Last Attempt At",
+];
 const QUIZ_ASSESSMENT_HEADERS = [
   "Name",
   "Email",
@@ -56,6 +66,16 @@ export type SheetsWebinarInput = {
   paidAt: Date;
   webinarTitle: string | null;
   webinarScheduledAt: Date | null;
+};
+
+export type SheetsAbandonedCheckoutInput = {
+  fullName: string;
+  email: string;
+  phoneNumber?: string | null;
+  courseTitle: string;
+  plan: string;
+  amountPaise: number;
+  lastAttemptAt: Date;
 };
 
 export type SheetsQuizAssessmentInput = {
@@ -120,7 +140,13 @@ function sleep(ms: number): Promise<void> {
 }
 
 function logSyncSuccess(
-  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration" | "Quiz Assessment",
+  entity:
+    | "User"
+    | "Lead"
+    | "Enrollment"
+    | "Webinar Registration"
+    | "Quiz Assessment"
+    | "Abandoned Checkout",
   email: string,
   sheet: string,
 ) {
@@ -130,7 +156,13 @@ function logSyncSuccess(
 }
 
 function logSyncFailure(
-  entity: "User" | "Lead" | "Enrollment" | "Webinar Registration" | "Quiz Assessment",
+  entity:
+    | "User"
+    | "Lead"
+    | "Enrollment"
+    | "Webinar Registration"
+    | "Quiz Assessment"
+    | "Abandoned Checkout",
   email: string,
   reason: unknown,
 ) {
@@ -221,6 +253,7 @@ class GoogleSheetsService {
     sheets: sheets_v4.Sheets,
     spreadsheetId: string,
     sheetName: string,
+    autoCreate = false,
   ): Promise<void> {
     const cacheKey = `${spreadsheetId}:${sheetName}`;
     if (this.verifiedSheetIds.has(cacheKey)) return;
@@ -234,9 +267,17 @@ class GoogleSheetsService {
       meta.data.sheets?.map((s) => s.properties?.title).filter(Boolean) ?? [];
 
     if (!titles.includes(sheetName)) {
-      throw new Error(
-        `Sheet tab "${sheetName}" was not found in the spreadsheet.`,
-      );
+      if (!autoCreate) {
+        throw new Error(
+          `Sheet tab "${sheetName}" was not found in the spreadsheet.`,
+        );
+      }
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [{ addSheet: { properties: { title: sheetName } } }],
+        },
+      });
     }
 
     this.verifiedSheetIds.add(cacheKey);
@@ -273,6 +314,7 @@ class GoogleSheetsService {
     sheetName: string,
     values: string[],
     headers?: string[],
+    autoCreateSheet = false,
   ): Promise<void> {
     const client = await this.getClient();
     if (!client) {
@@ -281,7 +323,12 @@ class GoogleSheetsService {
 
     const { sheets, spreadsheetId } = client;
 
-    await this.verifySheetAvailable(sheets, spreadsheetId, sheetName);
+    await this.verifySheetAvailable(
+      sheets,
+      spreadsheetId,
+      sheetName,
+      autoCreateSheet,
+    );
     if (headers) {
       await this.ensureHeaderRow(sheets, spreadsheetId, sheetName, headers);
     }
@@ -389,6 +436,34 @@ class GoogleSheetsService {
       logSyncSuccess("Webinar Registration", input.email, WEBINAR_SHEET);
     } catch (err) {
       logSyncFailure("Webinar Registration", input.email, err);
+    }
+  }
+
+  /**
+   * Append an abandoned checkout (opened the payment gateway but never paid)
+   * to the Abandoned Checkouts sheet. Never throws — failures are logged only.
+   */
+  async appendAbandonedCheckout(
+    input: SheetsAbandonedCheckoutInput,
+  ): Promise<void> {
+    try {
+      await this.appendRow(
+        ABANDONED_CHECKOUT_SHEET,
+        [
+          input.fullName,
+          input.email,
+          input.phoneNumber ?? "",
+          input.courseTitle,
+          input.plan,
+          formatAmount(input.amountPaise),
+          formatDate(input.lastAttemptAt),
+        ],
+        ABANDONED_CHECKOUT_HEADERS,
+        true, // auto-create the tab on first write
+      );
+      logSyncSuccess("Abandoned Checkout", input.email, ABANDONED_CHECKOUT_SHEET);
+    } catch (err) {
+      logSyncFailure("Abandoned Checkout", input.email, err);
     }
   }
 

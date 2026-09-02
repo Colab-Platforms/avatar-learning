@@ -3,7 +3,11 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { PaymentService } from "./payment.service.js";
-import { validateCreateOrder, validateVerifyPayment } from "./payment.validation.js";
+import {
+  validateCreateOrder,
+  validateVerifyPayment,
+  validateAbandonedCheckout,
+} from "./payment.validation.js";
 import {
   verifyRazorpayWebhookSignature,
   verifyCashfreeWebhookSignature,
@@ -42,6 +46,27 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
     }
     await service.verifyPayment(req.user!.id, value);
     sendResponse(res, true, null, "Payment successful");
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
+  }
+};
+
+export const reportAbandonedCheckout = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateAbandonedCheckout(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    await service.reportAbandonedCheckout(
+      req.user!.id,
+      value.courseId,
+      value.plan,
+    );
+    sendResponse(res, true, null, "Abandoned checkout recorded");
   } catch (err: any) {
     sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
   }

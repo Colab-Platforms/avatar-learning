@@ -22,6 +22,7 @@ import { useOfferCountdown } from "./OfferTimerBar";
 import { D2HCoursesSection } from "./D2HCoursesSection";
 import FAQSection from "./FAQSection";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
+import { useAppSelector } from "@/store/hooks";
 import { Testimonials } from "@/components/home/Testimonials/Testimonials";
 import { RECENT_ENROLLMENTS } from "@/data/socialProof";
 import type { ComponentType, CSSProperties } from "react";
@@ -352,10 +353,13 @@ export default function Direct2HirePage() {
   }, []);
 
   const { processing, message, enrolled } = useDirect2HireCheckout();
+  const { user, hasHydrated } = useAppSelector((s) => s.auth);
   const offerLabel = useOfferCountdown();
   const [offerHrs, offerMin, offerSec] = offerLabel.split(":");
 
-  const ctaHref = "/courses";
+  // Not logged in: send through login first, then on to the courses page.
+  const ctaHref =
+    hasHydrated && !user ? "/login?redirect=/courses" : "/courses";
   const ctaLabel = processing ? "Processing Payment…" : "Enroll Now";
 
   return (
@@ -1060,12 +1064,15 @@ export default function Direct2HirePage() {
                 {TOOLS.map((tool) => (
                   <div
                     key={tool.name}
-                    title={tool.name}
                     aria-label={tool.name}
                     style={{ "--tool": tool.color } as CSSProperties}
-                    className="group flex aspect-square items-center justify-center rounded-2xl border border-border bg-white p-2 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_30px_-12px_var(--tool)] hover:border-(--tool)"
+                    className="group relative flex aspect-square items-center justify-center rounded-2xl border border-border bg-white p-2 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_30px_-12px_var(--tool)] hover:border-(--tool)"
                   >
                     <tool.Icon className="h-8 w-8 text-(--tool) transition-transform duration-300 group-hover:scale-110" />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2.5 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-lg border border-(--tool) bg-white px-2.5 py-1 text-[11.5px] font-bold text-(--tool) opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+                      {tool.name}
+                      <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-(--tool) bg-white" />
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1225,72 +1232,6 @@ export default function Direct2HirePage() {
         </section> */}
 
         <Testimonials className="py-13 sm:py-16" />
-
-        {/* ══════════════════════════════
-            PRICE CTA BANNER
-        ══════════════════════════════ */}
-        <section className="py-13 sm:py-16 bg-white border-t border-border">
-          <div className="container-x">
-            <div className="relative overflow-hidden rounded-3xl border border-[#ebf0fc] bg-white p-6 sm:p-10 shadow-[0_8px_30px_rgb(235,240,252,0.4)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              {/* Radial Blur Glow in top right */}
-              <div className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl animate-pulse duration-[8000ms]" />
-
-              <div className="relative z-10">
-                {enrolled ? (
-                  <>
-                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
-                      You are enrolled in Direct2Hire!
-                    </h3>
-                    <p className="text-[14.5px] text-slate-500 max-w-[480px] leading-relaxed">
-                      Access your AI career roadmap, internship program details,
-                      and schedule your mentor calls directly from your
-                      dashboard.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ebf0ff] px-3.5 py-1 text-[11px] font-bold text-[#2563eb] mb-5 tracking-wide">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />
-                      OFFER ENDS IN{" "}
-                      <span className="font-mono tabular-nums">
-                        {offerLabel}
-                      </span>
-                    </span>
-                    <p className="flex items-baseline gap-2.5 mb-4">
-                      <span className="text-[38px] sm:text-[46px] font-extrabold text-slate-900 tracking-tight leading-none">
-                        ₹499
-                      </span>
-                      <span className="text-[15px] sm:text-[17px] text-slate-500 font-medium leading-none">
-                        or ₹4,999 for Career+
-                      </span>
-                    </p>
-                    <p className="text-[14px] sm:text-[15px] text-slate-500 max-w-[480px] leading-relaxed">
-                      Start with a 1-week certificate course, or go all the way
-                      with an internship and placement support.
-                    </p>
-                  </>
-                )}
-              </div>
-
-              <div className="relative z-10 w-full md:w-auto shrink-0 flex flex-col items-center md:items-end gap-2.5">
-                <Link href={ctaHref} className="w-full md:w-fit">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full md:w-auto bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold !rounded-2xl px-8 py-3.5 shadow-[0_12px_24px_rgba(37,99,235,0.25)] transition-all duration-300 hover:shadow-[0_12px_28px_rgba(37,99,235,0.35)] hover:scale-[1.01] active:scale-[0.98] inline-flex items-center justify-center gap-2"
-                  >
-                    {ctaLabel} <ArrowRight className="h-4 w-4 shrink-0" />
-                  </Button>
-                </Link>
-                {!enrolled && (
-                  <p className="text-center text-[12px] text-slate-400 w-full">
-                    Instant confirmation on WhatsApp
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* ══════════════════════════════
             DARK CTA BANNER

@@ -36,6 +36,28 @@ export function validateCreateOrder(data: unknown): {
   return { value };
 }
 
+export interface AbandonedCheckoutBody {
+  courseId: string;
+  plan: "BASIC" | "D2H";
+}
+
+export function validateAbandonedCheckout(data: unknown): {
+  error?: { message: string };
+  value: AbandonedCheckoutBody;
+} {
+  const schema = Joi.object<AbandonedCheckoutBody>({
+    courseId: Joi.string().trim().required().messages({
+      "any.required": "courseId is required",
+      "string.empty": "courseId cannot be empty",
+    }),
+    plan: Joi.string().valid("BASIC", "D2H").optional().default("BASIC"),
+  });
+  const { error, value } = schema.validate(data, { abortEarly: true });
+  if (error)
+    return { error: { message: error.message }, value: value as AbandonedCheckoutBody };
+  return { value };
+}
+
 export function validateVerifyPayment(data: unknown): {
   error?: { message: string };
   value: VerifyPaymentBody;
