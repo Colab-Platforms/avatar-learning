@@ -104,7 +104,7 @@ function D2HOverview() {
     useCounsellingBooking(courseId);
   const { data: selection, isLoading: selectionLoading } = useCourseSelection();
   const { data: internshipDashboard, isLoading: internshipLoading } =
-    useInternshipTasks();
+    useInternshipTasks(courseId);
 
   const { data: placement, isLoading: placementLoading } =
     usePlacementAssessment(courseId);

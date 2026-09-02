@@ -74,7 +74,7 @@ function CourseSuccessContent({ params }: PageProps) {
   }
 
   const isD2H = plan === "d2h";
-  const planLabel = isD2H ? "Direct2Hire 5-Step Program" : "Basic Course Plan";
+  const planLabel = isD2H ? "Career+" : "Practitioner";
   // Land them in the track they just paid for. An upgrader now owns both, so
   // a bare /dashboard/{id} would be ambiguous.
   const dashboardHref = isD2H

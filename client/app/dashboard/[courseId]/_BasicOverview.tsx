@@ -79,29 +79,29 @@ export function BasicOverview({ courseId }: { courseId: string }) {
       {/* This is where a Basic buyer lands, so it is the main upgrade surface —
           but not for someone already holding both plans. */}
       {!ownsD2H && (
-      <Link
-        href={`/courses/${courseId}/enroll?plan=d2h`}
-        className="group flex flex-col gap-3 rounded-3xl border border-emerald-200 bg-emerald-50/70 p-6 transition hover:border-emerald-300 hover:bg-emerald-50 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+        <Link
+          href={`/courses/${courseId}/enroll?plan=d2h`}
+          className="group flex flex-col gap-3 rounded-3xl border border-brand-200 bg-brand-50 p-6 transition hover:border-brand-300 hover:bg-brand-100/60 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3">
+            {/* <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
             <Sparkles size={18} />
+          </div> */}
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Upgrade to Career+
+              </h2>
+              <p className="mt-1 text-xs text-slate-600">
+                A separate 5-step track with mentors, live projects, internship
+                tasks and placement support. You keep everything in your
+                Practitioner course.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-emerald-900">
-              Upgrade to Direct2Hire
-            </h2>
-            <p className="mt-1 text-xs text-emerald-800/80">
-              A separate 5-step track with mentors, live projects, internship
-              tasks and placement support. You keep everything in your Basic
-              course.
-            </p>
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition group-hover:bg-emerald-700 sm:self-auto">
-          See the programme <ArrowRight size={14} />
-        </span>
-      </Link>
+          <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl bg-brand-500 px-4 py-2.5 text-xs font-bold text-white transition group-hover:bg-brand-600 sm:self-auto">
+            See the programme <ArrowRight size={14} />
+          </span>
+        </Link>
       )}
 
       {ownsD2H && (
@@ -110,7 +110,7 @@ export function BasicOverview({ courseId }: { courseId: string }) {
           className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 transition hover:border-emerald-300 hover:shadow-md"
         >
           <span className="flex items-center gap-3 text-sm font-semibold text-slate-800">
-            <Sparkles size={16} className="text-emerald-600" />
+            {/* <Sparkles size={16} className="text-emerald-600" /> */}
             Switch to your Direct2Hire track
           </span>
           <ArrowRight size={16} className="text-slate-400" />

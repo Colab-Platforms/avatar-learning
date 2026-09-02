@@ -107,6 +107,7 @@ export interface AdminD2HCourseBlock {
   assessmentCounsellingPaidAt: Date | null;
   tracks: { track: string; progress: number; isCompleted: boolean }[];
   payments: AdminD2HPaymentInfo[];
+  internship: AdminStudentInternshipProgressDto;
   booking: {
     preferredMode: string;
     notes: string | null;
@@ -173,6 +174,5 @@ export interface AdminD2HStudentProfile {
     createdAt: Date;
     updatedAt: Date;
   } | null;
-  internship: AdminStudentInternshipProgressDto;
   courses: AdminD2HCourseBlock[];
 }

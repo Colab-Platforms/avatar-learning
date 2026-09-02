@@ -208,27 +208,26 @@ export class InternshipService {
     return course;
   }
 
-  private async assertPaidEnrollment(userId: string) {
-    const enrollment = await prisma.direct2HireEnrollment.findFirst({
-      where: { userId, status: "PAID" },
-      orderBy: { createdAt: "desc" },
+  private async assertPaidEnrollment(userId: string, courseId: string) {
+    const enrollment = await prisma.direct2HireEnrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
     });
-    if (!enrollment) {
+    if (!enrollment || enrollment.status !== "PAID") {
       throw new ApiError(
-        "Direct2Hire enrollment required",
+        "Direct2Hire enrollment required for this course",
         STATUS_CODES.FORBIDDEN,
       );
     }
     return enrollment;
   }
 
-  // The Direct2Hire course is fixed at enrollment now (no post-counselling
-  // pick), so the booking's own course is the internship course — but only
-  // once counselling is complete, matching the previous "selected course" gate.
-  private async getSelectedCourseForUser(userId: string) {
-    const booking = await prisma.counsellingBooking.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
+  // Internship is per course now. The student track resolves its course from
+  // that course's own counselling booking, and only once counselling for it is
+  // complete — the same "unlock after counselling" gate as before, scoped to
+  // the course the caller named.
+  private async getSelectedCourseForUser(userId: string, courseId: string) {
+    const booking = await prisma.counsellingBooking.findUnique({
+      where: { userId_courseId: { userId, courseId } },
       select: {
         counsellingCompleted: true,
         course: {
@@ -529,9 +528,10 @@ export class InternshipService {
 
   async getStudentDashboard(
     userId: string,
+    courseId: string,
   ): Promise<StudentInternshipDashboardDto> {
-    await this.assertPaidEnrollment(userId);
-    const course = await this.getSelectedCourseForUser(userId);
+    await this.assertPaidEnrollment(userId, courseId);
+    const course = await this.getSelectedCourseForUser(userId, courseId);
 
     if (!course) {
       return {
@@ -581,10 +581,11 @@ export class InternshipService {
 
   async getStudentTask(
     userId: string,
+    courseId: string,
     taskId: string,
   ): Promise<StudentInternshipTaskDto> {
-    await this.assertPaidEnrollment(userId);
-    const course = await this.getSelectedCourseForUser(userId);
+    await this.assertPaidEnrollment(userId, courseId);
+    const course = await this.getSelectedCourseForUser(userId, courseId);
     if (!course) {
       throw new ApiError(
         "Select a Direct2Hire course before accessing internship tasks",
@@ -643,11 +644,12 @@ export class InternshipService {
 
   async submitTask(
     userId: string,
+    courseId: string,
     taskId: string,
     data: SubmitInternshipTaskInput,
   ): Promise<InternshipSubmissionDto> {
-    await this.assertPaidEnrollment(userId);
-    const course = await this.getSelectedCourseForUser(userId);
+    await this.assertPaidEnrollment(userId, courseId);
+    const course = await this.getSelectedCourseForUser(userId, courseId);
     if (!course) {
       throw new ApiError(
         "Select a Direct2Hire course before submitting internship work",
@@ -807,8 +809,16 @@ export class InternshipService {
 
   async getAdminStudentProgress(
     userId: string,
+    courseId: string,
   ): Promise<AdminStudentInternshipProgressDto> {
-    const course = await this.getSelectedCourseForUser(userId);
+    // Admin view is per course and independent of the counselling gate — a
+    // reviewer should see this course's task state as soon as it exists.
+    const course = courseId
+      ? await prisma.courses.findUnique({
+          where: { id: courseId },
+          select: { id: true, title: true, slug: true },
+        })
+      : null;
 
     if (!course) {
       return {

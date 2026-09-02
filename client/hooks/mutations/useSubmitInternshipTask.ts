@@ -5,7 +5,7 @@ import {
   type SubmitInternshipPayload,
 } from "@/lib/internshipApi";
 
-export function useSubmitInternshipTask() {
+export function useSubmitInternshipTask(courseId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -15,9 +15,11 @@ export function useSubmitInternshipTask() {
     }: {
       taskId: string;
       payload: SubmitInternshipPayload;
-    }) => submitInternshipTask(taskId, payload),
+    }) => submitInternshipTask(taskId, payload, courseId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.internshipTasks });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.internshipTasks(courseId),
+      });
     },
   });
 }

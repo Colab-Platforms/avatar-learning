@@ -212,7 +212,10 @@ export const getMyTasks = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const dashboard = await service.getStudentDashboard(req.user!.id);
+    const dashboard = await service.getStudentDashboard(
+      req.user!.id,
+      req.d2hCourseId!,
+    );
     sendResponse(res, true, dashboard, "Internship tasks fetched");
   } catch (err: unknown) {
     const error = err as { message?: string; statusCode?: number };
@@ -244,6 +247,7 @@ export const getMyTask = async (
     }
     const task = await service.getStudentTask(
       req.user!.id,
+      req.d2hCourseId!,
       param.value.taskId,
     );
     sendResponse(res, true, task, "Internship task fetched");
@@ -282,6 +286,7 @@ export const submitTask = async (
     }
     const submission = await service.submitTask(
       req.user!.id,
+      req.d2hCourseId!,
       param.value.taskId,
       value,
     );

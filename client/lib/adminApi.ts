@@ -789,7 +789,6 @@ export interface AdminD2HStudentProfile {
     createdAt: string;
     updatedAt: string;
   } | null;
-  internship?: AdminStudentInternshipProgress;
   courses: AdminD2HCourseBlock[];
 }
 
@@ -803,6 +802,7 @@ export interface AdminD2HCourseBlock {
   assessmentCounsellingPaidAt: string | null;
   tracks: { track: "BASIC" | "D2H"; progress: number; isCompleted: boolean }[];
   payments: AdminD2HPaymentInfo[];
+  internship: AdminStudentInternshipProgress;
   booking: {
     preferredMode: string;
     notes: string | null;

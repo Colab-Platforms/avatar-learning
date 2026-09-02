@@ -91,14 +91,14 @@ async function sendPurchaseConfirmationEmailForOrder(order: {
         select: { title: true },
       });
       productName = course?.title ?? "Course";
-      planName = "Basic Course Plan";
+      planName = "Practitioner";
     } else if (order.productType === "DIRECT2HIRE" && order.courseId) {
       const course = await prisma.courses.findUnique({
         where: { id: order.courseId },
         select: { title: true },
       });
       productName = course?.title ?? "Course";
-      planName = "Direct2Hire 5-Step Program";
+      planName = "Career+";
     } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
       productName = "Direct2Hire Assessment + Counselling";
     }

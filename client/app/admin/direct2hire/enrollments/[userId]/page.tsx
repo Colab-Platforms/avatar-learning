@@ -805,7 +805,7 @@ function InternshipProgressSection({
   internship,
 }: {
   userId: string;
-  internship: AdminD2HStudentProfile["internship"];
+  internship: AdminD2HCourseBlock["internship"];
 }) {
   if (!internship?.course) {
     return (
@@ -1040,36 +1040,6 @@ function CoursePaymentSection({
   );
 }
 
-function CourseTrackProgressCard({ course }: { course: AdminD2HCourseBlock }) {
-  if (course.tracks.length === 0) return null;
-  return (
-    <Card>
-      <h2 className="text-sm font-semibold text-white/80 mb-4">Track Progress</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {course.tracks.map((t) => (
-          <div key={t.track} className="rounded-xl border border-white/6 bg-white/[0.015] p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-white/60 uppercase tracking-wide">
-                {t.track === "D2H" ? "Direct2Hire" : "Basic"}
-              </span>
-              {t.isCompleted && (
-                <span className="text-[10px] font-bold text-emerald-400">Completed</span>
-              )}
-            </div>
-            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full bg-brand-500 rounded-full"
-                style={{ width: `${t.progress}%` }}
-              />
-            </div>
-            <p className="text-xs text-white/40 mt-1.5">{t.progress}%</p>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
 function CoursePanel({
   userId,
   course,
@@ -1084,7 +1054,6 @@ function CoursePanel({
   return (
     <div className="space-y-6">
       <CoursePaymentSection userId={userId} course={course} />
-      <CourseTrackProgressCard course={course} />
 
       <Card>
         <div className="flex items-center gap-2 mb-2">
@@ -1107,6 +1076,13 @@ function CoursePanel({
           </>
         )}
       </Card>
+
+      {isD2HPaid && (
+        <InternshipProgressSection
+          userId={userId}
+          internship={course.internship}
+        />
+      )}
 
       {isD2HPaid ? (
         <>
@@ -1256,27 +1232,13 @@ export default function AdminDirect2HireStudentPage() {
         <CounsellingTabs counselling={counselling} recommendation={recommendation} />
       )}
 
-      <InternshipProgressSection
-        userId={userId}
-        internship={
-          data.internship ?? {
-            course: null,
-            progress: {
-              approved: 0,
-              underReview: 0,
-              available: 0,
-              locked: 0,
-              total: 0,
-              approvedCount: 0,
-            },
-            tasks: [],
-          }
-        }
-      />
-
       <AdminJobPlacementSection userId={userId} />
 
-      <CoursesSection userId={userId} courses={courses} feedback={data.feedback ?? null} />
+      <CoursesSection
+        userId={userId}
+        courses={courses}
+        feedback={data.feedback ?? null}
+      />
     </div>
   );
 }

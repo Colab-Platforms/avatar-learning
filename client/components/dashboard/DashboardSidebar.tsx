@@ -70,7 +70,9 @@ function useStepLocks(activeCourseId: string | null): Record<string, boolean> {
   const profile = counsellingData?.profile ?? null;
   const { data: booking } = useCounsellingBooking();
   const { data: selection } = useCourseSelection();
-  const { data: internshipDashboard } = useInternshipTasks();
+  const { data: internshipDashboard } = useInternshipTasks(
+    activeCourseId ?? undefined,
+  );
   // Only used here to derive a pass/fail flag for the step-lock chain — no
   // need to hit the network on every dashboard navigation.
   const { data: assessments } = useAssessments(activeCourseId ?? "", {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   Briefcase,
   CheckCircle2,
@@ -132,7 +133,8 @@ function TaskModal({
   task: StudentInternshipTask;
   onClose: () => void;
 }) {
-  const submitMutation = useSubmitInternshipTask();
+  const { courseId } = useParams<{ courseId: string }>();
+  const submitMutation = useSubmitInternshipTask(courseId);
   const canEdit =
     task.derivedStatus === "AVAILABLE" ||
     task.derivedStatus === "CHANGES_REQUESTED";
@@ -580,7 +582,9 @@ function TaskModal({
 }
 
 export default function DashboardInternshipsPage() {
-  const { data, isLoading, isError, error, refetch } = useInternshipTasks();
+  const { courseId } = useParams<{ courseId: string }>();
+  const { data, isLoading, isError, error, refetch } =
+    useInternshipTasks(courseId);
   const [selectedTask, setSelectedTask] =
     useState<StudentInternshipTask | null>(null);
 

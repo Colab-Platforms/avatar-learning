@@ -240,25 +240,37 @@ export async function uploadInternshipFileToCloudinary(
 
 // ─── Student APIs ────────────────────────────────────────────────────────────
 
-export const fetchMyInternshipTasks =
-  (): Promise<StudentInternshipDashboard> =>
-    apiClient
-      .get("/direct2hire/internship/tasks")
-      .then((r) => r.data.data);
+// courseId is optional: when omitted the backend resolves it for a student who
+// has exactly one Direct2Hire enrollment, and 400s a multi-course student —
+// same contract as the counselling and mock-interview endpoints.
+export const fetchMyInternshipTasks = (
+  courseId?: string,
+): Promise<StudentInternshipDashboard> =>
+  apiClient
+    .get("/direct2hire/internship/tasks", {
+      params: courseId ? { courseId } : undefined,
+    })
+    .then((r) => r.data.data);
 
 export const fetchMyInternshipTask = (
   taskId: string,
+  courseId?: string,
 ): Promise<StudentInternshipTask> =>
   apiClient
-    .get(`/direct2hire/internship/tasks/${taskId}`)
+    .get(`/direct2hire/internship/tasks/${taskId}`, {
+      params: courseId ? { courseId } : undefined,
+    })
     .then((r) => r.data.data);
 
 export const submitInternshipTask = (
   taskId: string,
   payload: SubmitInternshipPayload,
+  courseId?: string,
 ): Promise<InternshipSubmission> =>
   apiClient
-    .post(`/direct2hire/internship/tasks/${taskId}/submit`, payload)
+    .post(`/direct2hire/internship/tasks/${taskId}/submit`, payload, {
+      params: courseId ? { courseId } : undefined,
+    })
     .then((r) => r.data.data);
 
 // ─── Admin APIs ──────────────────────────────────────────────────────────────

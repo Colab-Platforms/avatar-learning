@@ -324,29 +324,30 @@ export class Direct2HireService {
             ...(skip !== undefined && { skip }),
         });
 
-        const courseIds = Array.from(
-            new Set(
-                users.flatMap((u) => u.direct2hireEnrollments.map((e) => e.courseId)),
-            ),
-        );
-        const userIds = users.map((u) => u.id);
-        const paidOrders = courseIds.length
+        // D2H payment orders are keyed by direct2hireEnrollmentId, not courseId
+        // (courseId is null on them — see getMyStatus). Match on enrollment id.
+        const enrollmentUserId = new Map<string, string>();
+        for (const u of users) {
+            for (const e of u.direct2hireEnrollments) enrollmentUserId.set(e.id, u.id);
+        }
+        const enrollmentIds = Array.from(enrollmentUserId.keys());
+        const paidOrders = enrollmentIds.length
             ? await prisma.paymentOrder.findMany({
                 where: {
-                    userId: { in: userIds },
-                    courseId: { in: courseIds },
+                    direct2hireEnrollmentId: { in: enrollmentIds },
                     productType: "DIRECT2HIRE",
                     status: "PAID",
                 },
-                select: { userId: true, amount: true },
+                select: { direct2hireEnrollmentId: true, amount: true },
             })
             : [];
         const totalPaidByUserId = new Map<string, number>();
         for (const order of paidOrders) {
-            totalPaidByUserId.set(
-                order.userId,
-                (totalPaidByUserId.get(order.userId) ?? 0) + order.amount,
-            );
+            const uid = order.direct2hireEnrollmentId
+                ? enrollmentUserId.get(order.direct2hireEnrollmentId)
+                : undefined;
+            if (!uid) continue;
+            totalPaidByUserId.set(uid, (totalPaidByUserId.get(uid) ?? 0) + order.amount);
         }
 
         const rows = users.map((u) => ({

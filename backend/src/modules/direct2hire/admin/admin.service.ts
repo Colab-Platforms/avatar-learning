@@ -414,7 +414,6 @@ export class Direct2HireAdminService {
       throw new ApiError("Student not found", STATUS_CODES.NOT_FOUND);
     }
 
-    const internship = await this.internshipService.getAdminStudentProgress(userId);
     const paymentsByCourse = (await this.getPaymentsByUserAndCourse([userId])).get(userId);
 
     // This is the Direct2Hire (₹4999) journey page — only courses with a D2H
@@ -433,10 +432,15 @@ export class Direct2HireAdminService {
         .map((b) => [b.courseId as string, b]),
     );
 
-    const courses: AdminD2HCourseBlock[] = Array.from(courseIds).map((courseId) => {
+    const courses: AdminD2HCourseBlock[] = await Promise.all(
+      Array.from(courseIds).map(async (courseId) => {
       const mapper = mapperByCourseId.get(courseId);
       const enrollment = enrollmentByCourseId.get(courseId);
       const course = mapper?.course ?? enrollment?.course;
+      const internship = await this.internshipService.getAdminStudentProgress(
+        userId,
+        courseId,
+      );
       const tracks = mapper
         ? tracksFor(mapper.tier).map((track) => {
             const progressRow = user.trackProgress.find(
@@ -461,8 +465,10 @@ export class Direct2HireAdminService {
         tracks,
         payments: paymentsByCourse?.get(courseId) ?? [],
         booking: bookingByCourseId.get(courseId) ?? null,
+        internship,
       };
-    });
+    }),
+    );
 
     // Newest activity first: prefer enrollment createdAt implicitly via
     // insertion order from direct2hireEnrollments (already desc by nothing
@@ -490,7 +496,6 @@ export class Direct2HireAdminService {
       counselling: user.counsellingProfile ?? null,
       recommendation: user.courseRecommendation ?? null,
       feedback: user.counsellingFeedback ?? null,
-      internship,
       courses,
     };
   }
