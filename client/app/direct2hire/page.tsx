@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  ArrowUpRight,
   CheckCircle2,
   Star,
   Play,
@@ -356,12 +355,8 @@ export default function Direct2HirePage() {
   const offerLabel = useOfferCountdown();
   const [offerHrs, offerMin, offerSec] = offerLabel.split(":");
 
-  const ctaHref = enrolled ? "/dashboard" : "/courses";
-  const ctaLabel = processing
-    ? "Processing Payment…"
-    : enrolled
-      ? "Go to Dashboard"
-      : "Enroll Now";
+  const ctaHref = "/courses";
+  const ctaLabel = processing ? "Processing Payment…" : "Enroll Now";
 
   return (
     <>
@@ -527,15 +522,13 @@ export default function Direct2HirePage() {
                       <Button
                         variant="primary"
                         size="lg"
-                        className="w-full sm:w-auto group inline-flex items-center justify-center gap-2"
+                        className={cn(
+                          "w-full sm:w-auto group inline-flex items-center justify-center gap-2",
+                          !processing && "anim-shake",
+                        )}
                       >
                         {processing ? (
                           "Processing Payment…"
-                        ) : enrolled ? (
-                          <>
-                            Go to Dashboard
-                            <ArrowUpRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                          </>
                         ) : (
                           <>
                             Enroll Now
@@ -942,7 +935,7 @@ export default function Direct2HirePage() {
                               "bg-white! text-brand-600! hover:bg-slate-50!",
                           )}
                         >
-                          {enrolled ? "Go to Dashboard" : "Enroll Now"}
+                          Enroll Now
                           <ArrowRight className="h-4 w-4 shrink-0" />
                         </Button>
                       </Link>
@@ -1434,7 +1427,7 @@ export default function Direct2HirePage() {
                   size="lg"
                   className="mt-5 w-full inline-flex items-center justify-center gap-1.5"
                 >
-                  {enrolled ? "Go to Dashboard" : "Enroll Now"}
+                  Enroll Now
                 </Button>
               </Link>
               <p className="mt-3 text-center text-[11px] text-text-subtle">

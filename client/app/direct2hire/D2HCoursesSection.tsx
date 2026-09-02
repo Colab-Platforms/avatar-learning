@@ -9,15 +9,14 @@ import {
 } from "@/lib/coursesApi";
 import { queryKeys } from "@/lib/react-query/query-keys";
 import { ScrollReveal, ShinyText } from "@/components/ui";
-import { Layers, ArrowRight, Clock, MessageSquare, Star } from "lucide-react";
-
-// Mappings for course language based on slug
-const COURSE_LANGUAGES: Record<string, string> = {
-  "ai-fundamentals-chatgpt-mastery": "English ",
-  "ai-mastery-for-social-media-executives": "English ",
-  "prompt-engineering-advanced": "English",
-  "building-ai-agents": "English & Hindi",
-};
+import {
+  Layers,
+  ArrowRight,
+  Star,
+  Globe,
+  Award,
+  BookOpen,
+} from "lucide-react";
 
 // Mappings for course levels to badges
 const LEVEL_BADGES: Record<string, string> = {
@@ -25,6 +24,16 @@ const LEVEL_BADGES: Record<string, string> = {
   INTERMEDIATE: "PROFESSIONAL",
   ADVANCED: "CAREER +",
 };
+
+function courseShortDescription(course: DBCourse) {
+  const fromApi = course.description?.trim();
+  if (!fromApi)
+    return "A weekend-first live program with real projects and a certificate.";
+  const firstSentence = fromApi.split(/(?<=\.)\s/)[0] ?? fromApi;
+  return firstSentence.length > 110
+    ? `${firstSentence.slice(0, 107).trimEnd()}…`
+    : firstSentence;
+}
 
 export function D2HCoursesSection() {
   const { data, isLoading } = useQuery({
@@ -156,13 +165,16 @@ export function D2HCoursesSection() {
         {/* ── Cards Grid (Responsive Columns Based on Course Count) ── */}
         <div className={`grid gap-6 sm:gap-8 ${gridColsClass}`}>
           {d2hCourses.map((course, i) => {
+            const isComingSoon = course.isComingSoon;
             const levelLabel = LEVEL_BADGES[course.level] || course.level;
-            const language = COURSE_LANGUAGES[course.slug] || "English";
             const coverImage =
               course.heroImage ||
               course.bannerImage ||
               course.thumbnail ||
               "/placeholder.jpg";
+            const shortDescription = courseShortDescription(course);
+            const detailHref = `/courses/${course.slug}`;
+            const enrollHref = `/courses/${course.slug}/enroll`;
 
             return (
               <ScrollReveal
@@ -171,22 +183,28 @@ export function D2HCoursesSection() {
                 delay={i * 100}
                 className="h-full"
               >
-                <Link
-                  href={`/courses/${course.slug}`}
-                  className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-1.5 transition-all duration-300 h-full cursor-pointer"
-                >
-                  {/* ── Thumbnail Container ── */}
-                  <div className="relative h-[220px] w-full overflow-hidden bg-slate-50">
-                    <Image
-                      src={coverImage}
-                      alt={course.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 400px"
-                      quality={95}
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+                <div className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-1.5 transition-all duration-300 h-full">
+                  {/* ── Thumbnail ── */}
+                  <Link
+                    href={detailHref}
+                    className="relative h-[220px] w-full overflow-hidden bg-slate-50 shrink-0"
+                  >
+                    {coverImage ? (
+                      <Image
+                        src={coverImage}
+                        alt={course.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 400px"
+                        quality={95}
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+                        <BookOpen className="h-10 w-10 text-slate-300" />
+                      </div>
+                    )}
 
-                    {/* Watermark (Top Left) */}
+                    {/* Watermark (top left) */}
                     <div className="absolute top-0 left-4 bg-white px-2.5 py-4 rounded-b-xl shadow-xs flex items-center justify-center z-10">
                       <div className="relative h-8 w-8">
                         <Image
@@ -199,65 +217,104 @@ export function D2HCoursesSection() {
                       </div>
                     </div>
 
-                    {/* Level Badge (Bottom Right) */}
+                    {/* Coming soon badge (top right) */}
+                    {isComingSoon && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="inline-flex items-center rounded-full border border-amber-200 bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold tracking-wider text-amber-700 shadow-xs">
+                          COMING SOON
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Level badge (bottom right) */}
                     <div className="absolute bottom-3 right-3 bg-[#1d4ed8] text-white text-[10px] font-bold tracking-wider px-3.5 py-1.5 rounded-full shadow-xs uppercase z-10">
                       {levelLabel}
                     </div>
-                  </div>
+                  </Link>
 
-                  {/* ── Card Content ── */}
+                  {/* ── Content ── */}
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
-                    {/* Branding */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="relative h-4.5 w-4.5">
-                        <Image
-                          src="/favicon.png"
-                          alt=""
-                          fill
-                          sizes="20px"
-                          className="object-contain"
-                        />
+                    <Link href={detailHref} className="block">
+                      {/* Branding */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="relative h-4.5 w-4.5">
+                          <Image
+                            src="/favicon.png"
+                            alt=""
+                            fill
+                            sizes="20px"
+                            className="object-contain"
+                          />
+                        </div>
+                        <span className="text-xs text-slate-500 font-semibold tracking-wide">
+                          Avatar Learning
+                        </span>
                       </div>
-                      <span className="text-xs text-text-muted font-semibold tracking-wide">
-                        Avatar Learning
-                      </span>
-                    </div>
 
-                    {/* Title */}
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug mb-4 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                      {course.title}
-                    </h3>
+                      {/* Title */}
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {course.title}
+                      </h3>
 
-                    {/* Pills Row */}
+                      <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-2 mb-4">
+                        {shortDescription}
+                      </p>
+                    </Link>
+
+                    {/* Pills row */}
                     <div className="flex flex-wrap items-center gap-2 mb-4 mt-auto">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-550 border border-slate-100">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
-                        {course.totalWeeks}{" "}
-                        {course.totalWeeks === 1 ? "week" : "weeks"}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-100">
+                        <Globe className="h-3.5 w-3.5 text-slate-400" />
+                        Hinglish
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-550 border border-slate-100">
-                        <MessageSquare className="h-3.5 w-3.5 text-slate-400" />
-                        {language}
-                      </span>
+                      {course.certificate && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-100">
+                          <Award className="h-3.5 w-3.5 text-slate-400" />
+                          Certificate
+                        </span>
+                      )}
                     </div>
 
                     {/* Divider */}
                     <div className="h-px bg-slate-100 my-1" />
 
-                    {/* Footer Row */}
-                    <div className="flex items-center justify-between pt-3">
-                      <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                    {/* Footer row */}
+                    <div className="flex flex-wrap items-center gap-2 pt-3">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 shrink-0">
                         <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-400" />
                         <span>
                           {course.rating ? course.rating.toFixed(1) : "4.8"}
                         </span>
-                        <span className="text-slate-400 font-medium text-xs ml-1">
+                        <span className="text-slate-400 font-medium text-xs ml-0.5">
                           ({course.reviews || "840 Reviews"})
                         </span>
                       </div>
+                      <Link
+                        href={detailHref}
+                        className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-slate-400 hover:text-blue-600 transition-colors duration-250 ml-auto"
+                      >
+                        View Course
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                      {isComingSoon ? (
+                        <span className="inline-flex items-center justify-center rounded-lg bg-slate-200 px-3.5 py-2 text-[12px] font-semibold text-slate-500 cursor-not-allowed shrink-0">
+                          Coming Soon
+                        </span>
+                      ) : (
+                        <Link
+                          href={enrollHref}
+                          className="inline-flex items-center justify-center rounded-lg px-3.5 py-2 text-[12px] font-semibold text-white hover:brightness-110 active:scale-95 shadow-sm transition-all duration-200 shrink-0"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                          }}
+                        >
+                          Enroll Now
+                        </Link>
+                      )}
                     </div>
                   </div>
-                </Link>
+                </div>
               </ScrollReveal>
             );
           })}
