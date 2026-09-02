@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Search,
-  SlidersHorizontal,
   X,
   BookOpen,
   ArrowRight,
@@ -27,27 +26,12 @@ import { useCourses } from "@/hooks/queries/useCourses";
 
 /* ─────────────────────────── types / constants ─────────────────────────── */
 
-type Level = "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 type SortBy = "NEWEST" | "TITLE_ASC";
-
-const LEVELS: { value: Level; label: string }[] = [
-  { value: "ALL", label: "All Levels" },
-  { value: "BEGINNER", label: "Beginner" },
-  { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "ADVANCED", label: "Advanced" },
-];
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "NEWEST", label: "Newest First" },
   { value: "TITLE_ASC", label: "Title: A → Z" },
 ];
-
-// same level wording as the landing / Direct2Hire course cards
-const LEVEL_BADGES: Record<string, string> = {
-  BEGINNER: "LEARNER",
-  INTERMEDIATE: "PROFESSIONAL",
-  ADVANCED: "CAREER +",
-};
 
 function courseShortDescription(course: DBCourse) {
   const fromApi = course.description?.trim();
@@ -83,7 +67,6 @@ function SkeletonCard() {
 
 function CourseCard({ course }: { course: DBCourse }) {
   const isComingSoon = course.isComingSoon;
-  const levelLabel = LEVEL_BADGES[course.level] ?? course.level;
   const coverImage =
     course.heroImage || course.bannerImage || course.thumbnail || "";
   const shortDescription = courseShortDescription(course);
@@ -141,11 +124,6 @@ function CourseCard({ course }: { course: DBCourse }) {
             </span>
           </div>
         )}
-
-        {/* Level badge (bottom right) */}
-        <div className="absolute bottom-3 right-3 bg-[#1d4ed8] text-white text-[10px] font-bold tracking-wider px-3.5 py-1.5 rounded-full shadow-xs uppercase z-10">
-          {levelLabel}
-        </div>
       </Link>
 
       {/* ── Content ── */}
@@ -237,32 +215,6 @@ function CourseCard({ course }: { course: DBCourse }) {
   );
 }
 
-/* ─────────────────────────── filter pill ───────────────────────────────── */
-
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-full px-4 py-1.5 text-[13px] font-semibold border transition-all duration-250 cursor-pointer",
-        active
-          ? "bg-blue-50 border-blue-200 text-blue-700"
-          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:text-slate-700",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 /* ─────────────────────────── empty state ───────────────────────────────── */
 
 function EmptyState({ onReset }: { onReset: () => void }) {
@@ -297,9 +249,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 export default function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [level, setLevel] = useState<Level>("ALL");
   const [sortBy, setSortBy] = useState<SortBy>("NEWEST");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Fetch courses for current page using TanStack Query
   const { data, isLoading: loading, isError, error } = useCourses(currentPage);
@@ -330,22 +280,17 @@ export default function CoursesPage() {
       );
     }
 
-    if (level !== "ALL") {
-      list = list.filter((c) => c.level === level);
-    }
-
     if (sortBy === "TITLE_ASC")
       list.sort((a, b) => a.title.localeCompare(b.title));
     // NEWEST: server already orders by createdAt desc
 
     return list;
-  }, [courses, search, level, sortBy]);
+  }, [courses, search, sortBy]);
 
-  const hasActiveFilters = level !== "ALL" || search.trim().length > 0;
+  const hasActiveFilters = search.trim().length > 0;
 
   const resetFilters = () => {
     setSearch("");
-    setLevel("ALL");
     setSortBy("NEWEST");
     setCurrentPage(1);
   };
@@ -442,50 +387,11 @@ export default function CoursesPage() {
                   />
                 </div>
 
-                {/* filter toggle (mobile) */}
-                <button
-                  onClick={() => setFiltersOpen(!filtersOpen)}
-                  className={cn(
-                    "sm:hidden flex items-center justify-center gap-2 rounded-xl border px-4 py-3 cursor-pointer",
-                    "text-[13px] font-semibold transition-all duration-250",
-                    filtersOpen
-                      ? "border-blue-500/40 bg-blue-50 text-blue-600"
-                      : "border-slate-200 bg-slate-50 text-slate-600",
-                  )}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filters
-                  {hasActiveFilters && (
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* filter pills row — always visible on desktop, toggleable on mobile */}
-              <div
-                className={cn(
-                  "flex flex-wrap gap-2 sm:flex",
-                  filtersOpen ? "flex" : "hidden sm:flex",
-                )}
-              >
-                {/* LEVEL */}
-                <div className="flex flex-wrap gap-2">
-                  {LEVELS.map((l) => (
-                    <FilterPill
-                      key={l.value}
-                      active={level === l.value}
-                      onClick={() => setLevel(l.value)}
-                    >
-                      {l.label}
-                    </FilterPill>
-                  ))}
-                </div>
-
                 {/* reset */}
                 {hasActiveFilters && (
                   <button
                     onClick={resetFilters}
-                    className="ml-auto flex items-center gap-1.5 rounded-full border border-slate-200 px-3.5 py-1.5
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-3
                                text-[12px] text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50/50
                                transition-all duration-250 cursor-pointer"
                   >

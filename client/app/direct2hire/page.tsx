@@ -1059,8 +1059,9 @@ export default function Direct2HirePage() {
               </div>
             </ScrollReveal>
 
+            {/* Desktop / tablet — static grid */}
             <ScrollReveal animation="fade-up" delay={80}>
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-4xl mx-auto">
+              <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-4xl mx-auto">
                 {TOOLS.map((tool) => (
                   <div
                     key={tool.name}
@@ -1077,6 +1078,35 @@ export default function Direct2HirePage() {
                 ))}
               </div>
             </ScrollReveal>
+
+            {/* Mobile — two-row infinite marquee, opposite directions */}
+            <div className="sm:hidden space-y-3">
+              {[
+                { row: TOOLS.slice(0, 9), direction: "animate-marquee-left" },
+                { row: TOOLS.slice(9), direction: "animate-marquee-right" },
+              ].map(({ row, direction }, rowIndex) => (
+                <div key={rowIndex} className="relative overflow-hidden">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-linear-to-r from-surface-alt to-transparent" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-linear-to-l from-surface-alt to-transparent" />
+                  <div className={cn("flex w-max gap-2.5", direction)}>
+                    {[...row, ...row].map((tool, i) => (
+                      <div
+                        key={`${tool.name}-${i}`}
+                        style={{ "--tool": tool.color } as CSSProperties}
+                        className="flex shrink-0 items-center gap-2.5 rounded-full border border-border bg-white py-2 pl-2 pr-5 shadow-xs"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--tool)/10">
+                          <tool.Icon className="h-4.5 w-4.5 text-(--tool)" />
+                        </span>
+                        <span className="whitespace-nowrap text-[13.5px] font-semibold text-text">
+                          {tool.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <p className="mt-6 text-center text-[12.5px] font-medium text-text-subtle">
               and many more

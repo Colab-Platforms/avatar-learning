@@ -687,6 +687,35 @@
   }
 }
 
+/* Infinite tool marquee — mobile-only tool showcase */
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-left {
+  animation: marquee-left 24s linear infinite;
+}
+
+.animate-marquee-right {
+  animation: marquee-right 24s linear infinite;
+}
+
 /* Neon scan line sweeping across card */
 @keyframes neon-scan {
   0% {

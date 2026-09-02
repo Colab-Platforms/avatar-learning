@@ -17,8 +17,7 @@ import {
   Loader2,
   Info,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge, Button, ScrollReveal, AnimateOnScroll } from "@/components/ui";
+import { Button, ScrollReveal, AnimateOnScroll } from "@/components/ui";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { enrollCourse, type DBCourseDetail } from "@/lib/coursesApi";
@@ -406,7 +405,7 @@ export default function CoursePage({ params }: PageProps) {
           <div className="relative container-x pt-4">
             <div className="grid md:grid-cols-[1fr_380px] gap-14 items-start">
               {/* LEFT */}
-              <div>
+              <div className="md:self-center">
                 <ScrollReveal animation="fade-up" delay={0} duration={700}>
                   <div
                     className="inline-flex items-center gap-2 rounded-full border border-blue-500/20
@@ -429,19 +428,6 @@ export default function CoursePage({ params }: PageProps) {
                         FREE
                       </span>
                     )}
-                    <Badge
-                      className={cn(
-                        "font-semibold",
-                        course.level === "BEGINNER" &&
-                          "bg-emerald-50 text-emerald-700 border-emerald-200",
-                        course.level === "INTERMEDIATE" &&
-                          "bg-amber-50 text-amber-700 border-amber-200",
-                        course.level === "ADVANCED" &&
-                          "bg-rose-50 text-rose-700 border-rose-200",
-                      )}
-                    >
-                      {course.level}
-                    </Badge>
                     {course.certificate && (
                       <span
                         className="inline-flex items-center gap-1.5 rounded-full border border-blue-150
@@ -577,20 +563,6 @@ export default function CoursePage({ params }: PageProps) {
                       )}
                       <div className="absolute inset-0 bg-linear-to-t from-slate-900/20 via-transparent to-transparent" />
                     </div>
-                    {course._count.enrollments > 0 && (
-                      <div
-                        className="absolute -bottom-4 -left-4 rounded-xl border border-slate-200
-                                      bg-white/95 backdrop-blur-sm px-4 py-3 shadow-sm
-                                      hover:border-blue-500/25 transition-colors duration-300"
-                      >
-                        <p className="text-[11px] text-slate-400 uppercase tracking-wider">
-                          Students enrolled
-                        </p>
-                        <p className="text-2xl font-bold text-slate-800 mt-0.5">
-                          {course._count.enrollments.toLocaleString("en-IN")}+
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   {/* Info card below image */}
@@ -622,12 +594,12 @@ export default function CoursePage({ params }: PageProps) {
                             )}
                           </span>
                         )}
-                        {course.sessions && (
+                        {/* {course.sessions && (
                           <span className="flex items-center gap-1 text-slate-500 text-[13px]">
                             <Clock className="h-3.5 w-3.5 text-slate-400" />
                             {course.sessions}
                           </span>
-                        )}
+                        )} */}
                         {course.seats && (
                           <span className="flex items-center gap-1 text-slate-500 text-[13px]">
                             <Users className="h-3.5 w-3.5 text-slate-400" />
@@ -639,26 +611,34 @@ export default function CoursePage({ params }: PageProps) {
 
                     {/* Meta row */}
                     <div className="flex flex-col gap-1.5 text-[12px] text-slate-500 border-t border-slate-200/80 pt-3">
-                      {course.startDate && (
-                        <span>
-                          <span className="text-slate-400 mr-1">Starts:</span>
-                          <span className="text-slate-700 font-medium">
-                            {course.startDate}
-                          </span>
-                        </span>
-                      )}
-                      <span>
+                      {/* <span>
                         <span className="text-slate-400 mr-1">Duration:</span>
                         <span className="text-slate-700 font-medium">
                           {course.totalWeeks} Weeks
+                        </span>
+                      </span> */}
+                      <span>
+                        <span className="text-slate-400 mr-1">Language:</span>
+                        <span className="text-slate-700 font-medium">
+                          Hinglish
                         </span>
                       </span>
                       <span>
                         <span className="text-slate-400 mr-1">Mode:</span>
                         <span className="text-slate-700 font-medium">
-                          Live + Recorded
+                          Self Paced
                         </span>
                       </span>
+                      {course.certificate && (
+                        <span>
+                          <span className="text-slate-400 mr-1">
+                            Certificate:
+                          </span>
+                          <span className="text-slate-700 font-medium">
+                            Included
+                          </span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Enrollment message */}
