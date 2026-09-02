@@ -14,6 +14,7 @@ import {
   getCountries,
   getStatesForCountry,
   getCitiesForState,
+  useCountryDataReady,
   DEFAULT_COUNTRY_CODE,
 } from "@/data/countries";
 
@@ -80,9 +81,10 @@ function RegisterForm() {
   const [resendSuccess,  setResendSuccess]  = useState(false);
   const [phoneError,     setPhoneError]     = useState<string | null>(null);
 
-  const countries = useMemo(() => getCountries(), []);
-  const states = useMemo(() => getStatesForCountry(form.country), [form.country]);
-  const cities = useMemo(() => getCitiesForState(form.country, form.state), [form.country, form.state]);
+  const countryDataReady = useCountryDataReady();
+  const countries = useMemo(() => getCountries(), [countryDataReady]);
+  const states = useMemo(() => getStatesForCountry(form.country), [form.country, countryDataReady]);
+  const cities = useMemo(() => getCitiesForState(form.country, form.state), [form.country, form.state, countryDataReady]);
 
   useEffect(() => {
     if (!user) return;

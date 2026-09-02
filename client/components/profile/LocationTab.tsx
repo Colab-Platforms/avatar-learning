@@ -5,6 +5,7 @@ import {
   getCountries,
   getStatesForCountry,
   getCitiesForState,
+  useCountryDataReady,
 } from "@/data/countries";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -21,9 +22,10 @@ export function LocationTab({
   onCancel: () => void;
   onEditStart: () => void;
 }) {
-  const countries = useMemo(() => getCountries(), []);
-  const states = useMemo(() => form.country ? getStatesForCountry(form.country) : [], [form.country]);
-  const cities = useMemo(() => (form.country && form.state) ? getCitiesForState(form.country, form.state) : [], [form.country, form.state]);
+  const countryDataReady = useCountryDataReady();
+  const countries = useMemo(() => getCountries(), [countryDataReady]);
+  const states = useMemo(() => form.country ? getStatesForCountry(form.country) : [], [form.country, countryDataReady]);
+  const cities = useMemo(() => (form.country && form.state) ? getCitiesForState(form.country, form.state) : [], [form.country, form.state, countryDataReady]);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFieldChange("country")(e);

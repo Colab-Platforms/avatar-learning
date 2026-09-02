@@ -13,6 +13,7 @@ import {
   getStatesForCountry,
   getCountryIsoCode,
   getStateIsoCode,
+  preloadCountryData,
 } from "@/data/countries";
 import type { UpdateUserBody } from "@/store/authSlice";
 import type { Tab } from "@/components/profile/shared";
@@ -56,7 +57,10 @@ export default function ProfilePage() {
   }, [user]);
 
   useEffect(() => {
-    if (user && editing) {
+    if (!user || !editing) return;
+    let active = true;
+    preloadCountryData().then(() => {
+      if (!active) return;
       const countryIso = getCountryIsoCode(user.country ?? "");
       const stateIso = getStateIsoCode(countryIso, user.state ?? "");
       setForm({
@@ -68,7 +72,10 @@ export default function ProfilePage() {
         country:   countryIso || (user.country ?? ""),
         city:      user.city      ?? "",
       });
-    }
+    });
+    return () => {
+      active = false;
+    };
   }, [user, editing]);
 
   if (!hasHydrated || !user) return null;
@@ -82,6 +89,7 @@ export default function ProfilePage() {
     setSaveOk(false);
     
     // Resolve ISO codes to display names before dispatching updateUser
+    await preloadCountryData();
     const countriesList = getCountries();
     const countryName = countriesList.find((c) => c.isoCode === form.country)?.name ?? form.country;
     const statesList = form.country ? getStatesForCountry(form.country) : [];

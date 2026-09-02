@@ -34,6 +34,7 @@ import {
   getCountries,
   getStatesForCountry,
   getCitiesForState,
+  useCountryDataReady,
   DEFAULT_COUNTRY_CODE,
 } from "@/data/countries";
 
@@ -176,14 +177,15 @@ export default function PartnersPage() {
 
   const switchTab = (tab: PartnerType) => setActiveTab(tab);
 
-  const countries = useMemo(() => getCountries(), []);
+  const countryDataReady = useCountryDataReady();
+  const countries = useMemo(() => getCountries(), [countryDataReady]);
   const states = useMemo(
     () => getStatesForCountry(form.country),
-    [form.country],
+    [form.country, countryDataReady],
   );
   const cities = useMemo(
     () => getCitiesForState(form.country, form.state),
-    [form.country, form.state],
+    [form.country, form.state, countryDataReady],
   );
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) =>

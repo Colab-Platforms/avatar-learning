@@ -6,9 +6,7 @@ import { Toaster } from "sonner";
 import { SITE } from "@/data/site";
 import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
-import ChatbotAgent from "@/components/ui/ChatbotAgent";
-import { HelpWidget } from "@/components/ui/HelpWidget";
-import { CareerQuizPrompt } from "@/components/quiz/CareerQuizPrompt";
+import { DeferredWidgets } from "@/components/ui/DeferredWidgets";
 // import { IndependenceDayPromo } from "@/components/ui/IndependenceDayPromo";
 import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
 
@@ -83,9 +81,7 @@ export default function RootLayout({
         <StoreProvider>
           <QueryProvider>
             <ProfileCompletionGuard>{children}</ProfileCompletionGuard>
-            <ChatbotAgent />
-            <HelpWidget />
-            <CareerQuizPrompt />
+            <DeferredWidgets />
             {/* <IndependenceDayPromo /> */}
             <Toaster richColors position="top-right" />
           </QueryProvider>
