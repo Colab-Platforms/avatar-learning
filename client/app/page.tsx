@@ -3,12 +3,12 @@ import {
   Hero,
   QuizBanner,
   TimelineSection,
-  CoursesSection,
   WhyChooseUs,
   AdvisorCTA,
   Direct2HireBanner,
 } from "@/components/sections";
 import { Testimonials } from "@/components/home/Testimonials";
+import { D2HCoursesSection } from "@/app/direct2hire/D2HCoursesSection";
 
 export default function Page() {
   return (
@@ -19,7 +19,7 @@ export default function Page() {
       {/* <Testimonials /> */}
       <QuizBanner />
       <TimelineSection />
-      <CoursesSection />
+      <D2HCoursesSection />
       {/* <WhyChooseUs /> */}
       {/* <AdvisorCTA /> */}
       <Footer />
