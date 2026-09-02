@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useRazorpay } from "@/hooks/useRazorpay";
-import { useCashfree } from "@/hooks/useCashfree";
+import { loadRazorpayScript } from "@/hooks/useRazorpay";
+import { loadCashfreeScript } from "@/hooks/useCashfree";
 import { useCreateDirect2HireOrder } from "@/hooks/mutations/useCreateDirect2HireOrder";
 import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
 import { useD2HStatus } from "@/hooks/queries/useD2HStatus";
@@ -22,8 +22,6 @@ export function useDirect2HireCheckout() {
   const router = useRouter();
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
 
-  const razorpayLoaded = useRazorpay();
-  const cashfreeLoaded = useCashfree();
   const { mutateAsync: createOrder } = useCreateDirect2HireOrder();
   const { mutateAsync: verifyPayment } = useVerifyPayment();
   const { data: statusData, refetch: refetchStatus } = useD2HStatus({
@@ -183,18 +181,22 @@ export function useDirect2HireCheckout() {
         const order = await createOrder(couponCode);
 
         if (order.provider === "cashfree") {
-          if (!cashfreeLoaded) {
+          try {
+            await loadCashfreeScript();
+          } catch {
             showMessage(
-              "Payment SDK is still loading. Please try again.",
+              "Couldn't load the payment SDK. Check your connection and retry.",
               "error",
             );
             return;
           }
           await handleCashfreeCheckout(order, lead);
         } else {
-          if (!razorpayLoaded) {
+          try {
+            await loadRazorpayScript();
+          } catch {
             showMessage(
-              "Payment SDK is still loading. Please try again.",
+              "Couldn't load the payment SDK. Check your connection and retry.",
               "error",
             );
             return;
@@ -230,8 +232,6 @@ export function useDirect2HireCheckout() {
       enrolled,
       router,
       createOrder,
-      cashfreeLoaded,
-      razorpayLoaded,
       handleCashfreeCheckout,
       handleRazorpayCheckout,
     ],

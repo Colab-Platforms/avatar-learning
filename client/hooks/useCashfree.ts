@@ -17,7 +17,7 @@ const CASHFREE_SCRIPT = "https://sdk.cashfree.com/js/v3/cashfree.js";
 
 let loadPromise: Promise<void> | null = null;
 
-function loadCashfreeScript(): Promise<void> {
+export function loadCashfreeScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.Cashfree) return Promise.resolve();
   if (loadPromise) return loadPromise;
@@ -45,13 +45,18 @@ function loadCashfreeScript(): Promise<void> {
   return loadPromise;
 }
 
-export function useCashfree() {
+/**
+ * @param eager  When true (default), the Cashfree SDK is injected on mount. Pass
+ *   `false` on pages that only *might* start a payment and call
+ *   {@link loadCashfreeScript} when checkout actually begins.
+ */
+export function useCashfree(eager = true) {
   const [loaded, setLoaded] = useState(
     typeof window !== "undefined" && Boolean(window.Cashfree),
   );
 
   useEffect(() => {
-    if (loaded) return;
+    if (loaded || !eager) return;
     let cancelled = false;
 
     loadCashfreeScript()
@@ -63,7 +68,7 @@ export function useCashfree() {
     return () => {
       cancelled = true;
     };
-  }, [loaded]);
+  }, [loaded, eager]);
 
   return loaded;
 }

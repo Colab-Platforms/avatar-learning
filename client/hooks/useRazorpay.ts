@@ -16,7 +16,7 @@ const RAZORPAY_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
 
 let loadPromise: Promise<void> | null = null;
 
-function loadRazorpayScript(): Promise<void> {
+export function loadRazorpayScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.Razorpay) return Promise.resolve();
   if (loadPromise) return loadPromise;
@@ -44,13 +44,19 @@ function loadRazorpayScript(): Promise<void> {
   return loadPromise;
 }
 
-export function useRazorpay() {
+/**
+ * @param eager  When true (default), the checkout SDK is injected as soon as the
+ *   hook mounts. Pass `false` on pages that only *might* start a payment so the
+ *   ~hundreds of KB of third-party script don't load until checkout actually
+ *   begins — call {@link loadRazorpayScript} at that point.
+ */
+export function useRazorpay(eager = true) {
   const [loaded, setLoaded] = useState(
     typeof window !== "undefined" && Boolean(window.Razorpay),
   );
 
   useEffect(() => {
-    if (loaded) return;
+    if (loaded || !eager) return;
     let cancelled = false;
 
     loadRazorpayScript()
@@ -62,7 +68,7 @@ export function useRazorpay() {
     return () => {
       cancelled = true;
     };
-  }, [loaded]);
+  }, [loaded, eager]);
 
   return loaded;
 }
