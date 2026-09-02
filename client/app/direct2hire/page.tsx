@@ -21,6 +21,7 @@ import { StickyMemoSticker } from "./StickyMemoSticker";
 import { UrgencyBanner } from "./UrgencyBanner";
 import { useOfferCountdown } from "./OfferTimerBar";
 import { D2HCoursesSection } from "./D2HCoursesSection";
+import FAQSection from "./FAQSection";
 import { useDirect2HireCheckout } from "@/hooks/useDirect2HireCheckout";
 import { Testimonials } from "@/components/home/Testimonials/Testimonials";
 import { RECENT_ENROLLMENTS } from "@/data/socialProof";
@@ -1352,6 +1353,8 @@ export default function Direct2HirePage() {
             </p>
           </div>
         </section>
+
+        <FAQSection />
       </main>
 
       {/* ══════════════════════════════
