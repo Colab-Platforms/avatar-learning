@@ -12,6 +12,7 @@ interface TestimonialVideoProps {
   name: string;
   role: string;
   isActive: boolean;
+  disableVideo?: boolean;
   isVideoOpen: boolean;
   onVideoOpen: () => void;
   onVideoClose: () => void;
@@ -24,6 +25,7 @@ export function TestimonialVideo({
   name,
   role,
   isActive,
+  disableVideo = false,
   isVideoOpen,
   onVideoOpen,
   onVideoClose,
@@ -112,6 +114,38 @@ export function TestimonialVideo({
   };
 
   const showThumbnail = !isVideoOpen || !isPlaying;
+
+  if (disableVideo) {
+    return (
+      <div
+        className={cn(
+          "relative w-full overflow-hidden rounded-2xl bg-black aspect-video",
+          className,
+        )}
+      >
+        <Image
+          src={thumbnail}
+          alt={`${name}, ${role}`}
+          fill
+          sizes="(max-width: 768px) 100vw, 55vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
+        <div className="absolute bottom-4 left-4 right-4 z-10 pointer-events-none lg:hidden">
+          <p className="text-sm font-bold uppercase tracking-wide text-white underline decoration-white/40 underline-offset-4">
+            {name}
+          </p>
+          <p className="mt-1 text-xs text-white/85">{role}</p>
+        </div>
+        <div className="absolute bottom-5 left-5 z-10 hidden lg:block pointer-events-none">
+          <p className="text-sm font-bold uppercase tracking-wide text-white">
+            {name}
+          </p>
+          <p className="mt-0.5 text-xs text-white/85">{role}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

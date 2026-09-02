@@ -34,6 +34,7 @@ const itemVariants = {
 interface TestimonialCardProps {
   testimonial: Testimonial;
   isActive: boolean;
+  disableVideo?: boolean;
   isVideoOpen: boolean;
   onVideoOpen: () => void;
   onVideoClose: () => void;
@@ -46,6 +47,7 @@ interface TestimonialCardProps {
 export function TestimonialCard({
   testimonial,
   isActive,
+  disableVideo = false,
   isVideoOpen,
   onVideoOpen,
   onVideoClose,
@@ -79,6 +81,7 @@ export function TestimonialCard({
             name={testimonial.name}
             role={testimonial.role}
             isActive={isActive}
+            disableVideo={disableVideo}
             isVideoOpen={isVideoOpen}
             onVideoOpen={onVideoOpen}
             onVideoClose={onVideoClose}

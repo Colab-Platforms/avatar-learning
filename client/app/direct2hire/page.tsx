@@ -44,9 +44,6 @@ import {
 
 /* ─── data ─────────────────────────────────────────────────────────── */
 
-const HERO_VIDEO_URL =
-  "https://res.cloudinary.com/w55pkbm8/video/upload/v1788175876/Avatar_India_Web_Page_w7mfvh.mp4";
-
 const SEATS_TOTAL = 50;
 const SEATS_FILLED = 38;
 const SEATS_PERCENT = Math.round((SEATS_FILLED / SEATS_TOTAL) * 100);
@@ -322,7 +319,6 @@ export default function Direct2HirePage() {
   const [walkAwaySlide, setWalkAwaySlide] = useState(0);
   const [enrollmentIndex, setEnrollmentIndex] = useState(0);
   const [modalPlan, setModalPlan] = useState<number | null>(null);
-  const [heroVideoPlaying, setHeroVideoPlaying] = useState(false);
 
   useEffect(() => {
     if (modalPlan === null) return;
@@ -588,39 +584,14 @@ export default function Direct2HirePage() {
                   className="w-full lg:h-full"
                 >
                   <div className="relative w-full h-72 sm:h-96 lg:h-full lg:min-h-120 rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-slate-200">
-                    {heroVideoPlaying ? (
-                      <video
-                        src={HERO_VIDEO_URL}
-                        className="absolute inset-0 h-full w-full object-cover"
-                        autoPlay
-                        playsInline
-                        controls
-                        preload="auto"
-                        title="Direct2Hire — every plan & outcome explained"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setHeroVideoPlaying(true)}
-                        aria-label="Play intro video"
-                        className="group absolute inset-0"
-                      >
-                        <Image
-                          src="/Direct2hire/d2h-thumbnail.png"
-                          alt="Direct2Hire intro video"
-                          fill
-                          priority
-                          sizes="(max-width:1024px) 100vw, 50vw"
-                          className="object-cover"
-                        />
-                        <span className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/30" />
-                        <span className="absolute inset-0 flex items-center justify-center">
-                          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-brand-600 shadow-lg transition-transform group-hover:scale-105">
-                            <Play className="h-6 w-6 fill-current translate-x-0.5" />
-                          </span>
-                        </span>
-                      </button>
-                    )}
+                    <Image
+                      src="/Direct2hire/d2h-thumbnail.png"
+                      alt="Direct2Hire intro"
+                      fill
+                      priority
+                      sizes="(max-width:1024px) 100vw, 50vw"
+                      className="object-cover"
+                    />
                   </div>
                 </ScrollReveal>
               </div>
@@ -1261,7 +1232,7 @@ export default function Direct2HirePage() {
           </div>
         </section> */}
 
-        <Testimonials className="py-13 sm:py-16" />
+        <Testimonials className="py-13 sm:py-16" disableVideo />
 
         {/* ══════════════════════════════
             DARK CTA BANNER

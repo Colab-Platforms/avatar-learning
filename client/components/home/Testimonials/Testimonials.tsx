@@ -13,7 +13,13 @@ const SWIPE_VELOCITY = 400;
 
 const AUTOPLAY_INTERVAL_MS = 3000;
 
-export function Testimonials({ className }: { className?: string }) {
+export function Testimonials({
+  className,
+  disableVideo = false,
+}: {
+  className?: string;
+  disableVideo?: boolean;
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoOpenIndex, setVideoOpenIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -156,6 +162,7 @@ export function Testimonials({ className }: { className?: string }) {
                   key={activeTestimonial.id}
                   testimonial={activeTestimonial}
                   isActive
+                  disableVideo={disableVideo}
                   isVideoOpen={videoOpenIndex === activeIndex}
                   onVideoOpen={() => setVideoOpenIndex(activeIndex)}
                   onVideoClose={() => setVideoOpenIndex(null)}

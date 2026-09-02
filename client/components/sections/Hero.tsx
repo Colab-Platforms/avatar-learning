@@ -143,12 +143,12 @@ export function Hero() {
           <div className="relative w-full h-full min-h-[350px] sm:min-h-[450px] lg:min-h-[550px] anim-fade-up stagger-3 hidden lg:flex items-center justify-center">
             {/* Main Video Animation */}
             <div className="relative w-[85%] rounded-[32px] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.1)] z-10 bg-white border border-white/50">
-              <video
-                src="/landing-vid/pencil-animation.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
+              <Image
+                src="/landingpage-images/pencil.png"
+                alt="Learning illustration"
+                width={800}
+                height={640}
+                priority
                 className="w-full h-auto object-contain scale-[1.02]"
                 style={{ mixBlendMode: "darken" }}
               />
