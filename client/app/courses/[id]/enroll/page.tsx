@@ -326,9 +326,7 @@ function CourseEnrollContent({ params }: PageProps) {
             {isUpgrade ? "Upgrade & Payment" : "Checkout & Payment"}
           </span>
           <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-900">
-            {isUpgrade
-              ? "Upgrade to Career+"
-              : "Choose Your Learning Track"}
+            {isUpgrade ? "Upgrade to Career+" : "Choose Your Learning Track"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {isUpgrade ? "Add the full programme to" : "Select the plan for"}{" "}
@@ -340,7 +338,9 @@ function CourseEnrollContent({ params }: PageProps) {
           <div className="mb-6 flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
             <p className="text-sm text-slate-800">
-              <span className="font-semibold text-slate-900">You own the Practitioner plan.</span>{" "}
+              <span className="font-semibold text-slate-900">
+                You own the Practitioner plan.
+              </span>{" "}
               Career+ is a separate track with its own mentors, projects and
               assessments — it is a full ₹{d2hPrice} programme, and you keep
               everything from your Practitioner plan.
@@ -401,11 +401,11 @@ function CourseEnrollContent({ params }: PageProps) {
               <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5 border-t border-slate-200 pt-3 sm:pt-4 text-xs text-slate-700">
                 <li className="flex items-center gap-2.5">
                   <Check className="h-4 w-4 text-brand-500 shrink-0" />
-                  <span>Full access to compact course video series</span>
+                  <span>Full access to complete video lecture</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="h-4 w-4 text-brand-500 shrink-0" />
-                  <span>Course learning assessment & quiz evaluation</span>
+                  <span>Course assessment evaluation</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="h-4 w-4 text-brand-500 shrink-0" />
