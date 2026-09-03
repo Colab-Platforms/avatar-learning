@@ -91,6 +91,12 @@ const STAT_TILES = [
     label: "Students placed",
     stars: false,
   },
+  {
+    value: "3.6 LPA",
+    valueClass: "text-brand-600",
+    label: "Average package",
+    stars: false,
+  },
 ];
 
 const TRUST_BARS = [
@@ -642,9 +648,9 @@ export default function Direct2HirePage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 rounded-2xl border border-border bg-white overflow-hidden divide-x divide-border">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-2xl border border-border overflow-hidden">
                   {STAT_TILES.map((t) => (
-                    <div key={t.label} className="px-3 py-4 text-center">
+                    <div key={t.label} className="bg-white px-3 py-4 text-center">
                       <p
                         className={cn(
                           "text-[18px] sm:text-[20px] font-bold flex items-center justify-center gap-1",
