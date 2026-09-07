@@ -306,9 +306,10 @@ export default function CoursePage({ params }: PageProps) {
 
   if (isError || !course) return notFound();
 
-  const weekData = [...course.lessons].sort(
-    (a, b) => a.weekNumber - b.weekNumber,
-  );
+  // Program Structure shows the ₹4999 (D2H) path only — hide Basic-only weeks.
+  const weekData = [...course.lessons]
+    .filter((l) => l.tier !== "BASIC")
+    .sort((a, b) => a.weekNumber - b.weekNumber);
   const whatYouLearn = course.whatYouLearn ?? [];
   const audience = course.audience ?? [];
 
