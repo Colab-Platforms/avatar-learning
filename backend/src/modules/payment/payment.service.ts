@@ -443,7 +443,18 @@ export class PaymentService {
       orderBy: { createdAt: "desc" },
     });
 
-    const priceRupees = COURSE_BASIC_PRICE_RUPEES;
+    let couponId: string | undefined;
+    let discountRupees = 0;
+    if (couponCode) {
+      const coupon = await couponService.validateCoupon(couponCode);
+      couponId = coupon.id;
+      discountRupees = Math.round(
+        (COURSE_BASIC_PRICE_RUPEES * coupon.discountPercent) / 100,
+      );
+    }
+    discountRupees = Math.min(discountRupees, COURSE_BASIC_PRICE_RUPEES);
+
+    const priceRupees = COURSE_BASIC_PRICE_RUPEES - discountRupees;
     const provider = getPaymentProvider();
     const amountInPaise = priceRupees * 100;
     const ctx: OrderContext = {
@@ -451,6 +462,8 @@ export class PaymentService {
       courseId,
       description: `${course.title} (Basic Plan)`,
       returnPath: `/courses/${courseId}`,
+      couponId,
+      discountAmount: discountRupees * 100,
     };
 
     if (provider === "cashfree") {
