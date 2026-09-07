@@ -355,6 +355,7 @@ const bookingSchema = Joi.object({
     "any.required": "Preferred mode is required",
   }),
   notes: Joi.string().trim().max(1000).optional().allow(null, ""),
+  courseId: Joi.any().strip(),
 });
 
 export const validateCounsellingBooking = (data: unknown) =>
