@@ -1,6 +1,11 @@
-### Purchase webhook
+### Set these locally — do not commit real Pabbly URLs
+@d2hPurchaseWebhookUrl = REPLACE_WITH_PABBLY_D2H_PURCHASE_WEBHOOK_URL
+@basicCoursePurchaseWebhookUrl = REPLACE_WITH_PABBLY_BASIC_COURSE_PURCHASE_WEBHOOK_URL
+@signupWebhookUrl = REPLACE_WITH_PABBLY_SIGNUP_WEBHOOK_URL
 
-POST https://connect.pabbly.com/webhook-listener/webhook/IjU3NjMwNTZjMDYzNDA0M2M1MjY1NTUzMyI_3D_pc/IjU3NjcwNTY5MDYzZTA0MzU1MjY0NTUzYzUxMzci_pc
+### Purchase webhook (D2H ₹4999)
+
+POST {{d2hPurchaseWebhookUrl}}
 Content-Type: application/json
 
 {
@@ -8,7 +13,23 @@ Content-Type: application/json
   "phone_number": "91NUMBER",
   "email": "JOHN.DOE@EXAMPLE.COM",
   "product_name": "Direct2Hire Programme",
-  "amount": 99, 
+  "amount": 4999,
+  "order_id": "order_TSNMNjAbWKnf0C",
+  "payment_id": "pay_TSNMSWbzKsy7Oz",
+  "purchase_date": "2026-08-21T09:48:33.366Z"
+}
+
+### Course purchase webhook (₹499 Basic)
+
+POST {{basicCoursePurchaseWebhookUrl}}
+Content-Type: application/json
+
+{
+  "customer_name": "john doe",
+  "phone_number": "91NUMBER",
+  "email": "JOHN.DOE@EXAMPLE.COM",
+  "product_name": "AI Foundations Course",
+  "amount": 499,
   "order_id": "order_TSNMNjAbWKnf0C",
   "payment_id": "pay_TSNMSWbzKsy7Oz",
   "purchase_date": "2026-08-21T09:48:33.366Z"
@@ -16,7 +37,7 @@ Content-Type: application/json
 
 ### Signup webhook
 
-POST https://connect.pabbly.com/webhook-listener/webhook/IjU3NjMwNTZjMDYzNDA0M2M1MjY1NTUzMyI_3D_pc/IjU3NjcwNTY4MDYzNzA0MzI1MjY5NTUzYzUxMzEi_pc
+POST {{signupWebhookUrl}}
 Content-Type: application/json
 
 {

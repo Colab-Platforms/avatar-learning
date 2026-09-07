@@ -159,7 +159,12 @@ async function notifyPabblyOnPurchase(
       productName = "Direct2Hire Assessment + Counselling";
     }
 
-    const webhookUrl = process.env.PABBLY_PURCHASE_WEBHOOK_URL;
+    // ₹499 Basic course purchases go to their own Pabbly workflow; everything
+    // else (D2H ₹4999, assessment+counselling) keeps the original webhook.
+    const webhookUrl =
+      order.productType === "COURSE"
+        ? process.env.PABBLY_BASIC_COURSE_PURCHASE_WEBHOOK_URL
+        : process.env.PABBLY_D2H_PURCHASE_WEBHOOK_URL;
     if (!webhookUrl) {
       console.warn("[Payment] Pabbly purchase webhook URL not configured");
       return;
