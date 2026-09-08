@@ -117,6 +117,18 @@ export function D2HCoursesSection() {
         ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto"
         : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
+  // Mobile-only carousel: horizontal snap-scroll below md, grid from md up.
+  // gridColsClass (with its max-w / mx-auto) is applied only from md so it
+  // doesn't fight the edge-bleed padding on mobile.
+  const isCarousel = d2hCourses.length > 1;
+  const mdGridColsClass =
+    d2hCourses.length === 2
+      ? "md:grid-cols-2 md:max-w-4xl md:mx-auto"
+      : "md:grid-cols-2 lg:grid-cols-3";
+  const listClass = isCarousel
+    ? `flex snap-x snap-mandatory overflow-x-auto scroll-px-5 -mx-5 px-5 pb-4 gap-4 md:mx-0 md:px-0 md:pb-0 md:grid md:overflow-visible md:gap-8 ${mdGridColsClass}`
+    : `grid gap-6 sm:gap-8 ${gridColsClass}`;
+
   return (
     <section
       id="d2h-programs"
@@ -163,7 +175,7 @@ export function D2HCoursesSection() {
         </div>
 
         {/* ── Cards Grid (Responsive Columns Based on Course Count) ── */}
-        <div className={`grid gap-6 sm:gap-8 ${gridColsClass}`}>
+        <div className={listClass}>
           {d2hCourses.map((course, i) => {
             const isComingSoon = course.isComingSoon;
             const levelLabel = LEVEL_BADGES[course.level] || course.level;
@@ -181,7 +193,11 @@ export function D2HCoursesSection() {
                 key={course.id}
                 animation="fade-up"
                 delay={i * 100}
-                className="h-full"
+                className={
+                  isCarousel
+                    ? "h-full w-[88%] max-w-[340px] shrink-0 snap-center md:w-auto md:max-w-none md:shrink"
+                    : "h-full"
+                }
               >
                 <div className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-1.5 transition-all duration-300 h-full">
                   {/* ── Thumbnail ── */}
@@ -297,13 +313,13 @@ export function D2HCoursesSection() {
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                       {isComingSoon ? (
-                        <span className="inline-flex items-center justify-center rounded-lg bg-slate-200 px-3.5 py-2 text-[12px] font-semibold text-slate-500 cursor-not-allowed shrink-0">
+                        <span className="inline-flex w-full items-center justify-center rounded-lg bg-slate-200 px-3.5 py-2.5 text-[12px] font-semibold text-slate-500 cursor-not-allowed mt-1">
                           Coming Soon
                         </span>
                       ) : (
                         <Link
                           href={enrollHref}
-                          className="inline-flex items-center justify-center rounded-lg px-3.5 py-2 text-[12px] font-semibold text-white hover:brightness-110 active:scale-95 shadow-sm transition-all duration-200 shrink-0"
+                          className="inline-flex w-full items-center justify-center rounded-lg px-3.5 py-2.5 text-[12px] font-semibold text-white hover:brightness-110 active:scale-95 shadow-sm transition-all duration-200 mt-1"
                           style={{
                             background:
                               "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",

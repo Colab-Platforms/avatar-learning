@@ -444,10 +444,11 @@ export default function Direct2HirePage() {
 
                   <div className="grid grid-cols-2 gap-3 mb-4 sm:mb-5 max-w-lg">
                     {PLANS.map((plan) => (
-                      <div
+                      <a
                         key={plan.tag}
+                        href="#choose-plan"
                         className={cn(
-                          "relative overflow-hidden rounded-2xl border px-4 py-3.5",
+                          "relative block overflow-hidden rounded-2xl border px-4 py-3.5 transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer",
                           plan.popular
                             ? "bg-text border-text text-white"
                             : "bg-white border-border text-text",
@@ -477,7 +478,7 @@ export default function Direct2HirePage() {
                         >
                           {plan.meta}
                         </p>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 </ScrollReveal>
@@ -802,7 +803,10 @@ export default function Direct2HirePage() {
         {/* ══════════════════════════════
             CHOOSE YOUR PLAN
         ══════════════════════════════ */}
-        <section className="py-13 sm:py-16 bg-surface-alt border-t border-border">
+        <section
+          id="choose-plan"
+          className="py-13 sm:py-16 bg-surface-alt border-t border-border scroll-mt-20"
+        >
           <div className="container-x">
             <ScrollReveal animation="fade-up">
               <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
