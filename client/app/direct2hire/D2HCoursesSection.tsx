@@ -126,7 +126,7 @@ export function D2HCoursesSection() {
       ? "md:grid-cols-2 md:max-w-4xl md:mx-auto"
       : "md:grid-cols-2 lg:grid-cols-3";
   const listClass = isCarousel
-    ? `flex snap-x snap-mandatory overflow-x-auto scroll-px-5 -mx-5 px-5 pb-4 gap-4 md:mx-0 md:px-0 md:pb-0 md:grid md:overflow-visible md:gap-8 ${mdGridColsClass}`
+    ? `flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-px-5 -mx-5 px-5 pt-2 pb-4 gap-4 md:mx-0 md:px-0 md:pt-0 md:pb-0 md:grid md:overflow-visible md:gap-8 ${mdGridColsClass}`
     : `grid gap-6 sm:gap-8 ${gridColsClass}`;
 
   return (
