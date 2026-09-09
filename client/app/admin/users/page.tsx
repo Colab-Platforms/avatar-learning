@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ShieldCheck, ShieldMinus, Search, Link as LinkIcon, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  fetchUsersPaginated,
   setUserRole,
   generateD2HPaymentLink,
   type AdminUser,
   type D2HPaymentLink,
 } from "@/lib/adminApi";
+import { useAdminUsers } from "@/hooks/queries/useAdminUsers";
+import { queryKeys } from "@/lib/react-query/query-keys";
+import { useDebounce } from "@/hooks/useDebounce";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -33,18 +37,29 @@ const ROLE_COLOR: Record<string, string> = {
   USER: "text-white/50 bg-white/8",
 };
 
-export default function AdminUsersPage() {
+const PAGE_SIZE = 10;
+
+function AdminUsersContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+
+  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const urlSearch = searchParams.get("search")?.trim() ?? "";
+
   const [callerRole, setCallerRole] = useState<string | null>(null);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [mutationError, setMutationError] = useState("");
   const [linkActingId, setLinkActingId] = useState<string | null>(null);
   const [paymentLinks, setPaymentLinks] = useState<Record<string, D2HPaymentLink>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Search box value updates every keystroke; the debounced value only catches
+  // up 400ms after typing stops, so the URL (and the query key it drives)
+  // doesn't change on every keystroke.
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchInput.trim(), 400);
 
   useEffect(() => {
     try {
@@ -58,34 +73,86 @@ export default function AdminUsersPage() {
     }
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetchUsersPaginated(page, 10, search || undefined);
-      setUsers(res.data);
-      setTotalPages(res.totalPages ?? 1);
-    } catch {
-      setError("Failed to load users.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+  const { data, isPending, isError } = useAdminUsers(
+    currentPage,
+    PAGE_SIZE,
+    urlSearch || undefined,
+  );
 
+  const users = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const loading = isPending;
+  const error = mutationError || (isError ? "Failed to load users." : "");
+
+  const activeQueryKey = queryKeys.adminUsersPage(
+    currentPage,
+    PAGE_SIZE,
+    urlSearch || undefined,
+  );
+
+  const goTo = useCallback(
+    (page: number, nextSearch?: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (page <= 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(page));
+      }
+      const s = nextSearch !== undefined ? nextSearch : urlSearch;
+      if (s) {
+        params.set("search", s);
+      } else {
+        params.delete("search");
+      }
+      const qs = params.toString();
+      router.push(qs ? `/admin/users?${qs}` : "/admin/users");
+    },
+    [router, searchParams, urlSearch],
+  );
+
+  // Sync the debounced search term into the URL, resetting to page 1 so a stale
+  // currentPage doesn't request an out-of-range page against the new, smaller
+  // filtered result set.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (debouncedSearch !== urlSearch) {
+      goTo(1, debouncedSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  // If the current page falls past the end of the result set (e.g. after a
+  // refresh on ?page=9 with fewer pages now), snap back to page 1.
+  useEffect(() => {
+    if (
+      data &&
+      data.totalPages > 0 &&
+      currentPage > data.totalPages &&
+      currentPage !== 1
+    ) {
+      goTo(1);
+    }
+  }, [data, currentPage, goTo]);
 
   const handleToggleAdmin = async (user: AdminUser) => {
     const current = highestRole(user);
     const nextRole = current === "ADMIN" ? "USER" : "ADMIN";
     setActingId(user.id);
-    setError("");
+    setMutationError("");
     try {
       const updated = await setUserRole(user.id, nextRole);
-      setUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)));
+      queryClient.setQueryData(
+        activeQueryKey,
+        (old: typeof data | undefined) =>
+          old
+            ? {
+                ...old,
+                data: old.data.map((u) => (u.id === user.id ? updated : u)),
+              }
+            : old,
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? "Failed to update role.");
+      setMutationError(err?.response?.data?.message ?? "Failed to update role.");
     } finally {
       setActingId(null);
     }
@@ -93,7 +160,7 @@ export default function AdminUsersPage() {
 
   const handleGenerateLink = async (user: AdminUser) => {
     setLinkActingId(user.id);
-    setError("");
+    setMutationError("");
     try {
       const link = await generateD2HPaymentLink(user.id);
       setPaymentLinks((prev) => ({ ...prev, [user.id]: link }));
@@ -132,11 +199,8 @@ export default function AdminUsersPage() {
           className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
         />
         <input
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name or email"
           className="w-full pl-8 pr-3 py-2 rounded-lg border border-white/10 bg-ink-900 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-brand-500/50"
         />
@@ -269,18 +333,18 @@ export default function AdminUsersPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
+            onClick={() => goTo(currentPage - 1)}
+            disabled={currentPage <= 1}
             className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/60 hover:bg-white/5 disabled:opacity-30 transition-colors"
           >
             Previous
           </button>
           <span className="text-xs text-white/40">
-            Page {page} of {totalPages}
+            Page {currentPage} of {totalPages}
           </span>
           <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
+            onClick={() => goTo(currentPage + 1)}
+            disabled={currentPage >= totalPages}
             className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/60 hover:bg-white/5 disabled:opacity-30 transition-colors"
           >
             Next
@@ -288,5 +352,20 @@ export default function AdminUsersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-6">
+          <div className="h-8 w-40 bg-ink-800 rounded-lg animate-pulse" />
+          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+        </div>
+      }
+    >
+      <AdminUsersContent />
+    </Suspense>
   );
 }

@@ -37,6 +37,11 @@ export const queryKeys = {
   ) => ["admin-direct2hire-students", page, pageSize, search ?? ""] as const,
   adminBasicStudent: (userId: string) =>
     ["admin-basic-student", userId] as const,
+  adminBasicStudentsPage: (
+    page: number,
+    pageSize: number,
+    search?: string,
+  ) => ["admin-basic-students", page, pageSize, search ?? ""] as const,
   internshipTasks: (courseId?: string) =>
     ["direct2hire-internship-tasks", courseId ?? null] as const,
   internshipTask: (taskId: string) =>
@@ -78,6 +83,10 @@ export const queryKeys = {
     ["admin-job-placement-journey", userId] as const,
   introVideo: ["direct2hire-intro-video"] as const,
   adminIntroVideo: ["admin-direct2hire-intro-video"] as const,
+  adminDashboardOverview: ["admin-dashboard-overview"] as const,
+  adminUsers: ["admin-users"] as const,
+  adminUsersPage: (page: number, pageSize: number, search?: string) =>
+    ["admin-users", page, pageSize, search ?? ""] as const,
   adminCategories: ["admin-categories"] as const,
   adminCategoriesPage: (page: number, pageSize: number, search?: string) =>
     ["admin-categories", page, pageSize, search ?? ""] as const,

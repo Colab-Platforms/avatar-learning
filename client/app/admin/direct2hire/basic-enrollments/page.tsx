@@ -1,65 +1,92 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Wallet, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import {
-  fetchD2HBasicEnrollmentsPaginated,
-  type AdminBasicUserRow,
-} from "@/lib/adminApi";
-import type { PaginatedResponse } from "@/lib/coursesApi";
+import { useAdminBasicEnrollments } from "@/hooks/queries/useAdminBasicEnrollments";
+import { useDebounce } from "@/hooks/useDebounce";
 
-export default function AdminBasicPlanPage() {
-  const [rows, setRows] = useState<AdminBasicUserRow[]>([]);
-  const [pagination, setPagination] = useState<Omit<
-    PaginatedResponse<AdminBasicUserRow>,
-    "data"
-  > | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+function AdminBasicPlanContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const urlSearch = searchParams.get("search")?.trim() ?? "";
 
+  // Search box value updates every keystroke; the debounced value only catches
+  // up 400ms after typing stops, so the URL (and the query key it drives)
+  // doesn't change on every keystroke.
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchInput.trim(), 400);
+
+  const { data, isPending, isError } = useAdminBasicEnrollments(
+    currentPage,
+    20,
+    urlSearch || undefined,
+  );
+
+  const rows = data?.data ?? [];
+  const pagination = data
+    ? {
+        currentPage: data.currentPage,
+        pageSize: data.pageSize,
+        totalRecords: data.totalRecords,
+        totalPages: data.totalPages,
+        hasNextPage: data.hasNextPage,
+        hasPreviousPage: data.hasPreviousPage,
+      }
+    : null;
+  const loading = isPending;
+  const error = isError ? "Failed to load Basic plan enrollments." : "";
+
+  const goTo = useCallback(
+    (page: number, nextSearch?: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (page <= 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(page));
+      }
+      const s = nextSearch !== undefined ? nextSearch : urlSearch;
+      if (s) {
+        params.set("search", s);
+      } else {
+        params.delete("search");
+      }
+      const qs = params.toString();
+      router.push(
+        qs
+          ? `/admin/direct2hire/basic-enrollments?${qs}`
+          : "/admin/direct2hire/basic-enrollments",
+      );
+    },
+    [router, searchParams, urlSearch],
+  );
+
+  // Sync the debounced search term into the URL, resetting to page 1 so a stale
+  // currentPage (e.g. page 4) doesn't request an out-of-range page against the
+  // new, smaller filtered result set.
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [searchInput]);
-
-  useEffect(() => {
-    setCurrentPage(1);
+    if (debouncedSearch !== urlSearch) {
+      goTo(1, debouncedSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetchD2HBasicEnrollmentsPaginated(
-        currentPage,
-        20,
-        debouncedSearch || undefined,
-      );
-      setRows(res.data);
-      setPagination({
-        currentPage: res.currentPage,
-        pageSize: res.pageSize,
-        totalRecords: res.totalRecords,
-        totalPages: res.totalPages,
-        hasNextPage: res.hasNextPage,
-        hasPreviousPage: res.hasPreviousPage,
-      });
-    } catch {
-      setError("Failed to load Basic plan enrollments.");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, debouncedSearch]);
-
+  // If the current page falls past the end of the result set (e.g. after a
+  // refresh on ?page=9 with fewer pages now), snap back to page 1.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (
+      data &&
+      data.totalPages > 0 &&
+      currentPage > data.totalPages &&
+      currentPage !== 1
+    ) {
+      goTo(1);
+    }
+  }, [data, currentPage, goTo]);
 
   return (
     <div className="p-8 space-y-6">
@@ -111,8 +138,8 @@ export default function AdminBasicPlanPage() {
           <div className="py-16 text-center">
             <Wallet size={32} className="mx-auto text-white/15 mb-3" />
             <p className="text-sm text-white/35">
-              {debouncedSearch
-                ? `No students match "${debouncedSearch}".`
+              {urlSearch
+                ? `No students match "${urlSearch}".`
                 : "No Basic plan purchases yet."}
             </p>
           </div>
@@ -175,7 +202,7 @@ export default function AdminBasicPlanPage() {
       {!loading && pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
-            onClick={() => setCurrentPage((p) => p - 1)}
+            onClick={() => goTo(currentPage - 1)}
             disabled={!pagination.hasPreviousPage}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               pagination.hasPreviousPage
@@ -186,8 +213,28 @@ export default function AdminBasicPlanPage() {
             <ChevronLeft size={16} />
             Previous
           </button>
+
+          <div className="flex items-center gap-1">
+            {Array.from(
+              { length: pagination.totalPages },
+              (_, i) => i + 1,
+            ).map((page) => (
+              <button
+                key={page}
+                onClick={() => goTo(page)}
+                className={`h-9 w-9 rounded-lg text-sm font-medium transition-all ${
+                  currentPage === page
+                    ? "bg-brand-500 text-ink-950 font-semibold"
+                    : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
           <button
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => goTo(currentPage + 1)}
             disabled={!pagination.hasNextPage}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               pagination.hasNextPage
@@ -201,5 +248,20 @@ export default function AdminBasicPlanPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminBasicPlanPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-6">
+          <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
+          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+        </div>
+      }
+    >
+      <AdminBasicPlanContent />
+    </Suspense>
   );
 }

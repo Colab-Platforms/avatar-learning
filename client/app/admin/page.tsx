@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
     BookOpen,
@@ -14,12 +13,9 @@ import {
     Wallet,
     UserCheck,
 } from "lucide-react";
-import {
-    fetchAdminCourses,
-    fetchCategories,
-    fetchAdminDashboardOverview,
-    type AdminDashboardOverview,
-} from "@/lib/adminApi";
+import { useAdminCoursesList } from "@/hooks/queries/useAdminCoursesList";
+import { useAdminCategoriesList } from "@/hooks/queries/useAdminCategoriesList";
+import { useAdminDashboardOverview } from "@/hooks/queries/useAdminDashboardOverview";
 import { formatPaise } from "@/lib/formatters";
 
 interface StatCard {
@@ -102,28 +98,16 @@ const LEVEL_COLOR: Record<string, string> = {
 };
 
 export default function AdminOverviewPage() {
-    const [courses, setCourses] = useState<RecentCourse[]>([]);
-    const [catCount, setCatCount] = useState(0);
-    const [overview, setOverview] = useState<AdminDashboardOverview | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: coursesData, isPending: coursesLoading } = useAdminCoursesList();
+    const { data: categoriesData, isPending: categoriesLoading } =
+        useAdminCategoriesList();
+    const { data: overviewData, isPending: overviewLoading } =
+        useAdminDashboardOverview();
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [c, cats, ov] = await Promise.all([
-                fetchAdminCourses(),
-                fetchCategories(),
-                fetchAdminDashboardOverview(),
-            ]);
-            setCourses(c);
-            setCatCount(cats.length);
-            setOverview(ov);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => { load(); }, [load]);
+    const courses = (coursesData ?? []) as RecentCourse[];
+    const catCount = (categoriesData as unknown[] | undefined)?.length ?? 0;
+    const overview = overviewData ?? null;
+    const loading = coursesLoading || categoriesLoading || overviewLoading;
 
     const published = courses.filter((c) => c.isPublished).length;
     const totalLessons = courses.reduce((s, c) => s + c._count.lessons, 0);
