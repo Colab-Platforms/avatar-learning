@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft,
+  ChevronDown,
   Sparkles,
   X,
   CalendarClock,
@@ -1232,13 +1233,13 @@ export default function AdminDirect2HireStudentPage() {
         <CounsellingTabs counselling={counselling} recommendation={recommendation} />
       )}
 
-      <AdminJobPlacementSection userId={userId} />
-
       <CoursesSection
         userId={userId}
         courses={courses}
         feedback={data.feedback ?? null}
       />
+
+      <AdminJobPlacementSection userId={userId} />
     </div>
   );
 }
@@ -1255,6 +1256,19 @@ function CoursesSection({
   const [activeCourseId, setActiveCourseId] = useState<string | null>(
     courses[0]?.courseId ?? null,
   );
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   if (courses.length === 0) {
     return (
@@ -1272,24 +1286,66 @@ function CoursesSection({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-1 border-b border-white/6 overflow-x-auto scrollbar-none">
-        {courses.map((course) => (
-          <button
-            key={course.courseId}
-            onClick={() => setActiveCourseId(course.courseId)}
-            className={`relative px-4 py-2.5 text-sm font-semibold transition-colors shrink-0 flex items-center gap-2 ${
-              activeCourse.courseId === course.courseId
-                ? "text-brand-400"
-                : "text-white/40 hover:text-white/70"
-            }`}
-          >
-            {course.courseTitle}
-            <TierBadge tier={course.tier} />
-            {activeCourse.courseId === course.courseId && (
-              <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-brand-400 rounded-full animate-in fade-in duration-200" />
-            )}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-2">
+            Course
+          </p>
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex items-center gap-2 min-w-[260px] rounded-xl border border-white/10 bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white/90 outline-none transition hover:border-white/20 focus:border-brand-500/60 focus:ring-1 focus:ring-brand-500/40"
+            >
+              <span className="truncate">{activeCourse.courseTitle}</span>
+              <TierBadge tier={activeCourse.tier} />
+              <ChevronDown
+                size={16}
+                className={`ml-auto shrink-0 text-white/40 transition-transform ${
+                  menuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.ul
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute z-20 mt-2 w-full min-w-[260px] max-h-72 overflow-y-auto rounded-xl border border-white/10 bg-ink-900 p-1.5 shadow-xl shadow-black/40 scrollbar-none"
+                >
+                  {courses.map((course) => {
+                    const isActive = course.courseId === activeCourse.courseId;
+                    return (
+                      <li key={course.courseId}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveCourseId(course.courseId);
+                            setMenuOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                            isActive
+                              ? "bg-brand-500/10 text-brand-400"
+                              : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                          }`}
+                        >
+                          <span className="truncate">{course.courseTitle}</span>
+                          <TierBadge tier={course.tier} />
+                          {isActive && (
+                            <Check size={14} className="ml-auto shrink-0" />
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       <CoursePanel userId={userId} course={activeCourse} feedback={feedback} />
