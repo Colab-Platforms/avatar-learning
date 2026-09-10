@@ -17,6 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   { label: "Partners", href: "/partners" },
+  { label: "Blog", href: "/blog" },
 ];
 
 export const FOOTER_COLUMNS: FooterColumn[] = [
@@ -33,6 +34,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Company",
     items: [
       { label: "About Us", href: "/about" },
+      { label: "Blog", href: "/blog" },
       // { label: "Careers", href: "/internships" },
       { label: "Investors", href: "/investors" },
       { label: "Contact", href: "/contact" },
