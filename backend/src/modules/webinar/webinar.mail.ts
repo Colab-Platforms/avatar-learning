@@ -3,7 +3,22 @@ import { resend, FROM_EMAIL, APP_NAME } from "@/utils/mailer.js";
 const LOGO_URL = `${process.env.FRONTEND_URL || "http://localhost:3000"}/favicon.png`;
 
 const WEBINAR_TITLE = "AI Webinar";
-const WEBINAR_SCHEDULE = "Saturday, 22 Aug &middot; 8:00 PM IST";
+
+function formatSchedule(date: Date): string {
+  const datePart = date.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+  });
+  const timePart = date.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return `${datePart} &middot; ${timePart} IST`;
+}
 
 // General community — for interaction/networking, open to everyone.
 const WHATSAPP_COMMUNITY_LINK = process.env.WHATSAPP_COMMUNITY_LINK;
@@ -26,6 +41,8 @@ export interface WebinarPaymentConfirmationData {
   name: string;
   amount: number;
   currency: string;
+  webinarTitle: string | null;
+  webinarScheduledAt: Date | null;
 }
 
 function formatAmount(amount: number, currency: string): string {
@@ -33,7 +50,15 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 function buildHtml(data: WebinarPaymentConfirmationData): string {
-  const amountLabel = formatAmount(data.amount, data.currency);
+  const webinarTitle = data.webinarTitle ?? WEBINAR_TITLE;
+  const webinarSchedule = data.webinarScheduledAt
+    ? formatSchedule(data.webinarScheduledAt)
+    : "To be announced";
+
+  const isFree = data.amount === 0;
+  const confirmationLine = isFree
+    ? `Your seat for the ${webinarTitle} is confirmed.`
+    : `We've received your payment of <strong>${formatAmount(data.amount, data.currency)}</strong> and your seat for the ${webinarTitle} is confirmed.`;
 
   return `
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; width: 100%; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
@@ -54,23 +79,23 @@ function buildHtml(data: WebinarPaymentConfirmationData): string {
 
                         <!-- Body Content -->
                         <div style="padding: 32px 24px;">
-                            <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; line-height: 1.3;">Payment Received &mdash; Seat Reserved!</h2>
+                            <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; line-height: 1.3;">${isFree ? "Seat Reserved!" : "Payment Received &mdash; Seat Reserved!"}</h2>
                             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 8px;">Hi ${data.name},</p>
                             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-top: 0; margin-bottom: 24px;">
-                                We've received your payment of <strong>${amountLabel}</strong> and your seat for the ${WEBINAR_TITLE} is confirmed.
+                                ${confirmationLine}
                             </p>
 
                             <table role="presentation" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 28px; width: 100%; table-layout: fixed;">
                                 <tr>
                                     <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; vertical-align: top;">
                                         <span style="display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Session</span>
-                                        <span style="display: block; color: #0f172a; font-size: 14px; font-weight: 600; line-height: 1.4;">${WEBINAR_TITLE}</span>
+                                        <span style="display: block; color: #0f172a; font-size: 14px; font-weight: 600; line-height: 1.4;">${webinarTitle}</span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding: 12px 0; vertical-align: top;">
                                         <span style="display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Scheduled For</span>
-                                        <span style="display: block; color: #0f172a; font-size: 14px; font-weight: 600; line-height: 1.4;">${WEBINAR_SCHEDULE}</span>
+                                        <span style="display: block; color: #0f172a; font-size: 14px; font-weight: 600; line-height: 1.4;">${webinarSchedule}</span>
                                     </td>
                                 </tr>
                             </table>
@@ -187,7 +212,10 @@ export async function sendWebinarPaymentConfirmationEmail(
     const { data: sendData, error } = await resend.emails.send({
       from: `${APP_NAME} <${FROM_EMAIL}>`,
       to: email,
-      subject: `We've received your payment — ${WEBINAR_TITLE} seat confirmed`,
+      subject:
+        data.amount === 0
+          ? `Your seat is confirmed — ${data.webinarTitle ?? WEBINAR_TITLE}`
+          : `We've received your payment — ${data.webinarTitle ?? WEBINAR_TITLE} seat confirmed`,
       html: buildHtml(data),
     });
 

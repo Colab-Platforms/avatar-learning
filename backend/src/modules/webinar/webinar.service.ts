@@ -13,6 +13,7 @@ import { googleSheetsService } from "@/services/googleSheets.service.js";
 import type {
   CreateWebinarOrderBody,
   CreateWebinarOrderResponse,
+  FreeWebinarRegistrationResponse,
   AlreadyRegisteredResponse,
   WebinarRegistrationStatusResponse,
   WebinarScheduleResponse,
@@ -47,9 +48,50 @@ function getRazorpay(): Razorpay {
 }
 
 export class WebinarService {
+  // Shared by the free-registration path, /verify-payment, and the Razorpay
+  // webhook — every path that confirms a seat sends the same confirmation
+  // email and appends the same Google Sheets row.
+  private async finalizeAsPaid(
+    registrationId: string,
+    extra: {
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+    } = {},
+  ) {
+    const updated = await prisma.webinarRegistration.update({
+      where: { id: registrationId },
+      data: {
+        status: "PAID",
+        paidAt: new Date(),
+        ...(extra.razorpayPaymentId && { razorpayPaymentId: extra.razorpayPaymentId }),
+        ...(extra.razorpaySignature && { razorpaySignature: extra.razorpaySignature }),
+      },
+      include: { webinarSchedule: true },
+    });
+    void sendWebinarPaymentConfirmationEmail(updated.email, {
+      name: updated.name,
+      amount: updated.amount,
+      currency: updated.currency,
+      webinarTitle: updated.webinarSchedule?.title ?? null,
+      webinarScheduledAt: updated.webinarSchedule?.scheduledAt ?? null,
+    });
+    void googleSheetsService.appendWebinarRegistration({
+      name: updated.name,
+      email: updated.email,
+      phoneNumber: updated.phoneNumber,
+      amountPaid: updated.amount,
+      paidAt: updated.paidAt ?? new Date(),
+      webinarTitle: updated.webinarSchedule?.title ?? null,
+      webinarScheduledAt: updated.webinarSchedule?.scheduledAt ?? null,
+    });
+    return updated;
+  }
+
   async createOrder(
     body: CreateWebinarOrderBody,
-  ): Promise<CreateWebinarOrderResponse | AlreadyRegisteredResponse> {
+  ): Promise<
+    CreateWebinarOrderResponse | FreeWebinarRegistrationResponse | AlreadyRegisteredResponse
+  > {
     const { name, phoneNumber } = body;
     const email = normalizeEmail(body.email);
 
@@ -58,6 +100,7 @@ export class WebinarService {
     const liveSchedule = await prisma.webinarSchedule.findFirst({
       where: { isPublished: true, isLive: true },
     });
+    const priceInPaise = liveSchedule?.priceInPaise ?? WEBINAR_PRICE_PAISE;
 
     // Only short-circuit as "already registered" if they paid for the batch
     // that's live right now — a PAID registration for a past/different
@@ -79,9 +122,47 @@ export class WebinarService {
       orderBy: { createdAt: "desc" },
     });
 
+    // Free webinar — confirm the seat immediately, no Razorpay order at all.
+    if (priceInPaise === 0) {
+      if (registration) {
+        registration = await prisma.webinarRegistration.update({
+          where: { id: registration.id },
+          data: {
+            name,
+            phoneNumber,
+            amount: 0,
+            currency: "INR",
+            webinarScheduleId: liveSchedule?.id ?? null,
+          },
+        });
+      } else {
+        registration = await prisma.webinarRegistration.create({
+          data: {
+            name,
+            email,
+            phoneNumber,
+            amount: 0,
+            currency: "INR",
+            status: "PENDING",
+            webinarScheduleId: liveSchedule?.id ?? null,
+          },
+        });
+      }
+
+      const confirmed = await this.finalizeAsPaid(registration.id);
+
+      return {
+        isFree: true,
+        registrationId: confirmed.id,
+        name: confirmed.name,
+        email: confirmed.email,
+        phoneNumber: confirmed.phoneNumber,
+      };
+    }
+
     const razorpay = getRazorpay();
     const rzpOrder = await razorpay.orders.create({
-      amount: WEBINAR_PRICE_PAISE,
+      amount: priceInPaise,
       currency: "INR",
       receipt: `webinar_rcpt_${Date.now()}`,
       notes: { name, email, phoneNumber },
@@ -93,7 +174,7 @@ export class WebinarService {
         data: {
           name,
           phoneNumber,
-          amount: WEBINAR_PRICE_PAISE,
+          amount: priceInPaise,
           currency: "INR",
           razorpayOrderId: rzpOrder.id,
           razorpayPaymentId: null,
@@ -107,7 +188,7 @@ export class WebinarService {
           name,
           email,
           phoneNumber,
-          amount: WEBINAR_PRICE_PAISE,
+          amount: priceInPaise,
           currency: "INR",
           status: "PENDING",
           razorpayOrderId: rzpOrder.id,
@@ -118,7 +199,7 @@ export class WebinarService {
 
     return {
       orderId: rzpOrder.id,
-      amount: WEBINAR_PRICE_PAISE,
+      amount: priceInPaise,
       currency: "INR",
       key: process.env.RAZORPAY_KEY_ID!,
       registrationId: registration.id,
@@ -173,29 +254,7 @@ export class WebinarService {
     }
 
     try {
-      const updated = await prisma.webinarRegistration.update({
-        where: { id: registration.id },
-        data: {
-          status: "PAID",
-          razorpayPaymentId,
-          razorpaySignature,
-          paidAt: new Date(),
-        },
-      });
-      void sendWebinarPaymentConfirmationEmail(updated.email, {
-        name: updated.name,
-        amount: updated.amount,
-        currency: updated.currency,
-      });
-      void googleSheetsService.appendWebinarRegistration({
-        name: updated.name,
-        email: updated.email,
-        phoneNumber: updated.phoneNumber,
-        amountPaid: updated.amount,
-        paidAt: updated.paidAt ?? new Date(),
-        webinarTitle: registration.webinarSchedule?.title ?? null,
-        webinarScheduledAt: registration.webinarSchedule?.scheduledAt ?? null,
-      });
+      await this.finalizeAsPaid(registration.id, { razorpayPaymentId, razorpaySignature });
     } catch (err: any) {
       if (err.code === "P2002") {
         // Concurrent verify call already recorded this payment — safe to ignore.
@@ -226,28 +285,9 @@ export class WebinarService {
       if (!registration || registration.status !== "PENDING") return;
 
       try {
-        const updated = await prisma.webinarRegistration.update({
-          where: { id: registration.id },
-          data: {
-            status: "PAID",
-            razorpayPaymentId: payment.id,
-            razorpaySignature: "webhook",
-            paidAt: new Date(),
-          },
-        });
-        void sendWebinarPaymentConfirmationEmail(updated.email, {
-          name: updated.name,
-          amount: updated.amount,
-          currency: updated.currency,
-        });
-        void googleSheetsService.appendWebinarRegistration({
-          name: updated.name,
-          email: updated.email,
-          phoneNumber: updated.phoneNumber,
-          amountPaid: updated.amount,
-          paidAt: updated.paidAt ?? new Date(),
-          webinarTitle: registration.webinarSchedule?.title ?? null,
-          webinarScheduledAt: registration.webinarSchedule?.scheduledAt ?? null,
+        await this.finalizeAsPaid(registration.id, {
+          razorpayPaymentId: payment.id,
+          razorpaySignature: "webhook",
         });
       } catch (err: any) {
         // Concurrent /verify-payment call already recorded this payment.
@@ -444,6 +484,7 @@ export class AdminWebinarScheduleService {
         scheduledAt: new Date(body.scheduledAt),
         ...(body.durationMinutes && { durationMinutes: body.durationMinutes }),
         meetLink: body.meetLink || null,
+        ...(body.priceInPaise !== undefined && { priceInPaise: body.priceInPaise }),
       },
     });
   }
@@ -457,6 +498,7 @@ export class AdminWebinarScheduleService {
         ...(body.scheduledAt !== undefined && { scheduledAt: new Date(body.scheduledAt) }),
         ...(body.durationMinutes !== undefined && { durationMinutes: body.durationMinutes }),
         ...(body.meetLink !== undefined && { meetLink: body.meetLink || null }),
+        ...(body.priceInPaise !== undefined && { priceInPaise: body.priceInPaise }),
       },
     });
   }

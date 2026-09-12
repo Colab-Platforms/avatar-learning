@@ -68,6 +68,9 @@ export default function StickyBottomBar() {
     return () => clearInterval(timer);
   }, [schedule]);
 
+  const isFree = schedule ? schedule.priceInPaise === 0 : false;
+  const priceLabel = schedule ? `₹${schedule.priceInPaise / 100}` : "₹7";
+
   const scheduledDate = schedule ? new Date(schedule.scheduledAt) : null;
   const dateTimeLabel = scheduledDate
     ? `${scheduledDate.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short" })} · ${scheduledDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true })} IST`
@@ -92,8 +95,8 @@ export default function StickyBottomBar() {
         {/* Desktop Left Pricing & Details */}
         <div className="hidden sm:flex items-center gap-4">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-xl font-black">₹7</span>
-            <span className="text-xs text-gray-400 line-through">₹499</span>
+            <span className="text-xl font-black">{isFree ? "FREE" : priceLabel}</span>
+            {!isFree && <span className="text-xs text-gray-400 line-through">₹499</span>}
           </div>
           <div className="h-4 w-px bg-white/10"></div>
           <span className="text-xs text-gray-300 font-medium">
@@ -104,8 +107,8 @@ export default function StickyBottomBar() {
         {/* Mobile Left Stacked Details */}
         <div className="flex sm:hidden flex-col justify-center">
           <div className="flex items-baseline gap-1">
-            <span className="text-lg font-black">₹7</span>
-            <span className="text-[10px] text-gray-400 line-through">₹499</span>
+            <span className="text-lg font-black">{isFree ? "FREE" : priceLabel}</span>
+            {!isFree && <span className="text-[10px] text-gray-400 line-through">₹499</span>}
           </div>
           <span className="text-[9px] text-gray-300 mt-0.5">
             47 seats &middot; {timeLeft.days}d {timeLeft.hours}h left
@@ -124,7 +127,7 @@ export default function StickyBottomBar() {
             onClick={scrollToForm}
             className="bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-bold py-2.5 px-5 rounded-lg text-xs transition-all cursor-pointer shadow-md transform hover:-translate-y-[1px] active:translate-y-0 shrink-0"
           >
-            Reserve my seat &middot; ₹7
+            {isFree ? "Reserve my free seat" : `Reserve my seat · ${priceLabel}`}
           </button>
         </div>
 
@@ -134,7 +137,7 @@ export default function StickyBottomBar() {
             onClick={scrollToForm}
             className="bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-bold py-2.5 px-4 rounded-lg text-xs transition-all cursor-pointer shrink-0"
           >
-            Reserve &middot; ₹7
+            {isFree ? "Reserve · Free" : `Reserve · ${priceLabel}`}
           </button>
         </div>
 

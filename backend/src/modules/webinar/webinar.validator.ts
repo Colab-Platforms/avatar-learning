@@ -120,6 +120,9 @@ export function validateCreateWebinarSchedule(data: unknown): {
     meetLink: Joi.string().trim().uri().allow("").messages({
       "string.uri": "meetLink must be a valid URL",
     }),
+    priceInPaise: Joi.number().integer().min(0).messages({
+      "number.min": "priceInPaise cannot be negative",
+    }),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });
   if (error)
@@ -139,6 +142,9 @@ export function validateUpdateWebinarSchedule(data: unknown): {
     durationMinutes: Joi.number().integer().min(15).max(480),
     meetLink: Joi.string().trim().uri().allow("").messages({
       "string.uri": "meetLink must be a valid URL",
+    }),
+    priceInPaise: Joi.number().integer().min(0).messages({
+      "number.min": "priceInPaise cannot be negative",
     }),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });

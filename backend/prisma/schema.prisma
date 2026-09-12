@@ -1034,6 +1034,10 @@ model WebinarSchedule {
   durationMinutes Int      @default(60) @map("duration_minutes")
   meetLink        String?  @map("meet_link")
 
+  /// Registration price in paise. 0 means a free webinar — registration
+  /// skips the Razorpay checkout entirely and is confirmed immediately.
+  priceInPaise Int @default(700) @map("price_in_paise")
+
   isPublished Boolean @default(false) @map("is_published")
   isLive      Boolean @default(false) @map("is_live")
 

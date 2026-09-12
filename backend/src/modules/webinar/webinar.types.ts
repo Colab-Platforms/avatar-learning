@@ -6,10 +6,22 @@ export interface CreateWebinarOrderBody {
 
 export interface CreateWebinarOrderResponse {
   alreadyRegistered?: false;
+  isFree?: false;
   orderId: string;
   amount: number;
   currency: string;
   key: string;
+  registrationId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
+// Free webinar (priceInPaise === 0) — registration is confirmed immediately,
+// there's no Razorpay order to open on the client.
+export interface FreeWebinarRegistrationResponse {
+  alreadyRegistered?: false;
+  isFree: true;
   registrationId: string;
   name: string;
   email: string;
@@ -54,6 +66,7 @@ export interface WebinarScheduleResponse {
   scheduledAt: Date;
   durationMinutes: number;
   meetLink: string | null;
+  priceInPaise: number;
   isPublished: boolean;
   isLive: boolean;
   createdAt: Date;
@@ -65,6 +78,7 @@ export interface CreateWebinarScheduleBody {
   scheduledAt: string;
   durationMinutes?: number;
   meetLink?: string;
+  priceInPaise?: number;
 }
 
 export interface UpdateWebinarScheduleBody {
@@ -72,4 +86,5 @@ export interface UpdateWebinarScheduleBody {
   scheduledAt?: string;
   durationMinutes?: number;
   meetLink?: string;
+  priceInPaise?: number;
 }

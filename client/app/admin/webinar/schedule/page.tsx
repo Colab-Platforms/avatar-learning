@@ -30,7 +30,7 @@ function formatDateTime(iso: string) {
     });
 }
 
-const emptyForm = { title: "", scheduledAt: "", durationMinutes: 60, meetLink: "" };
+const emptyForm = { title: "", scheduledAt: "", durationMinutes: 60, meetLink: "", priceRupees: 7 };
 
 export default function AdminWebinarSchedulePage() {
     const [schedules, setSchedules] = useState<WebinarSchedule[]>([]);
@@ -69,6 +69,7 @@ export default function AdminWebinarSchedulePage() {
                 scheduledAt: new Date(form.scheduledAt).toISOString(),
                 durationMinutes: form.durationMinutes,
                 meetLink: form.meetLink || undefined,
+                priceInPaise: Math.round(form.priceRupees * 100),
             });
             setForm(emptyForm);
             setShowForm(false);
@@ -87,6 +88,7 @@ export default function AdminWebinarSchedulePage() {
             scheduledAt: toLocalInputValue(s.scheduledAt),
             durationMinutes: s.durationMinutes,
             meetLink: s.meetLink ?? "",
+            priceRupees: s.priceInPaise / 100,
         });
     };
 
@@ -104,6 +106,7 @@ export default function AdminWebinarSchedulePage() {
                 scheduledAt: new Date(editForm.scheduledAt).toISOString(),
                 durationMinutes: editForm.durationMinutes,
                 meetLink: editForm.meetLink || undefined,
+                priceInPaise: Math.round(editForm.priceRupees * 100),
             });
             setEditingId(null);
             await load();
@@ -209,6 +212,16 @@ export default function AdminWebinarSchedulePage() {
                                 className={inputCls}
                             />
                         </Field>
+                        <Field label="Amount (₹, 0 = free)">
+                            <input
+                                type="number"
+                                min={0}
+                                step={1}
+                                value={form.priceRupees}
+                                onChange={(e) => setForm((f) => ({ ...f, priceRupees: Number(e.target.value) }))}
+                                className={inputCls}
+                            />
+                        </Field>
                         <Field label="Meet Link (optional)" className="sm:col-span-4">
                             <input
                                 value={form.meetLink}
@@ -233,9 +246,10 @@ export default function AdminWebinarSchedulePage() {
 
             <div className="bg-ink-800 border border-white/6 rounded-2xl overflow-hidden">
                 <div className="hidden sm:grid grid-cols-12 px-6 py-2.5 text-[10px] font-semibold text-white/25 uppercase tracking-widest border-b border-white/4">
-                    <span className="col-span-4">Webinar</span>
+                    <span className="col-span-3">Webinar</span>
                     <span className="col-span-3">Date &amp; Time</span>
                     <span className="col-span-1">Duration</span>
+                    <span className="col-span-1">Price</span>
                     <span className="col-span-1">Status</span>
                     <span className="col-span-3 text-right">Actions</span>
                 </div>
@@ -260,7 +274,7 @@ export default function AdminWebinarSchedulePage() {
                             >
                                 {editingId === s.id ? (
                                     <>
-                                        <div className="col-span-12 sm:col-span-4">
+                                        <div className="col-span-12 sm:col-span-3">
                                             <input
                                                 value={editForm.title}
                                                 onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
@@ -287,6 +301,18 @@ export default function AdminWebinarSchedulePage() {
                                                 className={`${inputCls} py-1.5 text-xs`}
                                             />
                                         </div>
+                                        <div className="col-span-4 sm:col-span-1">
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                step={1}
+                                                value={editForm.priceRupees}
+                                                onChange={(e) =>
+                                                    setEditForm((f) => ({ ...f, priceRupees: Number(e.target.value) }))
+                                                }
+                                                className={`${inputCls} py-1.5 text-xs`}
+                                            />
+                                        </div>
                                         <span className="hidden sm:block col-span-1" />
                                         <div className="col-span-12 sm:col-span-3 flex items-center justify-end gap-2">
                                             <button
@@ -306,7 +332,7 @@ export default function AdminWebinarSchedulePage() {
                                     </>
                                 ) : (
                                     <>
-                                        <div className="col-span-12 sm:col-span-4 min-w-0">
+                                        <div className="col-span-12 sm:col-span-3 min-w-0">
                                             <p className="text-sm font-semibold text-white/90 truncate">{s.title}</p>
                                             {s.meetLink && (
                                                 <p className="text-[11px] text-white/35 truncate">{s.meetLink}</p>
@@ -317,6 +343,13 @@ export default function AdminWebinarSchedulePage() {
                                         </span>
                                         <span className="hidden sm:block col-span-1 text-xs text-white/45">
                                             {s.durationMinutes}m
+                                        </span>
+                                        <span className="hidden sm:block col-span-1 text-xs">
+                                            {s.priceInPaise === 0 ? (
+                                                <span className="font-semibold text-emerald-400">FREE</span>
+                                            ) : (
+                                                <span className="text-white/45">₹{s.priceInPaise / 100}</span>
+                                            )}
                                         </span>
                                         <div className="col-span-6 sm:col-span-1 flex flex-col gap-1">
                                             <span

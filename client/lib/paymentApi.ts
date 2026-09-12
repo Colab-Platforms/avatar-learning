@@ -117,10 +117,21 @@ export interface CreateWebinarOrderInput {
 
 export interface CreateWebinarOrderResponse {
   alreadyRegistered?: false;
+  isFree?: false;
   orderId: string;
   amount: number;
   currency: string;
   key: string;
+  registrationId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
+// Free webinar — registration is confirmed immediately, no gateway to open.
+export interface FreeWebinarRegistrationResponse {
+  alreadyRegistered?: false;
+  isFree: true;
   registrationId: string;
   name: string;
   email: string;
@@ -154,7 +165,7 @@ export interface WebinarRegistrationStatusResponse {
 
 export const createWebinarOrder = (
   input: CreateWebinarOrderInput,
-): Promise<CreateWebinarOrderResponse | AlreadyRegisteredResponse> =>
+): Promise<CreateWebinarOrderResponse | FreeWebinarRegistrationResponse | AlreadyRegisteredResponse> =>
   apiClient.post("/webinar/create-order", input).then((r) => r.data.data);
 
 export const verifyWebinarPayment = (
@@ -186,6 +197,7 @@ export interface WebinarLiveSchedule {
   scheduledAt: string;
   durationMinutes: number;
   meetLink: string | null;
+  priceInPaise: number;
   isPublished: boolean;
   isLive: boolean;
 }

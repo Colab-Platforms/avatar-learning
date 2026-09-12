@@ -208,8 +208,16 @@ function RegistrationFormInner() {
     await register({ name: fullName, email, phoneNumber: whatsApp });
   };
 
+  const isFree = schedule ? schedule.priceInPaise === 0 : false;
+  const priceLabel = schedule ? `₹${schedule.priceInPaise / 100}` : "₹7";
+  const discountPercentLabel = schedule
+    ? `${Math.round((1 - schedule.priceInPaise / 100 / 499) * 100)}% OFF`
+    : "99% OFF";
+
   const amountLabel = status
-    ? `${status.currency === "INR" ? "₹" : status.currency + " "}${(status.amount / 100).toFixed(0)}`
+    ? status.amount === 0
+      ? "Free"
+      : `${status.currency === "INR" ? "₹" : status.currency + " "}${(status.amount / 100).toFixed(0)}`
     : null;
   const paidDate = status?.paidAt
     ? new Date(status.paidAt).toLocaleDateString("en-IN", {
@@ -247,16 +255,29 @@ function RegistrationFormInner() {
 
       {/* Pricing display */}
       <div className="mb-6">
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-extrabold">₹7</span>
-          <span className="text-sm text-gray-400 line-through">₹499</span>
-          <span className="text-xs bg-[#1F2C24] text-[#4ADE80] font-semibold px-2 py-0.5 rounded border border-[#22C55E]/10">
-            99% OFF
-          </span>
-        </div>
-        <p className="text-[11px] text-gray-400 mt-1">
-          A nominal fee just to confirm your seat.
-        </p>
+        {isFree ? (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold">FREE</span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">
+              No payment needed — just reserve your seat.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold">{priceLabel}</span>
+              <span className="text-sm text-gray-400 line-through">₹499</span>
+              <span className="text-xs bg-[#1F2C24] text-[#4ADE80] font-semibold px-2 py-0.5 rounded border border-[#22C55E]/10">
+                {discountPercentLabel}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">
+              A nominal fee just to confirm your seat.
+            </p>
+          </>
+        )}
       </div>
 
       {/* Countdown Timer Grid */}
@@ -474,7 +495,7 @@ function RegistrationFormInner() {
               disabled={processing}
               className="w-full bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-bold py-3.5 px-4 rounded-xl text-center shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-[1px] active:translate-y-0 text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {processing ? "Processing…" : "Book my seat · ₹7"}
+              {processing ? "Processing…" : isFree ? "Reserve my free seat" : `Book my seat · ${priceLabel}`}
             </button>
           </form>
 

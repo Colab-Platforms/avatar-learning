@@ -1010,6 +1010,7 @@ export interface WebinarSchedule {
   scheduledAt: string;
   durationMinutes: number;
   meetLink: string | null;
+  priceInPaise: number;
   isPublished: boolean;
   isLive: boolean;
   createdAt: string;
@@ -1021,6 +1022,7 @@ export interface CreateWebinarScheduleInput {
   scheduledAt: string;
   durationMinutes?: number;
   meetLink?: string;
+  priceInPaise?: number;
 }
 
 export type UpdateWebinarScheduleInput = Partial<CreateWebinarScheduleInput>;

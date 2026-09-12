@@ -30,11 +30,6 @@ export function useWebinarCheckout() {
 
   const register = useCallback(
     async (input: CreateWebinarOrderInput) => {
-      if (!razorpayLoaded) {
-        showMessage("Payment SDK is still loading. Please try again.", "error");
-        return;
-      }
-
       setProcessing(true);
       setMessage(null);
 
@@ -44,6 +39,18 @@ export function useWebinarCheckout() {
         if (order.alreadyRegistered) {
           setStoredWebinarRegistrationId(order.registrationId);
           router.replace(`/webinar?registrationId=${order.registrationId}`, { scroll: false });
+          return;
+        }
+
+        // Free webinar — already confirmed server-side, nothing to pay.
+        if (order.isFree) {
+          setStoredWebinarRegistrationId(order.registrationId);
+          router.replace(`/webinar?registrationId=${order.registrationId}`, { scroll: false });
+          return;
+        }
+
+        if (!razorpayLoaded) {
+          showMessage("Payment SDK is still loading. Please try again.", "error");
           return;
         }
 

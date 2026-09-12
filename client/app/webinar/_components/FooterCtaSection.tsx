@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Sparkles, Calendar, Clock, Lock } from "lucide-react";
+import { useWebinarLiveSchedule } from "@/hooks/queries/useWebinarLiveSchedule";
 
 interface TimeLeft {
   days: string;
@@ -11,26 +12,22 @@ interface TimeLeft {
 }
 
 export default function FooterCtaSection() {
+  const { data: schedule } = useWebinarLiveSchedule();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
-    days: "09",
-    hours: "18",
-    minutes: "05",
-    seconds: "53",
+    days: "00",
+    hours: "00",
+    minutes: "00",
+    seconds: "00",
   });
 
-  // Countdown timer calculation
+  // Countdown to the currently published/live webinar's date.
   useEffect(() => {
+    if (!schedule) return;
+
+    const targetDate = new Date(schedule.scheduledAt);
+
     const calculateTimeLeft = () => {
-      let targetDate = new Date("2026-08-22T20:00:00+05:30");
       const now = new Date();
-
-      if (now > targetDate) {
-        const nextSaturday = new Date();
-        nextSaturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
-        nextSaturday.setHours(20, 0, 0, 0);
-        targetDate = nextSaturday;
-      }
-
       const difference = targetDate.getTime() - now.getTime();
 
       if (difference > 0) {
@@ -45,6 +42,8 @@ export default function FooterCtaSection() {
           minutes: m.toString().padStart(2, "0"),
           seconds: s.toString().padStart(2, "0"),
         });
+      } else {
+        setTimeLeft({ days: "00", hours: "00", minutes: "00", seconds: "00" });
       }
     };
 
@@ -52,7 +51,15 @@ export default function FooterCtaSection() {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [schedule]);
+
+  const isFree = schedule ? schedule.priceInPaise === 0 : false;
+  const priceLabel = schedule ? `₹${schedule.priceInPaise / 100}` : "₹7";
+
+  const scheduledDate = schedule ? new Date(schedule.scheduledAt) : null;
+  const dateTimeLabel = scheduledDate
+    ? `${scheduledDate.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short" })} · ${scheduledDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true })} IST`
+    : "Coming soon";
 
   const scrollToForm = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -73,7 +80,7 @@ export default function FooterCtaSection() {
         {/* Dynamic header tag */}
         <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-blue-300 mb-6">
           <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
-          Sat 22 Aug &middot; 8:00 PM IST &middot; 47 seats left
+          {dateTimeLabel} &middot; 47 seats left
         </div>
 
         {/* Heading */}
@@ -108,7 +115,7 @@ export default function FooterCtaSection() {
             onClick={scrollToForm}
             className="bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-extrabold py-4 px-8 rounded-xl text-sm sm:text-base transition-all duration-200 cursor-pointer shadow-lg transform hover:-translate-y-[1px] active:translate-y-0 w-full sm:w-auto"
           >
-            Reserve my seat &middot; ₹7
+            {isFree ? "Reserve my free seat" : `Reserve my seat · ${priceLabel}`}
           </button>
         </div>
 
