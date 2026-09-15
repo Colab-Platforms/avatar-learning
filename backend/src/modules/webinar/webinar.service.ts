@@ -27,6 +27,13 @@ const WEBINAR_PRICE_PAISE: number = process.env.WEBINAR_PRICE_PAISE
 
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
+// Email-scoped OTP request throttle. The route-level limiter in
+// webinar.route.ts is keyed by IP, so it can't stop an attacker who rotates
+// IPs/proxies from spamming a single victim's inbox with OTP emails — this
+// caps how many codes a given email can be sent regardless of source IP.
+const OTP_REQUEST_WINDOW_MS = 15 * 60 * 1000;
+const OTP_REQUEST_MAX_PER_WINDOW = 3;
+
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 const hashOtp = (otp: string): string =>
@@ -351,6 +358,15 @@ export class WebinarService {
       where: { email, status: "PAID" },
     });
     if (!registration) return;
+
+    const recentOtpCount = await prisma.otpVerification.count({
+      where: {
+        email,
+        type: "WEBINAR_RECOVERY",
+        createdAt: { gt: new Date(Date.now() - OTP_REQUEST_WINDOW_MS) },
+      },
+    });
+    if (recentOtpCount >= OTP_REQUEST_MAX_PER_WINDOW) return;
 
     const otp = generateOtp();
     await prisma.otpVerification.create({

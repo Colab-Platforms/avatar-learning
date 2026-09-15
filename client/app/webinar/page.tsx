@@ -56,7 +56,7 @@ export default function WebinarPage() {
       <CertificateSection />
 
       {/* 11. Pricing Section ("₹3000+ of training. Yours for ₹7") */}
-      <PricingSection />
+      {/*<PricingSection />*/}
 
       {/* 12. Success Stories Testimonials */}
       <SuccessStories />

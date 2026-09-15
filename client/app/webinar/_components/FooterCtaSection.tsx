@@ -71,12 +71,12 @@ export default function FooterCtaSection() {
 
   return (
     <footer className="bg-[#0B0F19] text-white border-t border-white/5 relative overflow-hidden">
-      
+
       {/* Accent glow blur backgrounds */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] bg-blue-600/10 rounded-full blur-3xl -z-10"></div>
 
       <div className="max-w-4xl mx-auto px-4 py-16 sm:py-20 text-center relative z-10">
-        
+
         {/* Dynamic header tag */}
         <div className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-blue-300 mb-6">
           <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
@@ -121,7 +121,7 @@ export default function FooterCtaSection() {
 
         {/* Social Proof trust text */}
         <p className="text-gray-500 text-[10px] sm:text-xs flex items-center justify-center gap-1.5 flex-wrap">
-          <span>Instant confirmation on WhatsApp</span>
+          <span>Instant confirmation on Email</span>
           <span className="text-gray-700 hidden sm:inline">&middot;</span>
           <span>NSE-listed company trusted by 10,000+ students</span>
         </p>

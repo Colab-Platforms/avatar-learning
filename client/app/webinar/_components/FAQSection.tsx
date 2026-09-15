@@ -9,17 +9,17 @@ const faqData = [
     question: "Do I need any AI experience?",
     answer: "No prior AI knowledge or coding experience is required. This live online workshop is designed from the ground up for absolute beginners.",
   },
-  {
-    question: "Is it really just ₹7?",
-    answer: "Yes, it is exactly ₹7. This is a nominal fee charged simply to confirm your seat, filter out casual registrants, and ensure commitment so slots remain available for serious learners.",
-  },
+  // {
+  //   question: "Is it really just ₹7?",
+  //   answer: "Yes, it is exactly ₹7. This is a nominal fee charged simply to confirm your seat, filter out casual registrants, and ensure commitment so slots remain available for serious learners.",
+  // },
   {
     question: "Will there be a recording?",
     answer: "This is a live, interactive workshop where we build real-world prompts together. To receive the certificate and bonus resources, you must attend live.",
   },
   {
     question: "What happens after I register?",
-    answer: "You will receive an instant confirmation message on WhatsApp and Email with the joining links and next steps.",
+    answer: "You will receive an instant confirmation message on Email with the joining links and next steps.",
   },
   {
     question: "Do I get a certificate?",
@@ -37,9 +37,10 @@ export default function FAQSection() {
   return (
     <section className="bg-white py-16 sm:py-20 border-b border-gray-100">
       {/* Outer container spanning the full page width matching other cards (max-w-7xl) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+      {/*Initially classname="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16"*/}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-1">
         {/* Shield commitment badge box */}
-        <div className="bg-[#EBF9F1] border border-[#D1F2DC] rounded-[24px] p-6 flex items-center gap-6 text-left w-full">
+        {/*<div className="bg-[#EBF9F1] border border-[#D1F2DC] rounded-[24px] p-6 flex items-center gap-6 text-left w-full">
           <img
             src="/webinar/shield.png"
             alt="Commitment Shield"
@@ -53,7 +54,7 @@ export default function FAQSection() {
               The nominal fee keeps no-shows out so serious learners get a spot. Show up live and everything &mdash; the session, the certificate and all four bonuses &mdash; is yours to keep.
             </p>
           </div>
-        </div>
+        </div>*/}
       </div>
 
       {/* Inner container for the FAQ Accordion (max-w-3xl for optimal readability) */}
@@ -112,4 +113,3 @@ export default function FAQSection() {
     </section>
   );
 }
-
