@@ -358,7 +358,7 @@ export default function HeroSection() {
               <div className="h-4 w-px bg-gray-200"></div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-extrabold text-blue-600">
-                  96.3%
+                  90.34%
                 </span>
                 <span>placement rate</span>
               </div>
