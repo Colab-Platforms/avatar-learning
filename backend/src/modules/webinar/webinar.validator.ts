@@ -30,14 +30,15 @@ export function validateCreateWebinarOrder(data: unknown): {
       "any.required": "email is required",
       "string.email": "email must be a valid email address",
     }),
-    // Digits only (after stripping spaces/hyphens/parens), optional leading
-    // "+", 8-15 digits — the old character-class-only regex accepted strings
-    // with zero digits (e.g. "-------"), which is not a valid phone number.
+    // Digits only (after stripping spaces/hyphens/parens) — must be exactly
+    // 10 digits and not start with 0. The old character-class-only regex
+    // accepted strings with zero digits (e.g. "-------") and any length up
+    // to 15, which is not a valid phone number.
     phoneNumber: Joi.string()
       .trim()
       .custom((value: string, helpers) => {
         const digits = value.replace(/[\s\-()]/g, "");
-        if (!/^\+?[0-9]{8,15}$/.test(digits)) {
+        if (!/^[1-9][0-9]{9}$/.test(digits)) {
           return helpers.error("any.invalid");
         }
         return value;
@@ -45,7 +46,7 @@ export function validateCreateWebinarOrder(data: unknown): {
       .required()
       .messages({
         "any.required": "phoneNumber is required",
-        "any.invalid": "phoneNumber must be a valid phone number",
+        "any.invalid": "phoneNumber must be a valid 10-digit phone number",
       }),
   });
   const { error, value } = schema.validate(data, { abortEarly: true });

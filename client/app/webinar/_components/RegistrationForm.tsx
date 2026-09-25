@@ -21,7 +21,7 @@ interface TimeLeft {
 }
 
 // Group for confirmed attendees only — joining link/session updates for this
-// batch. Distinct from the general WhatsApp community (interaction/
+// batch. Distinct from the general Phone hatsApp community (interaction/
 // networking, open to everyone), which is shared via the confirmation email.
 const WEBINAR_WHATSAPP_GROUP_LINK =
   "https://chat.whatsapp.com/GzHfq8PjC0u4UyeXaMYxqP?s=cl&p=a&mlu=0";
@@ -73,7 +73,9 @@ function RegistrationFormInner() {
     isError: statusError,
     refetch: refetchStatus,
     isFetching: statusFetching,
-  } = useWebinarRegistrationStatus(registrationId, { enabled: checkedStorage && !!registrationId });
+  } = useWebinarRegistrationStatus(registrationId, {
+    enabled: checkedStorage && !!registrationId,
+  });
 
   const resetToForm = () => {
     clearStoredWebinarRegistrationId();
@@ -91,7 +93,9 @@ function RegistrationFormInner() {
     if (status && status.status === "PAID") {
       setStoredWebinarRegistrationId(registrationId);
       if (!urlRegistrationId) {
-        router.replace(`/webinar?registrationId=${registrationId}`, { scroll: false });
+        router.replace(`/webinar?registrationId=${registrationId}`, {
+          scroll: false,
+        });
       }
     } else if (status && status.status !== "PAID" && !urlRegistrationId) {
       // A stale localStorage id that never completed payment — don't auto-show it.
@@ -157,7 +161,9 @@ function RegistrationFormInner() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear this field's error as soon as the user edits it.
-    setFieldErrors((prev) => (prev[name as keyof typeof prev] ? { ...prev, [name]: undefined } : prev));
+    setFieldErrors((prev) =>
+      prev[name as keyof typeof prev] ? { ...prev, [name]: undefined } : prev,
+    );
   };
 
   const NAME_PATTERN = /^[A-Za-z][A-Za-z\s'.-]{1,59}$/;
@@ -180,14 +186,15 @@ function RegistrationFormInner() {
     }
 
     if (!whatsApp) {
-      errors.whatsApp = "WhatsApp number is required.";
+      errors.whatsApp = "Phone number is required.";
     } else {
       // Digits only after stripping formatting characters — rejects
       // symbol-only input like "-------" that a plain character-class
-      // regex would otherwise accept.
+      // regex would otherwise accept. Must be exactly 10 digits and not
+      // start with 0.
       const digitsOnly = whatsApp.replace(/[\s\-()]/g, "");
-      if (!/^\+?[0-9]{8,15}$/.test(digitsOnly)) {
-        errors.whatsApp = "Enter a valid WhatsApp number (8-15 digits).";
+      if (!/^[1-9][0-9]{9}$/.test(digitsOnly)) {
+        errors.whatsApp = "Enter a valid 10-digit number.";
       }
     }
 
@@ -286,25 +293,33 @@ function RegistrationFormInner() {
           <div className="bg-white text-black font-extrabold text-xl py-2.5 rounded-xl w-full text-center shadow-md">
             {timeLeft.days}
           </div>
-          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">DAYS</span>
+          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">
+            DAYS
+          </span>
         </div>
         <div className="flex flex-col items-center">
           <div className="bg-white text-black font-extrabold text-xl py-2.5 rounded-xl w-full text-center shadow-md">
             {timeLeft.hours}
           </div>
-          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">HRS</span>
+          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">
+            HRS
+          </span>
         </div>
         <div className="flex flex-col items-center">
           <div className="bg-white text-black font-extrabold text-xl py-2.5 rounded-xl w-full text-center shadow-md">
             {timeLeft.minutes}
           </div>
-          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">MIN</span>
+          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">
+            MIN
+          </span>
         </div>
         <div className="flex flex-col items-center">
           <div className="bg-white text-black font-extrabold text-xl py-2.5 rounded-xl w-full text-center shadow-md">
             {timeLeft.seconds}
           </div>
-          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">SEC</span>
+          <span className="text-[9px] font-bold text-gray-400 tracking-wider mt-1.5 uppercase">
+            SEC
+          </span>
         </div>
       </div>
 
@@ -313,7 +328,9 @@ function RegistrationFormInner() {
           {statusLoading ? (
             <div className="mb-4 rounded-xl border border-white/10 bg-[#202427] px-4 py-8 text-center">
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
-              <p className="text-gray-400 text-xs">Checking your registration…</p>
+              <p className="text-gray-400 text-xs">
+                Checking your registration…
+              </p>
             </div>
           ) : status?.status === "PAID" && !status.isLiveWebinar ? (
             <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-5 text-center">
@@ -340,7 +357,8 @@ function RegistrationFormInner() {
                 You&rsquo;re confirmed! 🎉
               </p>
               <p className="text-gray-300 text-xs mb-3">
-                Your seat for the AI Webinar is reserved — check your email/WhatsApp for details.
+                Your seat for the AI Webinar is reserved — check your email for
+                details.
               </p>
               <div className="text-left text-xs text-gray-300 space-y-1.5 border-t border-white/10 pt-3">
                 <div className="flex justify-between">
@@ -382,7 +400,8 @@ function RegistrationFormInner() {
                 Payment is being processed
               </p>
               <p className="text-gray-300 text-xs mb-3">
-                Please wait a moment — if money was deducted, your seat will confirm shortly.
+                Please wait a moment — if money was deducted, your seat will
+                confirm shortly.
               </p>
               <button
                 type="button"
@@ -467,7 +486,7 @@ function RegistrationFormInner() {
                 name="whatsApp"
                 value={formData.whatsApp}
                 onChange={handleChange}
-                placeholder="WhatsApp number"
+                placeholder="Phone number"
                 required
                 disabled={processing}
                 aria-invalid={!!fieldErrors.whatsApp}
@@ -495,13 +514,17 @@ function RegistrationFormInner() {
               disabled={processing}
               className="w-full bg-[#1E6BFA] hover:bg-[#1554C7] text-white font-bold py-3.5 px-4 rounded-xl text-center shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-[1px] active:translate-y-0 text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {processing ? "Processing…" : isFree ? "Reserve my free seat" : `Book my seat · ${priceLabel}`}
+              {processing
+                ? "Processing…"
+                : isFree
+                  ? "Reserve my free seat"
+                  : `Book my seat · ${priceLabel}`}
             </button>
           </form>
 
           {/* WhatsApp text */}
           <div className="text-center text-[10px] text-gray-400 mb-5">
-            Instant confirmation on WhatsApp
+            Instant confirmation on Email
           </div>
         </>
       )}
