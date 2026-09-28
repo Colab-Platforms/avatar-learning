@@ -819,6 +819,15 @@
   }
 }
 
+/* AI Adoption Ecosystem page: kill the decorative `aie-*` keyframe loops
+   (hero orbit rings, core glow, etc.) when the user has asked for less
+   motion. Scoped by class name — these classes are only used on that page. */
+@media (prefers-reduced-motion: reduce) {
+  [class*="aie-"] {
+    animation: none !important;
+  }
+}
+
 /* ════════════════════════════════════════════
    COMPONENTS
 ════════════════════════════════════════════ */

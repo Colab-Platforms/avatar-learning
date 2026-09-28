@@ -1,7 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+
+// Routes where the chatbot / help widget / career-quiz prompt should never
+// mount (e.g. standalone prototype pages with their own dark theme/CTAs).
+const EXCLUDED_PATH_PREFIXES = ["/ai-adaption-ecosystem"];
 
 // These three widgets (chatbot, help bubble, career-quiz prompt) are global
 // but not part of first paint — none of them are visible until the user has
@@ -25,9 +30,12 @@ type IdleWindow = Window & {
 };
 
 export function DeferredWidgets() {
+  const pathname = usePathname();
+  const isExcluded = EXCLUDED_PATH_PREFIXES.some((prefix) => pathname?.startsWith(prefix));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    if (isExcluded) return;
     const idleWindow = window as IdleWindow;
     if (idleWindow.requestIdleCallback) {
       const id = idleWindow.requestIdleCallback(() => setMounted(true), {
@@ -37,9 +45,9 @@ export function DeferredWidgets() {
     }
     const timer = setTimeout(() => setMounted(true), 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isExcluded]);
 
-  if (!mounted) return null;
+  if (isExcluded || !mounted) return null;
 
   return (
     <>
