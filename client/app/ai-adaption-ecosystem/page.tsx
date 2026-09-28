@@ -26,7 +26,7 @@ export default function AiAdaptionEcosystemPage() {
         <WhyAvatarSection />
         <ServicesSection />
         <WhoWeServeSection />
-        <PricingSection />
+        {/* <PricingSection /> */}
         <AboutUsSection />
         <CustomSolutionsSection />
         <BookDemoSection />

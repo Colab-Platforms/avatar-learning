@@ -6,7 +6,7 @@ import { WHY_AVATAR } from "./data";
 
 export function WhyAvatarSection() {
   return (
-    <section id="why-avatar" className="relative flex min-h-[100svh] items-center py-20 sm:py-24 scroll-mt-24">
+    <section id="why-avatar" className="relative pt-4 pb-12 sm:pt-8 sm:pb-16 scroll-mt-24">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -60,7 +60,7 @@ export function WhyAvatarSection() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto mb-6 max-w-2xl text-center sm:mb-8"
         >
-          <SectionEyebrow number="01" label="Why Avatar" className="text-blue-300" textSize="text-[16px]" />
+          <SectionEyebrow number="01" label="Why Avatar" className="text-blue-300" />
           <h2 className="mt-4 text-3xl font-extralight tracking-tight text-white sm:text-5xl">
             Built for businesses that{" "}
             <span

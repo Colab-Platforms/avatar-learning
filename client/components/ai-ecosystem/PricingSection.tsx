@@ -15,7 +15,7 @@ export function PricingSection() {
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <section id="pricing" className="relative flex min-h-[100svh] items-center py-20 sm:py-24 scroll-mt-24">
+    <section id="pricing" className="relative py-12 sm:py-16 scroll-mt-24">
       <div className="relative mx-auto w-full max-w-[1200px] px-5 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
