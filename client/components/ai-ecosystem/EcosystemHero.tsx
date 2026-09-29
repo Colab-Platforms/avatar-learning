@@ -58,7 +58,7 @@ export function EcosystemHero() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[100svh] items-start overflow-hidden pt-24 pb-8 sm:items-center sm:pt-28 sm:pb-14"
+      className="relative flex min-h-[100svh] items-center overflow-hidden pt-32 pb-16"
     >
       {/* ambient background */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>

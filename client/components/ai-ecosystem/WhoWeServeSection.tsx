@@ -10,7 +10,7 @@ const SCAN_STAGES = ["Business", "Processes", "Automation", "AI", "Growth"];
 
 export function WhoWeServeSection() {
   return (
-    <section className="relative flex min-h-[100svh] items-center overflow-hidden py-8 sm:py-14">
+    <section className="relative overflow-hidden py-12 sm:py-16">
       <div
         className="pointer-events-none absolute inset-0"
         style={{

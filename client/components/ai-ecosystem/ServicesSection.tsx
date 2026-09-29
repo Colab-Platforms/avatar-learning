@@ -11,7 +11,7 @@ export function ServicesSection() {
   const [activeService, setActiveService] = useState<string | null>(null);
 
   return (
-    <section id="services" className="relative flex min-h-[100svh] items-center py-8 sm:py-14 scroll-mt-24">
+    <section id="services" className="relative py-12 sm:py-16 scroll-mt-24">
       <div
         className="pointer-events-none absolute inset-0"
         style={{

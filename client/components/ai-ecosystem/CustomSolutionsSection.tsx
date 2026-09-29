@@ -7,7 +7,7 @@ import { CUSTOM_SOLUTION_EXAMPLES } from "./data";
 
 export function CustomSolutionsSection() {
   return (
-    <section className="relative flex min-h-[100svh] items-center py-8 sm:py-14">
+    <section className="relative py-12 sm:py-16">
       <div className="relative mx-auto w-full max-w-[1100px] px-5 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
