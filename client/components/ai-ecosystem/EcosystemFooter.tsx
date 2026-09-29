@@ -42,7 +42,7 @@ export function EcosystemFooter() {
             />
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-white/95">
               AI-powered solutions to manage, automate and scale modern
-              business — presented here as an internal prototype for review.
+              business.
             </p>
             <div className="mt-5 flex items-center gap-3">
               {SOCIAL_LINKS.map((s) => {
