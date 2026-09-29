@@ -27,8 +27,14 @@ function scrollTo(targetY: number) {
   window.scrollTo({ top: targetY, behavior: prefersReducedMotion ? "auto" : "smooth" });
 }
 
-/** Tracks which nav section is currently centered in the viewport, for the active-link indicator. */
-function useActiveSection(ids: string[], onIntersect: (id: string) => void) {
+/**
+ * Tracks which nav section is currently centered in the viewport, for the active-link indicator.
+ * Bug fixed here: the observer only fires on intersection changes, so a naive "update only when
+ * something is visible" callback leaves the active link stuck on whatever last matched (e.g. still
+ * showing "Services" after the user scrolls back up into the Hero, which isn't tracked at all).
+ * Explicitly clearing to null when nothing intersects is what makes "no link active" reachable again.
+ */
+function useActiveSection(ids: string[], onIntersect: (id: string | null) => void) {
   useEffect(() => {
     const elements = ids
       .map((id) => document.getElementById(id))
@@ -40,7 +46,7 @@ function useActiveSection(ids: string[], onIntersect: (id: string) => void) {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) onIntersect(visible[0].target.id);
+        onIntersect(visible[0] ? visible[0].target.id : null);
       },
       { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
     );
@@ -61,7 +67,7 @@ export function EcosystemHeader() {
   // layout reflows (via the underline's layoutId) mid-animation.
   const suppressObserverUntilRef = useRef(0);
 
-  const handleIntersect = useCallback((id: string) => {
+  const handleIntersect = useCallback((id: string | null) => {
     if (Date.now() < suppressObserverUntilRef.current) return;
     setActiveSection(id);
   }, []);

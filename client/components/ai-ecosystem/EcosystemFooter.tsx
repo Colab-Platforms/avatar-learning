@@ -87,7 +87,6 @@ export function EcosystemFooter() {
 
         <div className="mt-6 flex flex-col gap-3 border-t border-white/[0.08] pt-4 text-[13px] text-white/55 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Avatar India. All rights reserved.</p>
-          <p>Internal prototype — for review purposes only.</p>
         </div>
       </div>
     </footer>

@@ -6,7 +6,7 @@ import { WHY_AVATAR } from "./data";
 
 export function WhyAvatarSection() {
   return (
-    <section id="why-avatar" className="relative flex min-h-[100svh] items-center py-20 sm:py-24 scroll-mt-24">
+    <section id="why-avatar" className="relative flex min-h-[100svh] items-center py-8 sm:py-14 scroll-mt-24">
       <div
         className="pointer-events-none absolute inset-0"
         style={{

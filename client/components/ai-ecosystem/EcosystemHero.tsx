@@ -12,6 +12,18 @@ const GridScan = dynamic(() => import("./GridScan").then((m) => m.GridScan), {
 export function EcosystemHero() {
   const sectionRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
+
+  // GridScan's shader was tuned for wide desktop aspect ratios — on a narrow, tall
+  // phone viewport the same intensity reads as an oversaturated, busy grid. Dial
+  // it back rather than touch the shader itself.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
@@ -46,7 +58,7 @@ export function EcosystemHero() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[100svh] items-center overflow-hidden pt-28 pb-14"
+      className="relative flex min-h-[100svh] items-start overflow-hidden pt-24 pb-8 sm:items-center sm:pt-28 sm:pb-14"
     >
       {/* ambient background */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
@@ -84,27 +96,45 @@ export function EcosystemHero() {
       `}</style>
 
       {/* GridScan — supplied WebGL background component, used as-is, full-bleed behind the hero content.
+          Tuned down (not rewritten) so it reads as an ambient atmosphere behind the headline rather
+          than competing with it: lower opacity/bloom, larger grid cells, a slower scan, plus a slight
+          blur and a dark overlay. Mobile gets an even quieter pass since the shader's perspective math
+          was tuned for wide aspect ratios and looks denser in a narrow, tall frame.
           Not pointer-events-none: it tracks the cursor for its perspective tilt. The text block
           below is pointer-events-none (buttons opt back in) so the cursor reaches it. */}
-      <div ref={bgRef} className="absolute inset-0 transition-opacity duration-300 ease-out" aria-hidden>
+      <div
+        ref={bgRef}
+        className="absolute inset-0 transition-opacity duration-300 ease-out"
+        style={{ filter: isMobile ? "blur(1.5px)" : "blur(0.5px)" }}
+        aria-hidden
+      >
         <GridScan
-          sensitivity={0.55}
+          sensitivity={isMobile ? 0.25 : 0.4}
           lineThickness={1}
           linesColor="#2F293A"
-          gridScale={0.1}
+          gridScale={isMobile ? 0.22 : 0.14}
           scanColor="#FF9FFC"
-          scanOpacity={0.4}
+          scanOpacity={isMobile ? 0.13 : 0.22}
           enablePost
-          bloomIntensity={0.6}
-          chromaticAberration={0.002}
+          bloomIntensity={isMobile ? 0.14 : 0.28}
+          chromaticAberration={isMobile ? 0 : 0.0012}
           noiseIntensity={0.01}
           lineJitter={0.1}
-          scanGlow={0.5}
+          scanGlow={isMobile ? 0.3 : 0.4}
           scanSoftness={2}
+          scanDuration={isMobile ? 3.4 : 2.4}
+          scanDelay={isMobile ? 3 : 2}
           enableWebcam={false}
           showPreview={false}
         />
       </div>
+
+      {/* darkens the grid so the headline stays the primary visual focus — a base dim on every
+          size, with an extra pass on phones where the same grid otherwise reads as too busy */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-black/20 sm:bg-black/15"
+        aria-hidden
+      />
 
       {/* fades the GridScan background into the next section's flat
           background color, so the hero blends into the page instead of
@@ -128,7 +158,7 @@ export function EcosystemHero() {
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-[32px] font-bold leading-[1.15] tracking-tight text-white sm:text-5xl lg:text-[52px]"
+          className="text-[32px] font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[52px]"
           style={{ fontFamily: "var(--font-space-grotesk)" }}
         >
           The AI Adaption Ecosystem for
@@ -149,7 +179,7 @@ export function EcosystemHero() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto mt-6 max-w-lg text-[17px] font-normal leading-relaxed text-white/90 sm:text-[19px]"
+          className="mx-auto mt-4 max-w-[330px] text-[14px] font-normal leading-relaxed text-white/90 sm:mt-8 sm:max-w-lg sm:text-[19px]"
         >
           AI-powered solutions to manage, automate and scale your business.
         </motion.p>
@@ -158,7 +188,7 @@ export function EcosystemHero() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-8 flex flex-col items-center gap-3.5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4"
+          className="mt-6 flex flex-col items-center gap-3.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4"
         >
           <a
             href="#book-demo"

@@ -11,7 +11,7 @@ const JOURNEY_STAGES = ["Understand", "Build", "Automate", "Transform", "Scale"]
 export function AboutUsSection() {
   return (
     <>
-      <section id="about" className="relative flex min-h-[100svh] items-center overflow-hidden bg-[#05050a] py-20 scroll-mt-24 sm:py-24">
+      <section id="about" className="relative flex min-h-[100svh] items-center overflow-hidden bg-[#05050a] py-8 scroll-mt-24 sm:py-14">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -112,7 +112,7 @@ export function AboutUsSection() {
         </div>
       </section>
 
-      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-[#05050a] py-20 sm:py-24">
+      <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-[#05050a] py-8 sm:py-14">
         <div
           className="pointer-events-none absolute inset-0"
           style={{

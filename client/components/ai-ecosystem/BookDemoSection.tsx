@@ -50,7 +50,7 @@ export function BookDemoSection() {
   };
 
   return (
-    <section id="book-demo" className="relative flex min-h-[100svh] items-center py-20 sm:py-24 scroll-mt-24">
+    <section id="book-demo" className="relative flex min-h-[100svh] items-center py-8 sm:py-14 scroll-mt-24">
       <div className="relative mx-auto w-full max-w-[1100px] px-5 sm:px-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
