@@ -1,242 +1,669 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, ChevronDown } from "lucide-react";
-import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
+import { GeistSans } from "geist/font/sans";
+import { HERO_PROMPTS, MARQUEE_ITEMS } from "./data";
+import styles from "./ecosystem.module.css";
 
-const GridScan = dynamic(() => import("./GridScan").then((m) => m.GridScan), {
-  ssr: false,
+const reveal = (delay = 0) => ({
+  initial: { opacity: 0, y: 28, filter: "blur(8px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: true, margin: "-40px" },
+  transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
-export function EcosystemHero() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = useReducedMotion();
+/** Rotating point-cloud "globe" rendered on canvas, with lines between nearby
+ * points and a handful of labelled anchor nodes that light up near the cursor. */
+function HeroSphere({ width }: { width: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef({ cmx: -9999, cmy: -9999, mx: 0, my: 0, hoverTarget: 0, hover: 0 });
 
-  // GridScan's shader was tuned for wide desktop aspect ratios — on a narrow, tall
-  // phone viewport the same intensity reads as an oversaturated, busy grid. Dial
-  // it back rather than touch the shader itself.
-  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
 
-  // Cinematic hero-to-page transition as the user scrolls past the hero —
-  // disabled entirely when reduced motion is requested.
-  const textY = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? [0, 0] : [0, -30]);
-  // Opacity fades are written straight to the DOM from the scroll listener below:
-  // MotionValue-bound `opacity` never reached the element here, while `y` did.
-  // The background fades (no scale/shift) so its edges never read as a card.
-  const bgRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const [pastIndicatorThreshold, setPastIndicatorThreshold] = useState(false);
-  useEffect(() => {
-    const onScroll = () => {
-      setPastIndicatorThreshold(window.scrollY > 60);
-      const section = sectionRef.current;
-      if (!section || prefersReducedMotion) return;
-      // Smoothstep over ~90% of the hero: stays strong at the top, then fades
-      // slowly and evenly, easing out again as it disappears.
-      const p = Math.min(Math.max(window.scrollY / (section.offsetHeight * 0.9), 0), 1);
-      const eased = p * p * (3 - 2 * p);
-      if (bgRef.current) bgRef.current.style.opacity = String(1 - eased);
-      if (textRef.current) textRef.current.style.opacity = String(1 - eased);
+    const N = 420;
+    const pts: [number, number, number, number][] = [];
+    const ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i / (N - 1)) * 2;
+      const r = Math.sqrt(1 - y * y);
+      const t = ga * i;
+      pts.push([Math.cos(t) * r, y, Math.sin(t) * r, Math.random() * 6.28]);
+    }
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx = pts[i][0] - pts[j][0];
+        const dy = pts[i][1] - pts[j][1];
+        const dz = pts[i][2] - pts[j][2];
+        if (dx * dx + dy * dy + dz * dz < 0.042) pairs.push([i, j]);
+      }
+    }
+    const anchors: [number, string][] = [
+      [36, "Leads"],
+      [98, "Orders"],
+      [165, "Content"],
+      [232, "Team training"],
+      [300, "Reports"],
+      [370, "Custom tools"],
+    ];
+
+    let rot = 0;
+    let tx = 0;
+    let ty = 0;
+    const proj = new Array<[number, number, number, number, number]>(N);
+    const m = mouseRef.current;
+    let raf = 0;
+
+    const draw = (now: number) => {
+      const c = canvasRef.current;
+      if (!c) return;
+      const ctx = c.getContext("2d");
+      if (!ctx) return;
+      const w = c.width;
+      const hh = c.height;
+      const dp = w / (parseFloat(c.style.width) || w);
+      ctx.clearRect(0, 0, w, hh);
+      m.hover += (m.hoverTarget - m.hover) * 0.06;
+      const hv = m.hover;
+      const R = Math.min(w * 0.42, hh * 0.5);
+      const cx = w / 2;
+      const cy = hh * 0.5;
+      const t = (now || 0) / 1000;
+      rot += 0.0018 + hv * 0.0012;
+      tx += (m.my * 0.3 - tx) * 0.04;
+      ty += (m.mx * 0.45 - ty) * 0.04;
+      const ay = rot + ty;
+      const ax = 0.3 + tx;
+      const sy = Math.sin(ay);
+      const cyy = Math.cos(ay);
+      const sx = Math.sin(ax);
+      const cxx = Math.cos(ax);
+      const mX = m.cmx * dp;
+      const mY = m.cmy * dp;
+      const rad = 170 * dp;
+
+      for (let i = 0; i < N; i++) {
+        const p = pts[i];
+        const x = p[0] * cyy + p[2] * sy;
+        let z = -p[0] * sy + p[2] * cyy;
+        const y = p[1] * cxx - z * sx;
+        z = p[1] * sx + z * cxx;
+        const X = cx + x * R;
+        const Y = cy + y * R;
+        const d = (z + 1) / 2;
+        const dd = Math.hypot(X - mX, Y - mY);
+        const k = dd < rad ? (1 - dd / rad) * hv * d : 0;
+        proj[i] = [X, Y, d, p[3], k];
+      }
+
+      ctx.lineWidth = dp;
+      for (const [a, b] of pairs) {
+        const A = proj[a];
+        const B = proj[b];
+        const d = (A[2] + B[2]) / 2;
+        const k = Math.max(A[4], B[4]);
+        ctx.strokeStyle = `rgba(${k > 0.05 ? "160,240,248" : "111,227,239"},${(0.015 + d * 0.11 + k * 0.7).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(A[0], A[1]);
+        ctx.lineTo(B[0], B[1]);
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < N; i++) {
+        const P = proj[i];
+        const d = P[2];
+        const k = P[4];
+        const fl = Math.sin(t * 1.3 + P[3] * 7) > 0.988;
+        const r = (0.7 + d * 1.7) * dp * (fl ? 2 : 1) * (1 + k * 1.6);
+        ctx.fillStyle =
+          fl || k > 0.25
+            ? "rgba(233,253,255,1)"
+            : d > 0.5
+              ? `rgba(143,233,242,${(0.3 + d * 0.6).toFixed(2)})`
+              : `rgba(107,124,255,${(0.18 + d * 0.5).toFixed(2)})`;
+        if (fl || k > 0.25) {
+          ctx.shadowColor = "#6fe3ef";
+          ctx.shadowBlur = 14 * dp;
+        }
+        ctx.beginPath();
+        ctx.arc(P[0], P[1], r, 0, 6.283);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.strokeStyle = `rgba(143,233,242,${(0.12 + hv * 0.2).toFixed(2)})`;
+      ctx.lineWidth = dp;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, R * 1.32, R * 0.3, -0.16, 0, 6.283);
+      ctx.stroke();
+
+      if (hv > 0.02) {
+        ctx.font = `500 ${Math.round(13 * dp)}px ${GeistSans.style.fontFamily}, system-ui, sans-serif`;
+        ctx.textBaseline = "middle";
+        for (const [ai, label] of anchors) {
+          const P = proj[ai];
+          if (P[2] < 0.5) continue;
+          const al = hv * Math.min(1, (P[2] - 0.5) * 4);
+          const lx = P[0] + (P[0] > cx ? 26 : -26) * dp;
+          const ly = P[1] - 22 * dp;
+          const tw = ctx.measureText(label).width;
+          const pw = tw + 22 * dp;
+          const ph = 26 * dp;
+          const bx = P[0] > cx ? lx : lx - pw;
+          ctx.globalAlpha = al;
+          ctx.strokeStyle = "rgba(143,233,242,.7)";
+          ctx.beginPath();
+          ctx.moveTo(P[0], P[1]);
+          ctx.lineTo(P[0] > cx ? bx : bx + pw, ly);
+          ctx.stroke();
+          ctx.fillStyle = "rgba(12,14,19,.9)";
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(bx, ly - ph / 2, pw, ph, ph / 2);
+          else ctx.rect(bx, ly - ph / 2, pw, ph);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#e9fdff";
+          ctx.fillText(label, bx + 11 * dp, ly);
+          ctx.shadowColor = "#6fe3ef";
+          ctx.shadowBlur = 12 * dp;
+          ctx.beginPath();
+          ctx.arc(P[0], P[1], 3.5 * dp, 0, 6.283);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
+        }
+      }
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [prefersReducedMotion]);
+
+    const loop = (now: number) => {
+      draw(now);
+      raf = requestAnimationFrame(loop);
+    };
+    draw(0);
+    raf = requestAnimationFrame(loop);
+
+    const header = canvas.closest("header");
+    const onMove = (e: MouseEvent) => {
+      if (!header) return;
+      const b = header.getBoundingClientRect();
+      m.mx = (e.clientX - b.left) / b.width - 0.5;
+      m.my = (e.clientY - b.top) / b.height - 0.5;
+      const cb = canvas.getBoundingClientRect();
+      m.cmx = e.clientX - cb.left;
+      m.cmy = e.clientY - cb.top;
+    };
+    const onEnter = () => {
+      m.hoverTarget = 1;
+      canvas.style.opacity = ".9";
+    };
+    const onLeave = () => {
+      m.hoverTarget = 0;
+      m.cmx = m.cmy = -9999;
+      canvas.style.opacity = ".38";
+    };
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (fine && header) {
+      header.addEventListener("mousemove", onMove);
+      header.addEventListener("mouseenter", onEnter);
+      header.addEventListener("mouseleave", onLeave);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      if (fine && header) {
+        header.removeEventListener("mousemove", onMove);
+        header.removeEventListener("mouseenter", onEnter);
+        header.removeEventListener("mouseleave", onLeave);
+      }
+    };
+  }, [width]);
+
+  const H = width < 600 ? 660 : 980;
+  const dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative flex min-h-[100svh] items-center overflow-hidden pt-32 pb-16"
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: width < 600 ? 10 : 30,
+        height: H,
+        pointerEvents: "none",
+        WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
+        maskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
+      }}
     >
-      {/* ambient background */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div
-          className="absolute -top-40 left-1/2 h-[640px] w-[900px] -translate-x-1/2"
+      <div
+        className={styles.breathe}
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: H,
+          height: H,
+          transform: "translate(-50%,-50%)",
+          borderRadius: "50%",
+          background: "radial-gradient(circle,rgba(111,227,239,.16),rgba(107,124,255,.07) 45%,transparent 70%)",
+        }}
+      />
+      <canvas
+        ref={canvasRef}
+        width={Math.round(width * dpr)}
+        height={Math.round(H * dpr)}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: 0.38, transition: "opacity .8s ease" }}
+      />
+    </div>
+  );
+}
+
+function HeroPromptPill({ width }: { width: number }) {
+  const promptRef = useRef<HTMLSpanElement>(null);
+  const sm = width < 600;
+  const pw = Math.min(560, width);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    let k = 0;
+    const run = () => {
+      const el = promptRef.current;
+      if (!el) {
+        timeout = setTimeout(run, 400);
+        return;
+      }
+      const [q] = HERO_PROMPTS[k % HERO_PROMPTS.length];
+      let n = 0;
+      const type = () => {
+        const p2 = promptRef.current;
+        if (!p2) return;
+        n++;
+        p2.textContent = q.slice(0, n);
+        if (n < q.length) {
+          timeout = setTimeout(type, 38);
+        } else {
+          timeout = setTimeout(() => {
+            timeout = setTimeout(() => {
+              const p3 = promptRef.current;
+              if (p3) p3.textContent = "";
+              k++;
+              run();
+            }, 2600);
+          }, 500);
+        }
+      };
+      timeout = setTimeout(type, 400);
+    };
+    run();
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const badge = (
+    <span
+      style={{
+        flex: "none",
+        fontFamily: "var(--font-geist-mono),monospace",
+        fontSize: 12,
+        color: "#8fe9f2",
+        padding: "3px 8px",
+        borderRadius: 999,
+        background: "rgba(111,227,239,.12)",
+      }}
+    >
+      Ask Avatar AI
+    </span>
+  );
+  const caret = (
+    <span
+      className={styles.blink}
+      style={{
+        display: "inline-block",
+        width: 2,
+        height: "1.1em",
+        marginLeft: 2,
+        verticalAlign: "-3px",
+        background: "#8fe9f2",
+      }}
+    />
+  );
+  const send = (
+    <span
+      style={{
+        flex: "none",
+        width: sm ? 34 : 36,
+        height: sm ? 34 : 36,
+        borderRadius: "50%",
+        background: "#f4f6f8",
+        color: "#07080b",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 16,
+        fontWeight: 600,
+      }}
+    >
+      ↑
+    </span>
+  );
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: pw,
+        maxWidth: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 14,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          borderRadius: sm ? 24 : 999,
+          padding: 1,
+          background: "linear-gradient(90deg,rgba(107,124,255,.6),rgba(111,227,239,.7))",
+          boxShadow: "0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(111,227,239,.2)",
+        }}
+      >
+        {sm ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              padding: "14px 14px 14px 18px",
+              borderRadius: 23,
+              background: "rgba(10,12,16,.92)",
+              backdropFilter: "blur(10px)",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ display: "flex" }}>{badge}</div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+              <span style={{ flex: 1, minWidth: 0, height: 40, fontSize: 15, lineHeight: "20px", color: "#f4f6f8", overflow: "hidden" }}>
+                <span ref={promptRef} />
+                {caret}
+              </span>
+              {send}
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 12px 12px 20px",
+              borderRadius: 999,
+              background: "rgba(10,12,16,.92)",
+              backdropFilter: "blur(10px)",
+              textAlign: "left",
+            }}
+          >
+            {badge}
+            <span style={{ flex: 1, minWidth: 0, fontSize: 16, color: "#f4f6f8", whiteSpace: "nowrap", overflow: "hidden" }}>
+              <span ref={promptRef} />
+              {caret}
+            </span>
+            {send}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Marquee() {
+  const row = (key: string) => (
+    <div key={key} style={{ display: "flex" }}>
+      {MARQUEE_ITEMS.map((t, i) => (
+        <span
+          key={key + i}
           style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(124,58,237,0.22) 0%, transparent 60%)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 14,
+            fontSize: 18,
+            color: "#98a1ac",
+            whiteSpace: "nowrap",
+            padding: "0 28px",
+          }}
+        >
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6fe3ef", boxShadow: "0 0 8px #6fe3ef" }} />
+          {t}
+        </span>
+      ))}
+    </div>
+  );
+  return (
+    <div className={styles.marquee} style={{ display: "flex", width: "max-content" }}>
+      {row("a")}
+      {row("b")}
+    </div>
+  );
+}
+
+export function EcosystemHero() {
+  const [width, setWidth] = useState(1440);
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const mobile = width < 600;
+  const vizW = Math.min(1000, width - 48);
+
+  return (
+    <header
+      id="top"
+      data-screen-label="01 Hero"
+      style={{ position: "relative", overflowX: "clip", overflowY: "visible", padding: "clamp(72px,10vw,112px) 24px 0" }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          WebkitMaskImage: "linear-gradient(180deg,#000 45%,transparent 100%)",
+          maskImage: "linear-gradient(180deg,#000 45%,transparent 100%)",
+        }}
+      >
+        <div
+          className={styles.breathe}
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: -320,
+            width: 1300,
+            height: 1000,
+            marginLeft: -650,
+            background: "radial-gradient(ellipse 50% 50% at 50% 0%,rgba(111,227,239,.16),rgba(107,124,255,.08) 50%,transparent 75%)",
+            filter: "blur(20px)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: "-10%",
+            top: "30%",
+            width: 700,
+            height: 700,
+            borderRadius: "50%",
+            background: "radial-gradient(circle,rgba(107,124,255,.07),transparent 65%)",
             filter: "blur(30px)",
           }}
         />
         <div
-          className="absolute top-10 right-0 h-[420px] w-[500px]"
           style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(37,99,235,0.20) 0%, transparent 65%)",
-            filter: "blur(40px)",
+            position: "absolute",
+            right: "-10%",
+            top: "15%",
+            width: 700,
+            height: 700,
+            borderRadius: "50%",
+            background: "radial-gradient(circle,rgba(111,227,239,.06),transparent 65%)",
+            filter: "blur(30px)",
           }}
         />
       </div>
 
-      <style jsx>{`
-        .aie-headline-gradient {
-          animation: aie-headline-gradient-shift 8s ease-in-out infinite;
-        }
-        @keyframes aie-headline-gradient-shift {
-          0%,
-          100% {
-            background-position: 0% center;
-          }
-          50% {
-            background-position: 100% center;
-          }
-        }
-      `}</style>
+      <HeroSphere width={width} />
 
-      {/* GridScan — supplied WebGL background component, used as-is, full-bleed behind the hero content.
-          Tuned down (not rewritten) so it reads as an ambient atmosphere behind the headline rather
-          than competing with it: lower opacity/bloom, larger grid cells, a slower scan, plus a slight
-          blur and a dark overlay. Mobile gets an even quieter pass since the shader's perspective math
-          was tuned for wide aspect ratios and looks denser in a narrow, tall frame.
-          Not pointer-events-none: it tracks the cursor for its perspective tilt. The text block
-          below is pointer-events-none (buttons opt back in) so the cursor reaches it. */}
       <div
-        ref={bgRef}
-        className="absolute inset-0 transition-opacity duration-300 ease-out"
-        style={{ filter: isMobile ? "blur(1.5px)" : "blur(0.5px)" }}
-        aria-hidden
-      >
-        <GridScan
-          sensitivity={isMobile ? 0.25 : 0.4}
-          lineThickness={1}
-          linesColor="#2F293A"
-          gridScale={isMobile ? 0.22 : 0.14}
-          scanColor="#FF9FFC"
-          scanOpacity={isMobile ? 0.13 : 0.22}
-          enablePost
-          bloomIntensity={isMobile ? 0.14 : 0.28}
-          chromaticAberration={isMobile ? 0 : 0.0012}
-          noiseIntensity={0.01}
-          lineJitter={0.1}
-          scanGlow={isMobile ? 0.3 : 0.4}
-          scanSoftness={2}
-          scanDuration={isMobile ? 3.4 : 2.4}
-          scanDelay={isMobile ? 3 : 2}
-          enableWebcam={false}
-          showPreview={false}
-        />
-      </div>
-
-      {/* darkens the grid so the headline stays the primary visual focus — a base dim on every
-          size, with an extra pass on phones where the same grid otherwise reads as too busy */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-black/20 sm:bg-black/15"
-        aria-hidden
-      />
-
-      {/* fades the GridScan background into the next section's flat
-          background color, so the hero blends into the page instead of
-          reading as a separate card with a hard bottom edge */}
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3"
+        aria-hidden="true"
         style={{
+          position: "absolute",
+          left: "50%",
+          top: 20,
+          width: 1200,
+          maxWidth: "130%",
+          height: 720,
+          transform: "translateX(-50%)",
           background:
-            "linear-gradient(to bottom, rgba(5,5,10,0) 0%, rgba(5,5,10,0.35) 35%, rgba(5,5,10,0.8) 70%, #05050a 100%)",
+            "radial-gradient(ellipse 52% 50% at 50% 48%,rgba(7,8,11,.9),rgba(7,8,11,.6) 50%,rgba(7,8,11,.2) 72%,transparent 85%)",
+          pointerEvents: "none",
         }}
-        aria-hidden
       />
 
-      {/* hero content — centered foreground layer */}
-      <motion.div
-        ref={textRef}
-        className="pointer-events-none relative z-10 mx-auto w-full max-w-4xl px-5 text-center transition-opacity duration-300 ease-out sm:px-8"
-        style={{ y: textY }}
+      <div
+        style={{
+          position: "relative",
+          maxWidth: 1200,
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          gap: 28,
+        }}
       >
-        <motion.h1
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-[32px] font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[52px]"
-          style={{ fontFamily: "var(--font-space-grotesk)" }}
+        <motion.div
+          {...reveal(0)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: mobile ? 8 : 10,
+            padding: mobile ? "6px 14px" : "6px 14px 6px 8px",
+            borderRadius: 999,
+            border: "1px solid rgba(255,255,255,.1)",
+            background: "rgba(255,255,255,.03)",
+            fontSize: mobile ? 12 : 13,
+            color: "#a3abb5",
+            whiteSpace: "nowrap",
+          }}
         >
-          The AI Adaption Ecosystem for
-          <br />
           <span
-            className="aie-headline-gradient bg-clip-text text-transparent"
             style={{
-              backgroundImage:
-                "linear-gradient(90deg, #C4B5FD 0%, #93C5FD 25%, #C4B5FD 50%, #93C5FD 75%, #C4B5FD 100%)",
-              backgroundSize: "300% auto",
+              padding: "2px 8px",
+              borderRadius: 999,
+              background: "rgba(111,227,239,.14)",
+              color: "#8fe9f2",
+              fontFamily: "var(--font-geist-mono),monospace",
+              fontSize: mobile ? "10.5px" : 12,
+              letterSpacing: ".06em",
             }}
           >
-            Modern Business.
+            AI-POWERED
           </span>
+          AI Adoption Ecosystem for Indian businesses
+        </motion.div>
+
+        <motion.h1
+          {...reveal(80)}
+          style={{
+            margin: 0,
+            maxWidth: 920,
+            fontSize: "clamp(44px,7.4vw,92px)",
+            lineHeight: 0.98,
+            letterSpacing: "-0.045em",
+            fontWeight: 600,
+            background: "linear-gradient(180deg,#ffffff 35%,#8e98a4 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+          }}
+        >
+          Put AI to work in your business
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto mt-4 max-w-[330px] text-[14px] font-normal leading-relaxed text-white/90 sm:mt-8 sm:max-w-lg sm:text-[19px]"
+          {...reveal(160)}
+          style={{ margin: 0, maxWidth: 560, fontSize: "clamp(17px,1.6vw,20px)", lineHeight: 1.5, color: "#a3abb5" }}
         >
-          AI-powered solutions to manage, automate and scale your business.
+          Ready-to-use tools, hands-on training and support at every step. Start small and grow at your own pace.
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-6 flex flex-col items-center gap-3.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4"
-        >
+        <motion.div {...reveal(240)} style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
           <a
-            href="#book-demo"
-            onClick={(e) => {
-              e.preventDefault();
-              window.dispatchEvent(new Event("aie:open-book-demo"));
-            }}
-            className="pointer-events-auto group relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-full px-9 py-4.5 text-[16px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:!shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_50px_-8px_rgba(124,58,237,0.8)] sm:w-auto"
+            href="#contact"
             style={{
-              background: "linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)",
-              boxShadow:
-                "0 0 0 1px rgba(255,255,255,0.08), 0 16px 40px -8px rgba(124,58,237,0.6)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxSizing: "border-box",
+              height: 50,
+              lineHeight: 1,
+              background: "#f4f6f8",
+              color: "#07080b",
+              padding: "0 26px",
+              borderRadius: 999,
+              fontWeight: 500,
+              fontSize: 15,
             }}
           >
-            <span className="relative z-10">Book a Demo</span>
-            <ArrowRight className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            Book a free consultation
           </a>
-
           <a
-            href="#pricing"
-            className="pointer-events-auto inline-flex w-full items-center justify-center rounded-lg border border-white/25 bg-transparent px-9 py-4.5 text-[16px] font-semibold text-white/85 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/60 hover:text-white hover:shadow-[0_0_24px_rgba(255,255,255,0.12)] sm:w-auto"
+            href="#products"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxSizing: "border-box",
+              height: 50,
+              lineHeight: 1,
+              border: "1px solid rgba(255,255,255,.16)",
+              color: "#f4f6f8",
+              padding: "0 26px",
+              borderRadius: 999,
+              fontWeight: 500,
+              fontSize: 15,
+              background: "rgba(255,255,255,.03)",
+            }}
           >
-            Know Our Plans
+            Explore products →
           </a>
         </motion.div>
-      </motion.div>
 
-      {/* minimal scroll indicator — bounces gently until the user starts scrolling */}
-      <div
-        className={`pointer-events-none absolute bottom-7 left-1/2 z-10 -translate-x-1/2 transition-opacity duration-300 ${
-          pastIndicatorThreshold ? "opacity-0" : "opacity-100"
-        }`}
-        aria-hidden
-      >
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <motion.div
-            animate={prefersReducedMotion ? undefined : { y: [0, 8, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <ChevronDown className="h-5 w-5 text-white/40" />
-          </motion.div>
+        <motion.div {...reveal(320)} style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: 36 }}>
+          <HeroPromptPill width={vizW} />
         </motion.div>
+
+        <div style={{ height: mobile ? 8 : "clamp(70px,10vw,140px)" }} />
       </div>
-    </section>
+
+      <div
+        style={{
+          position: "relative",
+          padding: mobile ? "28px 0 56px" : "40px 0 72px",
+          overflow: "hidden",
+          WebkitMaskImage: "linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)",
+          maskImage: "linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)",
+        }}
+      >
+        <Marquee />
+      </div>
+    </header>
   );
 }

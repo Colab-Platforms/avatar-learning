@@ -2,268 +2,261 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Menu, Phone, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { NAV_LINKS } from "./data";
 
-const LINKS = [
-  { label: "Why Avatar", href: "#why-avatar" },
-  { label: "Services", href: "#services" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#about" },
-];
-
-const SECTION_IDS = LINKS.map((l) => l.href.slice(1));
-
-/**
- * Native compositor-driven smooth scroll — deliberately not a hand-rolled
- * requestAnimationFrame loop. With this many `whileInView` animations now
- * triggering across the page as sections scroll past, a main-thread rAF loop
- * competes with all of them for frame time and can stall or land short of the
- * target; native smooth scroll runs off the main thread and isn't affected.
- */
-function scrollTo(targetY: number) {
+function scrollToSection(id: string, headerEl: HTMLElement | null) {
+  const target = document.getElementById(id);
+  if (!target || !headerEl) return;
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  window.scrollTo({ top: targetY, behavior: prefersReducedMotion ? "auto" : "smooth" });
-}
-
-/**
- * Tracks which nav section is currently centered in the viewport, for the active-link indicator.
- * Bug fixed here: the observer only fires on intersection changes, so a naive "update only when
- * something is visible" callback leaves the active link stuck on whatever last matched (e.g. still
- * showing "Services" after the user scrolls back up into the Hero, which isn't tracked at all).
- * Explicitly clearing to null when nothing intersects is what makes "no link active" reachable again.
- */
-function useActiveSection(ids: string[], onIntersect: (id: string | null) => void) {
-  useEffect(() => {
-    const elements = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
-    if (elements.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        onIntersect(visible[0] ? visible[0].target.id : null);
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
-    );
-
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [ids, onIntersect]);
+  const offset = headerEl.getBoundingClientRect().height + 8;
+  const top = target.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top: Math.max(top, 0), behavior: prefersReducedMotion ? "auto" : "smooth" });
 }
 
 export function EcosystemHeader() {
-  const [scrolled, setScrolled] = useState(false);
-  const [showCta, setShowCta] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
-  // While a nav-triggered scroll is in flight, ignore the IntersectionObserver
-  // so it can't fight the click-driven active-link update or force extra
-  // layout reflows (via the underline's layoutId) mid-animation.
-  const suppressObserverUntilRef = useRef(0);
-
-  const handleIntersect = useCallback((id: string | null) => {
-    if (Date.now() < suppressObserverUntilRef.current) return;
-    setActiveSection(id);
-  }, []);
-
-  useActiveSection(SECTION_IDS, handleIntersect);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 24);
-      setShowCta(window.scrollY <= window.innerHeight * 2);
+    const onResize = () => setIsDesktop(window.innerWidth >= 820);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const el = progressRef.current;
+      if (!el) return;
+      const doc = document.documentElement;
+      const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+      el.style.transform = `scaleX(${Math.min(1, window.scrollY / max)})`;
     };
-    onScroll();
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!menuOpen) return;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [mobileOpen]);
+  }, [menuOpen]);
 
-  const openBookDemo = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    window.dispatchEvent(new Event("aie:open-book-demo"));
-  };
-
-  // JS-driven scroll with a measured (not hardcoded) header offset — more robust
-  // than relying on CSS scroll-margin-top alone, especially on mobile where
-  // closing the menu must finish (and the layout settle) before we measure.
-  const scrollToSection = (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    setActiveSection(id);
-    suppressObserverUntilRef.current = Date.now() + 1200;
-
-    const performScroll = () => {
-      const target = document.getElementById(id);
-      const header = headerRef.current;
-      if (!target || !header) return;
-      const offset = header.getBoundingClientRect().height + 16;
-      const top = target.getBoundingClientRect().top + window.scrollY - offset;
-      scrollTo(Math.max(top, 0));
-    };
-
-    if (mobileOpen) {
-      setMobileOpen(false);
-      // wait a frame for the mobile menu to unmount and the header to shrink
-      // back down before measuring, so we scroll to the settled position.
-      requestAnimationFrame(() => requestAnimationFrame(performScroll));
-    } else {
-      performScroll();
-    }
-  };
+  const onNavClick = useCallback(
+    (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      setMenuOpen(false);
+      scrollToSection(href.slice(1), headerRef.current);
+    },
+    [],
+  );
 
   return (
-    <header
-      ref={headerRef}
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-500",
-        scrolled || mobileOpen
-          ? "bg-[#07070c]/80 backdrop-blur-xl border-b border-white/[0.08]"
-          : "bg-transparent border-b border-transparent",
-      )}
-    >
-      <div className="mx-auto flex h-18 max-w-[1400px] items-center justify-between px-5 sm:px-8">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/landingpage-images/Avatar_logo_Light.svg"
-            alt="Avatar"
-            width={120}
-            height={32}
-            className="h-7 w-auto sm:h-8"
-            priority
-          />
-        </div>
-
-        <nav className="hidden md:flex items-center gap-8">
-          {LINKS.map((l) => {
-            const isActive = l.href.slice(1) === activeSection;
-            return (
-              <a
-                key={l.label}
-                href={l.href}
-                onClick={scrollToSection(l.href.slice(1))}
-                className={cn(
-                  "relative pb-1 text-[15px] font-medium tracking-wide transition-colors duration-200",
-                  isActive
-                    ? "text-white"
-                    : "text-white/95 after:absolute after:-bottom-0.5 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:bg-white/40 after:transition-transform after:duration-300 after:content-[''] hover:text-white hover:after:scale-x-100",
-                )}
-              >
-                {l.label}
-                {isActive && (
-                  <motion.span
-                    layoutId="aie-nav-underline"
-                    className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full"
-                    style={{ background: "linear-gradient(135deg, #C4B5FD 0%, #93C5FD 100%)" }}
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </a>
-            );
-          })}
-        </nav>
-
+    <>
+      <nav
+        ref={headerRef}
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          background: "rgba(7,8,11,.72)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          borderBottom: "1px solid rgba(255,255,255,.06)",
+        }}
+      >
         <div
-          className={cn(
-            "hidden items-center gap-3 transition-all duration-500 md:flex",
-            showCta
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 -translate-y-1 pointer-events-none",
-          )}
-          aria-hidden={!showCta}
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 24px",
+            height: 68,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 24,
+          }}
         >
-          <a
-            href="#book-demo"
-            onClick={openBookDemo}
-            tabIndex={showCta ? undefined : -1}
-            aria-label="Call to book a demo"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/90 transition-colors duration-200 hover:border-white/40 hover:text-white"
-          >
-            <Phone className="h-4 w-4" />
+          <a href="#top" aria-label="Avatar home" style={{ display: "flex", alignItems: "center" }}>
+            <Image
+              src="/landingpage-images/Avatar_logo_Light.svg"
+              alt="Avatar"
+              width={110}
+              height={26}
+              style={{ height: 26, width: "auto", display: "block" }}
+              priority
+            />
           </a>
 
-          <a
-            href="#book-demo"
-            onClick={openBookDemo}
-            tabIndex={showCta ? undefined : -1}
-            className="relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white overflow-hidden group"
-            style={{
-              background: "linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px -4px rgba(124,58,237,0.5)",
-            }}
-          >
-            <span className="relative z-10">Book a Demo</span>
-            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-          </a>
-        </div>
+          {isDesktop && (
+            <div style={{ display: "flex", gap: 32, fontSize: 14 }}>
+              {NAV_LINKS.map((l) => (
+                <a
+                  key={l.label}
+                  href={l.href}
+                  onClick={onNavClick(l.href)}
+                  style={{ color: "#a3abb5" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#a3abb5")}
+                >
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          )}
 
-        <div className="flex items-center gap-2 md:hidden">
-          <a
-            href="#book-demo"
-            onClick={openBookDemo}
-            className="relative inline-flex h-10 items-center rounded-full px-4 text-[13px] font-semibold text-white whitespace-nowrap"
-            style={{
-              background: "linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 6px 18px -4px rgba(124,58,237,0.5)",
-            }}
-          >
-            Book a Demo
-          </a>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 text-white"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <div className="border-t border-white/[0.08] bg-[#07070c]/95 backdrop-blur-xl md:hidden">
-          <nav className="flex flex-col gap-1 px-5 py-4">
-            {LINKS.map((l) => (
-              <a
-                key={l.label}
-                href={l.href}
-                onClick={scrollToSection(l.href.slice(1))}
-                className="rounded-lg px-3 py-3 text-[15px] font-medium text-white/95 tracking-wide hover:bg-white/5 hover:text-white transition-colors duration-200"
-              >
-                {l.label}
-              </a>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <a
-              href="#book-demo"
-              onClick={(e) => {
-                openBookDemo(e);
-                setMobileOpen(false);
-              }}
-              className="relative mt-2 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[15px] font-semibold text-white overflow-hidden"
+              href="#contact"
+              onClick={onNavClick("#contact")}
               style={{
-                background: "linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)",
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px -4px rgba(124,58,237,0.5)",
+                display: "inline-flex",
+                alignItems: "center",
+                minHeight: 44,
+                boxSizing: "border-box",
+                background: "#f4f6f8",
+                color: "#07080b",
+                padding: "0 18px",
+                borderRadius: 999,
+                fontSize: 14,
+                fontWeight: 500,
               }}
             >
-              <span className="relative z-10">Book a Demo</span>
+              Get in touch
             </a>
-          </nav>
+            {!isDesktop && (
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                style={{
+                  cursor: "pointer",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  border: "1px solid rgba(255,255,255,.14)",
+                  background: "rgba(255,255,255,.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  padding: 0,
+                }}
+              >
+                <span
+                  style={{
+                    width: 16,
+                    height: 1.5,
+                    background: "#f4f6f8",
+                    borderRadius: 2,
+                    transition: "transform .3s",
+                    transform: menuOpen ? "translateY(3.25px) rotate(45deg)" : "none",
+                  }}
+                />
+                <span
+                  style={{
+                    width: 16,
+                    height: 1.5,
+                    background: "#f4f6f8",
+                    borderRadius: 2,
+                    transition: "transform .3s",
+                    transform: menuOpen ? "translateY(-3.25px) rotate(-45deg)" : "none",
+                  }}
+                />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div
+          ref={progressRef}
+          style={{
+            position: "absolute",
+            left: 0,
+            bottom: -1,
+            height: 1,
+            width: "100%",
+            transform: "scaleX(0)",
+            transformOrigin: "0 50%",
+            background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
+            boxShadow: "0 0 8px #6fe3ef",
+          }}
+        />
+      </nav>
+
+      {menuOpen && !isDesktop && (
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            top: 68,
+            bottom: 0,
+            zIndex: 70,
+            background: "rgba(7,8,11,.97)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            padding: "16px 24px 32px",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {NAV_LINKS.map((m) => (
+            <a
+              key={m.label}
+              href={m.href}
+              onClick={onNavClick(m.href)}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                minHeight: 60,
+                borderBottom: "1px solid rgba(255,255,255,.08)",
+                color: "#f4f6f8",
+                fontSize: 22,
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {m.label}
+              <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
+            </a>
+          ))}
+          <a
+            href="#contact"
+            onClick={onNavClick("#contact")}
+            style={{
+              marginTop: "auto",
+              height: 52,
+              borderRadius: 999,
+              background: "#f4f6f8",
+              color: "#07080b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 500,
+              fontSize: 15,
+            }}
+          >
+            Get in touch
+          </a>
         </div>
       )}
-    </header>
+    </>
   );
 }

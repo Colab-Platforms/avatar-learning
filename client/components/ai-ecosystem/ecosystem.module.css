@@ -1,0 +1,215 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spinr {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 40px 8px rgba(111, 227, 239, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 80px 22px rgba(111, 227, 239, 0.45);
+  }
+}
+@keyframes dash {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes scan {
+  0% {
+    transform: translateY(-10%);
+  }
+  100% {
+    transform: translateY(110%);
+  }
+}
+@keyframes grow {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+@keyframes streakX {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+@keyframes slideDot {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 10px);
+    opacity: 0;
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 600;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.spin {
+  animation: spin 50s linear infinite;
+}
+.spinr {
+  animation: spinr 34s linear infinite;
+}
+.breathe {
+  animation: breathe 9s ease-in-out infinite;
+}
+.blink {
+  animation: blink 1s steps(1) infinite;
+}
+.floaty {
+  animation: floaty 6s ease-in-out infinite;
+}
+.glow {
+  animation: glow 3s ease-in-out infinite;
+}
+.dash {
+  animation: dash 6s linear infinite;
+}
+.marquee {
+  animation: marquee 40s linear infinite;
+}
+.fill {
+  animation: fill 1.2s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+.fadeIn {
+  animation: fadeIn 0.5s ease both;
+}
+.scan {
+  animation: scan 2.4s ease-in-out infinite alternate;
+}
+.grow {
+  animation: grow 3s ease-in-out infinite;
+}
+.streakX {
+  animation: streakX 1.6s linear infinite;
+}
+.slideDot {
+  animation: slideDot 3s ease-in-out infinite;
+}
+.draw {
+  animation: draw 2s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+.ping {
+  animation: ping 1.8s ease-out infinite;
+}
+.reveal {
+  animation: reveal 1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin,
+  .spinr,
+  .breathe,
+  .blink,
+  .floaty,
+  .glow,
+  .dash,
+  .marquee,
+  .fill,
+  .fadeIn,
+  .scan,
+  .grow,
+  .streakX,
+  .slideDot,
+  .draw,
+  .ping,
+  .reveal {
+    animation: none !important;
+  }
+}
