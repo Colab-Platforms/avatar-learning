@@ -65,62 +65,75 @@ export function InsightsSection() {
           })}
         </div>
 
-        {featured && (
-          <motion.a
-            {...reveal(0)}
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,360px),1fr))",
-              gap: 24,
-              borderRadius: 20,
-              border: "1px solid rgba(255,255,255,.08)",
-              overflow: "hidden",
-              background: "rgba(255,255,255,.02)",
-            }}
-          >
-            <div style={{ height: 260, background: featured.art }} />
-            <div style={{ padding: "clamp(24px,3vw,36px)", display: "flex", flexDirection: "column", gap: 14, justifyContent: "center" }}>
-              <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, letterSpacing: ".08em", color: "#6fe3ef" }}>FEATURED &middot; {featured.type}</span>
-              <h3 style={{ margin: 0, fontSize: "clamp(22px,2.4vw,30px)", lineHeight: 1.2, fontWeight: 600, letterSpacing: "-0.02em", color: "#f4f6f8" }}>{featured.t}</h3>
-              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#a3abb5" }}>{featured.ex}</p>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, color: "#8fe9f2" }}>
-                {featured.meta} &middot; Read more →
-              </span>
-            </div>
-          </motion.a>
-        )}
-
-        <motion.div {...reveal(0)} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          {rest.map((p) => (
+        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,440px),1fr))", gap: "clamp(20px,3vw,40px)", alignItems: "stretch" }}>
+          {featured && (
             <a
-              key={p.t}
-              href="#"
+              href="#insights"
               onClick={(e) => e.preventDefault()}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "112px minmax(0,1fr) 32px",
-                gap: 16,
-                alignItems: "center",
-                padding: "20px 0",
-                borderBottom: "1px solid rgba(255,255,255,.08)",
-              }}
+              style={{ display: "flex", flexDirection: "column", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)", color: "#f4f6f8" }}
             >
-              <span style={{ height: 84, borderRadius: 12, background: p.art, display: "block" }} />
-              <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: 12, color: "#6fe3ef" }}>{p.type}</span>
-                <strong style={{ fontSize: 17, fontWeight: 500, color: "#f4f6f8" }}>{p.t}</strong>
-                <span style={{ fontSize: 13, color: "#8a939e" }}>{p.meta}</span>
-              </span>
-              <span style={{ color: "#8fe9f2" }}>→</span>
+              <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
+                <div style={{ position: "absolute", inset: 0, background: featured.art }} />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundImage: "linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px)",
+                    backgroundSize: "32px 32px",
+                  }}
+                />
+                <span style={{ position: "absolute", left: 18, top: 18, padding: "5px 10px", borderRadius: 999, background: "rgba(7,8,11,.72)", fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", color: "#bff5fa" }}>
+                  FEATURED
+                </span>
+              </div>
+              <div style={{ flex: 1, padding: "clamp(22px,3vw,30px)", display: "flex", flexDirection: "column", gap: 12 }}>
+                <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "#8fe9f2" }}>{featured.type}</span>
+                <strong style={{ fontSize: "clamp(22px,2.4vw,30px)", lineHeight: 1.15, fontWeight: 600, letterSpacing: "-0.03em" }}>{featured.t}</strong>
+                <span style={{ fontSize: 15, lineHeight: 1.55, color: "#a3abb5" }}>{featured.ex}</span>
+                <span style={{ marginTop: "auto", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, fontSize: 13, color: "#98a1ac" }}>
+                  {featured.meta}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#f4f6f8", fontSize: 14, fontWeight: 500 }}>
+                    Read more
+                    <span style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8fe9f2" }}>→</span>
+                  </span>
+                </span>
+              </div>
             </a>
-          ))}
-        </motion.div>
+          )}
 
-        <a href="#insights" style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 500, color: "#8fe9f2" }}>
-          View all insights →
-        </a>
+          <div style={{ display: "flex", flexDirection: "column", borderTop: "1px solid rgba(255,255,255,.08)" }}>
+            {rest.map((p) => (
+              <a
+                key={p.t}
+                href="#insights"
+                onClick={(e) => e.preventDefault()}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "112px minmax(0,1fr) 32px",
+                  gap: 18,
+                  alignItems: "center",
+                  padding: "16px 4px",
+                  borderBottom: "1px solid rgba(255,255,255,.08)",
+                  color: "#f4f6f8",
+                }}
+              >
+                <span style={{ position: "relative", display: "block", height: 84, borderRadius: 12, overflow: "hidden" }}>
+                  <span style={{ position: "absolute", inset: 0, background: p.art, display: "block" }} />
+                </span>
+                <span style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+                  <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "#98a1ac" }}>
+                    {p.type} &middot; {p.meta}
+                  </span>
+                  <strong style={{ fontSize: 17, lineHeight: 1.3, fontWeight: 500, letterSpacing: "-0.01em" }}>{p.t}</strong>
+                </span>
+                <span style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8fe9f2" }}>→</span>
+              </a>
+            ))}
+            <a href="#insights" style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, marginTop: 12, fontSize: 15, fontWeight: 500, color: "#8fe9f2" }}>
+              View all insights →
+            </a>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

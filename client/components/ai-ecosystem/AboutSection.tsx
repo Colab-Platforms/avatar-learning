@@ -92,7 +92,7 @@ export function AboutSection() {
 
         <p
           data-words
-          style={{ margin: 0, maxWidth: 760, fontSize: "clamp(26px,3.6vw,42px)", lineHeight: 1.3, letterSpacing: "-0.02em", fontWeight: 500, color: "#f4f6f8" }}
+          style={{ margin: 0, maxWidth: 760, fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.2, letterSpacing: "-0.03em", fontWeight: 500, color: "#f4f6f8" }}
         >
           {words.map((w, i) => (
             <motion.span
@@ -108,12 +108,35 @@ export function AboutSection() {
           ))}
         </p>
 
-        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 24, width: "100%" }}>
+        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", rowGap: 20, width: "100%" }}>
           {PILLARS.map((p) => (
-            <div key={p.n} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "20px 16px", borderRadius: 16, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)" }}>
-              <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#6fe3ef" }}>{p.n}</span>
-              <strong style={{ fontSize: 17, fontWeight: 600, color: "#f4f6f8" }}>{p.t}</strong>
-              <span style={{ fontSize: 13, lineHeight: 1.4, color: "#a3abb5" }}>{p.d}</span>
+            <div
+              key={p.n}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                const b = el.getBoundingClientRect();
+                el.style.setProperty("--x", `${e.clientX - b.left}px`);
+                el.style.setProperty("--y", `${e.clientY - b.top}px`);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.setProperty("--x", "-999px");
+                e.currentTarget.style.setProperty("--y", "-999px");
+              }}
+              style={{
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                textAlign: "left",
+                padding: "30px 24px 8px",
+                borderTop: "1px solid rgba(255,255,255,.08)",
+                background: "radial-gradient(200px circle at var(--x,-999px) var(--y,-999px),rgba(143,233,242,.08),transparent 65%)",
+              }}
+            >
+              <span style={{ position: "absolute", left: 24, top: -1, width: 32, height: 2, background: "#6fe3ef", boxShadow: "0 0 10px rgba(111,227,239,.6)" }} />
+              <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 13, color: "#6fe3ef" }}>{p.n}</span>
+              <strong style={{ fontWeight: 600, fontSize: "clamp(20px,2vw,24px)", letterSpacing: "-0.02em", color: "#f4f6f8" }}>{p.t}</strong>
+              <span style={{ fontSize: 16, lineHeight: 1.5, color: "#a3abb5" }}>{p.d}</span>
             </div>
           ))}
         </motion.div>

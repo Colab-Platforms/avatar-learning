@@ -117,8 +117,19 @@ export function PathToAdoptionSection() {
           </motion.h2>
         </div>
 
-        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: 16 }}>
-          <div style={{ display: "flex", flexDirection: "column", padding: "20px 36px 20px 0" }}>
+        <motion.div
+          {...reveal(0)}
+          style={{
+            position: "relative",
+            borderRadius: 28,
+            border: "1px solid rgba(255,255,255,.08)",
+            background: "linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008))",
+            overflow: "hidden",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))",
+          }}
+        >
+          <div style={{ order: 0, padding: "20px 36px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
             {STEPS.map((s, i) => {
               const on = i === active;
               const done = active > i;
@@ -184,53 +195,76 @@ export function PathToAdoptionSection() {
               );
             })}
           </div>
-          <div style={{ position: "relative", height: "clamp(320px,40vw,500px)", borderRadius: 16, boxShadow: "inset 1px 0 0 rgba(255,255,255,.08)" }}>
+          <div
+            style={{
+              order: 1,
+              position: "relative",
+              height: "clamp(320px,40vw,500px)",
+              overflow: "hidden",
+              boxShadow: "inset 1px 0 0 rgba(255,255,255,.08)",
+              background: "radial-gradient(ellipse 60% 55% at 50% 50%,rgba(111,227,239,.09),transparent 70%)",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage: "radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px)",
+                backgroundSize: "22px 22px",
+                WebkitMaskImage: "radial-gradient(ellipse at 50% 50%,#000,transparent 75%)",
+                maskImage: "radial-gradient(ellipse at 50% 50%,#000,transparent 75%)",
+              }}
+            />
             {STEPS.map((_, i) =>
               i === active ? <div key={i} className={styles.fadeIn} style={{ position: "absolute", inset: 0 }}><StepViz index={i} /></div> : null,
             )}
+            <span style={{ position: "absolute", left: 20, top: 18, fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".1em", color: "#98a1ac" }}>
+              STEP 0{active + 1} / 03
+            </span>
           </div>
-        </motion.div>
-
-        <motion.div
-          {...reveal(0)}
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 20,
-            flexWrap: "wrap",
-            borderRadius: 20,
-            border: "1px solid rgba(255,255,255,.08)",
-            background: "rgba(255,255,255,.02)",
-            padding: "28px 32px",
-          }}
-        >
-          <div>
-            <strong style={{ display: "block", fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "#f4f6f8", marginBottom: 6 }}>
-              Not sure where to start? We&apos;ll help you decide.
-            </strong>
-            <span style={{ fontSize: 15, color: "#a3abb5" }}>Book a free consultation and we&apos;ll suggest the right first step for your business.</span>
-          </div>
-          <a
-            href="#contact"
+          <div
             style={{
-              flex: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: 48,
+              order: 2,
+              gridColumn: "1 / -1",
               boxSizing: "border-box",
-              background: "#f4f6f8",
-              color: "#07080b",
-              padding: "0 24px",
-              borderRadius: 999,
-              fontWeight: 500,
-              fontSize: 15,
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              textAlign: "left",
+              gap: 20,
+              flexWrap: "wrap",
+              padding: "clamp(20px,2.6vw,26px) clamp(20px,3vw,36px)",
+              borderTop: "1px solid rgba(255,255,255,.08)",
+              background: "linear-gradient(90deg,rgba(111,227,239,.05),rgba(255,255,255,0) 70%)",
             }}
           >
-            Help me choose
-          </a>
+            <div style={{ flex: 1, minWidth: "min(100%,280px)", display: "flex", flexDirection: "column", gap: 6 }}>
+              <strong style={{ fontSize: "clamp(18px,1.8vw,20px)", fontWeight: 500, letterSpacing: "-0.01em" }}>
+                Not sure where to start? We&apos;ll help you decide.
+              </strong>
+              <span style={{ fontSize: 15, lineHeight: 1.5, color: "#a3abb5" }}>Book a free consultation and we&apos;ll suggest the right first step for your business.</span>
+            </div>
+            <a
+              href="#contact"
+              style={{
+                flex: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 48,
+                boxSizing: "border-box",
+                background: "#f4f6f8",
+                color: "#07080b",
+                padding: "0 24px",
+                borderRadius: 999,
+                fontWeight: 500,
+                fontSize: 15,
+              }}
+            >
+              Help me choose
+            </a>
+          </div>
         </motion.div>
       </div>
     </section>

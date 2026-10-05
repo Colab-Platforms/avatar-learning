@@ -13,18 +13,35 @@ const reveal = (delay = 0) => ({
 });
 
 const fieldStyle: React.CSSProperties = {
+  height: 48,
   width: "100%",
   boxSizing: "border-box",
   borderRadius: 12,
   border: "1px solid rgba(255,255,255,.1)",
   background: "rgba(255,255,255,.03)",
-  padding: "14px 16px",
-  fontSize: 15,
   color: "#f4f6f8",
+  padding: "0 14px",
+  fontSize: 15,
   outline: "none",
+  transition: "border-color .2s, box-shadow .2s",
 };
 
-const labelStyle: React.CSSProperties = { display: "block", marginBottom: 6, fontSize: 13, color: "#a3abb5" };
+const labelStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "#a3abb5" };
+
+const CONTACT_LINKS = [
+  { label: "Email", value: CONTACT.email, href: `mailto:${CONTACT.email}` },
+  { label: "Phone", value: CONTACT.phone, href: `tel:+${CONTACT.phone.replace(/\D/g, "")}` },
+  { label: "WhatsApp", value: CONTACT.whatsapp, href: `https://wa.me/${CONTACT.whatsapp.replace(/\D/g, "")}` },
+];
+
+function onFocusGlow(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = "#6fe3ef";
+  e.currentTarget.style.boxShadow = "0 0 0 4px rgba(111,227,239,.12)";
+}
+function onBlurGlow(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = "rgba(255,255,255,.1)";
+  e.currentTarget.style.boxShadow = "none";
+}
 
 export function BookDemoSection() {
   const [sent, setSent] = useState(false);
@@ -52,11 +69,20 @@ export function BookDemoSection() {
         }}
       />
 
-      <div style={{ position: "relative", maxWidth: 1000, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(32px,5vw,56px)" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
+      <div
+        style={{
+          position: "relative",
+          maxWidth: 1200,
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,400px),1fr))",
+          gap: "clamp(40px,6vw,72px)",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <motion.div
             {...reveal(0)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.03)", fontSize: 15, color: "#a3abb5" }}
+            style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 9, padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.03)", fontSize: 15, color: "#a3abb5" }}
           >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fe3ef" }} />
             Get in touch
@@ -67,79 +93,96 @@ export function BookDemoSection() {
           >
             Let&apos;s talk about your business
           </motion.h2>
+          <motion.p {...reveal(160)} style={{ margin: 0, fontSize: 18, lineHeight: 1.55, color: "#a3abb5" }}>
+            Tell us what you&apos;d like to improve. We&apos;ll get back to you shortly.
+          </motion.p>
+          <motion.div {...reveal(240)} style={{ display: "flex", flexDirection: "column", marginTop: 8, borderTop: "1px solid rgba(255,255,255,.08)" }}>
+            {CONTACT_LINKS.map((c) => (
+              <a
+                key={c.label}
+                href={c.href}
+                target={c.label === "WhatsApp" ? "_blank" : undefined}
+                rel={c.label === "WhatsApp" ? "noopener" : undefined}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 4px", borderBottom: "1px solid rgba(255,255,255,.08)", color: "#f4f6f8" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#f4f6f8")}
+              >
+                <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 12, color: "#98a1ac" }}>{c.label}</span>
+                  {c.value}
+                </span>
+                <span style={{ color: "#6fe3ef" }}>↗</span>
+              </a>
+            ))}
+          </motion.div>
         </div>
 
-        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,260px),1fr))", gap: 16 }}>
-          {([
-            ["Email", CONTACT.email, `mailto:${CONTACT.email}`],
-            ["Phone", CONTACT.phone, `tel:${CONTACT.phone.replace(/\s/g, "")}`],
-            ["WhatsApp", CONTACT.whatsapp, `https://wa.me/${CONTACT.whatsapp.replace(/\D/g, "")}`],
-          ] as const).map(([label, value, href]) => (
-            <a
-              key={label}
-              href={href}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                padding: "20px 22px",
-                borderRadius: 16,
-                border: "1px solid rgba(255,255,255,.08)",
-                background: "rgba(255,255,255,.02)",
-                color: "#f4f6f8",
-              }}
-            >
-              <span style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "#8a939e" }}>{label}</span>
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 16, fontWeight: 500 }}>
-                {value}
-                <span style={{ color: "#8fe9f2" }}>↗</span>
-              </span>
-            </a>
-          ))}
-        </motion.div>
-
-        <motion.div {...reveal(0)} style={{ borderRadius: 24, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)", padding: "clamp(24px,4vw,40px)" }}>
-          {!sent ? (
-            <form onSubmit={handleSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 18 }}>
-              <div>
-                <label style={labelStyle}>Name</label>
-                <input required type="text" style={fieldStyle} placeholder="Your name" />
+        <motion.div
+          {...reveal(0)}
+          style={{ borderRadius: 24, padding: 1, background: "linear-gradient(180deg,rgba(143,233,242,.4),rgba(255,255,255,.06) 50%)" }}
+        >
+          <div style={{ borderRadius: 23, background: "#0b0d12", padding: "clamp(24px,3.5vw,40px)", height: "100%", boxSizing: "border-box" }}>
+            {!sent ? (
+              <form onSubmit={handleSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,200px),1fr))", gap: 16 }}>
+                <label style={labelStyle}>
+                  Name
+                  <input required type="text" placeholder="Your name" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                </label>
+                <label style={labelStyle}>
+                  <span>
+                    Company <span style={{ color: "#8a939e" }}>(optional)</span>
+                  </span>
+                  <input type="text" placeholder="Company name" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                </label>
+                <label style={labelStyle}>
+                  Work email
+                  <input required type="email" placeholder="you@company.com" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                </label>
+                <label style={labelStyle}>
+                  <span>
+                    Phone <span style={{ color: "#8a939e" }}>(optional)</span>
+                  </span>
+                  <input type="tel" placeholder="+91" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                </label>
+                <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
+                  How can we help?
+                  <textarea
+                    data-contact-message
+                    rows={4}
+                    placeholder="Tell us a little about your business"
+                    style={{ ...fieldStyle, height: "auto", padding: "12px 14px", resize: "vertical" }}
+                    onFocus={onFocusGlow}
+                    onBlur={onBlurGlow}
+                  />
+                </label>
+                <button
+                  type="submit"
+                  style={{ gridColumn: "1 / -1", cursor: "pointer", height: 52, border: 0, borderRadius: 999, background: "#f4f6f8", color: "#07080b", fontSize: 15, fontWeight: 500, transition: "box-shadow .3s" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#fff";
+                    e.currentTarget.style.boxShadow = "0 0 32px rgba(111,227,239,.5)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#f4f6f8";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  Send message
+                </button>
+                <p style={{ gridColumn: "1 / -1", margin: "-4px 0 0", textAlign: "center", fontSize: 13, color: "#98a1ac" }}>
+                  We reply within 1 business day.
+                </p>
+              </form>
+            ) : (
+              <div className={styles.fadeIn} style={{ minHeight: 360, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14 }}>
+                <div className={styles.glow} style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(111,227,239,.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8fe9f2", fontSize: 22 }}>
+                  ✓
+                </div>
+                <strong style={{ fontSize: 22, fontWeight: 600, color: "#f4f6f8" }}>Thanks, we&apos;ve got your message</strong>
+                <span style={{ color: "#a3abb5" }}>Our team will be in touch shortly.</span>
               </div>
-              <div>
-                <label style={labelStyle}>Company (optional)</label>
-                <input type="text" style={fieldStyle} placeholder="Company name" />
-              </div>
-              <div>
-                <label style={labelStyle}>Work email</label>
-                <input required type="email" style={fieldStyle} placeholder="you@company.com" />
-              </div>
-              <div>
-                <label style={labelStyle}>Phone (optional)</label>
-                <input type="tel" style={fieldStyle} placeholder="+91 00000 00000" />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={labelStyle}>How can we help?</label>
-                <textarea data-contact-message rows={4} style={{ ...fieldStyle, resize: "none" }} placeholder="Tell us about your business..." />
-              </div>
-              <button
-                type="submit"
-                style={{ gridColumn: "1 / -1", cursor: "pointer", height: 52, border: 0, borderRadius: 999, background: "#f4f6f8", color: "#07080b", fontSize: 15, fontWeight: 500 }}
-              >
-                Send message
-              </button>
-              <p style={{ gridColumn: "1 / -1", margin: "-4px 0 0", textAlign: "center", fontSize: 13, color: "#98a1ac" }}>
-                We reply within 1 business day.
-              </p>
-            </form>
-          ) : (
-            <div className={styles.fadeIn} style={{ minHeight: 280, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14 }}>
-              <div className={styles.glow} style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(111,227,239,.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8fe9f2", fontSize: 22 }}>
-                ✓
-              </div>
-              <strong style={{ fontSize: 22, fontWeight: 600, color: "#f4f6f8" }}>Thanks, we&apos;ve got your message</strong>
-              <span style={{ color: "#a3abb5" }}>Our team will be in touch shortly.</span>
-            </div>
-          )}
+            )}
+          </div>
         </motion.div>
       </div>
     </section>

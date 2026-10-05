@@ -46,7 +46,26 @@ export function EcosystemFooter() {
             <a href={`https://wa.me/${CONTACT.whatsapp.replace(/\D/g, "")}`} style={{ fontSize: 14, color: "#a3abb5" }}>
               WhatsApp {CONTACT.whatsapp}
             </a>
+            <span style={{ fontSize: 14, color: "#a3abb5" }}>Office address</span>
           </div>
+        </div>
+
+        <div
+          aria-hidden="true"
+          style={{
+            fontSize: "clamp(80px,17vw,220px)",
+            fontWeight: 600,
+            letterSpacing: "-0.06em",
+            lineHeight: 0.8,
+            textAlign: "center",
+            background: "linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,0) 85%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+            userSelect: "none",
+          }}
+        >
+          Avatar
         </div>
 
         <div

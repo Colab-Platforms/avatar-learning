@@ -224,7 +224,21 @@ export function SkilledTalentSection() {
           })}
         </div>
 
-        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: "clamp(28px,5vw,64px)", alignItems: "center", padding: "clamp(28px,5vw,64px) 24px", borderRadius: 24, border: "1px solid rgba(255,255,255,.06)" }}>
+        <motion.div
+          {...reveal(0)}
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 28,
+            border: "1px solid rgba(255,255,255,.08)",
+            background: "radial-gradient(600px circle at 50% -20%,rgba(143,233,242,.07),transparent 60%),linear-gradient(160deg,rgba(111,227,239,.06),rgba(255,255,255,.01) 50%)",
+            padding: "clamp(28px,5vw,64px)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))",
+            gap: "clamp(28px,5vw,64px)",
+            alignItems: "center",
+          }}
+        >
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <h3 style={{ margin: 0, fontSize: "clamp(28px,3.4vw,42px)", lineHeight: 1.1, fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{current.q}</h3>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>{current.d}</p>

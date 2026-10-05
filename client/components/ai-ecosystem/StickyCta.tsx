@@ -1,32 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+// Width/height of the pill itself (roughly) — used to test it against other
+// on-page CTAs sharing the same bottom-right corner of the viewport, so it
+// never ends up floating on top of a real button (e.g. a section's own
+// "#contact" link or a form's submit button).
+const PILL_W = 300;
+const PILL_H = 64;
+const MARGIN = 20;
 
 export function StickyCta() {
   const [visible, setVisible] = useState(false);
+  const pillRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const hero = document.getElementById("top");
-    const contact = document.getElementById("contact");
     const onScroll = () => {
       if (!hero) return;
       const pastHero = hero.getBoundingClientRect().bottom < 0;
-      // Hide once the contact section (and its own CTA/submit button) is on
-      // screen — the floating pill would otherwise sit directly on top of it.
-      const nearContact = contact ? contact.getBoundingClientRect().top < window.innerHeight * 0.85 : false;
-      setVisible(pastHero && !nearContact);
+      if (!pastHero) {
+        setVisible(false);
+        return;
+      }
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const zoneLeft = vw - MARGIN - PILL_W;
+      const zoneTop = vh - MARGIN - PILL_H;
+
+      const candidates = document.querySelectorAll<HTMLElement>(
+        '#contact, a[href="#contact"], button[type="submit"]',
+      );
+      let collides = false;
+      for (const el of candidates) {
+        if (pillRef.current?.contains(el)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.right > zoneLeft && r.left < vw && r.bottom > zoneTop && r.top < vh) {
+          collides = true;
+          break;
+        }
+      }
+      setVisible(!collides);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll, { passive: true });
+    const id = setInterval(onScroll, 500);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      clearInterval(id);
+    };
   }, []);
 
   return (
     <div
+      ref={pillRef}
       style={{
         position: "fixed",
-        right: 20,
-        bottom: 20,
+        right: MARGIN,
+        bottom: MARGIN,
         zIndex: 40,
         transform: visible ? "translateY(0)" : "translateY(140%)",
         opacity: visible ? 1 : 0,
