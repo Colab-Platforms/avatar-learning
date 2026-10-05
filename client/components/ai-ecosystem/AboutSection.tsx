@@ -108,7 +108,7 @@ export function AboutSection() {
           ))}
         </p>
 
-        <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", rowGap: 20, width: "100%" }}>
+        <motion.div {...reveal(0)} className="grid grid-cols-2 min-[1000px]:grid-cols-4" style={{ rowGap: 20, width: "100%" }}>
           {PILLARS.map((p) => (
             <div
               key={p.n}

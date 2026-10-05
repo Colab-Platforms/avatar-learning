@@ -13,6 +13,7 @@ import { FaqSection } from "@/components/ai-ecosystem/FaqSection";
 import { BookDemoSection } from "@/components/ai-ecosystem/BookDemoSection";
 import { EcosystemFooter } from "@/components/ai-ecosystem/EcosystemFooter";
 import { StickyCta } from "@/components/ai-ecosystem/StickyCta";
+import { CursorGlow } from "@/components/ai-ecosystem/CursorGlow";
 
 export const metadata: Metadata = {
   title: "AI Adoption Ecosystem | Avatar India",
@@ -26,6 +27,7 @@ export default function AiAdaptionEcosystemPage() {
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       style={{
         position: "relative",
+        zIndex: 0,
         minHeight: "100vh",
         background: "#07080b",
         color: "#f4f6f8",
@@ -33,6 +35,7 @@ export default function AiAdaptionEcosystemPage() {
         fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
       }}
     >
+      <CursorGlow />
       <EcosystemHeader />
       <main>
         <EcosystemHero />
