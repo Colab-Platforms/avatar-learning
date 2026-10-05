@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PRODUCTS } from "./data";
 import styles from "./ecosystem.module.css";
 
@@ -158,6 +158,7 @@ export function AIToolsMarketplaceSection() {
   const [prod, setProd] = useState(0);
   const [auto, setAuto] = useState(true);
   const [typedN, setTypedN] = useState(0);
+  const [hovered, setHovered] = useState(-1);
   const tabsRef = useRef<HTMLDivElement>(null);
   const msgBoxRef = useRef<string>("");
 
@@ -231,10 +232,13 @@ export function AIToolsMarketplaceSection() {
         >
           {PRODUCTS.map((p, i) => {
             const on = i === prod;
+            const hot = i === hovered;
             return (
               <button
                 key={p.slug}
                 onClick={() => goTo(i)}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(-1)}
                 aria-pressed={on}
                 style={{
                   scrollSnapAlign: "start",
@@ -245,12 +249,13 @@ export function AIToolsMarketplaceSection() {
                   whiteSpace: "nowrap",
                   padding: "16px 16px 18px",
                   borderRadius: 14,
-                  border: `1px solid ${on ? "rgba(111,227,239,.35)" : "rgba(255,255,255,.08)"}`,
-                  background: on ? "rgba(111,227,239,.06)" : "rgba(255,255,255,.02)",
+                  border: `1px solid ${on ? "rgba(111,227,239,.35)" : hot ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.08)"}`,
+                  background: on ? "rgba(111,227,239,.06)" : hot ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.02)",
                   color: on ? "#f4f6f8" : "#8a939e",
                   fontSize: 15,
                   fontWeight: 500,
-                  transition: "border-color .3s,background .3s,color .3s",
+                  transform: hot && !on ? "translateY(-1px)" : "none",
+                  transition: "border-color .3s,background .3s,color .3s,transform .3s",
                 }}
               >
                 <span style={{ display: "block", fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#8a939e", marginBottom: 6 }}>
@@ -259,8 +264,9 @@ export function AIToolsMarketplaceSection() {
                 {p.plain}
                 <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2, background: "rgba(255,255,255,.06)" }} />
                 {on && (
-                  <span
-                    key={`${prod}-${auto}`}
+                  <motion.span
+                    layoutId="product-tab-underline"
+                    transition={{ type: "spring", stiffness: 420, damping: 38 }}
                     style={{
                       position: "absolute",
                       left: 0,
@@ -268,10 +274,20 @@ export function AIToolsMarketplaceSection() {
                       bottom: 0,
                       height: 2,
                       background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
-                      transformOrigin: "0 50%",
-                      animation: `${styles.fill} ${auto ? CYCLE_MS : 400}ms linear forwards`,
+                      boxShadow: "0 0 8px rgba(111,227,239,.5)",
                     }}
-                  />
+                  >
+                    <span
+                      key={`${prod}-${auto}`}
+                      style={{
+                        display: "block",
+                        height: "100%",
+                        background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
+                        transformOrigin: "0 50%",
+                        animation: `${styles.fill} ${auto ? CYCLE_MS : 400}ms linear forwards`,
+                      }}
+                    />
+                  </motion.span>
                 )}
               </button>
             );
@@ -304,54 +320,65 @@ export function AIToolsMarketplaceSection() {
               animationDuration: "7s",
             }}
           />
-          <div style={{ position: "relative", padding: "clamp(28px,4vw,48px)", display: "flex", flexDirection: "column", gap: 18, justifyContent: "center" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#6fe3ef" }}>
-              {String(prod + 1).padStart(2, "0")} / 05
-              <span style={{ padding: "3px 9px", borderRadius: 999, border: "1px solid rgba(111,227,239,.3)", color: "#bff5fa", letterSpacing: ".04em" }}>
-                {product.tag || product.name}
-              </span>
-            </span>
-            <h3 style={{ margin: 0, fontSize: "clamp(30px,3.6vw,44px)", fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{product.plain}</h3>
-            <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55, color: "#a3abb5", maxWidth: 480 }}>{product.desc}</p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {product.bullets.map((b) => (
-                <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 12px 7px 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", fontSize: 14, color: "#dfe4ea" }}>
-                  <Dot label={b} color="#6fe3ef" />
-                  {b}
+          <div style={{ position: "relative", padding: "clamp(28px,4vw,48px)", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden" }}>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.div
+                key={prod}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.45, ease: [0.2, 0.7, 0.1, 1] }}
+                style={{ display: "flex", flexDirection: "column", gap: 18 }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#6fe3ef" }}>
+                  {String(prod + 1).padStart(2, "0")} / 05
+                  <span style={{ padding: "3px 9px", borderRadius: 999, border: "1px solid rgba(111,227,239,.3)", color: "#bff5fa", letterSpacing: ".04em" }}>
+                    {product.tag || product.name}
+                  </span>
                 </span>
-              ))}
-            </div>
-            <a
-              href="#contact"
-              onClick={() => {
-                const full = product.plain + (product.tag ? "" : ` (${product.name})`);
-                msgBoxRef.current = `Hi, I'd like to know more about ${full} for my business.`;
-                setTimeout(() => {
-                  const m = document.querySelector<HTMLTextAreaElement>("[data-contact-message]");
-                  if (m && !m.value) m.value = msgBoxRef.current;
-                }, 60);
-              }}
-              style={{
-                alignSelf: "flex-start",
-                marginTop: 8,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                background: "#f4f6f8",
-                color: "#07080b",
-                padding: "15px 22px",
-                borderRadius: 999,
-                fontSize: 15,
-                fontWeight: 500,
-                boxShadow: "0 0 30px rgba(111,227,239,.25)",
-              }}
-            >
-              {product.cta}
-              <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#07080b", color: "#8fe9f2", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>
-                →
-              </span>
-            </a>
+                <h3 style={{ margin: 0, fontSize: "clamp(30px,3.6vw,44px)", fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{product.plain}</h3>
+                <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55, color: "#a3abb5", maxWidth: 480 }}>{product.desc}</p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {product.bullets.map((b) => (
+                    <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 12px 7px 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", fontSize: 14, color: "#dfe4ea" }}>
+                      <Dot label={b} color="#6fe3ef" />
+                      {b}
+                    </span>
+                  ))}
+                </div>
+                <a
+                  href="#contact"
+                  onClick={() => {
+                    const full = product.plain + (product.tag ? "" : ` (${product.name})`);
+                    msgBoxRef.current = `Hi, I'd like to know more about ${full} for my business.`;
+                    setTimeout(() => {
+                      const m = document.querySelector<HTMLTextAreaElement>("[data-contact-message]");
+                      if (m && !m.value) m.value = msgBoxRef.current;
+                    }, 60);
+                  }}
+                  style={{
+                    alignSelf: "flex-start",
+                    marginTop: 8,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    background: "#f4f6f8",
+                    color: "#07080b",
+                    padding: "15px 22px",
+                    borderRadius: 999,
+                    fontSize: 15,
+                    fontWeight: 500,
+                    boxShadow: "0 0 30px rgba(111,227,239,.25)",
+                  }}
+                >
+                  {product.cta}
+                  <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#07080b", color: "#8fe9f2", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>
+                    →
+                  </span>
+                </a>
+              </motion.div>
+            </AnimatePresence>
           </div>
           <div style={{ position: "relative", padding: "clamp(20px,3vw,36px)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 360 }}>
             <div style={{ width: "100%", borderRadius: 16, border: "1px solid rgba(255,255,255,.1)", background: "rgba(10,12,16,.85)", boxShadow: "0 30px 80px -20px rgba(0,0,0,.8)", overflow: "hidden" }}>
