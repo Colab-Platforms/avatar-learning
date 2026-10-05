@@ -6,13 +6,13 @@ export function EcosystemFooter() {
     <footer data-screen-label="10 Footer" style={{ position: "relative", overflow: "hidden", borderTop: "1px solid rgba(255,255,255,.06)", padding: "64px 24px 32px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 48 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: 36 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
             <Image
               src="/landingpage-images/Avatar_logo_Light.svg"
               alt="Avatar"
               width={110}
               height={26}
-              style={{ height: 26, width: "auto" }}
+              style={{ display: "block", height: 26, width: "auto", margin: 0 }}
             />
             <span style={{ fontSize: 14, color: "#a3abb5", maxWidth: 220, lineHeight: 1.5 }}>AI adoption for growing businesses.</span>
           </div>
