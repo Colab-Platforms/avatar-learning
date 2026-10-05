@@ -30,7 +30,7 @@ export function StickyCta() {
       const zoneTop = vh - MARGIN - PILL_H;
 
       const candidates = document.querySelectorAll<HTMLElement>(
-        '#contact, a[href="#contact"], button[type="submit"]',
+        '#contact, a[href="#contact"], button[type="submit"], [data-avoid-sticky]',
       );
       let collides = false;
       for (const el of candidates) {

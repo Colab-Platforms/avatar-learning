@@ -8,7 +8,7 @@ import styles from "./ecosystem.module.css";
 const reveal = (delay = 0) => ({
   initial: { opacity: 0, y: 28, filter: "blur(8px)" },
   whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: true, margin: "-40px" },
+  viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
@@ -136,7 +136,7 @@ export function AboutSection() {
         <p
           ref={paraRef}
           data-words
-          style={{ margin: 0, maxWidth: 760, fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.2, letterSpacing: "-0.03em", fontWeight: 500, color: "#f4f6f8" }}
+          style={{ margin: 0, fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.2, letterSpacing: "-0.03em", fontWeight: 500, color: "#f4f6f8" }}
         >
           {words.map((w, i) => (
             <span key={i} style={{ display: "inline-block", marginRight: "0.28em", opacity: 0.18, transition: "opacity .25s" }}>
@@ -145,7 +145,7 @@ export function AboutSection() {
           ))}
         </p>
 
-        <motion.div {...reveal(0)} className="grid grid-cols-2 min-[1000px]:grid-cols-4" style={{ rowGap: 20, width: "100%" }}>
+        <motion.div {...reveal(0)} data-avoid-sticky="" className="grid grid-cols-2 min-[1000px]:grid-cols-4" style={{ rowGap: 20, width: "100%" }}>
           {PILLARS.map((p) => (
             <div
               key={p.n}

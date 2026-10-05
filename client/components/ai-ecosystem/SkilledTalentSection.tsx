@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PRODUCTS, ROLES } from "./data";
 import styles from "./ecosystem.module.css";
@@ -8,16 +8,14 @@ import styles from "./ecosystem.module.css";
 const reveal = (delay = 0) => ({
   initial: { opacity: 0, y: 28, filter: "blur(8px)" },
   whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: true, margin: "-40px" },
+  viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
 const glass: React.CSSProperties = { borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(10,12,16,.85)" };
 
-const VIZ_HEIGHT = 340;
-
-function RoleViz({ index }: { index: number }) {
-  const box: React.CSSProperties = { position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" };
+function RoleViz({ index, scale = 1 }: { index: number; scale?: number }) {
+  const box: React.CSSProperties = { position: "relative", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" };
 
   if (index === 0) {
     return (
@@ -47,7 +45,7 @@ function RoleViz({ index }: { index: number }) {
 
   if (index === 1) {
     return (
-      <div className={styles.fadeIn} style={{ ...box, flexDirection: "column", gap: 12, alignItems: "stretch", padding: "0 8px" }}>
+      <div className={styles.fadeIn} style={{ ...box, maxWidth: 440, flexDirection: "column", gap: 12, alignItems: "stretch", padding: "0 8px" }}>
         {["New", "Contacted", "Demo", "Won"].map((l, k) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ width: 76, fontSize: 12, color: "#8a939e", flex: "none" }}>{l}</span>
@@ -77,7 +75,7 @@ function RoleViz({ index }: { index: number }) {
   if (index === 2) {
     return (
       <div className={styles.fadeIn} style={box}>
-        <div style={{ position: "relative", width: 420, height: 340, flex: "none" }}>
+        <div style={{ position: "relative", width: 420, height: 340, flex: "none", transform: `scale(${scale})`, transformOrigin: "50% 50%" }}>
           <div style={{ ...glass, position: "absolute", left: 0, top: 0, width: 250, padding: 0, overflow: "hidden", borderColor: "rgba(111,227,239,.35)", boxShadow: "0 30px 80px rgba(0,0,0,.6),0 0 60px -10px rgba(111,227,239,.35)", zIndex: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
               <span style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg,#6b7cff,#6fe3ef)" }} />
@@ -137,7 +135,7 @@ function RoleViz({ index }: { index: number }) {
 
   return (
     <div className={styles.fadeIn} style={box}>
-      <div style={{ position: "relative", width: 330, height: 300, flex: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "relative", width: 330, height: 300, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${scale})`, transformOrigin: "50% 50%" }}>
         <div
           style={{
             position: "absolute",
@@ -181,8 +179,25 @@ function RoleViz({ index }: { index: number }) {
 
 export function SkilledTalentSection() {
   const [role, setRole] = useState(0);
+  const [stacked, setStacked] = useState(false);
+  const [vizScale, setVizScale] = useState(1);
   const current = ROLES[role];
   const goTo = (i: number) => setRole((i + ROLES.length) % ROLES.length);
+
+  useEffect(() => {
+    const onResize = () => {
+      const w = window.innerWidth;
+      setStacked(w < 820);
+      // index 2's mockup has an intrinsic 420x340 footprint — shrink it to
+      // fit narrow viewports instead of letting it clip sideways.
+      setVizScale(Math.min(1, (w - 96) / 420));
+    };
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const vizHeight = stacked ? Math.round(340 * vizScale) : 340;
 
   return (
     <section id="who" data-screen-label="05 Who it's for" style={{ scrollMarginTop: 68, padding: "clamp(56px,7vw,96px) 24px" }}>
@@ -241,7 +256,7 @@ export function SkilledTalentSection() {
             alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: 18, minHeight: 280, justifyContent: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, minHeight: stacked ? 0 : 280, justifyContent: "center" }}>
             <h3 style={{ margin: 0, fontSize: "clamp(28px,3.4vw,42px)", lineHeight: 1.1, fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{current.q}</h3>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>{current.d}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -259,8 +274,8 @@ export function SkilledTalentSection() {
               {current.cta}
             </a>
           </div>
-          <div style={{ height: VIZ_HEIGHT, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <RoleViz index={role} />
+          <div data-avoid-sticky="" style={{ height: vizHeight, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <RoleViz index={role} scale={stacked ? vizScale : 1} />
           </div>
         </motion.div>
 

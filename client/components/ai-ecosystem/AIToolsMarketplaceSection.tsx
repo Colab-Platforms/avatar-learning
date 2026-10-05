@@ -8,7 +8,7 @@ import styles from "./ecosystem.module.css";
 const reveal = (delay = 0) => ({
   initial: { opacity: 0, y: 28, filter: "blur(8px)" },
   whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: true, margin: "-40px" },
+  viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
@@ -159,8 +159,19 @@ export function AIToolsMarketplaceSection() {
   const [auto, setAuto] = useState(true);
   const [typedN, setTypedN] = useState(0);
   const [hovered, setHovered] = useState(-1);
+  const [stacked, setStacked] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
   const msgBoxRef = useRef<string>("");
+
+  useEffect(() => {
+    // The panel's two columns (text / mockup) stack below ~760px, where the
+    // fixed heights that keep the desktop row from jumping between products
+    // are no longer needed and would just leave dead space.
+    const onResize = () => setStacked(window.innerWidth < 760);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     if (!auto) return;
@@ -320,7 +331,7 @@ export function AIToolsMarketplaceSection() {
               animationDuration: "7s",
             }}
           />
-          <div style={{ position: "relative", padding: "clamp(28px,4vw,48px)", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden" }}>
+          <div style={{ position: "relative", padding: "clamp(28px,4vw,48px)", minHeight: stacked ? 0 : 420, display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden" }}>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={prod}
@@ -380,15 +391,15 @@ export function AIToolsMarketplaceSection() {
               </motion.div>
             </AnimatePresence>
           </div>
-          <div style={{ position: "relative", padding: "clamp(20px,3vw,36px)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 360 }}>
-            <div style={{ width: "100%", borderRadius: 16, border: "1px solid rgba(255,255,255,.1)", background: "rgba(10,12,16,.85)", boxShadow: "0 30px 80px -20px rgba(0,0,0,.8)", overflow: "hidden" }}>
+          <div style={{ position: "relative", padding: "clamp(20px,3vw,36px)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: stacked ? 0 : 420 }}>
+            <div data-avoid-sticky="" style={{ width: "100%", borderRadius: 16, border: "1px solid rgba(255,255,255,.1)", background: "rgba(10,12,16,.85)", boxShadow: "0 30px 80px -20px rgba(0,0,0,.8)", overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
                 <span style={{ width: 9, height: 9, borderRadius: "50%", background: "rgba(255,255,255,.14)" }} />
                 <span style={{ width: 9, height: 9, borderRadius: "50%", background: "rgba(255,255,255,.14)" }} />
                 <span style={{ width: 9, height: 9, borderRadius: "50%", background: "rgba(255,255,255,.14)" }} />
                 <span style={{ marginLeft: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#8a939e" }}>avatar / {product.slug}</span>
               </div>
-              <div style={{ padding: 18, minHeight: 310, boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ padding: 18, height: 300, boxSizing: "border-box", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <ProductMock index={prod} typed={AI_CONTENT_COPY.slice(0, typedN)} />
               </div>
             </div>

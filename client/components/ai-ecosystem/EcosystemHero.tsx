@@ -9,7 +9,7 @@ import styles from "./ecosystem.module.css";
 const reveal = (delay = 0) => ({
   initial: { opacity: 0, y: 28, filter: "blur(8px)" },
   whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: true, margin: "-40px" },
+  viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
@@ -180,12 +180,30 @@ function HeroSphere({ width }: { width: number }) {
       }
     };
 
+    let visible = true;
     const loop = (now: number) => {
       draw(now);
-      raf = requestAnimationFrame(loop);
+      if (visible) raf = requestAnimationFrame(loop);
     };
     draw(0);
     raf = requestAnimationFrame(loop);
+
+    // Scrolling the hero far out of view shouldn't keep this per-frame
+    // canvas redraw (hundreds of line segments) competing for the main
+    // thread with the rest of the page's scroll handling.
+    let io: IntersectionObserver | undefined;
+    if ("IntersectionObserver" in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          const wasVisible = visible;
+          visible = entries[0]?.isIntersecting ?? true;
+          if (visible && !wasVisible) raf = requestAnimationFrame(loop);
+          else if (!visible) cancelAnimationFrame(raf);
+        },
+        { rootMargin: "200px 0px" },
+      );
+      io.observe(canvas);
+    }
 
     const header = canvas.closest("header");
     const onMove = (e: MouseEvent) => {
@@ -215,6 +233,7 @@ function HeroSphere({ width }: { width: number }) {
 
     return () => {
       cancelAnimationFrame(raf);
+      io?.disconnect();
       if (fine && header) {
         header.removeEventListener("mousemove", onMove);
         header.removeEventListener("mouseenter", onEnter);
