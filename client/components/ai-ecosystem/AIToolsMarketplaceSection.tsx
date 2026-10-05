@@ -331,7 +331,7 @@ export function AIToolsMarketplaceSection() {
               animationDuration: "7s",
             }}
           />
-          <div style={{ position: "relative", padding: "clamp(28px,4vw,48px)", minHeight: stacked ? 0 : 420, display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden" }}>
+          <div style={{ position: "relative", padding: "clamp(28px,4vw,48px)", height: stacked ? "auto" : 500, display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden" }}>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={prod}
@@ -391,7 +391,7 @@ export function AIToolsMarketplaceSection() {
               </motion.div>
             </AnimatePresence>
           </div>
-          <div style={{ position: "relative", padding: "clamp(20px,3vw,36px)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: stacked ? 0 : 420 }}>
+          <div style={{ position: "relative", padding: "clamp(20px,3vw,36px)", display: "flex", alignItems: "center", justifyContent: "center", height: stacked ? "auto" : 500 }}>
             <div data-avoid-sticky="" style={{ width: "100%", borderRadius: 16, border: "1px solid rgba(255,255,255,.1)", background: "rgba(10,12,16,.85)", boxShadow: "0 30px 80px -20px rgba(0,0,0,.8)", overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
                 <span style={{ width: 9, height: 9, borderRadius: "50%", background: "rgba(255,255,255,.14)" }} />
