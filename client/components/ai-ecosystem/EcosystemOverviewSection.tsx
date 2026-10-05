@@ -34,7 +34,7 @@ function Waffle({ lit }: { lit: number }) {
               width: "100%",
               aspectRatio: "1",
               borderRadius: "50%",
-              background: on ? "#bff5fa" : "rgba(255,255,255,.07)",
+              background: on ? "#bff5fa" : "rgba(255,255,255,.16)",
               boxShadow: on ? "0 0 10px rgba(111,227,239,.7)" : "none",
               transform: on ? "scale(1)" : "scale(.82)",
               transition: `background .45s ease ${i * 7}ms, box-shadow .45s ease ${i * 7}ms, transform .45s ease ${i * 7}ms`,
