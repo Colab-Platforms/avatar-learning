@@ -57,7 +57,7 @@ export function EcosystemFooter() {
             fontWeight: 600,
             letterSpacing: "-0.06em",
             lineHeight: 0.8,
-            textAlign: "left",
+            textAlign: "center",
             background: "linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,0) 85%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
