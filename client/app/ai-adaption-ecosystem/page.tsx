@@ -8,7 +8,7 @@ import { AIToolsMarketplaceSection } from "@/components/ai-ecosystem/AIToolsMark
 import { PathToAdoptionSection } from "@/components/ai-ecosystem/PathToAdoptionSection";
 import { SkilledTalentSection } from "@/components/ai-ecosystem/SkilledTalentSection";
 import { AboutSection } from "@/components/ai-ecosystem/AboutSection";
-import { InsightsSection } from "@/components/ai-ecosystem/InsightsSection";
+// import { InsightsSection } from "@/components/ai-ecosystem/InsightsSection";
 import { FaqSection } from "@/components/ai-ecosystem/FaqSection";
 import { BookDemoSection } from "@/components/ai-ecosystem/BookDemoSection";
 import { EcosystemFooter } from "@/components/ai-ecosystem/EcosystemFooter";
@@ -41,7 +41,7 @@ export default function AiAdaptionEcosystemPage() {
         <PathToAdoptionSection />
         <SkilledTalentSection />
         <AboutSection />
-        <InsightsSection />
+        {/* <InsightsSection /> */}
         <FaqSection />
         <BookDemoSection />
       </main>

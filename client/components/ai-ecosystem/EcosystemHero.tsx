@@ -601,7 +601,7 @@ export function EcosystemHero() {
           {...reveal(160)}
           style={{ margin: 0, maxWidth: 560, fontSize: "clamp(17px,1.6vw,20px)", lineHeight: 1.5, color: "#a3abb5" }}
         >
-          Ready-to-use tools, hands-on training and support at every step. Start small and grow at your own pace.
+          We bring together AI solutions, technology and talent to help businesses identify opportunities, implement the right solutions and scale measurable outcomes.
         </motion.p>
 
         <motion.div {...reveal(240)} style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
