@@ -17,7 +17,7 @@ import { StickyCta } from "@/components/ai-ecosystem/StickyCta";
 export const metadata: Metadata = {
   title: "AI Adoption Ecosystem | Avatar India",
   description:
-    "Ready-to-use AI tools, hands-on training and support at every step. CRM, order tracking, AI content and team training for growing Indian businesses.",
+    "We bring together AI solutions, technology and talent to help businesses identify opportunities, implement the right solutions and scale measurable outcomes.",
 };
 
 export default function AiAdaptionEcosystemPage() {

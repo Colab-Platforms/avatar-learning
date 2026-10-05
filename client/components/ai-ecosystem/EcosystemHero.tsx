@@ -594,7 +594,7 @@ export function EcosystemHero() {
             color: "transparent",
           }}
         >
-          Put AI to work in your business
+          Make AI work for you.
         </motion.h1>
 
         <motion.p
