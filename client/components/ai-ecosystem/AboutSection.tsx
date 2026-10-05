@@ -61,7 +61,7 @@ export function AboutSection() {
     <section
       id="about"
       data-screen-label="06 About Avatar"
-      style={{ scrollMarginTop: 68, position: "relative", overflowX: "clip", overflowY: "visible", padding: "clamp(64px,8vw,112px) 24px" }}
+      style={{ scrollMarginTop: 68, position: "relative", overflowX: "clip", overflowY: "visible", padding: "clamp(64px,8vw,112px) 24px clamp(32px,4vw,56px)" }}
     >
       <div
         aria-hidden="true"

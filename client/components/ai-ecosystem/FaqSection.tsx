@@ -15,7 +15,7 @@ export function FaqSection() {
   const [open, setOpen] = useState(0);
 
   return (
-    <section id="faq" data-screen-label="08 FAQ" style={{ scrollMarginTop: 68, padding: "clamp(56px,7vw,96px) 24px" }}>
+    <section id="faq" data-screen-label="08 FAQ" style={{ scrollMarginTop: 68, padding: "clamp(32px,4vw,56px) 24px clamp(56px,7vw,96px)" }}>
       <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(24px,4vw,40px)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
           <motion.div
