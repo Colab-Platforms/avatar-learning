@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ABOUT_TEXT, PILLARS } from "./data";
 import styles from "./ecosystem.module.css";
@@ -56,6 +57,48 @@ function OrbitBg() {
 
 export function AboutSection() {
   const words = ABOUT_TEXT.split(" ");
+  const paraRef = useRef<HTMLParagraphElement>(null);
+
+  // Continuous scroll-linked word reveal (not per-word viewport triggers,
+  // which read as a laggy "line by line" pop-in) — the lit word count
+  // tracks scroll position smoothly, same as the reference.
+  useEffect(() => {
+    const para = paraRef.current;
+    if (!para) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const spans = [...para.children] as HTMLElement[];
+    if (reduce) {
+      spans.forEach((s) => (s.style.opacity = "1"));
+      return;
+    }
+
+    let ticking = false;
+    let lastN = -1;
+    const update = () => {
+      ticking = false;
+      const h = window.innerHeight;
+      const r = para.getBoundingClientRect();
+      const t = Math.min(1, Math.max(0, (h * 0.85 - r.top) / (r.height + h * 0.35)));
+      const n = Math.floor(t * spans.length * 1.05);
+      if (n !== lastN) {
+        for (let i = 0; i < spans.length; i++) spans[i].style.opacity = i < n ? "1" : "0.18";
+        lastN = n;
+      }
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
   return (
     <section
@@ -91,20 +134,14 @@ export function AboutSection() {
         </motion.div>
 
         <p
+          ref={paraRef}
           data-words
           style={{ margin: 0, maxWidth: 760, fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.2, letterSpacing: "-0.03em", fontWeight: 500, color: "#f4f6f8" }}
         >
           {words.map((w, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0.18 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-20%" }}
-              transition={{ duration: 0.4, delay: i * 0.035 }}
-              style={{ display: "inline-block", marginRight: "0.28em" }}
-            >
+            <span key={i} style={{ display: "inline-block", marginRight: "0.28em", opacity: 0.18, transition: "opacity .25s" }}>
               {w}
-            </motion.span>
+            </span>
           ))}
         </p>
 

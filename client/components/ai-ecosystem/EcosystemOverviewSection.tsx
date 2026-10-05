@@ -438,6 +438,7 @@ export function EcosystemOverviewSection() {
           </motion.div>
           <motion.div
             {...reveal(0)}
+            className={styles.noScrollbar}
             style={{
               display: "grid",
               gridAutoFlow: "column",

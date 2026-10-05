@@ -14,8 +14,10 @@ const reveal = (delay = 0) => ({
 
 const glass: React.CSSProperties = { borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(10,12,16,.85)" };
 
+const VIZ_HEIGHT = 340;
+
 function RoleViz({ index }: { index: number }) {
-  const box: React.CSSProperties = { position: "relative", height: 300, display: "flex", alignItems: "center", justifyContent: "center" };
+  const box: React.CSSProperties = { position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" };
 
   if (index === 0) {
     return (
@@ -74,7 +76,7 @@ function RoleViz({ index }: { index: number }) {
 
   if (index === 2) {
     return (
-      <div className={styles.fadeIn} style={{ ...box, height: 340 }}>
+      <div className={styles.fadeIn} style={box}>
         <div style={{ position: "relative", width: 420, height: 340, flex: "none" }}>
           <div style={{ ...glass, position: "absolute", left: 0, top: 0, width: 250, padding: 0, overflow: "hidden", borderColor: "rgba(111,227,239,.35)", boxShadow: "0 30px 80px rgba(0,0,0,.6),0 0 60px -10px rgba(111,227,239,.35)", zIndex: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
@@ -134,7 +136,7 @@ function RoleViz({ index }: { index: number }) {
   }
 
   return (
-    <div className={styles.fadeIn} style={{ ...box, height: 300 }}>
+    <div className={styles.fadeIn} style={box}>
       <div style={{ position: "relative", width: 330, height: 300, flex: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div
           style={{
@@ -239,7 +241,7 @@ export function SkilledTalentSection() {
             alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, minHeight: 280, justifyContent: "center" }}>
             <h3 style={{ margin: 0, fontSize: "clamp(28px,3.4vw,42px)", lineHeight: 1.1, fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{current.q}</h3>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>{current.d}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -257,7 +259,7 @@ export function SkilledTalentSection() {
               {current.cta}
             </a>
           </div>
-          <div style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ height: VIZ_HEIGHT, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <RoleViz index={role} />
           </div>
         </motion.div>

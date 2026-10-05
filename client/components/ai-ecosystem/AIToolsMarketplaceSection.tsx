@@ -215,6 +215,7 @@ export function AIToolsMarketplaceSection() {
 
         <div
           ref={tabsRef}
+          className={styles.noScrollbar}
           style={{
             position: "sticky",
             top: 68,
