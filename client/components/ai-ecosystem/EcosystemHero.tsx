@@ -583,7 +583,7 @@ export function EcosystemHero() {
           {...reveal(80)}
           style={{
             margin: 0,
-            maxWidth: 920,
+            maxWidth: 651,
             fontSize: "clamp(44px,7.4vw,92px)",
             lineHeight: 0.98,
             letterSpacing: "-0.045em",
