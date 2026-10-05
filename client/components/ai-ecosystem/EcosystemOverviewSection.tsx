@@ -232,7 +232,17 @@ export function EcosystemOverviewSection() {
   const [auto, setAuto] = useState(true);
   const [seen, setSeen] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(-1);
+  const [wide, setWide] = useState(true);
+  const [touch, setTouch] = useState(false);
   const wafRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTouch(window.matchMedia("(hover: none)").matches);
+    const onResize = () => setWide(window.innerWidth >= 1000);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const el = wafRef.current;
@@ -458,10 +468,11 @@ export function EcosystemOverviewSection() {
                 light: { bg: "#eef1f4", border: "#eef1f4", ink: "#0b0d12", labelC: "#3a4699", descC: "#3c434c" },
                 teal: { bg: "linear-gradient(180deg,#0b1a20,#081117)", border: "rgba(111,227,239,.14)", ink: "#f4f6f8", labelC: "#8fe9f2", descC: "#a3abb5" },
               }[c.theme];
+              const show = !wide || touch || on;
               return (
                 <div
                   key={c.n}
-                  onMouseEnter={() => setHoveredCard(i)}
+                  onMouseEnter={() => { if (wide && !touch) setHoveredCard(i); }}
                   onMouseLeave={() => setHoveredCard(-1)}
                   style={{
                     scrollSnapAlign: "start",
@@ -484,7 +495,18 @@ export function EcosystemOverviewSection() {
                       {c.p}
                     </span>
                     <strong style={{ fontSize: "clamp(22px,2vw,26px)", lineHeight: 1.15, fontWeight: 600, letterSpacing: "-0.025em" }}>{c.t}</strong>
-                    <span style={{ fontSize: 15, lineHeight: 1.5, color: theme.descC }}>{c.d}</span>
+                    <span
+                      style={{
+                        fontSize: 15,
+                        lineHeight: 1.5,
+                        color: theme.descC,
+                        opacity: show ? 1 : 0,
+                        transform: show ? "none" : "translateY(10px)",
+                        transition: "opacity .45s ease,transform .5s cubic-bezier(.2,.7,.1,1)",
+                      }}
+                    >
+                      {c.d}
+                    </span>
                   </div>
                 </div>
               );
