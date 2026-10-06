@@ -238,6 +238,33 @@ function HeroSphere({ width }: { width: number }) {
       header.addEventListener("mouseleave", onLeave);
     }
 
+    // Touch devices have no persistent cursor, but a finger dragging across
+    // the globe should still light it up the same way a mouse would — so
+    // mirror onMove/onEnter/onLeave off touch events. Listeners are passive
+    // (no preventDefault) so page scrolling is never blocked.
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch || !header) return;
+      const b = header.getBoundingClientRect();
+      m.mx = (touch.clientX - b.left) / b.width - 0.5;
+      m.my = (touch.clientY - b.top) / b.height - 0.5;
+      const cb = canvas.getBoundingClientRect();
+      m.cmx = touch.clientX - cb.left;
+      m.cmy = touch.clientY - cb.top;
+      m.hoverTarget = 1;
+    };
+    const onTouchEnd = () => {
+      m.hoverTarget = 0;
+      m.cmx = m.cmy = -9999;
+    };
+    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (hasTouch && header) {
+      header.addEventListener("touchstart", onTouchMove, { passive: true });
+      header.addEventListener("touchmove", onTouchMove, { passive: true });
+      header.addEventListener("touchend", onTouchEnd, { passive: true });
+      header.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    }
+
     return () => {
       cancelAnimationFrame(raf);
       io?.disconnect();
@@ -245,6 +272,12 @@ function HeroSphere({ width }: { width: number }) {
         header.removeEventListener("mousemove", onMove);
         header.removeEventListener("mouseenter", onEnter);
         header.removeEventListener("mouseleave", onLeave);
+      }
+      if (hasTouch && header) {
+        header.removeEventListener("touchstart", onTouchMove);
+        header.removeEventListener("touchmove", onTouchMove);
+        header.removeEventListener("touchend", onTouchEnd);
+        header.removeEventListener("touchcancel", onTouchEnd);
       }
     };
   }, [width]);
