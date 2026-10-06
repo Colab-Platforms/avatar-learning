@@ -81,7 +81,21 @@ export function StickyCta() {
           backdropFilter: "blur(10px)",
         }}
       >
-        <span style={{ fontSize: 14, color: "#dfe4ea", whiteSpace: "nowrap" }} className="hidden sm:inline">
+        <span
+          style={{
+            flex: "none",
+            alignItems: "center",
+            height: 44,
+            padding: "0 18px",
+            borderRadius: 999,
+            background: "#000000",
+            color: "#ffffff",
+            fontSize: 14,
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+          className="hidden sm:flex"
+        >
           Start your AI journey
         </span>
         <a
