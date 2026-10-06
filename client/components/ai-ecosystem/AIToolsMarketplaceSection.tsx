@@ -225,85 +225,148 @@ export function AIToolsMarketplaceSection() {
           </motion.p>
         </div>
 
-        <div
-          ref={tabsRef}
-          className={styles.noScrollbar}
-          style={{
-            position: "sticky",
-            top: 68,
-            zIndex: 20,
-            display: "grid",
-            gridTemplateColumns: "repeat(5,minmax(160px,1fr))",
-            gap: 8,
-            overflowX: "auto",
-            margin: "0 -24px",
-            padding: "6px 24px",
-            scrollSnapType: "x mandatory",
-          }}
-        >
-          {PRODUCTS.map((p, i) => {
-            const on = i === prod;
-            const hot = i === hovered;
-            return (
-              <button
-                key={p.slug}
-                onClick={() => goTo(i)}
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(-1)}
-                aria-pressed={on}
-                style={{
-                  scrollSnapAlign: "start",
-                  position: "relative",
-                  overflow: "hidden",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  whiteSpace: "nowrap",
-                  padding: "16px 16px 18px",
-                  borderRadius: 14,
-                  border: `1px solid ${on ? "rgba(111,227,239,.35)" : hot ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.08)"}`,
-                  background: on ? "rgba(111,227,239,.06)" : hot ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.02)",
-                  color: on ? "#f4f6f8" : "#8a939e",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  transform: hot && !on ? "translateY(-1px)" : "none",
-                  transition: "border-color .3s,background .3s,color .3s,transform .3s",
-                }}
-              >
-                <span style={{ display: "block", fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#8a939e", marginBottom: 6 }}>
-                  0{i + 1} &middot; {p.tag ? "Custom" : p.name}
-                </span>
-                {p.plain}
-                <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2, background: "rgba(255,255,255,.06)" }} />
-                {on && (
-                  <motion.span
-                    layoutId="product-tab-underline"
-                    transition={{ type: "spring", stiffness: 420, damping: 38 }}
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: 2,
-                      background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
-                      boxShadow: "0 0 8px rgba(111,227,239,.5)",
-                    }}
-                  >
-                    <span
-                      key={`${prod}-${auto}`}
+        {stacked ? (
+          <div
+            ref={tabsRef}
+            className={styles.noScrollbar}
+            style={{
+              position: "sticky",
+              top: 68,
+              zIndex: 20,
+              display: "flex",
+              flexDirection: "row",
+              gap: 22,
+              overflowX: "auto",
+              margin: "0 -24px",
+              padding: "6px 24px 14px",
+              borderBottom: "1px solid rgba(255,255,255,.08)",
+              scrollSnapType: "x mandatory",
+            }}
+          >
+            {PRODUCTS.map((p, i) => {
+              const on = i === prod;
+              return (
+                <button
+                  key={p.slug}
+                  onClick={() => goTo(i)}
+                  aria-pressed={on}
+                  style={{
+                    scrollSnapAlign: "start",
+                    flex: "none",
+                    position: "relative",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    border: 0,
+                    background: "transparent",
+                    padding: "6px 0 12px",
+                    fontSize: 15,
+                    fontWeight: on ? 600 : 500,
+                    color: on ? "#f4f6f8" : "#8a939e",
+                    transition: "color .3s",
+                  }}
+                >
+                  {p.plain}
+                  {on && (
+                    <motion.span
+                      layoutId="product-tab-underline-mobile"
+                      transition={{ type: "spring", stiffness: 420, damping: 38 }}
                       style={{
-                        display: "block",
-                        height: "100%",
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: -1,
+                        height: 2,
+                        borderRadius: 2,
                         background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
-                        transformOrigin: "0 50%",
-                        animation: `${styles.fill} ${auto ? CYCLE_MS : 400}ms linear forwards`,
+                        boxShadow: "0 0 8px rgba(111,227,239,.5)",
                       }}
                     />
-                  </motion.span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            ref={tabsRef}
+            className={styles.noScrollbar}
+            style={{
+              position: "sticky",
+              top: 68,
+              zIndex: 20,
+              display: "grid",
+              gridTemplateColumns: "repeat(5,minmax(160px,1fr))",
+              gap: 8,
+              overflowX: "auto",
+              margin: "0 -24px",
+              padding: "6px 24px",
+              scrollSnapType: "x mandatory",
+            }}
+          >
+            {PRODUCTS.map((p, i) => {
+              const on = i === prod;
+              const hot = i === hovered;
+              return (
+                <button
+                  key={p.slug}
+                  onClick={() => goTo(i)}
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(-1)}
+                  aria-pressed={on}
+                  style={{
+                    scrollSnapAlign: "start",
+                    position: "relative",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    padding: "16px 16px 18px",
+                    borderRadius: 14,
+                    border: `1px solid ${on ? "rgba(111,227,239,.35)" : hot ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.08)"}`,
+                    background: on ? "rgba(111,227,239,.06)" : hot ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.02)",
+                    color: on ? "#f4f6f8" : "#8a939e",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    transform: hot && !on ? "translateY(-1px)" : "none",
+                    transition: "border-color .3s,background .3s,color .3s,transform .3s",
+                  }}
+                >
+                  <span style={{ display: "block", fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#8a939e", marginBottom: 6 }}>
+                    0{i + 1} &middot; {p.tag ? "Custom" : p.name}
+                  </span>
+                  {p.plain}
+                  <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2, background: "rgba(255,255,255,.06)" }} />
+                  {on && (
+                    <motion.span
+                      layoutId="product-tab-underline"
+                      transition={{ type: "spring", stiffness: 420, damping: 38 }}
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 2,
+                        background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
+                        boxShadow: "0 0 8px rgba(111,227,239,.5)",
+                      }}
+                    >
+                      <span
+                        key={`${prod}-${auto}`}
+                        style={{
+                          display: "block",
+                          height: "100%",
+                          background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
+                          transformOrigin: "0 50%",
+                          animation: `${styles.fill} ${auto ? CYCLE_MS : 400}ms linear forwards`,
+                        }}
+                      />
+                    </motion.span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div
           style={{
@@ -349,9 +412,30 @@ export function AIToolsMarketplaceSection() {
                 </span>
                 <h3 style={{ margin: 0, fontSize: "clamp(30px,3.6vw,44px)", fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{product.plain}</h3>
                 <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55, color: "#a3abb5", maxWidth: 480 }}>{product.desc}</p>
-                <div style={{ display: "flex", flexDirection: "row", gap: 8, flexWrap: stacked ? "wrap" : "nowrap" }}>
+                <div
+                  style={
+                    stacked
+                      ? { display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch" }
+                      : { display: "flex", flexDirection: "row", gap: 8, flexWrap: "nowrap" }
+                  }
+                >
                   {product.bullets.map((b) => (
-                    <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 12px 7px 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", fontSize: 14, color: "#dfe4ea", whiteSpace: "nowrap" }}>
+                    <span
+                      key={b}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: stacked ? "10px 14px 10px 8px" : "7px 12px 7px 8px",
+                        borderRadius: 999,
+                        border: "1px solid rgba(255,255,255,.1)",
+                        fontSize: 14,
+                        color: "#dfe4ea",
+                        whiteSpace: "nowrap",
+                        width: stacked ? "100%" : undefined,
+                        boxSizing: stacked ? "border-box" : undefined,
+                      }}
+                    >
                       <Dot label={b} color="#6fe3ef" />
                       {b}
                     </span>
