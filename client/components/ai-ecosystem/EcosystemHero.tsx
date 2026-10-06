@@ -61,6 +61,7 @@ function HeroSphere({ width }: { width: number }) {
     const m = mouseRef.current;
     let raf = 0;
 
+    let lastNow = -1;
     const draw = (now: number) => {
       const c = canvasRef.current;
       if (!c) return;
@@ -70,15 +71,20 @@ function HeroSphere({ width }: { width: number }) {
       const hh = c.height;
       const dp = w / (parseFloat(c.style.width) || w);
       ctx.clearRect(0, 0, w, hh);
-      m.hover += (m.hoverTarget - m.hover) * 0.06;
+      // Motion is stepped by elapsed time, not by frame count, so the globe
+      // turns at the same speed on 60Hz, 120Hz and throttled devices.
+      const dt = lastNow < 0 || now <= lastNow ? 1 : Math.min(3, (now - lastNow) / 16.667);
+      lastNow = now;
+      const ease = (f: number) => 1 - Math.pow(1 - f, dt);
+      m.hover += (m.hoverTarget - m.hover) * ease(0.06);
       const hv = m.hover;
-      const R = Math.min(w * 0.42, hh * 0.5);
+      const R = Math.min(w * (w < 600 * dp ? 0.5 : 0.42), hh * 0.5);
       const cx = w / 2;
       const cy = hh * 0.5;
       const t = (now || 0) / 1000;
-      rot += 0.0018 + hv * 0.0012;
-      tx += (m.my * 0.3 - tx) * 0.04;
-      ty += (m.mx * 0.45 - ty) * 0.04;
+      rot += (0.0018 + hv * 0.0012) * dt;
+      tx += (m.my * 0.3 - tx) * ease(0.04);
+      ty += (m.mx * 0.45 - ty) * ease(0.04);
       const ay = rot + ty;
       const ax = 0.3 + tx;
       const sy = Math.sin(ay);
@@ -294,7 +300,7 @@ function HeroSphere({ width }: { width: number }) {
         position: "absolute",
         left: 0,
         right: 0,
-        top: 30,
+        top: width < 600 ? -110 : 30,
         height: H,
         pointerEvents: "none",
         WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
@@ -318,7 +324,7 @@ function HeroSphere({ width }: { width: number }) {
         ref={canvasRef}
         width={Math.round(width * dpr)}
         height={Math.round(H * dpr)}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: 0.55 }}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: width < 600 ? 0.85 : 0.55 }}
       />
     </div>
   );
