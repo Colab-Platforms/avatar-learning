@@ -173,24 +173,6 @@ export function EcosystemHeader() {
                 </Link>
               </div>
             )}
-            <a
-              href="#contact"
-              onClick={onNavClick("#contact")}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                minHeight: 44,
-                boxSizing: "border-box",
-                background: "#f4f6f8",
-                color: "#07080b",
-                padding: "0 18px",
-                borderRadius: 999,
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              Get in touch
-            </a>
             {!isDesktop && (
               <button
                 type="button"
@@ -309,24 +291,6 @@ export function EcosystemHeader() {
             {PRODUCT_LINK.label}
             <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
           </Link>
-          <a
-            href="#contact"
-            onClick={onNavClick("#contact")}
-            style={{
-              marginTop: "auto",
-              height: 52,
-              borderRadius: 999,
-              background: "#f4f6f8",
-              color: "#07080b",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 500,
-              fontSize: 15,
-            }}
-          >
-            Get in touch
-          </a>
         </div>
       )}
     </>
