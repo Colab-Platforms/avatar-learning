@@ -4,8 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { NAV_LINKS } from "./data";
+import pillStyles from "../ui/hoverPill.module.css";
 
 const PRODUCT_LINK = { label: "Avatar Learning", href: "/learning" };
+
+function handlePillMouseMove(e: React.MouseEvent<HTMLElement>) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const el = e.currentTarget;
+  const rect = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+  el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+}
 
 function scrollToSection(id: string, headerEl: HTMLElement | null) {
   const target = document.getElementById(id);
@@ -136,20 +145,31 @@ export function EcosystemHeader() {
               >
                 <Link
                   href={PRODUCT_LINK.href}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    height: 36,
-                    boxSizing: "border-box",
-                    padding: "0 14px",
-                    borderRadius: 999,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: "#205A99",
-                    background: "#ffffff",
-                  }}
+                  className={pillStyles.hoverPill}
+                  onMouseMove={handlePillMouseMove}
+                  style={
+                    {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      height: 36,
+                      boxSizing: "border-box",
+                      padding: "0 14px",
+                      borderRadius: 999,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#205A99",
+                      background: "#ffffff",
+                      "--pill-border": "rgba(255,255,255,0)",
+                      "--pill-border-hover": "rgba(42,120,204,0.45)",
+                      "--pill-ring": "rgba(111,227,239,0.3)",
+                      "--pill-shadow": "rgba(32,90,153,0.22)",
+                      "--pill-inner": "rgba(111,227,239,0.18)",
+                      "--pill-sweep": "rgba(42,120,204,0.25)",
+                      "--pill-cursor-glow": "rgba(111,227,239,0.4)",
+                    } as React.CSSProperties
+                  }
                 >
-                  {PRODUCT_LINK.label}
+                  <span className={pillStyles.hoverPillLabel}>{PRODUCT_LINK.label}</span>
                 </Link>
               </div>
             )}

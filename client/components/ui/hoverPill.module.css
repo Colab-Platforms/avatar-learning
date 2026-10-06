@@ -1,0 +1,94 @@
+/* Shared "premium pill" hover interaction used by the Avatar Learning / AI
+   Adaptation nav pills. Theme colors are passed in per-usage via the
+   --pill-* custom properties on the element; --mx/--my are set from JS on
+   mousemove so the glow in ::after can follow the cursor. */
+
+.hoverPill {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--pill-border, transparent);
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hoverPill:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: var(--pill-border-hover, rgba(111, 227, 239, 0.55));
+  box-shadow:
+    0 0 0 1px var(--pill-ring, rgba(111, 227, 239, 0.18)),
+    0 6px 22px var(--pill-shadow, rgba(111, 227, 239, 0.3)),
+    inset 0 0 10px var(--pill-inner, rgba(111, 227, 239, 0.14));
+}
+
+.hoverPill:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 120ms;
+}
+
+.hoverPillLabel {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  transition: filter 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hoverPill:hover .hoverPillLabel {
+  filter: brightness(1.2);
+}
+
+.hoverPill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, var(--pill-sweep, rgba(255, 255, 255, 0.35)) 50%, transparent 70%);
+  transform: translateX(-130%);
+  opacity: 0;
+}
+.hoverPill:hover::before {
+  animation: hoverPillSweep 700ms ease-out;
+}
+
+.hoverPill::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: radial-gradient(90px circle at var(--mx, 50%) var(--my, 50%), var(--pill-cursor-glow, rgba(111, 227, 239, 0.35)), transparent 70%);
+}
+.hoverPill:hover::after {
+  opacity: 1;
+}
+
+@keyframes hoverPillSweep {
+  from {
+    transform: translateX(-130%);
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(130%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoverPill {
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .hoverPill:hover,
+  .hoverPill:active {
+    transform: none;
+  }
+  .hoverPill::before {
+    display: none;
+  }
+}

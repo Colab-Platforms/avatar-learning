@@ -21,6 +21,15 @@ import { logoutThunk } from "@/store/authSlice";
 import { getMyPartner } from "@/lib/partnersApi";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
+import pillStyles from "@/components/ui/hoverPill.module.css";
+
+function handlePillMouseMove(e: React.MouseEvent<HTMLElement>) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const el = e.currentTarget;
+  const rect = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+  el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+}
 // import { OfferTimerBar, OFFER_BAR_HEIGHT } from "@/app/direct2hire/OfferTimerBar";
 const OFFER_BAR_HEIGHT = 0;
 
@@ -249,12 +258,24 @@ export function Navbar({
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="hidden md:inline-flex items-center text-[13px] font-semibold px-4 py-2 rounded-full
-                         border border-[#6fe3ef]/35 bg-gradient-to-br from-[#12142b] to-[#0a0c11]
-                         hover:border-[#6fe3ef]/60 hover:shadow-[0_0_16px_rgba(111,227,239,0.35)]
-                         transition-all duration-200"
+              onMouseMove={handlePillMouseMove}
+              className={cn(
+                pillStyles.hoverPill,
+                "hidden md:inline-flex items-center text-[13px] font-semibold px-4 py-2 rounded-full bg-gradient-to-br from-[#12142b] to-[#0a0c11]",
+              )}
+              style={
+                {
+                  "--pill-border": "rgba(111,227,239,0.35)",
+                  "--pill-border-hover": "rgba(111,227,239,0.65)",
+                  "--pill-ring": "rgba(111,227,239,0.25)",
+                  "--pill-shadow": "rgba(111,227,239,0.35)",
+                  "--pill-inner": "rgba(111,227,239,0.2)",
+                  "--pill-sweep": "rgba(255,255,255,0.3)",
+                  "--pill-cursor-glow": "rgba(111,227,239,0.45)",
+                } as React.CSSProperties
+              }
             >
-              <span className="bg-gradient-to-r from-white to-[#8fe9f2] bg-clip-text text-transparent">
+              <span className={cn(pillStyles.hoverPillLabel, "bg-gradient-to-r from-white to-[#8fe9f2] bg-clip-text text-transparent")}>
                 AI Adaptation
               </span>
             </Link>
