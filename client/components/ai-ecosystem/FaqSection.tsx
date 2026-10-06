@@ -27,7 +27,7 @@ export function FaqSection() {
           </motion.div>
           <motion.h2
             {...reveal(80)}
-            style={{ margin: 0, fontSize: "clamp(32px,4.2vw,48px)", lineHeight: 1.05, letterSpacing: "-0.04em", fontWeight: 600, background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
+            style={{ margin: 0, fontSize: "clamp(32px,4.2vw,48px)", lineHeight: 1.05, letterSpacing: "-0.04em", fontWeight: 600, textWrap: "balance", background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
             Questions, answered
           </motion.h2>

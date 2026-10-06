@@ -212,7 +212,7 @@ export function SkilledTalentSection() {
           </motion.div>
           <motion.h2
             {...reveal(80)}
-            style={{ margin: 0, fontSize: "clamp(34px,4.8vw,58px)", lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 600, background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
+            style={{ margin: 0, fontSize: "clamp(34px,4.8vw,58px)", lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 600, textWrap: "balance", background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
             Built for businesses like yours
           </motion.h2>
@@ -257,7 +257,7 @@ export function SkilledTalentSection() {
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 18, minHeight: stacked ? 0 : 280, justifyContent: "center" }}>
-            <h3 style={{ margin: 0, fontSize: "clamp(28px,3.4vw,42px)", lineHeight: 1.1, fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{current.q}</h3>
+            <h3 style={{ margin: 0, fontSize: "clamp(28px,3.4vw,42px)", lineHeight: 1.1, fontWeight: 600, letterSpacing: "-0.035em", textWrap: "balance", color: "#f4f6f8" }}>{current.q}</h3>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>{current.d}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span style={{ fontSize: 13, color: "#98a1ac", marginRight: 4 }}>Suggested</span>

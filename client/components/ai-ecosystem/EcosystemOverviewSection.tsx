@@ -315,6 +315,7 @@ export function EcosystemOverviewSection() {
               lineHeight: 1.04,
               letterSpacing: "-0.04em",
               fontWeight: 600,
+              textWrap: "balance",
               background: "linear-gradient(180deg,#fff 40%,#8e98a4)",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",

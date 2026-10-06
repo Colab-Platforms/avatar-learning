@@ -616,6 +616,7 @@ export function EcosystemHero() {
             lineHeight: 0.98,
             letterSpacing: "-0.045em",
             fontWeight: 600,
+            textWrap: "balance",
             background: "linear-gradient(180deg,#ffffff 35%,#8e98a4 100%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",

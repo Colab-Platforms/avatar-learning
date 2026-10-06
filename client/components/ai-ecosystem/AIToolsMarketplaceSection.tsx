@@ -216,7 +216,7 @@ export function AIToolsMarketplaceSection() {
           </motion.div>
           <motion.h2
             {...reveal(80)}
-            style={{ margin: 0, fontSize: "clamp(34px,4.8vw,58px)", lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 600, background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
+            style={{ margin: 0, fontSize: "clamp(34px,4.8vw,58px)", lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 600, textWrap: "balance", background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
             Tools that work together
           </motion.h2>
@@ -410,7 +410,7 @@ export function AIToolsMarketplaceSection() {
                     {product.tag || product.name}
                   </span>
                 </span>
-                <h3 style={{ margin: 0, fontSize: "clamp(30px,3.6vw,44px)", fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{product.plain}</h3>
+                <h3 style={{ margin: 0, fontSize: "clamp(30px,3.6vw,44px)", fontWeight: 600, letterSpacing: "-0.035em", textWrap: "balance", color: "#f4f6f8" }}>{product.plain}</h3>
                 <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55, color: "#a3abb5", maxWidth: 480 }}>{product.desc}</p>
                 <div
                   style={
