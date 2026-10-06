@@ -21,7 +21,7 @@ function Waffle({ lit }: { lit: number }) {
         position: "relative",
         display: "grid",
         gridTemplateColumns: "repeat(10,minmax(0,1fr))",
-        gap: "1.8%",
+        gap: 8,
         width: "min(400px, 80vw)",
       }}
     >
