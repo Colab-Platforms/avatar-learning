@@ -33,7 +33,7 @@ export const GAP_CARDS: GapCard[] = [
   {
     n: "02",
     p: "AI-READY TALENT",
-    t: "Your team, powered by AI-ready people",
+    t: "Get AI-trained people for your team",
     d: "Get skilled, AI-trained professionals who are ready to contribute from day one.",
     theme: "dark",
   },
