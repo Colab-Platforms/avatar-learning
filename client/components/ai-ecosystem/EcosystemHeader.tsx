@@ -145,8 +145,8 @@ export function EcosystemHeader() {
                     borderRadius: 999,
                     fontSize: 13,
                     fontWeight: 500,
-                    color: "#f4f6f8",
-                    background: "rgba(255,255,255,.1)",
+                    color: "#205A99",
+                    background: "#ffffff",
                   }}
                 >
                   {PRODUCT_LINK.label}
