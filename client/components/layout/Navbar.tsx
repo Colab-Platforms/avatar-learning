@@ -127,7 +127,7 @@ export function Navbar({
       >
         <div className="container-x flex items-center justify-between h-16">
           <Link
-            href="/"
+            href="/learning"
             className="shrink-0 flex items-center transition-opacity duration-250 hover:opacity-80"
             aria-label="Avatar India home"
           >
@@ -247,6 +247,14 @@ export function Navbar({
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
+                         border border-brand-300 text-brand-600 hover:bg-brand-50 hover:border-brand-500
+                         transition-all duration-200"
+            >
+              AI Adaptation
+            </Link>
             {user ? (
               /* ── Avatar dropdown ── */
               <div className="relative hidden sm:block">
@@ -481,6 +489,16 @@ export function Navbar({
             );
           })}
           <div className="mt-3 pt-3 border-t border-border flex flex-col gap-2">
+            <Link
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "w-full justify-center",
+              )}
+            >
+              AI Adaptation
+            </Link>
             {user ? (
               <>
                 <Link

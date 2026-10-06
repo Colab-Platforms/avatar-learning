@@ -17,7 +17,7 @@ export default function TermsConditionPage() {
       {/* ── Page Hero ── */}
       <div className="mb-10">
         <div className="flex items-center gap-2 text-[12px] text-slate-400 mb-4">
-          <Link href="/" className="hover:text-brand-600 transition-colors duration-200">Home</Link>
+          <Link href="/learning" className="hover:text-brand-600 transition-colors duration-200">Home</Link>
           <span>/</span>
           <span className="text-slate-600 font-medium">Terms &amp; Conditions</span>
         </div>

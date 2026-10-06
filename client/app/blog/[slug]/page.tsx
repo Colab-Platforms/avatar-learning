@@ -77,7 +77,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </Link>
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-400">
-              <Link href="/" className="hover:text-slate-600">
+              <Link href="/learning" className="hover:text-slate-600">
                 Home
               </Link>
               <ChevronRight className="w-3.5 h-3.5" />

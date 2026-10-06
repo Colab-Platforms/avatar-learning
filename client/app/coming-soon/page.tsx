@@ -158,7 +158,7 @@ export default function ComingSoonPage({
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/"
+                href="/learning"
                 className="inline-flex items-center gap-2 rounded-full px-6 py-3
                            text-[14px] font-semibold text-white
                            hover:brightness-110 hover:scale-[1.04]

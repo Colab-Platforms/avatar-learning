@@ -35,7 +35,7 @@ const BLOCKING_CHECK_INTERVAL_MS = 600;
 // ];
 
 function isExcludedPath(pathname: string | null): boolean {
-  return pathname !== "/";
+  return pathname !== "/learning";
 }
 
 function isBlockingOverlayOpen(): boolean {

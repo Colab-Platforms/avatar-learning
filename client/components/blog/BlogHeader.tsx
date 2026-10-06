@@ -14,7 +14,7 @@ export function BlogHeader() {
       <div className="w-full px-4 sm:px-8 md:px-12 py-5 flex items-center justify-between border-b border-[#D3DCE6]/60">
         {/* Left: Bullet dot logo mark */}
         <Link
-          href="/"
+          href="/learning"
           className="flex items-center gap-3 group"
           aria-label="Avatar Learning home"
         >

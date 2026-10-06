@@ -109,7 +109,7 @@ export default function NotFound() {
 
             {/* Primary CTA */}
             <Link
-              href="/"
+              href="/learning"
               className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5
                          text-[14px] font-semibold text-ink-950
                          hover:bg-brand-400 hover:scale-[1.04]

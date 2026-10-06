@@ -278,7 +278,7 @@ export default function AdminLayout({
         <div className="px-5 py-5 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Link
-              href="/"
+              href="/learning"
               className="group shrink-0 flex items-center transition-opacity duration-250 hover:opacity-80"
               aria-label="Avatar India home"
             >
@@ -439,7 +439,7 @@ export default function AdminLayout({
             </div>
           )}
           <Link
-            href="/"
+            href="/learning"
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white/35 hover:text-white/60 hover:bg-white/4 transition-all"
           >
             <ArrowLeft size={13} />

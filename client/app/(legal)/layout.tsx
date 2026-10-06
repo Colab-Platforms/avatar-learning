@@ -23,7 +23,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
         <div className="mx-auto max-w-4xl px-6 h-16 flex items-center gap-4">
-          <Link href="/" aria-label="Avatar India home" className="hover:opacity-80 transition-opacity duration-200 shrink-0">
+          <Link href="/learning" aria-label="Avatar India home" className="hover:opacity-80 transition-opacity duration-200 shrink-0">
             <Image
               src="/landingpage-images/Avatar_dark_logo.png"
               alt="Avatar India"
@@ -50,7 +50,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-4 text-xs font-medium">
             <Link href="/privacy-policy" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Privacy Policy</Link>
             <Link href="/terms-and-conditions" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Terms &amp; Conditions</Link>
-            <Link href="/" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Home</Link>
+            <Link href="/learning" className="text-slate-600 hover:text-brand-600 transition-colors duration-200">Home</Link>
           </div>
         </div>
       </footer>

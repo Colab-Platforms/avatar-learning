@@ -6,6 +6,9 @@ import { useEffect, useState } from "react";
 
 // Routes where the chatbot / help widget / career-quiz prompt should never
 // mount (e.g. standalone prototype pages with their own dark theme/CTAs).
+// "/" is the AI Adaptation Ecosystem page; "/ai-adaption-ecosystem" now just
+// redirects there but is kept here in case anything still links to it mid-flight.
+const EXCLUDED_PATHS = ["/"];
 const EXCLUDED_PATH_PREFIXES = ["/ai-adaption-ecosystem"];
 
 // These three widgets (chatbot, help bubble, career-quiz prompt) are global
@@ -31,7 +34,9 @@ type IdleWindow = Window & {
 
 export function DeferredWidgets() {
   const pathname = usePathname();
-  const isExcluded = EXCLUDED_PATH_PREFIXES.some((prefix) => pathname?.startsWith(prefix));
+  const isExcluded =
+    EXCLUDED_PATHS.some((p) => pathname === p) ||
+    EXCLUDED_PATH_PREFIXES.some((prefix) => pathname?.startsWith(prefix));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
