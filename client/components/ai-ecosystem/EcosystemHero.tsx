@@ -23,11 +23,11 @@ function HeroSphere({ width }: { width: number }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const mobileSphere = width < 600;
 
-    // Fewer points/connections on mobile keeps the globe a calm backdrop
-    // instead of a dense, visually dominant mesh on a narrow screen.
-    const N = mobileSphere ? 240 : 420;
+    // Same node density, radius, glow and interaction on every breakpoint —
+    // the globe is just naturally smaller on a narrower canvas, not a
+    // separately toned-down mobile variant.
+    const N = 420;
     const pts: [number, number, number, number][] = [];
     const ga = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < N; i++) {
@@ -72,7 +72,7 @@ function HeroSphere({ width }: { width: number }) {
       ctx.clearRect(0, 0, w, hh);
       m.hover += (m.hoverTarget - m.hover) * 0.06;
       const hv = m.hover;
-      const R = mobileSphere ? Math.min(w * 0.4, hh * 0.46) : Math.min(w * 0.42, hh * 0.5);
+      const R = Math.min(w * 0.42, hh * 0.5);
       const cx = w / 2;
       const cy = hh * 0.5;
       const t = (now || 0) / 1000;
@@ -130,7 +130,7 @@ function HeroSphere({ width }: { width: number }) {
               : `rgba(107,124,255,${(0.18 + d * 0.5).toFixed(2)})`;
         if (fl || k > 0.25) {
           ctx.shadowColor = "#6fe3ef";
-          ctx.shadowBlur = (mobileSphere ? 9 : 14) * dp;
+          ctx.shadowBlur = 14 * dp;
         }
         ctx.beginPath();
         ctx.arc(P[0], P[1], r, 0, 6.283);
@@ -284,8 +284,7 @@ function HeroSphere({ width }: { width: number }) {
     };
   }, [width]);
 
-  const mobile = width < 600;
-  const H = mobile ? 680 : 980;
+  const H = 980;
   const dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
 
   return (
@@ -295,7 +294,7 @@ function HeroSphere({ width }: { width: number }) {
         position: "absolute",
         left: 0,
         right: 0,
-        top: mobile ? 6 : 30,
+        top: 30,
         height: H,
         pointerEvents: "none",
         WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
@@ -312,16 +311,14 @@ function HeroSphere({ width }: { width: number }) {
           height: H,
           transform: "translate(-50%,-50%)",
           borderRadius: "50%",
-          background: mobile
-            ? "radial-gradient(circle,rgba(111,227,239,.2),rgba(107,124,255,.1) 45%,transparent 70%)"
-            : "radial-gradient(circle,rgba(111,227,239,.16),rgba(107,124,255,.07) 45%,transparent 70%)",
+          background: "radial-gradient(circle,rgba(111,227,239,.16),rgba(107,124,255,.07) 45%,transparent 70%)",
         }}
       />
       <canvas
         ref={canvasRef}
         width={Math.round(width * dpr)}
         height={Math.round(H * dpr)}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: mobile ? 0.6 : 0.55 }}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: 0.55 }}
       />
     </div>
   );
