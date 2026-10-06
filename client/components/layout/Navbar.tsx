@@ -249,11 +249,14 @@ export function Navbar({
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="hidden md:inline-flex items-center text-[13px] font-medium px-4 py-2 rounded-full
-                         border border-brand-300 text-brand-600 hover:bg-brand-50 hover:border-brand-500
+              className="hidden md:inline-flex items-center text-[13px] font-semibold px-4 py-2 rounded-full
+                         border border-[#6fe3ef]/35 bg-gradient-to-br from-[#12142b] to-[#0a0c11]
+                         hover:border-[#6fe3ef]/60 hover:shadow-[0_0_16px_rgba(111,227,239,0.35)]
                          transition-all duration-200"
             >
-              AI Adaptation
+              <span className="bg-gradient-to-r from-white to-[#8fe9f2] bg-clip-text text-transparent">
+                AI Adaptation
+              </span>
             </Link>
             {user ? (
               /* ── Avatar dropdown ── */
@@ -492,12 +495,13 @@ export function Navbar({
             <Link
               href="/"
               onClick={() => setMobileOpen(false)}
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "w-full justify-center",
-              )}
+              className="w-full inline-flex items-center justify-center text-[14px] font-semibold px-4 py-2.5 rounded-full
+                         border border-[#6fe3ef]/35 bg-gradient-to-br from-[#12142b] to-[#0a0c11]
+                         transition-all duration-200"
             >
-              AI Adaptation
+              <span className="bg-gradient-to-r from-white to-[#8fe9f2] bg-clip-text text-transparent">
+                AI Adaptation
+              </span>
             </Link>
             {user ? (
               <>
