@@ -23,7 +23,6 @@ function HeroSphere({ width }: { width: number }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
 
     const N = 420;
     const pts: [number, number, number, number][] = [];
@@ -101,13 +100,13 @@ function HeroSphere({ width }: { width: number }) {
         proj[i] = [X, Y, d, p[3], k];
       }
 
-      ctx.lineWidth = dp;
       for (const [a, b] of pairs) {
         const A = proj[a];
         const B = proj[b];
         const d = (A[2] + B[2]) / 2;
         const k = Math.max(A[4], B[4]);
         ctx.strokeStyle = `rgba(${k > 0.05 ? "160,240,248" : "111,227,239"},${(0.015 + d * 0.11 + k * 0.7).toFixed(3)})`;
+        ctx.lineWidth = dp * (1 + k * 1.6);
         ctx.beginPath();
         ctx.moveTo(A[0], A[1]);
         ctx.lineTo(B[0], B[1]);
@@ -180,12 +179,18 @@ function HeroSphere({ width }: { width: number }) {
       }
     };
 
+    draw(0);
+
+    // Reduced-motion: paint the globe once as a static background and skip
+    // the rAF loop and mouse-reactive glow entirely — the sphere stays
+    // visible, it just doesn't animate or chase the cursor.
+    if (reduce) return;
+
     let visible = true;
     const loop = (now: number) => {
       draw(now);
       if (visible) raf = requestAnimationFrame(loop);
     };
-    draw(0);
     raf = requestAnimationFrame(loop);
 
     // Scrolling the hero far out of view shouldn't keep this per-frame
@@ -215,14 +220,15 @@ function HeroSphere({ width }: { width: number }) {
       m.cmx = e.clientX - cb.left;
       m.cmy = e.clientY - cb.top;
     };
+    // Canvas opacity stays constant — brightness reacts to the cursor only
+    // through each point's localized `k` factor below, never as a whole-globe
+    // flood so the sphere doesn't read as "continuously bright" on hover.
     const onEnter = () => {
       m.hoverTarget = 1;
-      canvas.style.opacity = ".9";
     };
     const onLeave = () => {
       m.hoverTarget = 0;
       m.cmx = m.cmy = -9999;
-      canvas.style.opacity = ".38";
     };
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     if (fine && header) {
@@ -276,7 +282,7 @@ function HeroSphere({ width }: { width: number }) {
         ref={canvasRef}
         width={Math.round(width * dpr)}
         height={Math.round(H * dpr)}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: 0.38, transition: "opacity .8s ease" }}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: 0.55 }}
       />
     </div>
   );
