@@ -25,7 +25,9 @@ function HeroSphere({ width }: { width: number }) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobileSphere = width < 600;
 
-    const N = 420;
+    // Fewer points/connections on mobile keeps the globe a calm backdrop
+    // instead of a dense, visually dominant mesh on a narrow screen.
+    const N = mobileSphere ? 240 : 420;
     const pts: [number, number, number, number][] = [];
     const ga = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < N; i++) {
@@ -70,7 +72,7 @@ function HeroSphere({ width }: { width: number }) {
       ctx.clearRect(0, 0, w, hh);
       m.hover += (m.hoverTarget - m.hover) * 0.06;
       const hv = m.hover;
-      const R = mobileSphere ? Math.min(w * 0.52, hh * 0.56) : Math.min(w * 0.42, hh * 0.5);
+      const R = mobileSphere ? Math.min(w * 0.4, hh * 0.46) : Math.min(w * 0.42, hh * 0.5);
       const cx = w / 2;
       const cy = hh * 0.5;
       const t = (now || 0) / 1000;
@@ -128,7 +130,7 @@ function HeroSphere({ width }: { width: number }) {
               : `rgba(107,124,255,${(0.18 + d * 0.5).toFixed(2)})`;
         if (fl || k > 0.25) {
           ctx.shadowColor = "#6fe3ef";
-          ctx.shadowBlur = 14 * dp;
+          ctx.shadowBlur = (mobileSphere ? 9 : 14) * dp;
         }
         ctx.beginPath();
         ctx.arc(P[0], P[1], r, 0, 6.283);
@@ -283,7 +285,7 @@ function HeroSphere({ width }: { width: number }) {
   }, [width]);
 
   const mobile = width < 600;
-  const H = mobile ? 780 : 980;
+  const H = mobile ? 680 : 980;
   const dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
 
   return (
@@ -293,7 +295,7 @@ function HeroSphere({ width }: { width: number }) {
         position: "absolute",
         left: 0,
         right: 0,
-        top: mobile ? 10 : 30,
+        top: mobile ? 6 : 30,
         height: H,
         pointerEvents: "none",
         WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
@@ -311,7 +313,7 @@ function HeroSphere({ width }: { width: number }) {
           transform: "translate(-50%,-50%)",
           borderRadius: "50%",
           background: mobile
-            ? "radial-gradient(circle,rgba(111,227,239,.3),rgba(107,124,255,.15) 45%,transparent 70%)"
+            ? "radial-gradient(circle,rgba(111,227,239,.2),rgba(107,124,255,.1) 45%,transparent 70%)"
             : "radial-gradient(circle,rgba(111,227,239,.16),rgba(107,124,255,.07) 45%,transparent 70%)",
         }}
       />
@@ -319,7 +321,7 @@ function HeroSphere({ width }: { width: number }) {
         ref={canvasRef}
         width={Math.round(width * dpr)}
         height={Math.round(H * dpr)}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: mobile ? 0.85 : 0.55 }}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: mobile ? 0.6 : 0.55 }}
       />
     </div>
   );
@@ -440,8 +442,8 @@ function HeroPromptPill({ width }: { width: number }) {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 10,
-              padding: "14px 14px 14px 18px",
+              gap: 8,
+              padding: "12px 12px 12px 16px",
               borderRadius: 23,
               background: "rgba(10,12,16,.92)",
               backdropFilter: "blur(10px)",
@@ -529,7 +531,12 @@ export function EcosystemHero() {
     <header
       id="top"
       data-screen-label="01 Hero"
-      style={{ position: "relative", overflowX: "clip", overflowY: "visible", padding: "clamp(72px,10vw,112px) 24px 0" }}
+      style={{
+        position: "relative",
+        overflowX: "clip",
+        overflowY: "visible",
+        padding: mobile ? "40px 24px 0" : "clamp(72px,10vw,112px) 24px 0",
+      }}
     >
       <div
         aria-hidden="true"
@@ -607,26 +614,30 @@ export function EcosystemHero() {
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
-          gap: 28,
+          gap: mobile ? 18 : 28,
         }}
       >
         <motion.div
           {...reveal(0)}
           style={{
-            display: "inline-flex",
+            display: "flex",
+            flexWrap: mobile ? "wrap" : "nowrap",
             alignItems: "center",
-            gap: mobile ? 8 : 10,
-            padding: mobile ? "6px 14px" : "6px 14px 6px 8px",
-            borderRadius: 999,
+            justifyContent: "center",
+            gap: mobile ? 6 : 10,
+            padding: mobile ? "8px 14px" : "6px 14px 6px 8px",
+            borderRadius: mobile ? 16 : 999,
             border: "1px solid rgba(255,255,255,.1)",
             background: "rgba(255,255,255,.03)",
-            fontSize: mobile ? 12 : 13,
+            fontSize: mobile ? 11.5 : 13,
             color: "#a3abb5",
-            whiteSpace: "nowrap",
+            maxWidth: mobile ? 280 : "none",
+            textAlign: "center",
           }}
         >
           <span
             style={{
+              flex: "none",
               padding: "2px 8px",
               borderRadius: 999,
               background: "rgba(111,227,239,.14)",
@@ -638,7 +649,9 @@ export function EcosystemHero() {
           >
             AI-POWERED
           </span>
-          AI Adoption Ecosystem for Indian businesses
+          <span style={{ minWidth: 0, whiteSpace: mobile ? "normal" : "nowrap" }}>
+            AI Adoption Ecosystem for Indian businesses
+          </span>
         </motion.div>
 
         <motion.h1
@@ -646,8 +659,8 @@ export function EcosystemHero() {
           style={{
             margin: 0,
             maxWidth: 651,
-            fontSize: "clamp(44px,7.4vw,92px)",
-            lineHeight: 0.98,
+            fontSize: mobile ? "clamp(34px,10.5vw,48px)" : "clamp(44px,7.4vw,92px)",
+            lineHeight: mobile ? 1.04 : 0.98,
             letterSpacing: "-0.045em",
             fontWeight: 600,
             textWrap: "balance",
@@ -662,12 +675,29 @@ export function EcosystemHero() {
 
         <motion.p
           {...reveal(160)}
-          style={{ margin: 0, maxWidth: 560, fontSize: "clamp(17px,1.6vw,20px)", lineHeight: 1.5, color: "#a3abb5" }}
+          style={{
+            margin: 0,
+            maxWidth: mobile ? 300 : 560,
+            fontSize: mobile ? 15 : "clamp(17px,1.6vw,20px)",
+            lineHeight: mobile ? 1.45 : 1.5,
+            color: "#a3abb5",
+          }}
         >
           We bring together AI solutions, technology and talent to help businesses identify opportunities, implement the right solutions and scale measurable outcomes.
         </motion.p>
 
-        <motion.div {...reveal(240)} style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+        <motion.div
+          {...reveal(240)}
+          style={{
+            display: "flex",
+            flexDirection: mobile ? "column" : "row",
+            gap: 12,
+            flexWrap: "wrap",
+            justifyContent: "center",
+            width: mobile ? "100%" : "auto",
+            maxWidth: mobile ? 340 : "none",
+          }}
+        >
           <a
             href="#contact"
             style={{
@@ -675,6 +705,7 @@ export function EcosystemHero() {
               alignItems: "center",
               justifyContent: "center",
               boxSizing: "border-box",
+              width: mobile ? "100%" : "auto",
               height: 50,
               lineHeight: 1,
               background: "#f4f6f8",
@@ -694,6 +725,7 @@ export function EcosystemHero() {
               alignItems: "center",
               justifyContent: "center",
               boxSizing: "border-box",
+              width: mobile ? "100%" : "auto",
               height: 50,
               lineHeight: 1,
               border: "1px solid rgba(255,255,255,.16)",
@@ -709,17 +741,17 @@ export function EcosystemHero() {
           </a>
         </motion.div>
 
-        <motion.div {...reveal(320)} style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: 36 }}>
+        <motion.div {...reveal(320)} style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: mobile ? 20 : 36 }}>
           <HeroPromptPill width={vizW} />
         </motion.div>
 
-        <div style={{ height: mobile ? 8 : "clamp(70px,10vw,140px)" }} />
+        <div style={{ height: mobile ? 4 : "clamp(70px,10vw,140px)" }} />
       </div>
 
       <div
         style={{
           position: "relative",
-          padding: mobile ? "28px 0 56px" : "40px 0 72px",
+          padding: mobile ? "16px 0 32px" : "40px 0 72px",
           overflow: "hidden",
           WebkitMaskImage: "linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)",
           maskImage: "linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)",
