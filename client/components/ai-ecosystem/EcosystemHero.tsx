@@ -23,6 +23,7 @@ function HeroSphere({ width }: { width: number }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobileSphere = width < 600;
 
     const N = 420;
     const pts: [number, number, number, number][] = [];
@@ -69,7 +70,7 @@ function HeroSphere({ width }: { width: number }) {
       ctx.clearRect(0, 0, w, hh);
       m.hover += (m.hoverTarget - m.hover) * 0.06;
       const hv = m.hover;
-      const R = Math.min(w * 0.42, hh * 0.5);
+      const R = mobileSphere ? Math.min(w * 0.52, hh * 0.56) : Math.min(w * 0.42, hh * 0.5);
       const cx = w / 2;
       const cy = hh * 0.5;
       const t = (now || 0) / 1000;
@@ -249,7 +250,7 @@ function HeroSphere({ width }: { width: number }) {
   }, [width]);
 
   const mobile = width < 600;
-  const H = mobile ? 660 : 980;
+  const H = mobile ? 780 : 980;
   const dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
 
   return (
