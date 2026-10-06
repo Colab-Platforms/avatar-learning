@@ -3,14 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "./data";
 
-const PRODUCT_LINKS = [
-  { label: "Avatar Learning", href: "/learning" },
-  { label: "AI Adaptation", href: "/" },
-  { label: "Direct2Hire", href: "/direct2hire" },
-];
+const PRODUCT_LINK = { label: "Avatar Learning", href: "/learning" };
 
 function scrollToSection(id: string, headerEl: HTMLElement | null) {
   const target = document.getElementById(id);
@@ -26,7 +21,6 @@ export function EcosystemHeader() {
   const progressRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
-  const pathname = usePathname();
 
   useEffect(() => {
     const onResize = () => setIsDesktop(window.innerWidth >= 820);
@@ -140,29 +134,23 @@ export function EcosystemHeader() {
                   marginRight: 4,
                 }}
               >
-                {PRODUCT_LINKS.map((p) => {
-                  const active = pathname === p.href;
-                  return (
-                    <Link
-                      key={p.label}
-                      href={p.href}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        height: 36,
-                        boxSizing: "border-box",
-                        padding: "0 14px",
-                        borderRadius: 999,
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: active ? "#f4f6f8" : "#a3abb5",
-                        background: active ? "rgba(255,255,255,.1)" : "transparent",
-                      }}
-                    >
-                      {p.label}
-                    </Link>
-                  );
-                })}
+                <Link
+                  href={PRODUCT_LINK.href}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    height: 36,
+                    boxSizing: "border-box",
+                    padding: "0 14px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "#f4f6f8",
+                    background: "rgba(255,255,255,.1)",
+                  }}
+                >
+                  {PRODUCT_LINK.label}
+                </Link>
               </div>
             )}
             <a
@@ -283,30 +271,24 @@ export function EcosystemHeader() {
               <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
             </a>
           ))}
-          {PRODUCT_LINKS.map((p) => {
-            const active = pathname === p.href;
-            return (
-              <Link
-                key={p.label}
-                href={p.href}
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  minHeight: 60,
-                  borderBottom: "1px solid rgba(255,255,255,.08)",
-                  color: active ? "#6fe3ef" : "#f4f6f8",
-                  fontSize: 22,
-                  fontWeight: 500,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {p.label}
-                <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
-              </Link>
-            );
-          })}
+          <Link
+            href={PRODUCT_LINK.href}
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              minHeight: 60,
+              borderBottom: "1px solid rgba(255,255,255,.08)",
+              color: "#6fe3ef",
+              fontSize: 22,
+              fontWeight: 500,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {PRODUCT_LINK.label}
+            <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
+          </Link>
           <a
             href="#contact"
             onClick={onNavClick("#contact")}

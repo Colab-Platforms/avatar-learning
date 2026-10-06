@@ -349,9 +349,9 @@ export function AIToolsMarketplaceSection() {
                 </span>
                 <h3 style={{ margin: 0, fontSize: "clamp(30px,3.6vw,44px)", fontWeight: 600, letterSpacing: "-0.035em", color: "#f4f6f8" }}>{product.plain}</h3>
                 <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55, color: "#a3abb5", maxWidth: 480 }}>{product.desc}</p>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", flexDirection: "row", gap: 8, flexWrap: stacked ? "wrap" : "nowrap" }}>
                   {product.bullets.map((b) => (
-                    <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 12px 7px 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", fontSize: 14, color: "#dfe4ea" }}>
+                    <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 12px 7px 8px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", fontSize: 14, color: "#dfe4ea", whiteSpace: "nowrap" }}>
                       <Dot label={b} color="#6fe3ef" />
                       {b}
                     </span>
