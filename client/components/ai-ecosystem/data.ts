@@ -32,9 +32,9 @@ export const GAP_CARDS: GapCard[] = [
   },
   {
     n: "02",
-    p: "Teams lack AI skills",
-    t: "Your whole team, AI-trained",
-    d: "Hands-on training so every person on your team can use each tool with confidence.",
+    p: "AI-READY TALENT",
+    t: "Your team, powered by AI-ready people",
+    d: "Get skilled, AI-trained professionals who are ready to contribute from day one.",
     theme: "dark",
   },
   {
