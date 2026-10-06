@@ -248,7 +248,8 @@ function HeroSphere({ width }: { width: number }) {
     };
   }, [width]);
 
-  const H = width < 600 ? 660 : 980;
+  const mobile = width < 600;
+  const H = mobile ? 660 : 980;
   const dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
 
   return (
@@ -258,7 +259,7 @@ function HeroSphere({ width }: { width: number }) {
         position: "absolute",
         left: 0,
         right: 0,
-        top: width < 600 ? 10 : 30,
+        top: mobile ? 10 : 30,
         height: H,
         pointerEvents: "none",
         WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
@@ -275,14 +276,16 @@ function HeroSphere({ width }: { width: number }) {
           height: H,
           transform: "translate(-50%,-50%)",
           borderRadius: "50%",
-          background: "radial-gradient(circle,rgba(111,227,239,.16),rgba(107,124,255,.07) 45%,transparent 70%)",
+          background: mobile
+            ? "radial-gradient(circle,rgba(111,227,239,.3),rgba(107,124,255,.15) 45%,transparent 70%)"
+            : "radial-gradient(circle,rgba(111,227,239,.16),rgba(107,124,255,.07) 45%,transparent 70%)",
         }}
       />
       <canvas
         ref={canvasRef}
         width={Math.round(width * dpr)}
         height={Math.round(H * dpr)}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: 0.55 }}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: mobile ? 0.85 : 0.55 }}
       />
     </div>
   );
