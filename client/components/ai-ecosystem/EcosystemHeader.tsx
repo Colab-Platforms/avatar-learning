@@ -102,7 +102,7 @@ export function EcosystemHeader() {
             gap: 24,
           }}
         >
-          <a href="#top" aria-label="Avatar home" style={{ display: "flex", alignItems: "center" }}>
+          <a href="#top" aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
             <Image
               src="/landingpage-images/Avatar_logo_Light.svg"
               alt="Avatar"
@@ -130,49 +130,51 @@ export function EcosystemHeader() {
             </div>
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {isDesktop && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  padding: 3,
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,.1)",
-                  marginRight: 4,
-                }}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                padding: 3,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,.1)",
+                marginRight: isDesktop ? 4 : 0,
+                flex: "none",
+              }}
+            >
+              <Link
+                href={PRODUCT_LINK.href}
+                className={pillStyles.hoverPill}
+                onMouseMove={handlePillMouseMove}
+                style={
+                  {
+                    display: "inline-flex",
+                    alignItems: "center",
+                    height: isDesktop ? 42 : 36,
+                    boxSizing: "border-box",
+                    padding: isDesktop ? "0 20px" : "0 14px",
+                    borderRadius: 999,
+                    fontSize: isDesktop ? 15 : 13,
+                    fontWeight: 700,
+                    color: "#205A99",
+                    background: "#ffffff",
+                    whiteSpace: "nowrap",
+                    position: "relative",
+                    zIndex: 50,
+                    "--pill-border": "rgba(255,255,255,0)",
+                    "--pill-border-hover": "rgba(42,120,204,0.45)",
+                    "--pill-ring": "rgba(111,227,239,0.3)",
+                    "--pill-shadow": "rgba(32,90,153,0.22)",
+                    "--pill-inner": "rgba(111,227,239,0.18)",
+                    "--pill-sweep": "rgba(42,120,204,0.25)",
+                    "--pill-cursor-glow": "rgba(111,227,239,0.4)",
+                  } as React.CSSProperties
+                }
               >
-                <Link
-                  href={PRODUCT_LINK.href}
-                  className={pillStyles.hoverPill}
-                  onMouseMove={handlePillMouseMove}
-                  style={
-                    {
-                      display: "inline-flex",
-                      alignItems: "center",
-                      height: 42,
-                      boxSizing: "border-box",
-                      padding: "0 20px",
-                      borderRadius: 999,
-                      fontSize: 15,
-                      fontWeight: 700,
-                      color: "#205A99",
-                      background: "#ffffff",
-                      "--pill-border": "rgba(255,255,255,0)",
-                      "--pill-border-hover": "rgba(42,120,204,0.45)",
-                      "--pill-ring": "rgba(111,227,239,0.3)",
-                      "--pill-shadow": "rgba(32,90,153,0.22)",
-                      "--pill-inner": "rgba(111,227,239,0.18)",
-                      "--pill-sweep": "rgba(42,120,204,0.25)",
-                      "--pill-cursor-glow": "rgba(111,227,239,0.4)",
-                    } as React.CSSProperties
-                  }
-                >
-                  <span className={pillStyles.hoverPillLabel}>{PRODUCT_LINK.label}</span>
-                </Link>
-              </div>
-            )}
+                <span className={pillStyles.hoverPillLabel}>{PRODUCT_LINK.label}</span>
+              </Link>
+            </div>
             {!isDesktop && (
               <button
                 type="button"
