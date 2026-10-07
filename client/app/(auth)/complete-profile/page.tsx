@@ -56,7 +56,7 @@ function CompleteProfileForm() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
-  const redirectTo = searchParams.get("redirect") || "/learning";
+  const redirectTo = searchParams.get("redirect") || "/direct2hire";
 
   useEffect(() => {
     if (!hasHydrated) return;

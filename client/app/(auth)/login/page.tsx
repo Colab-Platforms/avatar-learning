@@ -53,7 +53,7 @@ function LoginForm() {
       );
       return;
     }
-    router.push(redirect || "/learning");
+    router.push(redirect || "/direct2hire");
   }, [user, router, searchParams]);
 
   useEffect(() => {
