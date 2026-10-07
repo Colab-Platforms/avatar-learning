@@ -396,9 +396,9 @@ export function DashboardSidebar({
             <Image
               src="/landingpage-images/Avatar_logo_Light.svg"
               alt="Avatar-India Logo"
-              width={119}
-              height={32}
-              className="h-7 w-auto transition-transform duration-350 group-hover:scale-[1.02]"
+              width={150}
+              height={40}
+              className="h-9 w-auto transition-transform duration-350 group-hover:scale-[1.02]"
               priority
             />
           </Link>
