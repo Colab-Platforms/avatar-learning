@@ -239,9 +239,9 @@ export function AIToolsMarketplaceSection() {
               overflowX: "auto",
               margin: "0 -24px",
               padding: "6px 24px 14px",
-              background: "rgba(7,8,11,.82)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
+              background: "transparent",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
               borderBottom: "1px solid rgba(255,255,255,.08)",
               scrollSnapType: "x mandatory",
             }}
@@ -303,9 +303,9 @@ export function AIToolsMarketplaceSection() {
               overflowX: "auto",
               margin: "0 -24px",
               padding: "6px 24px",
-              background: "rgba(7,8,11,.82)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
+              background: "transparent",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
               scrollSnapType: "x mandatory",
             }}
           >
@@ -416,7 +416,7 @@ export function AIToolsMarketplaceSection() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.45, ease: [0.2, 0.7, 0.1, 1] }}
-                style={{ display: "flex", flexDirection: "column", gap: 22 }}
+                style={{ display: "flex", flexDirection: "column", gap: 18 }}
               >
                 <span style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#6fe3ef" }}>
                   {String(prod + 1).padStart(2, "0")} / 05
