@@ -239,7 +239,9 @@ export function AIToolsMarketplaceSection() {
               overflowX: "auto",
               margin: "0 -24px",
               padding: "6px 24px 14px",
-              background: "#07080b",
+              background: "rgba(7,8,11,.82)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
               borderBottom: "1px solid rgba(255,255,255,.08)",
               scrollSnapType: "x mandatory",
             }}
@@ -301,7 +303,9 @@ export function AIToolsMarketplaceSection() {
               overflowX: "auto",
               margin: "0 -24px",
               padding: "6px 24px",
-              background: "#07080b",
+              background: "rgba(7,8,11,.82)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
               scrollSnapType: "x mandatory",
             }}
           >
