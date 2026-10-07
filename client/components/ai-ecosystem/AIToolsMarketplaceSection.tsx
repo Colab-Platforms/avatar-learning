@@ -240,8 +240,6 @@ export function AIToolsMarketplaceSection() {
               margin: "0 -24px",
               padding: "6px 24px 14px",
               background: "transparent",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
               borderBottom: "1px solid rgba(255,255,255,.08)",
               scrollSnapType: "x mandatory",
             }}
@@ -304,8 +302,6 @@ export function AIToolsMarketplaceSection() {
               margin: "0 -24px",
               padding: "6px 24px",
               background: "transparent",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
               scrollSnapType: "x mandatory",
             }}
           >
@@ -330,6 +326,8 @@ export function AIToolsMarketplaceSection() {
                     borderRadius: 14,
                     border: `1px solid ${on ? "rgba(111,227,239,.35)" : hot ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.08)"}`,
                     background: on ? "rgba(111,227,239,.06)" : hot ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.02)",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
                     color: on ? "#f4f6f8" : "#8a939e",
                     fontSize: 15,
                     fontWeight: 500,
