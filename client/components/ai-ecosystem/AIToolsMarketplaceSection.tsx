@@ -404,7 +404,7 @@ export function AIToolsMarketplaceSection() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.45, ease: [0.2, 0.7, 0.1, 1] }}
-                style={{ display: "flex", flexDirection: "column", gap: 18 }}
+                style={{ display: "flex", flexDirection: "column", gap: 22 }}
               >
                 <span style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#6fe3ef" }}>
                   {String(prod + 1).padStart(2, "0")} / 05
