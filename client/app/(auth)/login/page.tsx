@@ -53,7 +53,7 @@ function LoginForm() {
       );
       return;
     }
-    router.push(redirect || "/");
+    router.push(redirect || "/learning");
   }, [user, router, searchParams]);
 
   useEffect(() => {

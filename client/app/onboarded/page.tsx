@@ -14,7 +14,7 @@ export default function OnboardedPage() {
 
   useEffect(() => {
     window.fbq?.("track", "CompleteRegistration");
-    router.replace("/");
+    router.replace("/learning");
   }, [router]);
 
   return null;
