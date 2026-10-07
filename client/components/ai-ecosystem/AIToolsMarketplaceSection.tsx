@@ -344,14 +344,22 @@ export function AIToolsMarketplaceSection() {
                   <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2, background: "rgba(255,255,255,.06)" }} />
                   {on && (
                     <motion.span
-                      layoutId="product-tab-underline"
-                      transition={{ type: "spring", stiffness: 420, damping: 38 }}
+                      // No layoutId here on purpose: the active underline swaps
+                      // between sibling buttons that each clip their own content
+                      // (overflow: hidden + border-radius). A shared layoutId
+                      // "flies" the element across that boundary and can render
+                      // outside its own 2px strip mid-transition. A plain local
+                      // fade/grow stays inside this card the whole time.
+                      initial={{ opacity: 0, scaleX: 0.3 }}
+                      animate={{ opacity: 1, scaleX: 1 }}
+                      transition={{ duration: 0.35, ease: [0.2, 0.7, 0.1, 1] }}
                       style={{
                         position: "absolute",
                         left: 0,
                         right: 0,
                         bottom: 0,
                         height: 2,
+                        transformOrigin: "0 50%",
                         background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
                         boxShadow: "0 0 8px rgba(111,227,239,.5)",
                       }}
