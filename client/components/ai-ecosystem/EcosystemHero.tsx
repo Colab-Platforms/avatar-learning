@@ -15,6 +15,8 @@ const reveal = (delay = 0) => ({
 
 /** Rotating point-cloud "globe" rendered on canvas, with lines between nearby
  * points and a handful of labelled anchor nodes that light up near the cursor. */
+const SPHERE_H = 980;
+
 function HeroSphere({ width }: { width: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ cmx: -9999, cmy: -9999, mx: 0, my: 0, hoverTarget: 0, hover: 0 });
@@ -23,6 +25,14 @@ function HeroSphere({ width }: { width: number }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Size the backing store here rather than via JSX attributes: the server
+    // render has no devicePixelRatio, and hydration never patches a
+    // mismatched `height`, which left the globe squashed into an oval on
+    // zoomed / scaled displays.
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(SPHERE_H * dpr);
 
     // Same node density, radius, glow and interaction on every breakpoint —
     // the globe is just naturally smaller on a narrower canvas, not a
@@ -290,8 +300,7 @@ function HeroSphere({ width }: { width: number }) {
     };
   }, [width]);
 
-  const H = 980;
-  const dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
+  const H = SPHERE_H;
 
   return (
     <div
@@ -322,8 +331,6 @@ function HeroSphere({ width }: { width: number }) {
       />
       <canvas
         ref={canvasRef}
-        width={Math.round(width * dpr)}
-        height={Math.round(H * dpr)}
         style={{ position: "absolute", inset: 0, width, height: H, opacity: width < 600 ? 0.85 : 0.55 }}
       />
     </div>
