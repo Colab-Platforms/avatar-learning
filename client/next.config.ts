@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // /home serves the revamped homepage exported from the design tool, as-is
+  // (static files in public/home-revamp). beforeFiles so it wins over app routes.
+  // The AI Adoption Ecosystem page (/) and Avatar Learning (/learning) are untouched.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/home", destination: "/home-revamp/index.html" }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
     qualities: [75, 95, 100],

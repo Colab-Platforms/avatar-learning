@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>window.__resources={"https://unpkg.com/react@18.3.1/umd/react.production.min.js":"/home-revamp/assets/react.production.min.js","https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js":"/home-revamp/assets/react-dom.production.min.js"}</script>
+<script src="/home-revamp/assets/dc-runtime.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Avatar India — Learn, adopt and grow with AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Avatar India helps people and teams build AI skills through Direct2Hire, and helps businesses adopt AI, with an AI tools marketplace on the way.">
+<style>
+@font-face{font-family:"Geist";src:url("/home-revamp/assets/geist.woff2") format("woff2");font-weight:100 900;font-display:swap}
+html{scroll-behavior:smooth}
+body{margin:0;background:#0d161f;color:#f3f6f9;font-family:"Geist",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+a:hover{color:#ffffff}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid #bbe3fa;outline-offset:3px}
+button{font:inherit;color:inherit}
+/* Mobile polish (not in the reference export) */
+/* Why Avatar cards: hide the empty photo placeholder so its caption never sits behind the card title. */
+[data-fan] *::part(empty){opacity:0}
+/* Touch screens: 44px-tall invisible hit areas on small text links; layout and look unchanged. */
+@media (pointer:coarse){
+  footer a,a[data-tap],a[aria-label="Avatar home"]{position:relative}
+  footer a::after,a[data-tap]::after,a[aria-label="Avatar home"]::after{content:"";position:absolute;left:-6px;right:-6px;top:50%;height:44px;transform:translateY(-50%)}
+}
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="position:relative;min-height:100vh;background:linear-gradient(180deg,#111c27 0,#0d161f 100%);color:#f3f6f9;overflow-x:clip">
+
+<div ref="{{ glowRef }}" aria-hidden="true" style="position:fixed;left:0;top:0;z-index:60;width:0;height:0;pointer-events:none;opacity:0;transition:opacity .5s ease"><span style="position:absolute;width:620px;height:620px;left:-310px;top:-310px;border-radius:50%;background:radial-gradient(circle,rgba(120,190,240,.11),rgba(107,124,255,.04) 40%,transparent 68%);mix-blend-mode:screen"></span></div>
+
+<header style="position:fixed;top:0;left:0;right:0;z-index:50;transition:background .35s,border-color .35s,backdrop-filter .35s;border-bottom:1px solid {{ navBd }};background:{{ navBg }};backdrop-filter:{{ navBlur }};-webkit-backdrop-filter:{{ navBlur }}">
+  <nav aria-label="Main" data-hi="100" style="display:flex;align-items:center;justify-content:space-between;height:72px;max-width:1920px;margin:0 auto;padding:0 clamp(20px,4.5vw,72px);box-sizing:border-box">
+    <a href="#top" aria-label="Avatar home" style="display:flex"><img src="/home-revamp/assets/avatar-logo.svg" alt="Avatar" width="119" height="32" style="display:block;height:28px;width:auto"></a>
+    <sc-if value="{{ navFull }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:clamp(40px,3vw,56px)">
+        <div style="display:flex;gap:clamp(20px,2vw,32px);font-size:14px;color:rgba(225,235,243,.88)">
+          <a href="/" style-hover="color:#ffffff">Ecosystem</a>
+          <a href="#why" style-hover="color:#ffffff">Why Avatar</a>
+          <a href="#who" style-hover="color:#ffffff">Who we serve</a>
+          <a href="#about" style-hover="color:#ffffff">About</a>
+          <a href="/investors" style-hover="color:#ffffff">Investors</a>
+        </div>
+        <a href="/learning" style="display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 20px 0 22px;border:1px solid rgba(255,255,255,.6);border-radius:999px;font-size:14px;font-weight:500;transition:background .2s,border-color .2s" style-hover="background:rgba(255,255,255,.08);border-color:#ffffff">Start learning<svg sc-camel-view-box="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+      </div>
+    </sc-if>
+    <sc-if value="{{ navCompact }}" hint-placeholder-val="{{ false }}">
+      <button sc-camel-on-click="{{ toggleMenu }}" aria-label="Menu" aria-expanded="{{ menu }}" style="display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(255,255,255,.45);border-radius:999px;background:transparent;cursor:pointer;padding:0">
+        <span style="display:flex;flex-direction:column;gap:4px"><span style="display:block;width:16px;height:1.5px;background:#fff;transition:transform .25s;transform:{{ bar1 }}"></span><span style="display:block;width:16px;height:1.5px;background:#fff;transition:opacity .2s;opacity:{{ bar2 }}"></span><span style="display:block;width:16px;height:1.5px;background:#fff;transition:transform .25s;transform:{{ bar3 }}"></span></span>
+      </button>
+    </sc-if>
+  </nav>
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;margin:0 16px 16px;padding:8px;border:1px solid rgba(220,235,245,0.28);border-radius:16px;background:rgba(30,48,64,.92);backdrop-filter:blur(18px)">
+      <sc-for list="{{ menuLinks }}" as="l" hint-placeholder-count="6">
+        <a href="{{ l.href }}" sc-camel-on-click="{{ closeMenu }}" style="display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border-radius:10px;font-size:16px" style-hover="background:rgba(255,255,255,.06)">{{ l.label }}<svg sc-camel-view-box="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+      </sc-for>
+    </div>
+  </sc-if>
+</header>
+
+<main id="top">
+<section ref="{{ heroRef }}" data-screen-label="01 Hero" style="position:relative;background:#1b2b3a url(&quot;/home-revamp/assets/ai-hero-bg.jpg&quot;) center/cover no-repeat;overflow:hidden">
+  <div style="position:relative;z-index:1;max-width:1920px;margin:0 auto;display:grid;grid-template-columns:{{ heroCols }};aspect-ratio:{{ heroAspect }};height:{{ heroH }};padding-bottom:{{ heroPadB }}">
+    <div style="position:relative;z-index:2;padding:{{ copyPad }};max-width:640px">
+      <p data-hi="250" style="display:flex;align-items:center;gap:22px;margin:0;font-size:13px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(214,230,242,.88)"><span>Learn · Adopt · Grow with AI</span><span style="flex:1 1 0;max-width:150px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span></p>
+      <h1 style="margin:22px 0 0;font-weight:300;line-height:1.04;letter-spacing:-.03em;color:#f3f6f9;font-size:{{ h1Size }}">
+        <span style="display:inline-block;clip-path:inset(-.25em -.2em -.25em -.2em)"><span data-hw="1" style="display:inline-block">From</span></span> <span style="white-space:nowrap"><span style="display:inline-block;clip-path:inset(-.25em -.2em -.25em -.2em)"><span data-hw="1" style="display:inline-block">learning</span></span> <span style="display:inline-block;clip-path:inset(-.25em -.2em -.25em -.2em)"><span data-hw="1" style="display:inline-block">AI</span></span></span><br><span style="display:inline-block;clip-path:inset(-.25em -.2em -.25em -.2em)"><span data-hw="1" style="display:inline-block">to</span></span> <strong style="font-weight:600;color:#bbe3fa;white-space:nowrap"><span style="display:inline-block;clip-path:inset(-.25em -.2em -.25em -.2em)"><span data-hw="1" style="display:inline-block">adopting</span></span> <span style="display:inline-block;clip-path:inset(-.25em -.2em -.25em -.2em)"><span data-hw="1" style="display:inline-block">AI.</span></span></strong>
+      </h1>
+      <p data-hi="700" style="margin:22px 0 0;max-width:470px;font-size:clamp(17px,1.25vw,20px);line-height:1.5;color:#dbe5ed;text-wrap:pretty">Avatar helps people and teams build real AI skills, apply them to everyday work and roll them out across the business.</p>
+      <div data-hi="850" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px 28px;margin-top:32px">
+        <a href="/" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:{{ ctaJ }};width:{{ ctaW }};box-sizing:border-box;gap:{{ ctaGap }};height:52px;padding:0 24px 0 26px;border-radius:999px;background:#aedffd;color:#10202e;font-size:16px;font-weight:500;box-shadow:0 8px 30px rgba(174,223,253,.18);transition:background .2s,box-shadow .2s,transform .2s" style-hover="background:#c8ebff;color:#10202e;box-shadow:0 10px 36px rgba(174,223,253,.32);transform:translateY(-1px)"><span data-sheen="1" aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);pointer-events:none"></span><span style="position:relative">Explore the Ecosystem</span><svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:relative"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+        
+      </div>
+    </div>
+
+    <div data-hi="400" style="position:relative;z-index:1;width:{{ artW }};margin:{{ artMargin }};aspect-ratio:{{ artAR }}">
+      <div ref="{{ artRef }}" style="position:absolute;inset:0;container-type:inline-size">
+        <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}"><img src="/home-revamp/assets/ai-hero-art.jpg" alt="" width="970" height="805" style="display:block;width:100%;height:100%;object-fit:cover;-webkit-mask-image:linear-gradient(90deg,transparent,#000 11%,#000 92%,transparent),linear-gradient(180deg,transparent,#000 7%,#000 88%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 11%,#000 92%,transparent),linear-gradient(180deg,transparent,#000 7%,#000 88%,transparent);mask-composite:intersect"></sc-if><sc-if value="{{ isSm }}" hint-placeholder-val="{{ false }}"><img src="/home-revamp/assets/ai-hero-art.jpg" alt="" width="970" height="805" style="display:block;width:100%;height:100%;object-fit:cover;-webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 45%,transparent 100%);mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 45%,transparent 100%)"></sc-if>
+        <span data-streak="1" aria-hidden="true" style="position:absolute;left:40%;top:36%;width:30%;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(235,248,255,.9),transparent);filter:blur(.5px);opacity:0;pointer-events:none"></span>
+
+        <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}"><a href="/learning" aria-label="Avatar Learning, live now" data-depth="14" data-card="1" style="position:absolute;left:9.278%;top:2.857%;width:28.454%;height:28.323%;display:flex;flex-direction:column;align-items:flex-start;padding:2.4cqw 2.5cqw;box-sizing:border-box;border-radius:max(12px,1.8cqw);border:1px solid rgba(220,236,247,.4);background:linear-gradient(150deg,rgba(118,148,173,.62),rgba(58,84,108,.66));backdrop-filter:blur(20px) saturate(1.15);-webkit-backdrop-filter:blur(20px) saturate(1.15);box-shadow:0 0 40px rgba(140,200,240,.1),inset 0 1px 0 rgba(255,255,255,.18);color:#f3f7fa;overflow:hidden;transition:transform .7s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s" style-hover="border-color:rgba(235,246,255,.8);box-shadow:0 0 50px rgba(150,214,250,.3),inset 0 1px 0 rgba(255,255,255,.25)">
+          <span style="display:inline-flex;align-items:center;gap:.8em;font-size:max(11px,1.15cqw);letter-spacing:.06em;color:#9fb4c6">01<span style="width:1.8em;height:1px;background:currentColor;opacity:.6"></span></span><span style="position:absolute;right:2.4cqw;top:2.2cqw;padding:.35em .8em;border-radius:999px;border:1px solid rgba(187,227,250,.6);font-size:max(10px,1cqw);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#bbe3fa">Live</span>
+          <svg sc-camel-view-box="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:max(18px,3.2cqw);height:max(18px,3.2cqw);margin-top:2.4cqw;color:#eef7fc"><path d="M16 9.5c-2.6-1.8-6.1-2.4-10-2v15.5c3.9-.4 7.4.2 10 2 2.6-1.8 6.1-2.4 10-2V7.5c-3.9-.4-7.4.2-10 2Z"></path><path d="M16 9.5V24.5"></path></svg>
+          <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}">
+            <span style="margin-top:1.5cqw;font-size:2.2cqw;font-weight:500;line-height:1.12;letter-spacing:-.01em">Avatar<br>Learning</span>
+            <span style="margin-top:1.3cqw;font-size:1.45cqw;line-height:1.3;color:rgba(232,241,247,.9)">Hands-on<br>AI programs.</span>
+            <svg sc-camel-view-box="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;right:2.4cqw;bottom:2.2cqw;width:2.1cqw;height:2.1cqw"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg>
+          </sc-if>
+        </a>
+        <a href="/" aria-label="AI Adoption Services, live now" data-depth="22" data-card="1" style="position:absolute;left:.309%;top:51.056%;width:29.588%;height:28.323%;display:flex;flex-direction:column;align-items:flex-start;padding:2.4cqw 2.5cqw;box-sizing:border-box;border-radius:max(12px,1.8cqw);border:1px solid rgba(220,236,247,.4);background:linear-gradient(150deg,rgba(118,148,173,.62),rgba(58,84,108,.66));backdrop-filter:blur(20px) saturate(1.15);-webkit-backdrop-filter:blur(20px) saturate(1.15);box-shadow:0 0 40px rgba(140,200,240,.1),inset 0 1px 0 rgba(255,255,255,.18);color:#f3f7fa;overflow:hidden;transition:transform .7s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s" style-hover="border-color:rgba(235,246,255,.8);box-shadow:0 0 50px rgba(150,214,250,.3),inset 0 1px 0 rgba(255,255,255,.25)">
+          <span style="display:inline-flex;align-items:center;gap:.8em;font-size:max(11px,1.15cqw);letter-spacing:.06em;color:#9fb4c6">02<span style="width:1.8em;height:1px;background:currentColor;opacity:.6"></span></span><span style="position:absolute;right:2.4cqw;top:2.2cqw;padding:.35em .8em;border-radius:999px;border:1px solid rgba(187,227,250,.6);font-size:max(10px,1cqw);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#bbe3fa">Live</span>
+          <svg sc-camel-view-box="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:max(18px,3.2cqw);height:max(18px,3.2cqw);margin-top:2.4cqw;color:#eef7fc"><circle cx="12" cy="11.5" r="3.6"></circle><path d="M5 24.5c.6-3.7 3.4-6 7-6s6.4 2.3 7 6"></path><circle cx="21.5" cy="12.5" r="3"></circle><path d="M20.5 18.6c3.2-.3 5.9 1.6 6.5 5"></path></svg>
+          <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}">
+            <span style="margin-top:1.5cqw;font-size:2.2cqw;font-weight:500;line-height:1.12;letter-spacing:-.01em">AI Adoption<br>Services</span>
+            <span style="margin-top:1.3cqw;font-size:1.45cqw;line-height:1.3;color:rgba(232,241,247,.9)">Setup, training and<br>ongoing support.</span>
+            <svg sc-camel-view-box="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;right:2.4cqw;bottom:2.2cqw;width:2.1cqw;height:2.1cqw"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg>
+          </sc-if>
+        </a>
+        <a href="/marketplace" aria-label="AI Marketplace, coming soon" data-depth="-18" data-card="1" style="position:absolute;left:60.619%;top:43.106%;width:34.124%;height:34.534%;display:flex;flex-direction:column;align-items:flex-start;padding:2.4cqw 2.5cqw;box-sizing:border-box;border-radius:max(12px,1.8cqw);border:1px solid rgba(220,236,247,.4);background:linear-gradient(150deg,rgba(118,148,173,.62),rgba(58,84,108,.66));backdrop-filter:blur(20px) saturate(1.15);-webkit-backdrop-filter:blur(20px) saturate(1.15);box-shadow:0 0 40px rgba(140,200,240,.1),inset 0 1px 0 rgba(255,255,255,.18);color:#f3f7fa;overflow:hidden;transition:transform .7s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s" style-hover="border-color:rgba(235,246,255,.8);box-shadow:0 0 50px rgba(150,214,250,.3),inset 0 1px 0 rgba(255,255,255,.25)">
+          <span style="display:inline-flex;align-items:center;gap:.8em;font-size:max(11px,1.15cqw);letter-spacing:.06em;color:#9fb4c6">03<span style="width:1.8em;height:1px;background:currentColor;opacity:.6"></span></span><span style="position:absolute;right:2.4cqw;top:2.2cqw;padding:.35em .8em;border-radius:999px;border:1px solid rgba(220,236,247,.4);font-size:max(10px,1cqw);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#c6d4df">Soon</span>
+          <svg sc-camel-view-box="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:max(18px,3.2cqw);height:max(18px,3.2cqw);margin-top:2.4cqw;color:#eef7fc"><rect x="6" y="6" width="8" height="8" rx="1"></rect><rect x="18" y="6" width="8" height="8" rx="1"></rect><rect x="6" y="18" width="8" height="8" rx="1"></rect><rect x="18" y="18" width="8" height="8" rx="1"></rect></svg>
+          <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}">
+            <span style="margin-top:1.5cqw;font-size:2.2cqw;font-weight:500;line-height:1.12;letter-spacing:-.01em">AI<br>Marketplace</span>
+            <span style="margin-top:1.3cqw;font-size:1.45cqw;line-height:1.3;color:rgba(232,241,247,.9)">Ready-made and<br>custom AI tools.</span>
+            <svg sc-camel-view-box="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;right:2.4cqw;bottom:2.2cqw;width:2.1cqw;height:2.1cqw"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg>
+            <span aria-hidden="true" style="position:absolute;right:3cqw;top:50%;display:grid;grid-template-columns:repeat(2,4.6cqw);gap:1.1cqw;transform:translateY(-50%) perspective(400px) rotateY(-14deg)">
+              <i data-tile="1" style="aspect-ratio:1;border:1px solid rgba(230,244,252,.35);background:linear-gradient(145deg,rgba(200,225,240,.32),rgba(80,110,135,.25));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)"></i>
+              <i data-tile="1" style="aspect-ratio:1;border:1px solid rgba(230,244,252,.35);background:linear-gradient(145deg,rgba(200,225,240,.32),rgba(80,110,135,.25));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)"></i>
+              <i data-tile="1" style="aspect-ratio:1;border:1px solid rgba(230,244,252,.35);background:linear-gradient(145deg,rgba(200,225,240,.32),rgba(80,110,135,.25));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)"></i>
+              <i data-tile="1" style="aspect-ratio:1;border:1px solid rgba(230,244,252,.35);background:linear-gradient(145deg,rgba(200,225,240,.32),rgba(80,110,135,.25));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)"></i>
+              <i data-tile="1" style="aspect-ratio:1;border:1px solid rgba(230,244,252,.35);background:linear-gradient(145deg,rgba(200,225,240,.32),rgba(80,110,135,.25));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)"></i>
+              <i data-tile="1" style="aspect-ratio:1;border:1px solid rgba(230,244,252,.35);background:linear-gradient(145deg,rgba(200,225,240,.32),rgba(80,110,135,.25));box-shadow:inset 0 1px 0 rgba(255,255,255,.25)"></i>
+            </span>
+          </sc-if>
+        </a></sc-if>
+
+        
+      </div>
+    </div>
+
+    <sc-if value="{{ isSm }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;gap:12px;padding:8px 20px 0">
+        <sc-for list="{{ heroCards }}" as="c" hint-placeholder-count="3">
+          <a href="{{ c.href }}" data-hi="{{ c.d }}" style="display:flex;align-items:center;gap:16px;min-height:64px;padding:16px 18px;border-radius:14px;border:1px solid rgba(220,235,245,0.28);background:linear-gradient(150deg,rgba(118,148,173,.32),rgba(58,84,108,.36));backdrop-filter:blur(16px)" style-hover="border-color:rgba(235,246,255,.7)">
+            <span style="font-size:12px;color:#9fb4c6">{{ c.num }}</span>
+            <span style="display:flex;flex:1;flex-direction:column;gap:3px"><strong style="font-size:16px;font-weight:500">{{ c.title }}</strong><span style="font-size:14px;color:#c6d4df">{{ c.desc }}</span></span>
+            <svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    
+  </div>
+  <span aria-hidden="true" style="position:absolute;inset:auto 0 0;height:160px;background:linear-gradient(180deg,transparent,#111c27);pointer-events:none"></span>
+</section>
+
+<section aria-label="Why people trust Avatar" style="position:relative;z-index:2;padding:8px 0 0">
+  <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box">
+    <div data-reveal="up" style="display:flex;border-top:1px solid rgba(220,235,245,.14);border-bottom:1px solid rgba(220,235,245,.14)">
+      <sc-for list="{{ trust }}" as="t" hint-placeholder-count="3">
+        <div style="flex:1 1 0;display:flex;align-items:center;gap:14px;min-width:0;padding:26px clamp(16px,2.4vw,32px);border-left:{{ t.bl }}">
+          <span style="display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:50%;border:1px solid rgba(187,227,250,.4);color:#bbe3fa"><svg sc-camel-view-box="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.p1 }}"></path><path d="{{ t.p2 }}"></path></svg></span>
+          <span style="display:flex;flex-direction:column;gap:3px;white-space:nowrap"><strong style="font-size:16px;font-weight:500">{{ t.title }}</strong><span style="font-size:14px;color:#c6d4df">{{ t.desc }}</span></span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ isSm }}" hint-placeholder-val="{{ false }}">
+  <div style="overflow:hidden;border-top:1px solid rgba(220,235,245,.14);border-bottom:1px solid rgba(220,235,245,.14);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)">
+    <div ref="{{ trustTrackRef }}" style="display:flex;width:max-content;padding:18px 0">
+      <sc-for list="{{ trustLoop }}" as="t" hint-placeholder-count="6">
+        <div aria-hidden="{{ t.dup }}" style="flex:none;display:flex;align-items:center;gap:14px;padding:0 28px 0 0;margin-left:28px">
+          <span style="display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:50%;border:1px solid rgba(187,227,250,.4);color:#bbe3fa"><svg sc-camel-view-box="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.p1 }}"></path><path d="{{ t.p2 }}"></path></svg></span>
+          <span style="display:flex;flex-direction:column;gap:3px;white-space:nowrap"><strong style="font-size:16px;font-weight:500">{{ t.title }}</strong><span style="font-size:14px;color:#c6d4df">{{ t.desc }}</span></span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+</section>
+
+<section id="ecosystem" data-screen-label="02 Ecosystem" style="position:relative;padding:clamp(56px,10vw,136px) 0 clamp(40px,7vw,96px);scroll-margin-top:72px">
+  <div style="max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box">
+    <div data-reveal="blur" style="display:flex;flex-direction:column;align-items:center;text-align:center">
+      <p style="display:flex;align-items:center;gap:22px;margin:0;font-size:13px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(214,230,242,.88)"><span style="width:clamp(20px,5vw,60px);flex:none;height:1px;background:linear-gradient(270deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span><span>The Avatar ecosystem</span><span style="width:clamp(20px,5vw,60px);flex:none;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span></p>
+      <h2 style="margin:18px 0 0;font-size:clamp(34px,4.6vw,56px);font-weight:300;line-height:1.08;letter-spacing:-.025em;text-wrap:balance">Two ways to start. <strong style="font-weight:600;color:#bbe3fa">One more on the way.</strong></h2>
+    </div>
+    <sc-if value="{{ isSm }}" hint-placeholder-val="{{ false }}">
+      <div ref="{{ ecoTrackRef }}" sc-camel-on-scroll="{{ ecoScroll }}" style="display:flex;gap:12px;margin:32px -20px 0;padding:0 20px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+        <sc-for list="{{ products }}" as="p" hint-placeholder-count="3">
+          <article style="flex:none;width:84%;scroll-snap-align:center;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(220,235,245,.14);border-radius:24px;background:#132231">
+            <div style="position:relative;aspect-ratio:4/3;background:#0f1a24">
+              <x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ p.slot }}" placeholder="{{ p.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
+              <span aria-hidden="true" style="position:absolute;inset:auto 0 -1px;height:70%;background:linear-gradient(180deg,rgba(19,34,49,0),rgba(19,34,49,.6) 50%,#132231);pointer-events:none"></span>
+              <span style="position:absolute;right:14px;bottom:40px;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid rgba(220,236,247,.3);background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-radius:999px;font-size:11.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:{{ p.badgeC }};pointer-events:none"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.badgeC }}"></span>{{ p.badge }}</span>
+              <span style="position:absolute;left:14px;top:14px;display:inline-flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;border:1px solid rgba(220,236,247,.3);background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-radius:999px;font-size:13px;pointer-events:none"><span style="display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#aedffd;color:#10202e"><svg sc-camel-view-box="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5 5 8.5 9 4"></path></svg></span>{{ p.mChip }}</span>
+            </div>
+            <div style="position:relative;display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:12px;margin-top:-28px;padding:0 22px 24px">
+              <span style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#9fb4c6">{{ p.num }} · {{ p.verb }}</span>
+              <h3 style="margin:0;font-size:28px;font-weight:300;line-height:1.08;letter-spacing:-.025em">{{ p.t1 }} <strong style="font-weight:600;color:#bbe3fa">{{ p.t2 }}</strong></h3>
+              <p style="margin:0;font-size:15px;line-height:1.5;color:#d6e2eb;text-wrap:pretty">{{ p.line }}</p>
+              <div style="margin-top:auto;padding-top:6px">
+                <sc-if value="{{ p.live }}" hint-placeholder-val="{{ true }}"><a href="{{ p.href }}" style="display:inline-flex;align-items:center;gap:18px;height:46px;padding:0 18px 0 20px;border-radius:999px;background:#aedffd;color:#10202e;font-size:14.5px;font-weight:500">{{ p.cta }}<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a></sc-if>
+                <sc-if value="{{ p.soon }}" hint-placeholder-val="{{ false }}"><a href="{{ p.href }}" style="display:inline-flex;align-items:center;gap:18px;height:46px;padding:0 18px 0 20px;border:1px solid rgba(255,255,255,.55);border-radius:999px;font-size:14.5px;font-weight:500">{{ p.cta }}<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a></sc-if>
+              </div>
+            </div>
+          </article>
+        </sc-for>
+        <span aria-hidden="true" style="flex:none;width:8px"></span>
+      </div>
+      <div aria-hidden="true" style="display:flex;justify-content:center;gap:6px;margin-top:18px">
+        <sc-for list="{{ ecoDots }}" as="d" hint-placeholder-count="3"><span style="height:4px;width:{{ d.w }};border-radius:4px;background:{{ d.c }};transition:width .35s,background .35s"></span></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:{{ stackGap }};margin-top:clamp(40px,5vw,64px)">
+      <sc-for list="{{ products }}" as="p" hint-placeholder-count="3">
+        <div data-stack="1" data-top="{{ p.top }}" style="position:{{ stackPos }};top:{{ p.top }}">
+          <article data-stack-card="1" style="position:relative;overflow:hidden;box-sizing:border-box;display:grid;grid-template-columns:{{ stackCols }};min-height:{{ stackH }};border:1px solid rgba(220,235,245,.14);border-radius:32px;background:linear-gradient(135deg,#182a3b 0%,#111d29 65%);box-shadow:0 -20px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.08);transform-origin:50% 0;will-change:transform">
+            <span aria-hidden="true" style="position:absolute;left:-15%;top:-40%;width:70%;height:120%;border-radius:50%;background:radial-gradient(ellipse,rgba(150,210,245,.14),transparent 65%);pointer-events:none"></span>
+            <span data-reveal="fill" aria-hidden="true" style="position:absolute;left:8%;right:8%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(187,227,250,.7),transparent);transform-origin:50% 50%;z-index:3"></span>
+            <div style="position:relative;z-index:2;display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-width:0;padding:clamp(28px,4vw,56px)">
+              
+              <div data-reveal="up" style="position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px">
+                <span style="font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#9fb4c6">{{ p.num }} · {{ p.verb }}</span>
+                <span style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid {{ p.badgeBd }};border-radius:999px;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:{{ p.badgeC }}"><span data-pulse="1" style="width:6px;height:6px;border-radius:50%;background:{{ p.badgeC }}"></span>{{ p.badge }}</span>
+              </div>
+              <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:18px">
+                <h3 data-reveal="blur" data-delay="80" style="margin:0;font-size:clamp(38px,4.4vw,64px);font-weight:300;line-height:1;letter-spacing:-.035em">{{ p.t1 }}<br><strong style="font-weight:600;color:#bbe3fa">{{ p.t2 }}</strong></h3>
+                <p data-reveal="up" data-delay="160" style="margin:0;max-width:380px;font-size:17px;line-height:1.5;color:#d6e2eb;text-wrap:pretty">{{ p.line }}</p>
+                <div data-reveal="up" data-delay="260" style="margin-top:8px">
+                  <sc-if value="{{ p.live }}" hint-placeholder-val="{{ true }}">
+                    <a href="{{ p.href }}" style="display:inline-flex;align-items:center;gap:24px;height:50px;padding:0 22px 0 24px;border-radius:999px;background:#aedffd;color:#10202e;font-size:15px;font-weight:500;box-shadow:0 8px 30px rgba(174,223,253,.18);transition:background .2s,transform .2s" style-hover="background:#c8ebff;color:#10202e;transform:translateY(-1px)">{{ p.cta }}<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+                  </sc-if>
+                  <sc-if value="{{ p.soon }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ p.href }}" style="display:inline-flex;align-items:center;gap:24px;height:50px;padding:0 22px 0 24px;border:1px solid rgba(255,255,255,.55);border-radius:999px;font-size:15px;font-weight:500;transition:background .2s,border-color .2s" style-hover="background:rgba(255,255,255,.08);border-color:#ffffff">{{ p.cta }}<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <div data-vis="1" style="position:relative;min-width:0;min-height:{{ visH }}">
+              <div style="position:absolute;inset:0;overflow:hidden;background:#0f1a24">
+                <div data-ezoom="1" style="position:absolute;left:0;right:0;top:-6%;bottom:-6%;transform-origin:50% 50%"><x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ p.slot }}" placeholder="{{ p.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import></div>
+                <span aria-hidden="true" style="position:absolute;inset:0;background:{{ visFade }};pointer-events:none"></span>
+              </div>
+              <sc-if value="{{ p.isLearn }}" hint-placeholder-val="{{ true }}">
+              <div data-reveal="pop" data-delay="350" style="position:absolute;right:{{ chipOut }};bottom:28px;width:min(300px,calc(100% - 48px));z-index:2"><div data-float="0.6" style="will-change:transform"><div style="min-height:124px;justify-content:space-between;display:flex;flex-direction:column;gap:12px;padding:18px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:16px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14)"><span style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9fb4c6">Week 2 of 4</span><strong style="font-size:16px;font-weight:500;line-height:1.3">AI Fundamentals &amp; ChatGPT Mastery</strong><div style="height:6px;overflow:hidden;border-radius:6px;background:rgba(220,235,245,.14)"><span data-reveal="fill" data-delay="600" style="display:block;width:50%;height:100%;border-radius:6px;background:linear-gradient(90deg,#7fc4ee,#bbe3fa);transform-origin:left"></span></div></div></div></div>
+              <div data-reveal="pop" data-delay="200" style="position:absolute;left:{{ chipOut }};top:28px;z-index:2"><div data-float="-0.5" style="will-change:transform"><span style="display:inline-flex;align-items:center;gap:12px;padding:10px 16px 10px 10px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:999px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14);font-size:14px"><span style="display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#aedffd;color:#10202e"><svg sc-camel-view-box="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5 5 8.5 9 4"></path></svg></span>Career call booked</span></div></div>
+            </sc-if>
+            <sc-if value="{{ p.isAdopt }}" hint-placeholder-val="{{ false }}">
+              <div data-reveal="pop" data-delay="200" style="position:absolute;right:{{ chipOut }};top:28px;z-index:2"><div data-float="-0.5" style="will-change:transform"><span style="display:inline-flex;align-items:center;gap:12px;padding:10px 16px 10px 10px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:999px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14);font-size:14px"><span style="display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#aedffd;color:#10202e"><svg sc-camel-view-box="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5 5 8.5 9 4"></path></svg></span>Team trained</span></div></div>
+              <div data-reveal="pop" data-delay="350" style="position:absolute;left:{{ chipOut }};bottom:28px;width:min(300px,calc(100% - 48px));z-index:2"><div data-float="0.6" style="will-change:transform"><div style="min-height:124px;align-content:center;position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:18px 8px 16px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:16px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14)"><span aria-hidden="true" style="position:absolute;left:16.66%;right:16.66%;top:38px;height:1px;background:rgba(220,235,245,.16)"><span data-reveal="fill" data-delay="500" style="position:absolute;inset:0;transform-origin:left;background:linear-gradient(90deg,#bbe3fa,rgba(187,227,250,.4));box-shadow:0 0 8px rgba(150,220,255,.6)"></span></span><sc-for list="{{ p.flow }}" as="f" hint-placeholder-count="3"><div data-reveal="pop" data-delay="{{ f.d }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid rgba(187,227,250,.5);background:#16283a;color:#bbe3fa"><svg sc-camel-view-box="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ f.i }}"></path></svg></span><strong style="font-size:14px;font-weight:500">{{ f.t }}</strong><span style="font-size:12px;color:#9fb4c6">{{ f.m }}</span></div></sc-for></div></div></div>
+            </sc-if>
+            <sc-if value="{{ p.isMarket }}" hint-placeholder-val="{{ false }}">
+              <div data-reveal="pop" data-delay="200" style="position:absolute;left:{{ chipOut }};top:28px;z-index:2"><div data-float="-0.5" style="will-change:transform"><div style="display:flex;align-items:center;gap:12px;height:50px;padding:0 20px 0 16px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:999px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14);font-size:14px;color:#c6d4df"><svg sc-camel-view-box="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13ZM15.5 15.5 20 20"></path></svg>Search AI tools</div></div></div>
+              <div data-reveal="pop" data-delay="350" style="position:absolute;right:{{ chipOut }};bottom:28px;width:min(300px,calc(100% - 48px));z-index:2"><div data-float="0.6" style="will-change:transform"><div style="min-height:124px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;padding:18px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:16px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14)"><span style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9fb4c6">Coming soon</span><strong style="font-size:16px;font-weight:500;line-height:1.3">Ready-made AI tools</strong><div style="display:flex;justify-content:space-between;gap:4px"><sc-for list="{{ p.tools }}" as="t" hint-placeholder-count="6"><div data-reveal="pop" data-delay="{{ t.d }}" title="{{ t.t }}" aria-label="{{ t.t }}" style="display:flex"><span style="display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(187,227,250,.12);color:#bbe3fa"><svg sc-camel-view-box="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.i }}"></path></svg></span></div></sc-for></div></div></div></div>
+            </sc-if>
+            </div>
+            <span data-dim="1" aria-hidden="true" style="position:absolute;inset:0;z-index:4;border-radius:inherit;background:#000;opacity:0;pointer-events:none"></span>
+          </article>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+  </div>
+</section>
+
+<section id="about" data-screen-label="03 About" style="position:relative;padding:clamp(44px,8vw,112px) 0;overflow:hidden;scroll-margin-top:72px">
+  <span data-glow="1" aria-hidden="true" style="position:absolute;left:-8%;top:0;width:min(820px,90vw);height:460px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(140,205,245,.15),rgba(107,124,255,.05) 45%,transparent 70%);filter:blur(8px);pointer-events:none"></span>
+  <div style="position:relative;max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box">
+    <p data-reveal="up" style="display:flex;align-items:center;gap:22px;margin:0;font-size:13px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(214,230,242,.88)"><span>Who we are</span><span style="width:120px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span></p>
+    <h2 ref="{{ stmtRef }}" style="margin:24px 0 0;max-width:1100px;font-size:clamp(25px,4.6vw,60px);font-weight:300;line-height:1.2;letter-spacing:-.025em;text-wrap:pretty"><sc-for list="{{ stmtWords }}" as="wd" hint-placeholder-count="16"><span data-word="1" style="opacity:.22;transition:opacity .35s ease,text-shadow .5s ease;color:{{ wd.c }};font-weight:{{ wd.fw }}">{{ wd.t }}</span></sc-for></h2>
+    <div style="display:grid;grid-template-columns:{{ aboutCols }};gap:clamp(40px,6vw,96px);align-items:center;margin-top:clamp(64px,7vw,104px)">
+      <div data-reveal="zoom" aria-label="Avatar ecosystem: Learning, AI Adoption and AI Marketplace connected" role="img" style="position:relative;width:100%;max-width:540px;aspect-ratio:1;margin:0 auto">
+        <span aria-hidden="true" style="position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(140,205,245,.18),transparent 66%);filter:blur(10px)"></span>
+        <svg sc-camel-view-box="0 0 400 400" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+          <circle cx="200" cy="200" r="140" fill="none" stroke="rgba(220,235,245,.12)"></circle>
+          <g data-spin="70000" style="transform-box:fill-box;transform-origin:center"><circle cx="200" cy="200" r="184" fill="none" stroke="rgba(187,227,250,.34)" stroke-dasharray="2 10"></circle></g>
+          <g data-spin="-45000" style="transform-box:fill-box;transform-origin:center"><circle cx="200" cy="200" r="104" fill="none" stroke="rgba(187,227,250,.24)" stroke-dasharray="1 7"></circle></g>
+          <path d="M200 60 L321 270 L79 270 Z" fill="none" stroke="rgba(220,235,245,.08)"></path>
+          <path data-flow="1" d="M200 60 L321 270 L79 270 Z" fill="none" stroke="rgba(187,227,250,.45)" stroke-dasharray="3 9"></path>
+          <path d="M200 200 L200 60 M200 200 L321 270 M200 200 L79 270" fill="none" stroke="rgba(220,235,245,.2)"></path>
+          <path data-beam="0" d="M200 200 L200 60" fill="none" stroke="#bbe3fa" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="18 160" stroke-dashoffset="18"></path><path data-beam="800" d="M200 200 L321 270" fill="none" stroke="#bbe3fa" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="18 160" stroke-dashoffset="18"></path><path data-beam="1600" d="M200 200 L79 270" fill="none" stroke="#bbe3fa" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="18 160" stroke-dashoffset="18"></path>
+        </svg>
+        <span data-ripple="0" aria-hidden="true" style="position:absolute;left:50%;top:50%;width:26%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(187,227,250,.5);transform:translate(-50%,-50%);opacity:0"></span>
+        <span data-ripple="1600" aria-hidden="true" style="position:absolute;left:50%;top:50%;width:26%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(187,227,250,.5);transform:translate(-50%,-50%);opacity:0"></span>
+        <div style="position:absolute;left:50%;top:50%;width:26%;aspect-ratio:1;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(187,227,250,.5);background:radial-gradient(circle at 50% 30%,#243b50,#111d29 75%);box-shadow:0 0 60px rgba(150,214,250,.25);transform:translate(-50%,-50%)"><img src="/home-revamp/assets/avatar-logo.svg" alt="" style="display:block;width:64%;height:auto"></div>
+        <sc-for list="{{ ecoNodes }}" as="n" hint-placeholder-count="3">
+          <div style="position:absolute;left:{{ n.x }};top:{{ n.y }};width:clamp(48px,13%,68px);aspect-ratio:1;transform:translate(-50%,-50%)">
+            <span data-node="{{ n.d }}" style="position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;border:1px solid {{ n.bd }};background:#132130;color:{{ n.c }}"><svg sc-camel-view-box="0 0 32 32" width="48%" height="48%" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ n.i1 }}"></path><path d="{{ n.i2 }}"></path></svg></span>
+            <span style="position:absolute;left:50%;top:{{ n.lt }};bottom:{{ n.lb }};transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap"><span style="font-size:14px;font-weight:500;color:#eef4f8">{{ n.t }}</span><span style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:{{ n.c }}">{{ n.s }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;align-self:stretch">
+        <div data-reveal="up" data-delay="120" style="display:flex;flex-direction:column;gap:14px;padding:clamp(26px,3vw,36px) 0;border-top:1px solid rgba(220,235,245,.16)">
+          <span style="display:flex;align-items:center;gap:14px;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#9fb4c6"><span style="color:#bbe3fa">01</span>Our vision</span>
+          <h3 style="margin:0;font-size:clamp(28px,3vw,40px);font-weight:300;line-height:1.1;letter-spacing:-.025em;text-wrap:balance">Making AI work <strong style="font-weight:600;color:#bbe3fa">for everyone.</strong></h3>
+          <p style="margin:0;max-width:480px;font-size:16.5px;line-height:1.65;color:#c6d4df;text-wrap:pretty">We envision a future where AI skills, tools, and solutions are accessible to individuals and businesses of every size.</p>
+        </div>
+        <div data-reveal="up" data-delay="240" style="display:flex;flex-direction:column;gap:14px;padding:clamp(26px,3vw,36px) 0;border-top:1px solid rgba(220,235,245,.16);border-bottom:1px solid rgba(220,235,245,.16)">
+          <span style="display:flex;align-items:center;gap:14px;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#9fb4c6"><span style="color:#bbe3fa">02</span>Our mission</span>
+          <h3 style="margin:0;font-size:clamp(28px,3vw,40px);font-weight:300;line-height:1.1;letter-spacing:-.025em;text-wrap:balance">Empower. Transform. <strong style="font-weight:600;color:#bbe3fa">Evolve.</strong></h3>
+          <p style="margin:0;max-width:480px;font-size:16.5px;line-height:1.65;color:#c6d4df;text-wrap:pretty">Our mission is to build an interconnected ecosystem that empowers people, transforms businesses, and accelerates innovation through practical AI adoption.</p>
+        </div>
+        </div>
+        <a href="/about" data-tap="1" style="display:inline-flex;align-items:center;gap:14px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.55);font-size:15px;color:#e6eef4;transition:border-color .2s,gap .25s;margin-top:32px" style-hover="border-color:#ffffff;gap:18px">More about Avatar India<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="who" data-screen-label="04 Who we serve" style="position:relative;padding:clamp(44px,8vw,112px) 0;scroll-margin-top:72px">
+  <div style="max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 48px">
+      <div data-reveal="blur">
+        <p style="display:flex;align-items:center;gap:22px;margin:0;font-size:13px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(214,230,242,.88)"><span>Who we serve</span><span style="width:120px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span></p>
+        <h2 style="margin:18px 0 0;font-size:clamp(34px,4.6vw,56px);font-weight:300;line-height:1.08;letter-spacing:-.025em">Pick your starting point.</h2>
+      </div>
+      <p data-reveal="up" data-delay="120" style="margin:0;max-width:380px;font-size:16px;line-height:1.55;color:#c6d4df;text-wrap:pretty">Learners, businesses and institutions, at different points of the same AI journey.</p>
+    </div>
+    <sc-if value="{{ isSm }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:32px">
+        <div role="tablist" aria-label="Audience" style="position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;border:1px solid rgba(220,235,245,.2);border-radius:999px;background:rgba(22,38,54,.5)">
+          <span aria-hidden="true" style="position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 3);border-radius:999px;background:#aedffd;transform:{{ audPillT }};transition:transform .45s cubic-bezier(.2,.7,.2,1)"></span>
+          <sc-for list="{{ auds }}" as="a" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{ a.sel }}" sc-camel-on-click="{{ a.pick }}" style="position:relative;min-height:44px;padding:0 6px;border:0;background:transparent;font-size:14px;font-weight:500;color:{{ a.tabC }};cursor:pointer;transition:color .3s">{{ a.title }}</button>
+          </sc-for>
+        </div>
+        <div sc-camel-on-touch-start="{{ audTouchStart }}" sc-camel-on-touch-end="{{ audTouchEnd }}" style="position:relative;margin-top:14px;height:420px;overflow:hidden;border:1px solid rgba(220,235,245,.16);border-radius:24px;background:#0f1a24">
+          <sc-for list="{{ auds }}" as="a" hint-placeholder-count="1">
+            <div aria-hidden="{{ a.hid }}" style="position:absolute;inset:0;opacity:{{ a.mOp }};transform:{{ a.mT }};pointer-events:{{ a.pe }};transition:opacity .5s ease,transform .7s cubic-bezier(.2,.7,.2,1)">
+              <x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ a.slot }}" placeholder="{{ a.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
+              <span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,22,31,0) 30%,rgba(13,22,31,.9) 70%,#0d161f 100%);pointer-events:none"></span>
+              <a href="{{ a.href }}" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:22px 22px 52px">
+                <span style="font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#bbe3fa">{{ a.tag }}</span>
+                <h3 style="margin:0;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:-.025em">{{ a.title }}</h3>
+                <p style="margin:0;font-size:15px;line-height:1.5;color:#d6e2eb;text-wrap:pretty">{{ a.desc }}</p>
+              </a>
+            </div>
+          </sc-for>
+          <span aria-hidden="true" style="position:absolute;left:22px;right:22px;bottom:26px;height:2px;border-radius:2px;background:rgba(220,235,245,.16);overflow:hidden"><span ref="{{ audBarRef }}" style="position:absolute;inset:0;background:#bbe3fa;transform-origin:left;transform:scaleX(0)"></span></span>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notSm }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:48px">
+      <div style="display:grid;grid-template-columns:{{ audCols }};gap:14px">
+        <sc-for list="{{ auds }}" as="a" hint-placeholder-count="3">
+          <div data-reveal="up" data-delay="{{ a.d }}" style="min-width:0">
+            <a href="{{ a.href }}" aria-label="{{ a.title }}: {{ a.desc }}" style="position:relative;display:block;overflow:hidden;height:{{ audH }};border-radius:28px;border:1px solid rgba(220,235,245,.16);background:#0f1a24;box-shadow:0 30px 70px rgba(5,12,20,.45);transition:transform .5s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .5s" style-hover="transform:translateY(-6px);border-color:rgba(187,227,250,.5);box-shadow:0 40px 90px rgba(5,12,20,.6),0 0 40px rgba(150,214,250,.12)">
+              <x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ a.slot }}" placeholder="{{ a.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
+              <span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,22,31,.35) 0,rgba(13,22,31,0) 22%,rgba(13,22,31,0) 38%,rgba(13,22,31,.88) 66%,#0d161f 100%);pointer-events:none"></span>
+              <div style="position:absolute;left:20px;right:20px;top:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none">
+                <span style="display:flex;flex-direction:column;gap:2px;padding:9px 16px;border:1px solid rgba(220,236,247,.3);border-radius:16px;background:rgba(22,38,54,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:11px;font-weight:500;line-height:1.35;letter-spacing:.12em;text-transform:uppercase;color:#e6eef4;white-space:nowrap"><span>{{ a.t1 }}</span><span>{{ a.t2 }}</span></span>
+                
+              </div>
+              <div style="position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:12px;padding:clamp(22px,2.4vw,30px)">
+                <h3 style="margin:0;font-size:clamp(30px,3vw,40px);font-weight:500;line-height:1.05;letter-spacing:-.025em">{{ a.title }}</h3>
+                <p style="margin:0;max-width:340px;font-size:15.5px;line-height:1.5;color:#d6e2eb;text-wrap:pretty">{{ a.desc }}</p>
+                
+              </div>
+            </a>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+</section>
+
+<section id="why" data-screen-label="05 Why Avatar" style="position:relative;padding:clamp(44px,8vw,112px) 0;overflow-x:clip;scroll-margin-top:72px">
+  <div data-reveal="blur" style="max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center">
+    <p style="display:flex;align-items:center;gap:22px;margin:0;font-size:13px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(214,230,242,.88)"><span style="width:clamp(20px,5vw,60px);flex:none;height:1px;background:linear-gradient(270deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span><span>Why Avatar</span><span style="width:clamp(20px,5vw,60px);flex:none;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span></p>
+    <h2 style="margin:18px 0 0;font-size:clamp(34px,4.6vw,56px);font-weight:300;line-height:1.08;letter-spacing:-.025em">Built to make AI <strong style="font-weight:600;color:#bbe3fa">practical.</strong></h2>
+  </div>
+  <div ref="{{ fanRef }}" style="display:flex;justify-content:{{ fanJustify }};gap:{{ fanGap }};margin-top:clamp(32px,6vw,80px);padding:{{ fanPad }};overflow-x:{{ fanOverflow }};scroll-snap-type:x mandatory;scrollbar-width:none">
+    <sc-for list="{{ whys }}" as="w" hint-placeholder-count="4">
+      <div data-fan="{{ w.k }}" style="flex:none;width:{{ fanW }};scroll-snap-align:center;transform-origin:50% 120%;will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden">
+        <article style="position:relative;overflow:hidden;contain:layout paint;aspect-ratio:3/4;border-radius:28px;border:1px solid rgba(220,235,245,.16);background:#0f1a24;box-shadow:0 30px 70px rgba(5,12,20,.5);transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s,border-color .3s" style-hover="transform:{{ whyHT }};border-color:{{ whyHB }};box-shadow:{{ whyHS }}">
+          <x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ w.slot }}" placeholder="{{ w.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
+          <span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,22,31,0) 35%,rgba(13,22,31,.82) 72%,#0d161f);pointer-events:none"></span>
+          <span aria-hidden="true" style="position:absolute;inset:0;background:rgba(13,22,31,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity .45s ease;pointer-events:none;opacity:{{ w.ovOp }}"></span>
+          <div style="position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 22px 24px;text-align:center">
+            <h3 style="margin:0;font-size:clamp(22px,1.9vw,27px);font-weight:500;line-height:1.15;letter-spacing:-.015em;text-wrap:balance">{{ w.title }}</h3>
+            <p style="margin:0;font-size:13px;line-height:1.45;color:#c6d4df">{{ w.tags }}</p>
+            <div style="display:grid;transition:grid-template-rows .45s cubic-bezier(.2,.7,.2,1);grid-template-rows:{{ w.rows }}"><div style="overflow:hidden"><p style="margin:6px 0 0;font-size:15px;line-height:1.55;color:#e6eef4;text-wrap:pretty">{{ w.body }}</p></div></div>
+            <button type="button" sc-camel-on-click="{{ w.toggle }}" aria-expanded="{{ w.open }}" aria-label="{{ w.aria }}" style="display:grid;place-items:center;width:46px;height:46px;margin-top:8px;padding:0;border:1px solid rgba(220,236,247,.4);border-radius:50%;background:rgba(22,38,54,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#ffffff;cursor:pointer;transition:background .25s,color .25s,border-color .25s" style-hover="background:#aedffd;border-color:#aedffd;color:#10202e"><svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="transition:transform .4s cubic-bezier(.2,.7,.2,1);transform:{{ w.rot }}"><path d="M10 4v12M4 10h12"></path></svg></button>
+            
+          </div>
+        </article>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="faq" data-screen-label="06 FAQ" style="position:relative;padding:clamp(44px,8vw,112px) 0;scroll-margin-top:72px">
+  <div style="max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 48px">
+      <div data-reveal="blur">
+        <p style="display:flex;align-items:center;gap:22px;margin:0;font-size:13px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(214,230,242,.88)"><span>FAQ</span><span style="width:120px;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.08))"></span></p>
+        <h2 style="margin:18px 0 0;font-size:clamp(34px,4.6vw,56px);font-weight:300;line-height:1.08;letter-spacing:-.025em">Questions, answered.</h2>
+      </div>
+      <div data-reveal="up" data-delay="120" style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:380px">
+        <p style="margin:0;font-size:16px;line-height:1.55;color:#c6d4df">Still unsure about something? Ask us directly.</p>
+        <a href="#contact" data-tap="1" style="display:inline-flex;align-items:center;gap:14px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.55);font-size:15px;color:#e6eef4;transition:border-color .2s,gap .25s;" style-hover="border-color:#ffffff;gap:18px">Talk to us<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+      </div>
+    </div>
+    <sc-if value="{{ isLg }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(48px,6vw,96px);margin-top:56px;align-items:start">
+        <div data-reveal="up" style="display:flex;flex-direction:column;border-bottom:1px solid rgba(220,235,245,.14)">
+          <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="5">
+            <button type="button" sc-camel-on-click="{{ f.select }}" aria-pressed="{{ f.open }}" style="position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) 20px;align-items:center;gap:16px;width:100%;padding:26px 0;border:0;border-top:1px solid rgba(220,235,245,.14);background:transparent;text-align:left;cursor:pointer" style-hover="color:#ffffff">
+              <span style="font-size:13px;letter-spacing:.08em;color:{{ f.numC }};transition:color .3s">{{ f.num }}</span>
+              <span style="font-size:clamp(17px,1.5vw,20px);font-weight:{{ f.fw }};line-height:1.35;color:{{ f.qC }};transition:color .3s;text-wrap:pretty">{{ f.q }}</span>
+              <span style="display:flex;color:#bbe3fa;opacity:{{ f.arOp }};transform:{{ f.arT }};transition:opacity .3s,transform .45s cubic-bezier(.2,.7,.2,1)"><svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></span>
+              <span aria-hidden="true" style="position:absolute;left:0;top:-1px;height:1px;width:{{ f.lineW }};background:linear-gradient(90deg,#bbe3fa,rgba(187,227,250,0));transition:width .7s cubic-bezier(.2,.7,.2,1)"></span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="position:sticky;top:120px">
+          <div ref="{{ faqPanelRef }}" aria-live="polite" style="position:relative">
+            <span aria-hidden="true" style="position:absolute;left:-10%;top:-20%;width:90%;height:90%;border-radius:50%;background:radial-gradient(circle,rgba(140,205,245,.12),transparent 65%);pointer-events:none"></span>
+            <span aria-hidden="true" style="position:relative;display:block;font-size:clamp(120px,13vw,184px);font-weight:200;line-height:.85;letter-spacing:-.05em;color:transparent;-webkit-text-stroke:1px rgba(187,227,250,.4)">{{ faqActive.num }}</span>
+            <h3 style="position:relative;margin:32px 0 0;font-size:clamp(24px,2.2vw,30px);font-weight:400;line-height:1.2;letter-spacing:-.02em;text-wrap:balance">{{ faqActive.q }}</h3>
+            <p style="position:relative;margin:18px 0 0;max-width:520px;font-size:17px;line-height:1.7;color:#c6d4df;text-wrap:pretty">{{ faqActive.a }}</p>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notLg }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:40px;border-bottom:1px solid rgba(220,235,245,.14)">
+        <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="5">
+          <div style="position:relative;border-top:1px solid rgba(220,235,245,.14)">
+            <span aria-hidden="true" style="position:absolute;left:0;top:-1px;height:1px;width:{{ f.lineW }};background:linear-gradient(90deg,#bbe3fa,rgba(187,227,250,0));transition:width .7s cubic-bezier(.2,.7,.2,1)"></span>
+            <button type="button" sc-camel-on-click="{{ f.toggle }}" aria-expanded="{{ f.open }}" style="display:grid;grid-template-columns:36px minmax(0,1fr) 28px;align-items:center;gap:12px;width:100%;min-height:64px;padding:18px 0;border:0;background:transparent;text-align:left;cursor:pointer">
+              <span style="font-size:12.5px;color:{{ f.numC }}">{{ f.num }}</span>
+              <span style="font-size:16px;font-weight:500;line-height:1.4;color:{{ f.qC }}">{{ f.q }}</span>
+              <span aria-hidden="true" style="position:relative;width:28px;height:28px;flex:none;border:1px solid rgba(220,235,245,0.28);border-radius:50%;transition:transform .35s ease,background .3s;transform:{{ f.rot }};background:{{ f.iconBg }}"><span style="position:absolute;left:50%;top:50%;width:10px;height:1.5px;margin:-.75px 0 0 -5px;background:#bbe3fa"></span><span style="position:absolute;left:50%;top:50%;width:10px;height:1.5px;margin:-.75px 0 0 -5px;background:#bbe3fa;transition:transform .35s;transform:{{ f.vert }}"></span></span>
+            </button>
+            <div style="display:grid;transition:grid-template-rows .4s cubic-bezier(.2,.7,.2,1);grid-template-rows:{{ f.rows }}">
+              <div style="overflow:hidden"><p style="margin:0;padding:0 0 22px 48px;font-size:15px;line-height:1.65;color:#c6d4df">{{ f.a }}</p></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</section>
+
+<section id="contact" data-screen-label="07 Contact" style="position:relative;overflow:hidden;padding:clamp(64px,12vw,168px) 0 0;scroll-margin-top:72px">
+  <span aria-hidden="true" style="position:absolute;left:50%;top:10%;width:min(1100px,130vw);height:70%;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 100%,rgba(140,205,245,.16),transparent 65%);pointer-events:none"></span>
+  <div data-reveal="blur" style="position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;gap:24px">
+    <span style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid rgba(187,227,250,.4);border-radius:999px;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#bbe3fa"><span data-pulse="1" style="width:6px;height:6px;border-radius:50%;background:#bbe3fa;box-shadow:0 0 8px rgba(150,220,255,.9)"></span>Get started</span>
+    <h2 style="margin:0;font-size:clamp(46px,7.6vw,108px);font-weight:300;line-height:1;letter-spacing:-.045em;text-wrap:balance">Let's build <strong style="font-weight:600;color:#bbe3fa">what's next.</strong></h2>
+    <p style="margin:0;max-width:560px;font-size:17px;line-height:1.6;color:#c6d4df;text-wrap:pretty">Learners, businesses, investors and technology partners: tell us where you are today and we'll point you to the right part of Avatar.</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:18px 32px;margin-top:8px">
+      <a href="/contact" style="display:inline-flex;align-items:center;gap:24px;height:56px;padding:0 26px 0 28px;border-radius:999px;background:#aedffd;color:#10202e;font-size:16px;font-weight:500;box-shadow:0 10px 40px rgba(174,223,253,.25);transition:background .2s,transform .2s" style-hover="background:#c8ebff;color:#10202e;transform:translateY(-2px)">Talk to our team<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+      <a href="/quiz" data-tap="1" style="display:inline-flex;align-items:center;gap:14px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.55);font-size:15px;color:#e6eef4;transition:border-color .2s,gap .25s;" style-hover="border-color:#ffffff;gap:18px">Take the career quiz<svg sc-camel-view-box="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10h13M11.5 5l5 5-5 5"></path></svg></a>
+    </div>
+    <p style="margin:0;font-size:13px;color:#9fb4c6">No obligation · We reply within one working day</p>
+  </div>
+  <div style="position:relative;margin-top:clamp(72px,9vw,128px);padding:clamp(64px,7vw,104px) 0 clamp(56px,6vw,88px)">
+    <div aria-hidden="true" style="position:absolute;left:50%;top:0;width:{{ arcW }};aspect-ratio:1;transform:translateX(-50%);pointer-events:none">
+      <span style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 0%,#1f374b 0,#142434 14%,#0d161f 34%);box-shadow:0 -40px 140px rgba(120,190,240,.16)"></span>
+      <span style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(187,227,250,.24)"></span>
+      <span ref="{{ rimRef }}" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from -24deg,transparent 0deg,rgba(220,242,255,1) 24deg,transparent 48deg,transparent 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));filter:drop-shadow(0 0 6px rgba(150,214,250,.9))"></span>
+    </div>
+    <div style="position:relative;max-width:1100px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box;display:grid;grid-template-columns:{{ ctcCols }}">
+      <sc-for list="{{ contacts }}" as="c" hint-placeholder-count="3">
+        <a href="{{ c.href }}" target="{{ c.target }}" rel="noopener noreferrer" data-reveal="up" data-delay="{{ c.d }}" style="display:flex;flex-direction:{{ c.dir }};align-items:center;gap:{{ c.gap }};padding:{{ c.pad }};text-align:{{ c.ta }};border-left:{{ c.bl }};border-top:{{ c.bt }};transition:transform .35s cubic-bezier(.2,.7,.2,1)" style-hover="transform:translateY(-4px)">
+          <span style="display:grid;place-items:center;width:40px;height:40px;flex:none;border:1px solid rgba(187,227,250,.3);border-radius:50%;color:#bbe3fa"><svg sc-camel-view-box="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ c.p1 }}"></path><path d="{{ c.p2 }}"></path></svg></span>
+          <span style="display:flex;flex-direction:column;align-items:{{ c.al }};gap:6px;min-width:0"><span style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9fb4c6">{{ c.label }}</span>
+          <strong style="font-size:16px;font-weight:400;color:#dbe5ed;word-break:break-word">{{ c.value }}</strong></span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer style="padding:64px 0 40px;border-top:1px solid rgba(220,235,245,.1)">
+  <div style="max-width:1260px;margin:0 auto;padding:0 clamp(20px,5vw,80px);box-sizing:border-box;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:36px">
+    <div>
+      <img src="/home-revamp/assets/avatar-logo.svg" alt="Avatar" width="119" height="32" style="display:block;height:28px;width:auto">
+      <p style="margin:14px 0 0;max-width:240px;font-size:13px;line-height:1.5;color:#9fb4c6">© 2026 AVATAR India. All rights reserved.</p>
+    </div>
+    <sc-for list="{{ footCols }}" as="col" hint-placeholder-count="3">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:12px;font-size:14px">
+        <strong style="margin-bottom:4px;font-size:12px;font-weight:500;letter-spacing:.2em;text-transform:uppercase">{{ col.title }}</strong>
+        <sc-for list="{{ col.links }}" as="l" hint-placeholder-count="3">
+          <a href="{{ l.href }}" style="color:#9fb4c6;transition:color .2s;padding:2px 0;border-bottom:1px solid transparent" style-hover="color:#ffffff;border-bottom:1px solid #bbe3fa">{{ l.label }}</a>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;cursorGlow&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Full&quot;,&quot;Calm&quot;],&quot;default&quot;:&quot;Full&quot;,&quot;tsType&quot;:&quot;'Full' | 'Calm'&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  state = { w: typeof window !== 'undefined' ? window.innerWidth : 1440, scrolled: false, menu: false, aud: 0, eco: 0, faq: 0, why: 0, whyOpen: -1 };
+  rootRef = React.createRef(); heroRef = React.createRef(); artRef = React.createRef(); glowRef = React.createRef();
+  spinRef = React.createRef(); rimRef = React.createRef(); ecoTrackRef = React.createRef(); trustTrackRef = React.createRef(); audBarRef = React.createRef(); faqPanelRef = React.createRef(); stmtRef = React.createRef(); fanRef = React.createRef(); lineRef = React.createRef();
+
+  componentDidMount() {
+    this.onResize = () => { this.setState({ w: window.innerWidth }); requestAnimationFrame(() => this.handleScroll()); };
+    // One scroll update per frame: scroll events can fire several times per frame
+    // (touchpads, high-rate mice), and each update measures/styles many elements.
+    this.onScroll = () => { if (!this.scrollRaf) this.scrollRaf = requestAnimationFrame(() => { this.scrollRaf = 0; this.handleScroll(); }); };
+    this.onMove = (e) => {
+      const g = this.glowRef.current; if (!g) return;
+      g.style.opacity = this.props.cursorGlow === true ? '1' : '0';
+      g.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+    };
+    window.addEventListener('resize', this.onResize);
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    window.addEventListener('pointermove', this.onMove);
+    this.anims = [];
+    // Motion no longer depends on the OS 'reduce motion' setting: Windows reports it
+    // whenever 'Animation effects' is off (common on laptops / battery saver / RDP),
+    // which silently disabled every animation on those PCs. The 'Calm' motion prop
+    // still turns motion down deliberately.
+    this.reduce = this.props.motion === 'Calm';
+    requestAnimationFrame(() => { this.audBarEl = this.audBarRef.current; this.startAudBar(); this.intro(); this.initReveal(); this.loops(); this.handleScroll(); });
+  }
+  startAudBar() {
+    const b = this.audBarRef.current;
+    if (this.audAnim) { this.audAnim.cancel(); this.audAnim = null; }
+    if (!b || this.reduce || this.audUser) { if (b) b.style.opacity = '0'; return; }
+    this.audAnim = b.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 5500, easing: 'linear', fill: 'forwards' });
+    this.audAnim.onfinish = () => this.setState(st => ({ aud: (st.aud + 1) % 3 }), () => this.startAudBar());
+  }
+  componentDidUpdate(pp, ps) {
+    // The runtime sometimes calls this without prevState (also crashes on the
+    // reference); treat that as "no state change" instead of throwing.
+    ps = ps || this.state;
+    const tt = this.trustTrackRef.current;
+    if (tt !== this.trustEl) { this.trustAnim && this.trustAnim.cancel(); this.trustEl = tt; this.trustAnim = null;
+      if (tt && !this.reduce) { this.trustAnim = tt.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-50%)' }], { duration: 22000, iterations: Infinity });
+        tt.addEventListener('touchstart', () => this.trustAnim && this.trustAnim.pause(), { passive: true });
+        tt.addEventListener('touchend', () => this.trustAnim && this.trustAnim.play(), { passive: true }); } }
+    const bar = this.audBarRef.current;
+    if (bar && (ps.aud !== this.state.aud || this.audBarEl !== bar)) { this.audBarEl = bar; this.startAudBar(); }
+    if (!bar && this.audAnim) { this.audAnim.cancel(); this.audAnim = null; this.audBarEl = null; }
+    if (ps.faq !== this.state.faq && this.faqPanelRef.current && !this.reduce) this.faqPanelRef.current.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,.7,.2,1)' });
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('scroll', this.onScroll);
+    window.removeEventListener('pointermove', this.onMove);
+    this.io && this.io.disconnect();
+    this.anims.forEach(a => a.cancel());
+    this.audAnim && this.audAnim.cancel();
+  }
+  q(sel) { const r = this.rootRef.current; return r ? Array.from(r.querySelectorAll(sel)) : []; }
+
+  intro() {
+    if (this.reduce) return;
+    const ease = 'cubic-bezier(.2,.75,.15,1)';
+    this.q('[data-hw]').forEach((el, i) => el.animate([{ transform: 'translateY(115%)' }, { transform: 'none' }], { duration: 1000, delay: 200 + i * 80, easing: ease, fill: 'backwards' }));
+    this.q('[data-hi]').forEach(el => {
+      const d = +el.dataset.hi || 0;
+      el.animate([{ opacity: 0, translate: '0 22px' }, { opacity: 1, translate: '0 0' }], { duration: 1300, delay: d, easing: ease, fill: 'backwards' });
+    });
+    if (this.lineRef.current) this.lineRef.current.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 1400, delay: 900, easing: ease, fill: 'backwards' });
+  }
+
+  loops() {
+    const add = a => this.anims.push(a);
+    // Contact arc highlight runs on every device (by request), like the reference.
+    if (this.rimRef.current) add(this.rimRef.current.animate([{ transform: 'rotate(-38deg)' }, { transform: 'rotate(38deg)' }], { duration: 6500, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' }));
+    if (this.reduce) return;
+    if (this.spinRef.current) add(this.spinRef.current.animate([{ transform: 'translate(-50%,-50%) rotate(0deg)' }, { transform: 'translate(-50%,-50%) rotate(360deg)' }], { duration: 9000, iterations: Infinity }));
+    this.q('[data-pulse]').forEach(el => add(el.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: .4, transform: 'scale(.7)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 2000, iterations: Infinity, easing: 'ease-in-out' })));
+    this.q('[data-spin]').forEach(el => { const d = +el.dataset.spin; add(el.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(' + (d < 0 ? -360 : 360) + 'deg)' }], { duration: Math.abs(d), iterations: Infinity })); });
+    this.q('[data-beam]').forEach(el => add(el.animate([{ strokeDashoffset: '18px' }, { strokeDashoffset: '-160px' }], { duration: 2400, delay: +el.dataset.beam, iterations: Infinity, easing: 'cubic-bezier(.45,0,.2,1)' })));
+    this.q('[data-ripple]').forEach(el => add(el.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: .6 }, { transform: 'translate(-50%,-50%) scale(2.2)', opacity: 0 }], { duration: 3200, delay: +el.dataset.ripple, iterations: Infinity, easing: 'ease-out' })));
+                            }
+
+  initReveal() {
+    const vh = window.innerHeight;
+    const from = { fill: 'scaleX(0)', pop: 'scale(.86)', up: 'translateY(28px)', left: 'translateX(-48px)', right: 'translateX(48px)', zoom: 'scale(.95)', blur: 'translateY(18px)' };
+    const ease = 'cubic-bezier(.2,.7,.2,1)';
+    this.io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target, d = +el.dataset.delay || 0;
+      el.style.transition = `opacity 1s ${ease} ${d}ms, transform 1.1s ${ease} ${d}ms, filter 1s ease ${d}ms`;
+      el.style.opacity = ''; el.style.transform = ''; el.style.filter = '';
+      this.io.unobserve(el);
+    }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
+    if (this.reduce) return;
+    this.q('[data-reveal]').forEach(el => {
+      if (el.getBoundingClientRect().top < vh * .92) return;
+      const k = el.dataset.reveal;
+      el.style.opacity = '0'; el.style.transform = from[k] || from.up;
+      if (k === 'blur') el.style.filter = 'blur(10px)';
+      this.io.observe(el);
+    });
+  }
+
+  fanStep(now) {
+    this.fanRaf = 0;
+    const fan = this.fanRef.current; if (!fan) return;
+    const cards = fan.querySelectorAll('[data-fan]');
+    if (window.innerWidth < 900) { cards.forEach(el => { el.style.transform = ''; }); this.fanCur = this.fanTo = this.fanTarget; return; }
+    // Fixed-length eased glide toward the scroll target (no slow creeping tail).
+    // A new target mid-glide restarts the glide from wherever the cards are now.
+    const D = 420;
+    if (this.fanTo !== this.fanTarget) { this.fanFrom = this.fanCur; this.fanTo = this.fanTarget; this.fanT0 = now; }
+    const u = Math.min(1, (now - this.fanT0) / D), ease = 1 - Math.pow(1 - u, 3); // easeOutCubic
+    this.fanCur = u >= 1 ? this.fanTo : this.fanFrom + (this.fanTo - this.fanFrom) * ease;
+    // Spread follows scroll linearly (as in the reference); the short glide above
+    // is the only smoothing, so the cards never seem to stall at the start or end.
+    const e = this.fanCur;
+    const wds = Array.from(cards, el => el.offsetWidth + 20); // read all, then write all
+    cards.forEach((el, i) => {
+      const k = parseFloat(el.dataset.fan), wd = wds[i];
+      const x = (-k * wd * (1 - e)).toFixed(2), y = (k * k * 18 * e + (1 - e) * 40).toFixed(2), rot = (k * 7 * e).toFixed(3);
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0) rotate(' + rot + 'deg)';
+    });
+    if (this.fanCur !== this.fanTarget) this.fanRaf = requestAnimationFrame((t) => this.fanStep(t));
+  }
+
+  handleScroll() {
+    const sc = window.scrollY > 24;
+    if (sc !== this.state.scrolled) this.setState({ scrolled: sc });
+    const vh = window.innerHeight;
+    const s = this.stmtRef.current;
+    if (s) {
+      const rc = s.getBoundingClientRect();
+      // Brightness-only (no movement), so it stays scroll-linked even under reduced motion.
+      const p = Math.min(1, Math.max(0, (vh * .95 - rc.top) / (rc.height + vh * .2)));
+      const ws = s.querySelectorAll('[data-word]'); const n = ws.length;
+      ws.forEach((el, i) => { el.style.opacity = (i / n < p) ? '1' : '0.22'; el.style.textShadow = (i / n < p && i / n > p - 0.06) ? '0 0 24px rgba(187,227,250,.75)' : 'none'; });
+    }
+    if (!this.reduce) this.q('[data-par]').forEach(el => { const r = el.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return; const p = (r.top + r.height / 2) / vh - .5; el.style.transform = 'translateY(' + (p * -36) + 'px)'; });
+    if (!this.reduce) this.q('[data-float]').forEach(el => { const v = el.closest('[data-vis]'); if (!v) return; const r = v.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return; el.style.transform = 'translateY(' + ((r.top + r.height / 2 - vh / 2) * -.08 * parseFloat(el.dataset.float)) + 'px)'; });
+    const fan = this.fanRef.current;
+    if (fan) { const r = fan.getBoundingClientRect();
+      // Scroll sets the TARGET spread; fanStep() eases the cards toward it each frame,
+      // so wheel/trackpad steps glide instead of snapping (still scroll-linked + reversible).
+      this.fanTarget = this.reduce ? 1 : Math.min(1, Math.max(0, (vh - r.top) / (vh * .75)));
+      if (this.fanCur == null) this.fanCur = this.fanTarget;
+      if (!this.fanRaf) this.fanRaf = requestAnimationFrame((t) => this.fanStep(t)); }
+    // Stacking cards. Measure everything first, then write (no layout thrash);
+    // sticky top only changes when needed; the covered card dims through an
+    // overlay's opacity (compositor) instead of a per-frame brightness() repaint.
+    const st = this.q('[data-stack]');
+    const sm = Array.from(st, el => { const card = el.firstElementChild; return card ? { el, card, top: el.getBoundingClientRect().top, h: card.offsetHeight } : null; });
+    sm.forEach((o, i) => {
+      if (!o) return;
+      const { el, card, top, h } = o; const nx = sm[i + 1];
+      if (!this.reduce) { const e = Math.min(1, Math.max(0, (vh - top) / (vh * .85)));
+        const z = card.querySelector('[data-ezoom]'); if (z) z.style.transform = 'translateZ(0) scale(' + (1.14 - .14 * e).toFixed(4) + ')';
+        const nm = card.querySelector('[data-enum]'); if (nm) nm.style.transform = 'translate3d(0,' + ((1 - e) * 90).toFixed(2) + 'px,0)'; }
+      const want = parseInt(el.dataset.top) || 96;
+      const topPx = Math.min(want, vh - h - 16) + 'px';
+      if (el.style.top !== topPx) el.style.top = topPx;
+      const dim = card.querySelector('[data-dim]');
+      if (!nx || this.reduce || window.innerWidth < 700) { card.style.transform = ''; card.style.filter = ''; if (dim) dim.style.opacity = '0'; return; }
+      const p = Math.min(1, Math.max(0, 1 - (nx.top - top) / h));
+      card.style.transform = 'translateZ(0) scale(' + (1 - p * .05).toFixed(4) + ')';
+      if (dim) dim.style.opacity = (p * .35).toFixed(3); else card.style.filter = 'brightness(' + (1 - p * .35) + ')';
+    });
+    const items = this.q('[data-why]');
+    if (items.length) {
+      let best = 0, bd = 1e9; const c = vh * .5;
+      items.forEach((el, i) => { const r = el.getBoundingClientRect(); const d = Math.abs(r.top + r.height / 2 - c); if (d < bd) { bd = d; best = i; } });
+      if (best !== this.state.why) this.setState({ why: best });
+    }
+  }
+
+  renderVals() {
+    const s = this.state, w = this.props.forceW || s.w;
+    const desk = w >= 1200, lg = w >= 1024, md = w >= 700, sm = w < 700, navFull = w >= 900;
+    const trust = [
+        { bl: 'none', title: 'NSE-listed', desc: 'Backed by an NSE-listed company', p1: 'M4 19h16M6.5 15l4-4 3 3 5-6', p2: 'M15 8h3.5v3.5', d: 0 },
+        { bl: sm ? 'none' : '1px solid rgba(220,235,245,.14)', title: 'No coding needed to start', desc: 'Tracks that match your current level', p1: 'M12 4 3.5 8.5 12 13l8.5-4.5L12 4Z', p2: 'm3.5 12.5 8.5 4.5 8.5-4.5M3.5 16.5 12 21l8.5-4.5', d: 120 },
+        { bl: sm ? 'none' : '1px solid rgba(220,235,245,.14)', title: 'Career support built in', desc: 'Guidance alongside every plan', p1: 'M12 3.5 13.8 9l5.7 1.8-5.7 1.9L12 18.5l-1.8-5.8-5.7-1.9L10.2 9 12 3.5Z', p2: 'M19 16.5v3M17.5 18h3', d: 240 }
+      ];
+    const arrowT = 'M3.5 10h13M11.5 5l5 5-5 5';
+    const heroMove = (e) => {
+      if (this.reduce) return;
+      const r = e.currentTarget.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / r.width - .5, ny = (e.clientY - r.top) / r.height - .5;
+      if (this.artRef.current) this.artRef.current.style.transform = `translate3d(${nx * -16}px,${ny * -10}px,0)`;
+      
+    };
+    const heroLeave = () => {
+      if (this.artRef.current) this.artRef.current.style.transform = '';
+      this.q('[data-depth]').forEach(el => { el.style.transform = ''; });
+    };
+    const spot = (e) => {
+      const t = e.currentTarget, r = t.getBoundingClientRect();
+      t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      t.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    };
+
+    const audRaw = [
+      { num: '01', tag: 'For students and professionals', t1: 'For students', t2: 'and professionals', title: 'Individuals', desc: 'Students and professionals who want AI skills and a job to go with them.', links: [{ label: 'Learn AI with Direct2Hire', href: '/direct2hire' }, { label: 'Take the career quiz', href: '/quiz' }], gx: '20% 90%', slot: 'serve-individuals', ph: 'Learners in a session', d: 0 },
+      { num: '02', tag: 'For teams and companies', t1: 'For teams', t2: 'and companies', title: 'Businesses', desc: 'Teams that want AI working inside their day-to-day operations.', links: [{ label: 'Explore AI adoption', href: '/' }, { label: 'Get notified about the AI Marketplace', href: '#contact' }], gx: '80% 85%', slot: 'serve-business', ph: 'Team at work', d: 120 },
+      { num: '03', tag: 'For colleges and training bodies', t1: 'For colleges', t2: 'and training bodies', title: 'Institutions', desc: 'Colleges and training bodies bringing AI programs to their students.', links: [{ label: 'Bring AI programs to campus', href: '#contact' }, { label: 'Partner with us', href: '/partners' }], gx: '50% 100%', slot: 'serve-institutions', ph: 'Campus or classroom', d: 240 }
+    ];
+    const auds = audRaw.map((a, i) => {
+      const on = !lg || s.aud === i;
+      const cur = s.aud === i;
+      return { ...a, href: a.links[0].href, links: a.links.slice(0, 1), sel: cur, hid: !cur, tabC: cur ? '#10202e' : '#c6d4df',
+        mOp: cur ? 1 : 0, mT: cur ? 'none' : (i < s.aud ? 'translateX(-8%)' : 'translateX(8%)'), pe: cur ? 'auto' : 'none',
+        pick: () => { this.audUser = true; this.setState({ aud: i }, () => this.startAudBar()); },
+        flex: lg ? (s.aud === i ? '2.3 1 0' : '1 1 0') : 'none',
+        minH: lg ? 'auto' : '0',
+        bd: (lg && s.aud === i) ? 'rgba(187,227,250,.6)' : 'rgba(220,235,245,0.24)',
+        bg: (lg && s.aud === i) ? 'linear-gradient(150deg,rgba(126,158,184,.3),rgba(44,68,90,.38))' : 'linear-gradient(150deg,rgba(110,142,168,.16),rgba(40,62,82,.26))',
+        glow: `radial-gradient(ellipse 70% 60% at ${a.gx},rgba(150,214,250,.22),transparent 70%)`,
+        glowOp: on ? 1 : .35,
+        op: on ? 1 : 0, contT: on ? 'none' : 'translateY(12px)', tab: on ? 0 : -1,
+        numT: (lg && s.aud === i) ? 'translateY(10px) scale(1.08)' : 'none'
+      };
+    });
+
+    const whyRaw = [
+      { title: 'One integrated ecosystem', label: 'Ecosystem', i: 'M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7ZM12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21', tags: 'Learning · Adoption · AI tools', x: '50%', y: '12.5%', body: 'Learning, business services and AI tools in one place, each strengthening the others.' },
+      { title: 'Built around real needs', label: 'Real needs', i: 'M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17ZM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z', tags: 'Practical AI · Real problems · Useful outcomes', x: '87.5%', y: '50%', body: 'Practical AI that solves real problems. Useful outcomes before technology for its own sake.' },
+      { title: 'Powered by collaboration', label: 'Collaboration', i: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17.5 14c2 .4 3.4 2 3.8 5', tags: 'Learners · Businesses · Developers · Partners', x: '50%', y: '87.5%', body: 'Learners, businesses, developers and partners in one network, sharing expertise.' },
+      { title: 'Designed for growth', label: 'Growth', i: 'M4 19h16M6.5 15l4-4 3 3 5-6M15 8h3.5v3.5', tags: 'Education · Services · Platforms', x: '12.5%', y: '50%', body: 'Education, services and platforms that grow together across industries.' }
+    ];
+    const whys = whyRaw.map((x, i) => {
+      const on = s.why === i;
+      const op = s.whyOpen === i;
+      return { ...x, num: '0' + (i + 1), k: i - 1.5, slot: 'why-' + (i + 1), ph: 'Photo for ' + x.title, open: op,
+        toggle: () => this.setState({ whyOpen: op ? -1 : i }), aria: (op ? 'Hide details: ' : 'Show details: ') + x.title,
+        rows: op ? '1fr' : '0fr', ovOp: op ? 1 : 0, rot: op ? 'rotate(45deg)' : 'none',
+        op: 1,
+        bar: on ? '64px' : '0px',
+        numC: on ? '#bbe3fa' : '#9fb4c6',
+        numSh: on ? '0 0 18px rgba(150,220,255,.55)' : 'none',
+        navC: on ? '#bbe3fa' : '#9fb4c6', navW: on ? '48px' : '16px'
+      };
+    });
+
+    const wn = {}; const wlines = {};
+    whyRaw.forEach((x, i) => { const on = s.why === i;
+      wn['wn' + i] = { label: x.label, i: x.i, x: x.x, y: x.y, t: 'translate(-28px,-28px)' + (on ? ' scale(1.12)' : ''),
+        bd: on ? 'rgba(187,227,250,.8)' : 'rgba(220,235,245,.24)', bg: on ? 'radial-gradient(circle at 50% 30%,rgba(187,227,250,.3),#16283a)' : '#132130',
+        sh: on ? '0 0 32px rgba(150,214,250,.45)' : 'none', c: on ? '#bbe3fa' : '#9fb4c6' };
+      wlines['wl' + i] = on ? 'rgba(187,227,250,.85)' : 'rgba(220,235,245,.14)'; });
+    const faqRaw = [
+      ['Do I need a technical background to start?', 'No. Direct2Hire starts with an evaluation and a counseling call, then puts you on a track that matches your current level — including tracks with no coding at all.'],
+      ['What exactly is Direct2Hire?', "Direct2Hire is Avatar's learning-to-career program. You learn AI through structured courses and real projects, get career guidance along the way, and choose a plan based on how much career support you want."],
+      ['Are courses available separately?', "Our courses run inside Direct2Hire, with plans at different levels of career support. If you're only after a single course, talk to us and we'll point you to the right option."],
+      ['Who can sell on the AI Marketplace?', 'The AI Marketplace is launching soon. If you build AI tools and would like to list them, get in touch through our contact page.'],
+      ['What does an AI adoption engagement include?', 'We study how your business works today, set up the right tools and connect them to your existing systems, train your team to use them, and review results with you regularly as you grow.']
+    ];
+    const faqs = faqRaw.map(([q, a], i) => {
+      const open = s.faq === i;
+      return { q, a, d: i * 70, open,
+        toggle: () => this.setState({ faq: open ? -1 : i }),
+        rows: open ? '1fr' : '0fr', rot: open ? 'rotate(180deg)' : 'none', vert: open ? 'rotate(0deg)' : 'rotate(90deg)',
+        iconBg: open ? 'rgba(187,227,250,.12)' : 'transparent',
+        num: '0' + (i + 1), select: () => this.setState({ faq: i }),
+        numC: open ? '#bbe3fa' : '#7f95a7', qC: open ? '#ffffff' : '#a9bccb', fw: open ? 500 : 400,
+        arOp: open ? 1 : 0, arT: open ? 'none' : 'translateX(-8px)', lineW: open ? '100%' : '0%',
+        bd: open ? 'rgba(187,227,250,.5)' : 'rgba(220,235,245,0.24)',
+        bg: open ? 'linear-gradient(150deg,rgba(118,150,176,.24),rgba(44,68,90,.32))' : 'linear-gradient(150deg,rgba(110,142,168,.16),rgba(40,62,82,.26))'
+      };
+    });
+
+    const fa = faqRaw[Math.max(0, s.faq)];
+    const faqActive = { num: '0' + (Math.max(0, s.faq) + 1), q: fa[0], a: fa[1] };
+    const stmt = 'Avatar India is building an integrated AI ecosystem that connects AI learning, business transformation and technology solutions.'.split(' ');
+    const hl = new Set([5, 6, 7]);
+    const stmtWords = stmt.map((t, i) => ({ t: t + (i < stmt.length - 1 ? ' ' : ''), c: hl.has(i) ? '#bbe3fa' : '#f3f6f9', fw: hl.has(i) ? 600 : 300 }));
+
+    return {
+      rootRef: this.rootRef, fanRef: this.fanRef, heroRef: this.heroRef, artRef: this.artRef, glowRef: this.glowRef, spinRef: this.spinRef, rimRef: this.rimRef, faqPanelRef: this.faqPanelRef, faqActive, notLg: !lg, stmtRef: this.stmtRef, lineRef: this.lineRef,
+      heroMove, heroLeave, spot,
+      navFull, navCompact: !navFull, menu: s.menu, menuOpen: s.menu && !navFull,
+      toggleMenu: () => this.setState({ menu: !s.menu }), closeMenu: () => this.setState({ menu: false }),
+      bar1: s.menu ? 'translateY(5.5px) rotate(45deg)' : 'none', bar2: s.menu ? 0 : 1, bar3: s.menu ? 'translateY(-5.5px) rotate(-45deg)' : 'none',
+      navBg: (s.scrolled || s.menu) ? 'rgba(13,22,31,.78)' : 'rgba(13,22,31,0)',
+      navBd: s.scrolled ? 'rgba(220,235,245,.12)' : 'rgba(220,235,245,0)',
+      navBlur: (s.scrolled || s.menu) ? 'blur(18px) saturate(1.2)' : 'none',
+      menuLinks: [{ label: 'Ecosystem', href: '/' }, { label: 'Why Avatar', href: '#why' }, { label: 'Who we serve', href: '#who' }, { label: 'About', href: '#about' }, { label: 'Investors', href: '/investors' }, { label: 'Start learning', href: '/learning' }],
+      isSm: sm, notSm: !sm, ecoTrackRef: this.ecoTrackRef, ctaW: sm ? '100%' : 'auto', ctaGap: sm ? '14px' : '28px', ctaJ: sm ? 'center' : 'flex-start', whyHT: sm ? 'none' : 'translateY(-10px) scale(1.02)', whyHB: sm ? 'rgba(220,235,245,.16)' : 'rgba(187,227,250,.45)', whyHS: sm ? '0 30px 70px rgba(5,12,20,.5)' : '0 44px 90px rgba(5,12,20,.6)', trustTrackRef: this.trustTrackRef, trustLoop: [...trust.map(t => ({ ...t, dup: 'false' })), ...trust.map(t => ({ ...t, dup: 'true' }))], audBarRef: this.audBarRef,
+      audPillT: 'translateX(' + (s.aud * 100) + '%)',
+      audTouchStart: (e) => { this.tx = e.touches[0].clientX; },
+      audTouchEnd: (e) => { this.audUser = true; const dx = e.changedTouches[0].clientX - (this.tx || 0); if (Math.abs(dx) < 40) return; this.setState(st => ({ aud: (st.aud + (dx < 0 ? 1 : 2)) % 3 }), () => this.startAudBar()); },
+      ecoScroll: (e) => { const t = e.currentTarget, c = t.firstElementChild; if (!c) return; const k = Math.min(2, Math.round(t.scrollLeft / (c.offsetWidth + 12))); if (k !== this.state.eco) this.setState({ eco: k }); },
+      ecoDots: [0, 1, 2].map(k => ({ w: s.eco === k ? '28px' : '8px', c: s.eco === k ? '#bbe3fa' : 'rgba(220,235,245,.28)' })), isLg: lg,
+      heroCols: desk ? '39.375% 60.625%' : 'minmax(0,1fr)',
+      heroAspect: 'auto', heroH: desk ? 'min(56.25vw,100svh)' : 'auto',
+      heroPadB: desk ? '0' : '64px',
+      copyPad: desk ? 'max(108px,min(12.6vw,19svh)) 0 0 5.125vw' : (md ? '132px 48px 0' : '116px 20px 0'),
+      h1Size: desk ? 'min(5.15vw,9.4svh,99px)' : 'clamp(42px,9vw,72px)',
+      artW: desk ? 'min(100%,calc((100svh - max(72px,5.94vw) - 8px) * 970 / 805))' : 'min(100%,820px)',
+      artAR: '970/805', artMargin: desk ? 'max(72px,5.94vw) 0 0 auto' : '28px auto 0',
+      stripPos: desk ? 'absolute' : 'relative',
+      stripLeft: desk ? '5vw' : 'auto', stripBottom: desk ? 'min(3.6vw,5svh)' : 'auto',
+      stripPad: desk ? '0' : (md ? '44px 48px 0' : '40px 20px 0'),
+      stripCols: md ? 'repeat(4,max-content)' : 'repeat(2,minmax(0,1fr))',
+      stripGap: md ? '0' : '24px 0',
+      heroCards: [
+        { num: '01', title: 'Avatar Learning · Live', desc: 'Hands-on AI programs.', href: '/learning', d: 800 },
+        { num: '02', title: 'AI Adoption Services · Live', desc: 'Setup, training and ongoing support.', href: '/', d: 900 },
+        { num: '03', title: 'AI Marketplace · Soon', desc: 'Ready-made and custom AI tools.', href: '/marketplace', d: 1000 }
+      ],
+      steps: [
+        { num: '01', title: 'Learn', desc: 'Build AI skills', d: 900 },
+        { num: '02', title: 'Adopt', desc: 'Implement solutions', d: 1000 },
+        { num: '03', title: 'Access', desc: 'Ready-made AI tools', d: 1100 },
+        { num: '04', title: 'Scale', desc: 'Drive real impact', d: 1200 }
+      ],
+      trust,
+      vmCols: md ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,1fr)',
+      trustCols: '',
+      trustGap: sm ? '28px' : '0', trustBleed: sm ? '-20px' : '0', trustPad: sm ? '18px 20px' : '0', trustFlex: sm ? 'none' : '1 1 0', trustItemPad: sm ? '0' : '26px clamp(16px,2.4vw,32px)',
+      learnPoints: ['Courses for every level', 'Hands-on, real projects', 'Career guidance built in'],
+      courses: [
+        { title: 'AI Fundamentals & ChatGPT', meta: '4 wks', rating: '4.7', thumb: 'linear-gradient(145deg,rgba(174,223,253,.55),rgba(70,110,150,.35))' },
+        { title: 'Prompt Engineering', meta: '3 wks', rating: '4.8', thumb: 'linear-gradient(145deg,rgba(150,236,220,.5),rgba(60,120,120,.35))' },
+        { title: 'Building AI Agents', meta: '6 wks', rating: '4.2', thumb: 'linear-gradient(145deg,rgba(190,180,255,.5),rgba(90,90,160,.35))' }
+      ],
+      products: [
+        { num: '01', title: 'Avatar Learning', t1: 'Avatar', t2: 'Learning', i1: 'M16 9.5c-2.6-1.8-6.1-2.4-10-2v15.5c3.9-.4 7.4.2 10 2 2.6-1.8 6.1-2.4 10-2V7.5c-3.9-.4-7.4.2-10 2Z', i2: 'M16 9.5V24.5', imgPos: '18% 20%', imgScale: '1.25', imgFilter: 'none', line: 'Learn AI with career support, through Direct2Hire.', points: ['No coding needed to start', 'Hands-on, real projects', 'Career guidance built in'], cta: 'Start learning', href: '/learning', live: true, soon: false, badge: 'Live now', panelTitle: 'Popular courses',
+          rows: [{ k: '4 weeks', t: 'AI Fundamentals & ChatGPT Mastery', m: '★ 4.7' }, { k: '3 weeks', t: 'Prompt Engineering Advanced', m: '★ 4.8' }, { k: '6 weeks', t: 'Building AI Agents', m: '★ 4.2' }] },
+        { num: '02', title: 'AI Adoption Services', t1: 'AI Adoption', t2: 'Services', i1: 'M5 24.5c.6-3.7 3.4-6 7-6s6.4 2.3 7 6M15.6 11.5a3.6 3.6 0 1 1-7.2 0 3.6 3.6 0 0 1 7.2 0Z', i2: 'M20.5 18.6c3.2-.3 5.9 1.6 6.5 5M24.5 12.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z', imgPos: '10% 75%', imgScale: '1.6', imgFilter: 'none', line: 'We set up AI inside your business and train your team to use it.', points: ['A study of how you work today', 'The right tools, connected to your systems', 'Team training and regular reviews'], cta: 'Explore AI adoption', href: '/', live: true, soon: false, badge: 'Live now', panelTitle: 'How it works',
+          rows: [{ k: '01', t: 'Study your workflow', m: 'Discovery' }, { k: '02', t: 'Set up', m: 'Setup' }, { k: '03', t: 'Train and review', m: 'Ongoing' }] },
+        { num: '03', title: 'AI Marketplace', t1: 'AI', t2: 'Marketplace', i1: 'M6 6h8v8H6zM18 6h8v8h-8z', i2: 'M6 18h8v8H6zM18 18h8v8h-8z', imgPos: '85% 60%', imgScale: '1.5', imgFilter: 'grayscale(.7) brightness(.85)', line: 'Find and compare AI tools for your work.', points: ['Ready-made AI tools', 'Compare before you choose', 'Built by vetted developers'], cta: 'Notify me', href: '#contact', live: false, soon: true, badge: 'Coming soon', panelTitle: 'What you will find',
+          rows: [{ k: '01', t: 'Ready-made tools', m: 'Use now' }, { k: '02', t: 'Custom solutions', m: 'Tailored' }, { k: '03', t: 'List your tool', m: 'Developers' }] }
+      ].map((p, i) => { return { ...p, mChip: ['Career call booked', 'Team trained', 'Search AI tools'][i], verb: ['Learn', 'Adopt', 'Access'][i], slot: ['eco-learning', 'eco-adoption', 'eco-marketplace'][i], ph: ['Live class photo', 'Team workshop or client photo', 'Product screenshot or tools photo'][i], isLearn: i === 0, isAdopt: i === 1, isMarket: i === 2,
+        mods: [{ t: 'Prompt basics', s: 2 }, { t: 'ChatGPT at work', s: 2 }, { t: 'Real project', s: 1 }, { t: 'Career call', s: 0 }].map((m, k) => ({ t: m.t, d: 150 + k * 90, i: ['M3.5 6h5v4h-5zM4.5 6V4.5a1.5 1.5 0 0 1 3 0V6', 'M4.5 3.2 9 6l-4.5 2.8z', 'M3 6.5 5 8.5 9 4'][m.s], c: m.s ? '#eef4f8' : '#9fb4c6', bd: m.s === 1 ? 'rgba(187,227,250,.55)' : 'rgba(220,236,247,.16)', dotBg: m.s === 2 ? '#aedffd' : (m.s === 1 ? 'rgba(187,227,250,.18)' : 'rgba(220,235,245,.08)'), dotC: m.s === 2 ? '#10202e' : (m.s === 1 ? '#bbe3fa' : '#9fb4c6') })),
+        flow: [{ t: 'Study', m: 'Your workflow', i: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13ZM15.5 15.5 20 20' }, { t: 'Set up', m: 'Tools + systems', i: 'M9 3.5v5M15 3.5v5M6.5 8.5h11v3a5.5 5.5 0 0 1-11 0zM12 17v3.5' }, { t: 'Train', m: 'Your team', i: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17.5 14c2 .4 3.4 2 3.8 5' }].map((f, k) => ({ ...f, d: 100 + k * 220 })),
+        tools: [['Writing assistant', 'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'], ['Document reader', 'M6 3.5h8l4 4v13H6zM14 3.5v4h4M9 12h6M9 16h6'], ['Support chatbot', 'M4.5 19.5 5.6 16A8 8 0 1 1 8.3 18.6l-3.8.9ZM9 10.5h6M9 13.5h4'], ['Sales insights', 'M4 19h16M7 16v-4M12 16V8M17 16v-7'], ['Meeting notes', 'M5 4.5h14v15H5zM8.5 9h7M8.5 12.5h7M8.5 16h4'], ['Custom tools', 'M12 5v14M5 12h14']].map(([t, ic], k) => ({ t, i: ic, d: 80 + k * 70 })),
+        top: (96 + i * 28) + 'px', badgeC: p.live ? '#bbe3fa' : '#c6d4df', badgeBd: p.live ? 'rgba(187,227,250,.5)' : 'rgba(220,235,245,.3)', bd: p.live ? 'rgba(187,227,250,.4)' : 'rgba(220,235,245,.24)', bg: ['linear-gradient(150deg,#22384c,#152536)', 'linear-gradient(150deg,#1f3447,#13222f)', 'linear-gradient(150deg,#1b2d3d,#111d29)'][i] }; }),
+      visH: lg ? '0' : '320px', visFade: lg ? 'linear-gradient(90deg,#131f2c 0,rgba(19,31,44,0) 28%)' : 'linear-gradient(180deg,#141f2c 0,rgba(20,31,44,0) 30%)', chipOut: '24px', chipOut2: '24px', isMd: md, stackPos: md ? 'sticky' : 'relative', stackGap: md ? '28px' : '16px', stackCols: lg ? 'minmax(0,.95fr) minmax(0,1.05fr)' : 'minmax(0,1fr)', stackH: lg ? 'min(520px,calc(100svh - 190px))' : (md ? '700px' : 'auto'),
+
+      fanJustify: w >= 900 ? 'center' : 'flex-start', fanGap: w >= 900 ? 'clamp(14px,1.6vw,24px)' : '14px', fanPad: w >= 900 ? '24px 0 64px' : '8px 20px 32px', fanOverflow: w >= 900 ? 'visible' : 'auto', fanW: w >= 900 ? 'clamp(230px,21vw,300px)' : 'min(78vw,320px)',
+      stmtWords, ...wn, ...wlines, aboutCols: lg ? 'minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)',
+      arcW: md ? 'max(1600px,140vw)' : '260vw', ctcCols: md ? 'repeat(3,minmax(0,1fr))' : 'minmax(0,1fr)',
+      ecoNodes: [
+        { t: 'Learning', s: 'Live', x: '50%', y: '15%', lt: 'auto', lb: 'calc(100% + 10px)', d: 1300, bd: 'rgba(187,227,250,.55)', c: '#bbe3fa', i1: 'M16 9.5c-2.6-1.8-6.1-2.4-10-2v15.5c3.9-.4 7.4.2 10 2 2.6-1.8 6.1-2.4 10-2V7.5c-3.9-.4-7.4.2-10 2Z', i2: 'M16 9.5V24.5' },
+        { t: 'AI Adoption', s: 'Live', x: '80.25%', y: '67.5%', lt: 'calc(100% + 10px)', lb: 'auto', d: 2100, bd: 'rgba(187,227,250,.55)', c: '#bbe3fa', i1: 'M5 24.5c.6-3.7 3.4-6 7-6s6.4 2.3 7 6M15.6 11.5a3.6 3.6 0 1 1-7.2 0 3.6 3.6 0 0 1 7.2 0Z', i2: 'M20.5 18.6c3.2-.3 5.9 1.6 6.5 5M24.5 12.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z' },
+        { t: 'AI Marketplace', s: 'Soon', x: '19.75%', y: '67.5%', lt: 'calc(100% + 10px)', lb: 'auto', d: 2900, bd: 'rgba(220,235,245,.28)', c: '#9fb4c6', i1: 'M6 6h8v8H6zM18 6h8v8h-8z', i2: 'M6 18h8v8H6zM18 18h8v8h-8z' }
+      ],
+      audCols: lg ? 'repeat(3,minmax(0,1fr))' : (md ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,1fr)'), audH: lg ? '600px' : '540px', auds,
+      whyCols: lg ? 'minmax(0,.9fr) minmax(0,1.1fr)' : 'minmax(0,1fr)', whyPos: lg ? 'sticky' : 'static', whys,
+      faqCols: lg ? 'minmax(0,.8fr) minmax(0,1.2fr)' : 'minmax(0,1fr)', faqs,
+      ctaCols: lg ? 'minmax(0,1.1fr) minmax(0,.9fr)' : 'minmax(0,1fr)',
+      contacts: [
+        { label: 'Email', value: 'business@avatarindia.com', href: 'mailto:business@avatarindia.com', target: '_self', p1: 'M3.5 6.5a1 1 0 0 1 1-1h15a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z', p2: 'm4 6.5 8 6 8-6' },
+        { label: 'Phone', value: '+91 89768 30779', href: 'tel:+918976830779', target: '_self', p1: 'M6.5 3.5h3l1.5 4-2 1.3a10 10 0 0 0 6.2 6.2l1.3-2 4 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z', p2: '' },
+        { label: 'WhatsApp', value: '+91 91367 74304', href: 'https://wa.me/919136774304', target: '_blank', p1: 'M4.5 19.5 5.6 16A8 8 0 1 1 8.3 18.6l-3.8.9Z', p2: 'M9 10.5h6M9 13.5h4' }
+      ].map((c, i) => ({ ...c, d: i * 120, bl: md && i ? '1px solid rgba(220,235,245,.14)' : 'none', bt: !md && i ? '1px solid rgba(220,235,245,.14)' : 'none', dir: md ? 'column' : 'row', gap: md ? '14px' : '18px', pad: md ? '24px 16px' : '20px 4px', ta: md ? 'center' : 'left', al: md ? 'center' : 'flex-start' })),
+      footCols: [
+        { title: 'Platforms', links: [{ label: 'Direct2Hire', href: '/direct2hire' }, { label: 'AI Marketplace (soon)', href: '/marketplace' }, { label: 'Partners', href: '/partners' }] },
+        { title: 'Company', links: [{ label: 'About Us', href: '/about' }, { label: 'Investors', href: '/investors' }, { label: 'Contact', href: '/contact' }] },
+        { title: 'Legal', links: [{ label: 'Terms & Conditions', href: '/terms-and-conditions' }, { label: 'Privacy Policy', href: '/privacy-policy' }] }
+      ]
+    };
+  }
+}
+</script>
+
+
+</body></html>
