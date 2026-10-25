@@ -11,10 +11,12 @@ export const fetchCategories = () =>
     .then((r) => r.data.data.data);
 
 export const fetchCategoriesPaginated = (
+  page: number = 1,
+  pageSize: number = 10,
   search?: string,
 ): Promise<PaginatedResponse<any>> =>
   apiClient
-    .get("/admin/categories", { params: { ...(search && { search }) } })
+    .get("/admin/categories", { params: { page, pageSize, ...(search && { search }) } })
     .then((r) => r.data.data);
 
 export const createCategory = (payload: {
@@ -30,10 +32,12 @@ export const fetchAdminCourses = () =>
   apiClient.get("/admin/courses").then((r) => r.data.data.data ?? r.data.data);
 
 export const fetchAdminCoursesPaginated = (
+  page: number = 1,
+  pageSize: number = 10,
   search?: string,
 ): Promise<PaginatedResponse<any>> =>
   apiClient
-    .get("/admin/courses", { params: { ...(search && { search }) } })
+    .get("/admin/courses", { params: { page, pageSize, ...(search && { search }) } })
     .then((r) => r.data.data);
 
 export const fetchAdminCourse = (id: string) =>
@@ -947,10 +951,12 @@ export interface AdminUser {
 }
 
 export const fetchUsersPaginated = (
+  page: number = 1,
+  pageSize: number = 10,
   search?: string,
 ): Promise<PaginatedResponse<AdminUser>> =>
   apiClient
-    .get("/users", { params: { ...(search && { search }) } })
+    .get("/users", { params: { page, pageSize, ...(search && { search }) } })
     .then((r) => r.data.data);
 
 export const setUserRole = (
@@ -980,12 +986,14 @@ export interface AdminWebinarRegistration {
 }
 
 export const fetchWebinarRegistrationsPaginated = (
+  page: number = 1,
+  pageSize: number = 20,
   search?: string,
   status?: WebinarRegistrationStatus,
 ): Promise<PaginatedResponse<AdminWebinarRegistration>> =>
   apiClient
     .get("/admin/webinar/registrations", {
-      params: { ...(search && { search }), ...(status && { status }) },
+      params: { page, pageSize, ...(search && { search }), ...(status && { status }) },
     })
     .then((r) => r.data.data);
 

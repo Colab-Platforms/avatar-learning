@@ -1,23 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, FolderOpen, Tag } from "lucide-react";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Plus, FolderOpen, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { createCategory } from "@/lib/adminApi";
 import { useAdminCategories } from "@/hooks/queries/useAdminCategories";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/react-query/query-keys";
 
-export default function CategoriesPage() {
+const PAGE_SIZE = 10;
+
+function CategoriesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useAdminCategories();
+  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+  const { data, isLoading, isFetching } = useAdminCategories(page, PAGE_SIZE);
   const categories = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const totalRecords = data?.totalRecords ?? 0;
 
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", slug: "", description: "" });
+
+  const goToPage = useCallback(
+    (p: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (p <= 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(p));
+      }
+      const qs = params.toString();
+      router.push(qs ? `/admin/categories?${qs}` : "/admin/categories");
+    },
+    [router, searchParams],
+  );
+
+  // Fallback to page 1 if the URL points past the last available page.
+  useMemo(() => {
+    if (data && page > data.totalPages && data.totalPages > 0 && page !== 1) {
+      goToPage(1);
+    }
+  }, [data, page, goToPage]);
 
   const slugify = (s: string) =>
     s
@@ -200,10 +230,53 @@ export default function CategoriesPage() {
               ))}
             </div>
 
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-3.5 border-t border-white/5">
+                <span className="text-xs text-white/35">
+                  Page {page} of {totalPages}
+                  {isFetching && (
+                    <span className="ml-2 text-white/20">Updating…</span>
+                  )}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => goToPage(page - 1)}
+                    disabled={page <= 1}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/55 hover:text-white/80 hover:bg-white/4 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronLeft size={13} />
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => goToPage(page + 1)}
+                    disabled={page >= totalPages}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/55 hover:text-white/80 hover:bg-white/4 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    Next
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
     </div>
+  );
+}
+
+export default function CategoriesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-6">
+          <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
+          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+        </div>
+      }
+    >
+      <CategoriesContent />
+    </Suspense>
   );
 }
 

@@ -4,6 +4,7 @@ import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { verifyRazorpaySignature } from "@/modules/payment/payment.utils.js";
+import type { RazorpayWebhookPayload } from "@/modules/payment/payment.types.js";
 import {
   sendWebinarPaymentConfirmationEmail,
   sendWebinarRecoveryOtpEmail,
@@ -267,6 +268,54 @@ export class WebinarService {
         return;
       }
       throw err;
+    }
+  }
+
+  // Fallback path for when the client never completes the /verify-payment call
+  // (tab closed, network drop, app crash right after Razorpay captures the
+  // charge). Razorpay still delivers the webhook independently of the
+  // checkout.js `handler`, so this is the only guaranteed reconciliation path.
+  // Shares the single /api/payment/webhook endpoint — payment.controller.ts
+  // invokes this alongside PaymentService's own webhook handling, and this
+  // silently no-ops for orderIds it doesn't recognise (i.e. non-webinar ones).
+  async handleRazorpayWebhook(payload: RazorpayWebhookPayload): Promise<void> {
+    const event = payload.event;
+
+    if (event === "payment.captured") {
+      const payment = payload.payload.payment?.entity;
+      if (!payment) return;
+
+      const registration = await prisma.webinarRegistration.findUnique({
+        where: { razorpayOrderId: payment.order_id },
+        include: { webinarSchedule: true },
+      });
+      if (!registration || registration.status !== "PENDING") return;
+
+      try {
+        await this.finalizeAsPaid(registration.id, {
+          razorpayPaymentId: payment.id,
+          razorpaySignature: "webhook",
+        });
+      } catch (err: any) {
+        // Concurrent /verify-payment call already recorded this payment.
+        if (err.code !== "P2002") throw err;
+      }
+      return;
+    }
+
+    if (event === "payment.failed") {
+      const payment = payload.payload.payment?.entity;
+      if (!payment) return;
+
+      const registration = await prisma.webinarRegistration.findUnique({
+        where: { razorpayOrderId: payment.order_id },
+      });
+      if (!registration || registration.status !== "PENDING") return;
+
+      await prisma.webinarRegistration.update({
+        where: { id: registration.id },
+        data: { status: "FAILED" },
+      });
     }
   }
 
