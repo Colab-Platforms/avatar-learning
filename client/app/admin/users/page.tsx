@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Loader2, ShieldCheck, ShieldMinus, Search, Link as LinkIcon, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +12,6 @@ import {
 } from "@/lib/adminApi";
 import { useAdminUsers } from "@/hooks/queries/useAdminUsers";
 import { queryKeys } from "@/lib/react-query/query-keys";
-import { useDebounce } from "@/hooks/useDebounce";
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -37,16 +35,8 @@ const ROLE_COLOR: Record<string, string> = {
   USER: "text-white/50 bg-white/8",
 };
 
-const PAGE_SIZE = 10;
-
-function AdminUsersContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function AdminUsersPage() {
   const queryClient = useQueryClient();
-
-  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
-  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-  const urlSearch = searchParams.get("search")?.trim() ?? "";
 
   const [callerRole, setCallerRole] = useState<string | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
@@ -55,11 +45,7 @@ function AdminUsersContent() {
   const [paymentLinks, setPaymentLinks] = useState<Record<string, D2HPaymentLink>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Search box value updates every keystroke; the debounced value only catches
-  // up 400ms after typing stops, so the URL (and the query key it drives)
-  // doesn't change on every keystroke.
-  const [searchInput, setSearchInput] = useState(urlSearch);
-  const debouncedSearch = useDebounce(searchInput.trim(), 400);
+  const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
     try {
@@ -73,65 +59,14 @@ function AdminUsersContent() {
     }
   }, []);
 
-  const { data, isPending, isError } = useAdminUsers(
-    currentPage,
-    PAGE_SIZE,
-    urlSearch || undefined,
-  );
+  const search = searchInput.trim() || undefined;
+  const { data, isPending, isError } = useAdminUsers(search);
 
   const users = data?.data ?? [];
-  const totalPages = data?.totalPages ?? 1;
   const loading = isPending;
   const error = mutationError || (isError ? "Failed to load users." : "");
 
-  const activeQueryKey = queryKeys.adminUsersPage(
-    currentPage,
-    PAGE_SIZE,
-    urlSearch || undefined,
-  );
-
-  const goTo = useCallback(
-    (page: number, nextSearch?: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (page <= 1) {
-        params.delete("page");
-      } else {
-        params.set("page", String(page));
-      }
-      const s = nextSearch !== undefined ? nextSearch : urlSearch;
-      if (s) {
-        params.set("search", s);
-      } else {
-        params.delete("search");
-      }
-      const qs = params.toString();
-      router.push(qs ? `/admin/users?${qs}` : "/admin/users");
-    },
-    [router, searchParams, urlSearch],
-  );
-
-  // Sync the debounced search term into the URL, resetting to page 1 so a stale
-  // currentPage doesn't request an out-of-range page against the new, smaller
-  // filtered result set.
-  useEffect(() => {
-    if (debouncedSearch !== urlSearch) {
-      goTo(1, debouncedSearch);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]);
-
-  // If the current page falls past the end of the result set (e.g. after a
-  // refresh on ?page=9 with fewer pages now), snap back to page 1.
-  useEffect(() => {
-    if (
-      data &&
-      data.totalPages > 0 &&
-      currentPage > data.totalPages &&
-      currentPage !== 1
-    ) {
-      goTo(1);
-    }
-  }, [data, currentPage, goTo]);
+  const activeQueryKey = queryKeys.adminUsersPage(1, 0, search);
 
   const handleToggleAdmin = async (user: AdminUser) => {
     const current = highestRole(user);
@@ -329,43 +264,6 @@ function AdminUsersContent() {
           </tbody>
         </table>
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={() => goTo(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/60 hover:bg-white/5 disabled:opacity-30 transition-colors"
-          >
-            Previous
-          </button>
-          <span className="text-xs text-white/40">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => goTo(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/60 hover:bg-white/5 disabled:opacity-30 transition-colors"
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
-  );
-}
-
-export default function AdminUsersPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="p-8 space-y-6">
-          <div className="h-8 w-40 bg-ink-800 rounded-lg animate-pulse" />
-          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
-        </div>
-      }
-    >
-      <AdminUsersContent />
-    </Suspense>
   );
 }

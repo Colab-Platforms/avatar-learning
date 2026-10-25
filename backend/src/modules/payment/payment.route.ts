@@ -6,13 +6,11 @@ import {
   verifyPayment,
   reportAbandonedCheckout,
   getPaymentConfig,
-  handleRazorpayWebhook,
   handleCashfreeWebhook,
 } from "./payment.controller.js";
 
 const router = Router();
 
-router.post("/webhook", handleRazorpayWebhook);
 router.post("/webhook/cashfree", handleCashfreeWebhook);
 
 router.get("/config", getPaymentConfig);

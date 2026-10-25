@@ -4,7 +4,7 @@ import STATUS_CODES from "@/utils/statusCodes.js";
 import { hashPassword } from "@/utils/auth.js";
 import { googleSheetsService } from "@/services/googleSheets.service.js";
 import { userSelectFields, CreateUserBody, UpdateUserBody, SetUserRoleBody, CompleteQuizBody, Role, ROLE_LEVEL } from "./user.types.js";
-import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
+import { formatPaginationResponse } from "@/utils/paginationUtils.js";
 import { buildPrismaQuery } from "prisma-qb";
 import { deleteFromCloudinary, RESUME_FOLDER, PROFILE_IMAGES_FOLDER, uploadToCloudinary } from "@/utils/cloudinary.js";
 
@@ -27,8 +27,6 @@ class UserService {
     };
 
     async getAllUsers(query: any, callerRole: Role, callerId: string) {
-        const { take, skip, page, pageSize } = getPaginationOptions(query, 10);
-
         const { where: qbWhere, orderBy } = buildPrismaQuery({
             query,
             searchFields: [
@@ -60,12 +58,9 @@ class UserService {
             },
         };
 
-        const [users, totalRecords] = await Promise.all([
-            prisma.user.findMany({ where, select: userSelectFields, skip, take, orderBy }),
-            prisma.user.count({ where }),
-        ]);
+        const users = await prisma.user.findMany({ where, select: userSelectFields, orderBy });
 
-        return formatPaginationResponse(users, totalRecords, page, pageSize);
+        return formatPaginationResponse(users, users.length, 1, Math.max(users.length, 1));
     }
 
     async getUserById(targetId: string, callerRole: Role, callerId: string) {

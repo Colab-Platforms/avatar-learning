@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Video, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Video, Search } from "lucide-react";
 import { useAdminWebinarRegistrations } from "@/hooks/queries/useAdminWebinarRegistrations";
 import type { WebinarRegistrationStatus } from "@/lib/adminApi";
-import { useDebounce } from "@/hooks/useDebounce";
 
 const STATUS_FILTERS: { label: string; value: WebinarRegistrationStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
@@ -27,64 +25,19 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-function AdminWebinarContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function AdminWebinarPage() {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<WebinarRegistrationStatus | "ALL">("ALL");
 
-  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
-  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-  const urlSearch = searchParams.get("search")?.trim() ?? "";
-  const urlStatus = (searchParams.get("status") as WebinarRegistrationStatus | null) ?? "ALL";
-
-  const [search, setSearch] = useState(urlSearch);
-  const debouncedSearch = useDebounce(search, 400);
+  const urlSearch = search.trim();
 
   const { data, isLoading, isError } = useAdminWebinarRegistrations(
-    currentPage,
-    20,
     urlSearch || undefined,
-    urlStatus === "ALL" ? undefined : urlStatus,
+    status === "ALL" ? undefined : status,
   );
 
   const registrations = data?.data ?? [];
-  const pagination = data
-    ? {
-        totalRecords: data.totalRecords,
-        totalPages: data.totalPages,
-        hasNextPage: data.hasNextPage,
-        hasPreviousPage: data.hasPreviousPage,
-      }
-    : null;
-
-  const updateParams = useCallback(
-    (next: { page?: number; search?: string; status?: string }) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      const page = next.page ?? currentPage;
-      if (page <= 1) params.delete("page");
-      else params.set("page", String(page));
-
-      const s = next.search !== undefined ? next.search : urlSearch;
-      if (s) params.set("search", s);
-      else params.delete("search");
-
-      const st = next.status !== undefined ? next.status : urlStatus;
-      if (st && st !== "ALL") params.set("status", st);
-      else params.delete("status");
-
-      const qs = params.toString();
-      router.push(qs ? `/admin/webinar?${qs}` : "/admin/webinar");
-    },
-    [router, searchParams, currentPage, urlSearch, urlStatus],
-  );
-
-  // Sync debounced search into the URL, resetting to page 1
-  useEffect(() => {
-    if (debouncedSearch !== urlSearch) {
-      updateParams({ page: 1, search: debouncedSearch });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]);
+  const totalRecords = data?.totalRecords ?? 0;
 
   return (
     <div className="p-8 space-y-6">
@@ -92,7 +45,7 @@ function AdminWebinarContent() {
         <div>
           <h1 className="text-2xl font-bold text-white">Webinar Registrations</h1>
           <p className="text-sm text-white/40 mt-0.5">
-            AI Webinar &middot; {pagination?.totalRecords ?? 0} registrations
+            AI Webinar &middot; {totalRecords} registrations
           </p>
         </div>
         <Link
@@ -128,9 +81,9 @@ function AdminWebinarContent() {
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
-              onClick={() => updateParams({ page: 1, status: f.value })}
+              onClick={() => setStatus(f.value)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                urlStatus === f.value
+                status === f.value
                   ? "bg-brand-500/15 text-brand-300 border border-brand-500/30"
                   : "border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20"
               }`}
@@ -205,50 +158,6 @@ function AdminWebinarContent() {
           </div>
         )}
       </div>
-
-      {!isLoading && pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            onClick={() => updateParams({ page: currentPage - 1 })}
-            disabled={!pagination.hasPreviousPage}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              pagination.hasPreviousPage
-                ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                : "border border-white/5 text-white/20 cursor-not-allowed"
-            }`}
-          >
-            <ChevronLeft size={16} />
-            Previous
-          </button>
-          <button
-            onClick={() => updateParams({ page: currentPage + 1 })}
-            disabled={!pagination.hasNextPage}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              pagination.hasNextPage
-                ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                : "border border-white/5 text-white/20 cursor-not-allowed"
-            }`}
-          >
-            Next
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
     </div>
-  );
-}
-
-export default function AdminWebinarPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="p-8 space-y-6">
-          <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
-          <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
-        </div>
-      }
-    >
-      <AdminWebinarContent />
-    </Suspense>
   );
 }

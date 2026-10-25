@@ -17,7 +17,6 @@ import { sendPaymentConfirmationEmail } from "./payment.mail.js";
 import type {
   CreateOrderResponse,
   CreatePaymentLinkResponse,
-  RazorpayWebhookPayload,
   CashfreeWebhookPayload,
   VerifyPaymentBody,
   VerifyCashfreePaymentBody,
@@ -1120,94 +1119,6 @@ export class PaymentService {
       amountPaise: orders[0].amount,
       lastAttemptAt: orders[0].createdAt,
     });
-  }
-
-  async handleRazorpayWebhook(payload: RazorpayWebhookPayload): Promise<void> {
-    const event = payload.event;
-
-    if (event === "payment_link.paid") {
-      // Admin-generated Payment Link flow: the link's own id is what we stored
-      // as gatewayOrderId at creation (Payment Links don't have an order_id
-      // until paid), so match on that instead of payment.entity.order_id.
-      const paymentLink = payload.payload.payment_link?.entity;
-      const payment = payload.payload.payment?.entity;
-      if (!paymentLink || !payment) return;
-
-      await completePayment({
-        orderId: paymentLink.id,
-        gatewayPaymentId: payment.id,
-        gatewaySignature: "webhook",
-        paymentMethod: payment.method,
-        metadata: payment.notes as object,
-      });
-      return;
-    }
-
-    if (event === "payment.captured") {
-      const payment = payload.payload.payment?.entity;
-      if (!payment) return;
-
-      await completePayment({
-        orderId: payment.order_id,
-        gatewayPaymentId: payment.id,
-        gatewaySignature: "webhook",
-        paymentMethod: payment.method,
-        metadata: payment.notes as object,
-      });
-    }
-
-    if (event === "payment.failed") {
-      const payment = payload.payload.payment?.entity;
-      if (!payment) return;
-
-      const order = await prisma.paymentOrder.findUnique({
-        where: { gatewayOrderId: payment.order_id },
-      });
-      if (!order || order.status !== "PENDING") return;
-
-      await prisma.paymentOrder.update({
-        where: { id: order.id },
-        data: { status: "FAILED" },
-      });
-    }
-
-    if (event === "refund.processed") {
-      const refund = payload.payload.refund?.entity;
-      if (!refund) return;
-
-      const tx = await prisma.paymentTransaction.findUnique({
-        where: { gatewayPaymentId: refund.payment_id },
-      });
-      if (!tx) return;
-
-      const order = await prisma.paymentOrder.findUnique({
-        where: { id: tx.paymentOrderId },
-      });
-      if (!order) return;
-
-      await prisma.$transaction(async (db) => {
-        await db.paymentTransaction.update({
-          where: { id: tx.id },
-          data: { status: "REFUNDED" },
-        });
-        await db.paymentOrder.update({
-          where: { id: order.id },
-          data: { status: "REFUNDED" },
-        });
-        // Marks the enrollment refunded so the partner-commission maturity
-        // sweep (partnerService.processMaturedReferrals) permanently skips
-        // it instead of crediting the referring partner.
-        if (
-          order.productType === "DIRECT2HIRE" &&
-          order.direct2hireEnrollmentId
-        ) {
-          await db.direct2HireEnrollment.update({
-            where: { id: order.direct2hireEnrollmentId },
-            data: { status: "REFUNDED" },
-          });
-        }
-      });
-    }
   }
 
   async handleCashfreeWebhook(payload: CashfreeWebhookPayload): Promise<void> {

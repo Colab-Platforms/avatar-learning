@@ -9,12 +9,10 @@ import {
   validateAbandonedCheckout,
 } from "./payment.validation.js";
 import {
-  verifyRazorpayWebhookSignature,
   verifyCashfreeWebhookSignature,
 } from "./payment.utils.js";
 import { getPaymentProvider } from "./payment.config.js";
-import { webinarService } from "@/modules/webinar/webinar.service.js";
-import type { RazorpayWebhookPayload, CashfreeWebhookPayload } from "./payment.types.js";
+import type { CashfreeWebhookPayload } from "./payment.types.js";
 
 const service = new PaymentService();
 
@@ -74,51 +72,6 @@ export const reportAbandonedCheckout = async (
 
 export const getPaymentConfig = async (_req: Request, res: Response): Promise<void> => {
   sendResponse(res, true, { provider: getPaymentProvider() }, "Payment config");
-};
-
-export const handleRazorpayWebhook = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    if (!secret) {
-      res.status(STATUS_CODES.SERVER_ERROR).json({ success: false });
-      return;
-    }
-
-    const signature = req.headers["x-razorpay-signature"] as string;
-    if (!signature) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Missing signature" });
-      return;
-    }
-
-    const rawBody = (req as any).rawBody as string | undefined;
-    if (!rawBody) {
-      res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Missing raw body" });
-      return;
-    }
-
-    const isValid = verifyRazorpayWebhookSignature(rawBody, signature, secret);
-    if (!isValid) {
-      res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: "Invalid signature" });
-      return;
-    }
-
-    // Ack immediately once signature verified — Razorpay only needs 2xx here.
-    // Processing errors below must never surface as a failed delivery, or
-    // repeated retries eventually get this webhook endpoint auto-deactivated.
-    res.status(STATUS_CODES.OK).json({ success: true });
-
-    const payload = req.body as RazorpayWebhookPayload;
-    service.handleRazorpayWebhook(payload).catch((err) => {
-      console.error("Razorpay webhook processing error:", err);
-    });
-    // Separate table/flow from PaymentOrder — no-ops for orderIds it doesn't recognise.
-    webinarService.handleRazorpayWebhook(payload).catch((err) => {
-      console.error("Webinar webhook processing error:", err);
-    });
-  } catch (err: any) {
-    console.error("Razorpay webhook error:", err);
-    res.status(STATUS_CODES.SERVER_ERROR).json({ success: false });
-  }
 };
 
 export const handleCashfreeWebhook = async (req: Request, res: Response): Promise<void> => {

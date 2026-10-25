@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Users, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useAdminDirect2HireEnrollments } from "@/hooks/queries/useAdminDirect2HireEnrollments";
-import { useDebounce } from "@/hooks/useDebounce";
 
 function AdminDirect2HireEnrollmentsContent() {
   const router = useRouter();
@@ -19,7 +18,7 @@ function AdminDirect2HireEnrollmentsContent() {
   // up 400ms after typing stops, so the URL (and the query key it drives)
   // doesn't change on every keystroke.
   const [searchInput, setSearchInput] = useState(urlSearch);
-  const debouncedSearch = useDebounce(searchInput.trim(), 400);
+  const debouncedSearch = searchInput.trim();
 
   const { data, isPending, isError } = useAdminDirect2HireEnrollments(
     currentPage,

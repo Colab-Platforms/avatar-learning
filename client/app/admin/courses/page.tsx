@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap } from "lucide-react";
 import {
     fetchCategories,
     createCourse,
@@ -14,7 +13,6 @@ import { useAdminCourses } from "@/hooks/queries/useAdminCourses";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/react-query/query-keys";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
-import { useDebounce } from "@/hooks/useDebounce";
 
 interface Category { id: string; name: string; slug: string; }
 interface Course {
@@ -37,31 +35,14 @@ const LEVEL_COLOR: Record<string, string> = {
     ADVANCED: "text-red-400 bg-red-400/10",
 };
 
-function AdminCoursesContent() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+export default function AdminCoursesPage() {
     const queryClient = useQueryClient();
 
-    const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
-    const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
-    const urlSearch = searchParams.get("search")?.trim() ?? "";
+    const [search, setSearch] = useState("");
 
-    const [search, setSearch] = useState(urlSearch);
-    const debouncedSearch = useDebounce(search, 400);
-
-    const { data, isLoading, isFetching } = useAdminCourses(currentPage, 10, urlSearch || undefined);
+    const { data, isLoading } = useAdminCourses(search.trim() || undefined);
     const courses = (data?.data ?? []) as Course[];
     const allCoursesCount = data?.totalRecords ?? 0;
-    const pagination = data
-        ? {
-              currentPage: data.currentPage,
-              pageSize: data.pageSize,
-              totalRecords: data.totalRecords,
-              totalPages: data.totalPages,
-              hasNextPage: data.hasNextPage,
-              hasPreviousPage: data.hasPreviousPage,
-          }
-        : null;
     const loading = isLoading;
 
     const [categories, setCategories] = useState<Category[]>([]);
@@ -86,40 +67,6 @@ function AdminCoursesContent() {
         () => queryClient.invalidateQueries({ queryKey: queryKeys.adminCourses }),
         [queryClient],
     );
-
-    const handlePageChange = useCallback(
-        (page: number, nextSearch?: string) => {
-            const params = new URLSearchParams(searchParams.toString());
-            if (page <= 1) {
-                params.delete("page");
-            } else {
-                params.set("page", String(page));
-            }
-            const s = nextSearch !== undefined ? nextSearch : urlSearch;
-            if (s) {
-                params.set("search", s);
-            } else {
-                params.delete("search");
-            }
-            const qs = params.toString();
-            router.push(qs ? `/admin/courses?${qs}` : "/admin/courses");
-        },
-        [router, searchParams, urlSearch],
-    );
-
-    useEffect(() => {
-        if (data && currentPage > data.totalPages && data.totalPages > 0 && currentPage !== 1) {
-            handlePageChange(1);
-        }
-    }, [data, currentPage, handlePageChange]);
-
-    // Sync debounced search into the URL, resetting to page 1
-    useEffect(() => {
-        if (debouncedSearch !== urlSearch) {
-            handlePageChange(1, debouncedSearch);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearch]);
 
     const filtered = courses.filter((c) => {
         const matchLevel = filterLevel === "ALL" || c.level === filterLevel;
@@ -163,7 +110,7 @@ function AdminCoursesContent() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Courses</h1>
-                    <p className="text-sm text-white/40 mt-0.5">{allCoursesCount} total · {courses.filter(c => c.isPublished).length} on this page</p>
+                    <p className="text-sm text-white/40 mt-0.5">{allCoursesCount} total · {courses.filter(c => c.isPublished).length} published</p>
                 </div>
                 <button
                     onClick={() => setShowForm((v) => !v)}
@@ -373,69 +320,7 @@ function AdminCoursesContent() {
                     </div>
                 )}
             </div>
-
-            {/* Pagination */}
-            {!loading && pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={!pagination.hasPreviousPage}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            pagination.hasPreviousPage
-                                ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                                : "border border-white/5 text-white/20 cursor-not-allowed"
-                        }`}
-                    >
-                        <ChevronLeft size={16} />
-                        Previous
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => handlePageChange(page)}
-                                className={`h-9 w-9 rounded-lg text-sm font-medium transition-all ${
-                                    currentPage === page
-                                        ? "bg-brand-500 text-ink-950 font-semibold"
-                                        : "border border-white/8 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                                }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
-                    </div>
-
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={!pagination.hasNextPage}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            pagination.hasNextPage
-                                ? "border border-white/10 text-white/60 hover:border-brand-500/40 hover:text-brand-300 hover:bg-brand-500/5"
-                                : "border border-white/5 text-white/20 cursor-not-allowed"
-                        }`}
-                    >
-                        Next
-                        <ChevronRight size={16} />
-                    </button>
-                </div>
-            )}
         </div>
-    );
-}
-
-export default function AdminCoursesPage() {
-    return (
-        <Suspense
-            fallback={
-                <div className="p-8 space-y-6">
-                    <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
-                    <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
-                </div>
-            }
-        >
-            <AdminCoursesContent />
-        </Suspense>
     );
 }
 

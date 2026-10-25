@@ -65,18 +65,17 @@ export const getCategories = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
     const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const { categories, totalRecords } = await adminService.getCategories(
-      take,
-      skip,
+      undefined,
+      undefined,
       search,
     );
     const response = formatPaginationResponse(
       categories,
       totalRecords,
-      page,
-      pageSize,
+      1,
+      Math.max(totalRecords, 1),
     );
     sendResponse(res, true, response, "Categories fetched");
   } catch (err: any) {
@@ -96,18 +95,17 @@ export const adminGetAllCourses = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
     const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const { courses, totalRecords } = await adminService.getAllCourses(
-      take,
-      skip,
+      undefined,
+      undefined,
       search,
     );
     const response = formatPaginationResponse(
       courses,
       totalRecords,
-      page,
-      pageSize,
+      1,
+      Math.max(totalRecords, 1),
     );
     sendResponse(res, true, response, "Courses fetched");
   } catch (err: any) {

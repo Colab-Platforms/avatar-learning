@@ -1,16 +1,11 @@
 import { fetchUsersPaginated } from "@/lib/adminApi";
 import { queryKeys } from "@/lib/react-query/query-keys";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-export function useAdminUsers(
-  page: number,
-  pageSize: number = 10,
-  search?: string,
-) {
+export function useAdminUsers(search?: string) {
   return useQuery({
-    queryKey: queryKeys.adminUsersPage(page, pageSize, search),
-    queryFn: () => fetchUsersPaginated(page, pageSize, search),
-    placeholderData: keepPreviousData,
+    queryKey: queryKeys.adminUsersPage(1, 0, search),
+    queryFn: () => fetchUsersPaginated(search),
     staleTime: 5 * 60 * 1000,
   });
 }
