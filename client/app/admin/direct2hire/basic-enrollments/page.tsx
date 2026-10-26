@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Wallet, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useAdminBasicEnrollments } from "@/hooks/queries/useAdminBasicEnrollments";
+import { useDebounce } from "@/hooks/useDebounce";
 
 function AdminBasicPlanContent() {
   const router = useRouter();
@@ -18,7 +19,7 @@ function AdminBasicPlanContent() {
   // up 400ms after typing stops, so the URL (and the query key it drives)
   // doesn't change on every keystroke.
   const [searchInput, setSearchInput] = useState(urlSearch);
-  const debouncedSearch = searchInput.trim();
+  const debouncedSearch = useDebounce(searchInput.trim(), 400);
 
   const { data, isPending, isError } = useAdminBasicEnrollments(
     currentPage,

@@ -17,6 +17,21 @@ export function verifyRazorpaySignature(
   );
 }
 
+export function verifyRazorpayWebhookSignature(
+  rawBody: string,
+  signature: string,
+  secret: string,
+): boolean {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected, "hex"),
+    Buffer.from(signature, "hex"),
+  );
+}
+
 export function verifyCashfreeWebhookSignature(
   rawBody: string,
   signature: string,

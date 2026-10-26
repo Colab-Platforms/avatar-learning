@@ -1,11 +1,12 @@
 import { fetchCategoriesPaginated } from "@/lib/adminApi";
 import { queryKeys } from "@/lib/react-query/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-export function useAdminCategories() {
+export function useAdminCategories(page: number, pageSize: number = 10) {
   return useQuery({
-    queryKey: queryKeys.adminCategoriesPage(1, 0),
-    queryFn: () => fetchCategoriesPaginated(),
+    queryKey: queryKeys.adminCategoriesPage(page, pageSize),
+    queryFn: () => fetchCategoriesPaginated(page, pageSize),
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   });
 }
