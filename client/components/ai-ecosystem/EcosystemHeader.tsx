@@ -102,7 +102,7 @@ export function EcosystemHeader() {
             gap: 24,
           }}
         >
-          <a href="/home" aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
+          <a href="#top" aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
             <Image
               src="/landingpage-images/Avatar_logo_Light.svg"
               alt="Avatar"

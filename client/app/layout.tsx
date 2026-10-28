@@ -9,6 +9,7 @@ import QueryProvider from "@/store/QueryProvider";
 import { DeferredWidgets } from "@/components/ui/DeferredWidgets";
 // import { IndependenceDayPromo } from "@/components/ui/IndependenceDayPromo";
 import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
+import { WebinarPopup } from "@/app/direct2hire/WebinarPopup";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -91,6 +92,7 @@ export default function RootLayout({
             <ProfileCompletionGuard>{children}</ProfileCompletionGuard>
             <DeferredWidgets />
             {/* <IndependenceDayPromo /> */}
+            <WebinarPopup />
             <Toaster richColors position="top-right" />
           </QueryProvider>
         </StoreProvider>

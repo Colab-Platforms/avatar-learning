@@ -6,7 +6,6 @@ import {
   Direct2HireBanner,
 } from "@/components/sections";
 import { D2HCoursesSection } from "@/app/direct2hire/D2HCoursesSection";
-
 export default function Page() {
   return (
     <main className="bg-white">
