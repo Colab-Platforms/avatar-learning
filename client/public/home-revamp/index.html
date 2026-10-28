@@ -176,10 +176,10 @@ button{font:inherit;color:inherit}
     <sc-if value="{{ isSm }}" hint-placeholder-val="{{ false }}">
       <div ref="{{ ecoTrackRef }}" sc-camel-on-scroll="{{ ecoScroll }}" style="display:flex;gap:12px;margin:32px -20px 0;padding:0 20px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch">
         <sc-for list="{{ products }}" as="p" hint-placeholder-count="3">
-          <article style="flex:none;width:84%;scroll-snap-align:center;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(220,235,245,.14);border-radius:24px;background:#132231">
-            <div style="position:relative;aspect-ratio:4/3;background:#0f1a24">
-              <x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ p.slot }}" placeholder="{{ p.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
-              <span aria-hidden="true" style="position:absolute;inset:auto 0 -1px;height:70%;background:linear-gradient(180deg,rgba(19,34,49,0),rgba(19,34,49,.6) 50%,#132231);pointer-events:none"></span>
+          <article style="flex:none;width:84%;scroll-snap-align:center;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(220,235,245,.16);border-radius:24px;background:linear-gradient(135deg,#17293b 0%,#111d2a 55%,#0d1720 100%)">
+            <div style="position:relative;aspect-ratio:4/3;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent 100%);mask-image:linear-gradient(180deg,#000 50%,transparent 100%)">
+              <x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ p.slot }}" placeholder="{{ p.ph }}" src="{{ p.img }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
+              <span aria-hidden="true" style="position:absolute;inset:auto 0 -1px;height:70%;background:linear-gradient(180deg,rgba(18,31,44,0),rgba(18,31,44,.35));pointer-events:none"></span>
               <span style="position:absolute;right:14px;bottom:40px;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid rgba(220,236,247,.3);background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-radius:999px;font-size:11.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:{{ p.badgeC }};pointer-events:none"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.badgeC }}"></span>{{ p.badge }}</span>
               <span style="position:absolute;left:14px;top:14px;display:inline-flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;border:1px solid rgba(220,236,247,.3);background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-radius:999px;font-size:13px;pointer-events:none"><span style="display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#aedffd;color:#10202e"><svg sc-camel-view-box="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5 5 8.5 9 4"></path></svg></span>{{ p.mChip }}</span>
             </div>
@@ -204,9 +204,7 @@ button{font:inherit;color:inherit}
     <div style="display:flex;flex-direction:column;gap:{{ stackGap }};margin-top:clamp(40px,5vw,64px)">
       <sc-for list="{{ products }}" as="p" hint-placeholder-count="3">
         <div data-stack="1" data-top="{{ p.top }}" style="position:{{ stackPos }};top:{{ p.top }}">
-          <article data-stack-card="1" style="position:relative;overflow:hidden;box-sizing:border-box;display:grid;grid-template-columns:{{ stackCols }};min-height:{{ stackH }};border:1px solid rgba(220,235,245,.14);border-radius:32px;background:linear-gradient(135deg,#182a3b 0%,#111d29 65%);box-shadow:0 -20px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.08);transform-origin:50% 0;will-change:transform">
-            <span aria-hidden="true" style="position:absolute;left:-15%;top:-40%;width:70%;height:120%;border-radius:50%;background:radial-gradient(ellipse,rgba(150,210,245,.14),transparent 65%);pointer-events:none"></span>
-            <span data-reveal="fill" aria-hidden="true" style="position:absolute;left:8%;right:8%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(187,227,250,.7),transparent);transform-origin:50% 50%;z-index:3"></span>
+          <article data-stack-card="1" style="position:relative;overflow:hidden;box-sizing:border-box;display:grid;grid-template-columns:{{ stackCols }};min-height:{{ stackH }};border:1px solid rgba(220,235,245,.16);border-radius:32px;background:linear-gradient(135deg,#17293b 0%,#111d2a 55%,#0d1720 100%);box-shadow:0 30px 80px rgba(5,12,20,.45),inset 0 1px 0 rgba(255,255,255,.05);transform-origin:50% 0;will-change:transform">
             <div style="position:relative;z-index:2;display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-width:0;padding:clamp(28px,4vw,56px)">
               
               <div data-reveal="up" style="position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px">
@@ -227,8 +225,8 @@ button{font:inherit;color:inherit}
               </div>
             </div>
             <div data-vis="1" style="position:relative;min-width:0;min-height:{{ visH }}">
-              <div style="position:absolute;inset:0;overflow:hidden;background:#0f1a24">
-                <div data-ezoom="1" style="position:absolute;left:0;right:0;top:-6%;bottom:-6%;transform-origin:50% 50%"><x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ p.slot }}" placeholder="{{ p.ph }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import></div>
+              <div style="position:absolute;top:0;right:0;bottom:0;left:{{ visLeft }};overflow:hidden;-webkit-mask-image:{{ visMask }};mask-image:{{ visMask }}">
+                <div data-ezoom="1" style="position:absolute;left:0;right:0;top:-6%;bottom:-6%;transform-origin:50% 50%"><x-import component-from-global-scope="image-slot" from="/home-revamp/assets/image-slot.js#/image-slot.js" id="{{ p.slot }}" placeholder="{{ p.ph }}" src="{{ p.img }}" shape="rect" hint-size="100%,100%" style="position:absolute;inset:0"></x-import></div>
                 <span aria-hidden="true" style="position:absolute;inset:0;background:{{ visFade }};pointer-events:none"></span>
               </div>
               <sc-if value="{{ p.isLearn }}" hint-placeholder-val="{{ true }}">
@@ -244,7 +242,6 @@ button{font:inherit;color:inherit}
               <div data-reveal="pop" data-delay="350" style="position:absolute;right:{{ chipOut }};bottom:28px;width:min(300px,calc(100% - 48px));z-index:2"><div data-float="0.6" style="will-change:transform"><div style="min-height:124px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;padding:18px;box-sizing:border-box;border:1px solid rgba(220,236,247,.3);border-radius:16px;background:rgba(22,38,54,.74);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 24px 60px rgba(5,12,20,.55),inset 0 1px 0 rgba(255,255,255,.14)"><span style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9fb4c6">Coming soon</span><strong style="font-size:16px;font-weight:500;line-height:1.3">Ready-made AI tools</strong><div style="display:flex;justify-content:space-between;gap:4px"><sc-for list="{{ p.tools }}" as="t" hint-placeholder-count="6"><div data-reveal="pop" data-delay="{{ t.d }}" title="{{ t.t }}" aria-label="{{ t.t }}" style="display:flex"><span style="display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(187,227,250,.12);color:#bbe3fa"><svg sc-camel-view-box="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.i }}"></path></svg></span></div></sc-for></div></div></div></div>
             </sc-if>
             </div>
-            <span data-dim="1" aria-hidden="true" style="position:absolute;inset:0;z-index:4;border-radius:inherit;background:#000;opacity:0;pointer-events:none"></span>
           </article>
         </div>
       </sc-for>
@@ -633,8 +630,7 @@ class Component extends DCLogic {
       if (this.fanCur == null) this.fanCur = this.fanTarget;
       if (!this.fanRaf) this.fanRaf = requestAnimationFrame((t) => this.fanStep(t)); }
     // Stacking cards. Measure everything first, then write (no layout thrash);
-    // sticky top only changes when needed; the covered card dims through an
-    // overlay's opacity (compositor) instead of a per-frame brightness() repaint.
+    // sticky top only changes when needed.
     const st = this.q('[data-stack]');
     const sm = Array.from(st, el => { const card = el.firstElementChild; return card ? { el, card, top: el.getBoundingClientRect().top, h: card.offsetHeight } : null; });
     sm.forEach((o, i) => {
@@ -646,11 +642,11 @@ class Component extends DCLogic {
       const want = parseInt(el.dataset.top) || 96;
       const topPx = Math.min(want, vh - h - 16) + 'px';
       if (el.style.top !== topPx) el.style.top = topPx;
-      const dim = card.querySelector('[data-dim]');
-      if (!nx || this.reduce || window.innerWidth < 700) { card.style.transform = ''; card.style.filter = ''; if (dim) dim.style.opacity = '0'; return; }
+      if (!nx || this.reduce || window.innerWidth < 700) { card.style.transform = ''; card.style.filter = ''; return; }
       const p = Math.min(1, Math.max(0, 1 - (nx.top - top) / h));
       card.style.transform = 'translateZ(0) scale(' + (1 - p * .05).toFixed(4) + ')';
-      if (dim) dim.style.opacity = (p * .35).toFixed(3); else card.style.filter = 'brightness(' + (1 - p * .35) + ')';
+      // No dimming: the section has no card edges, so a darkened covered card
+      // would read as a box. It still eases back slightly as the next one arrives.
     });
     const items = this.q('[data-why]');
     if (items.length) {
@@ -817,12 +813,12 @@ class Component extends DCLogic {
           rows: [{ k: '01', t: 'Study your workflow', m: 'Discovery' }, { k: '02', t: 'Set up', m: 'Setup' }, { k: '03', t: 'Train and review', m: 'Ongoing' }] },
         { num: '03', title: 'AI Marketplace', t1: 'AI', t2: 'Marketplace', i1: 'M6 6h8v8H6zM18 6h8v8h-8z', i2: 'M6 18h8v8H6zM18 18h8v8h-8z', imgPos: '85% 60%', imgScale: '1.5', imgFilter: 'grayscale(.7) brightness(.85)', line: 'Find and compare AI tools for your work.', points: ['Ready-made AI tools', 'Compare before you choose', 'Built by vetted developers'], cta: 'Notify me', href: '#contact', live: false, soon: true, badge: 'Coming soon', panelTitle: 'What you will find',
           rows: [{ k: '01', t: 'Ready-made tools', m: 'Use now' }, { k: '02', t: 'Custom solutions', m: 'Tailored' }, { k: '03', t: 'List your tool', m: 'Developers' }] }
-      ].map((p, i) => { return { ...p, mChip: ['Career call booked', 'Team trained', 'Search AI tools'][i], verb: ['Learn', 'Adopt', 'Access'][i], slot: ['eco-learning', 'eco-adoption', 'eco-marketplace'][i], ph: ['Live class photo', 'Team workshop or client photo', 'Product screenshot or tools photo'][i], isLearn: i === 0, isAdopt: i === 1, isMarket: i === 2,
+      ].map((p, i) => { return { ...p, mChip: ['Career call booked', 'Team trained', 'Search AI tools'][i], verb: ['Learn', 'Adopt', 'Access'][i], slot: ['eco-learning', 'eco-adoption', 'eco-marketplace'][i], img: ['/home-revamp/assets/live-class.jpg', '', ''][i], ph: ['Live class photo', 'Team workshop or client photo', 'Product screenshot or tools photo'][i], isLearn: i === 0, isAdopt: i === 1, isMarket: i === 2,
         mods: [{ t: 'Prompt basics', s: 2 }, { t: 'ChatGPT at work', s: 2 }, { t: 'Real project', s: 1 }, { t: 'Career call', s: 0 }].map((m, k) => ({ t: m.t, d: 150 + k * 90, i: ['M3.5 6h5v4h-5zM4.5 6V4.5a1.5 1.5 0 0 1 3 0V6', 'M4.5 3.2 9 6l-4.5 2.8z', 'M3 6.5 5 8.5 9 4'][m.s], c: m.s ? '#eef4f8' : '#9fb4c6', bd: m.s === 1 ? 'rgba(187,227,250,.55)' : 'rgba(220,236,247,.16)', dotBg: m.s === 2 ? '#aedffd' : (m.s === 1 ? 'rgba(187,227,250,.18)' : 'rgba(220,235,245,.08)'), dotC: m.s === 2 ? '#10202e' : (m.s === 1 ? '#bbe3fa' : '#9fb4c6') })),
         flow: [{ t: 'Study', m: 'Your workflow', i: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13ZM15.5 15.5 20 20' }, { t: 'Set up', m: 'Tools + systems', i: 'M9 3.5v5M15 3.5v5M6.5 8.5h11v3a5.5 5.5 0 0 1-11 0zM12 17v3.5' }, { t: 'Train', m: 'Your team', i: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17.5 14c2 .4 3.4 2 3.8 5' }].map((f, k) => ({ ...f, d: 100 + k * 220 })),
         tools: [['Writing assistant', 'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4'], ['Document reader', 'M6 3.5h8l4 4v13H6zM14 3.5v4h4M9 12h6M9 16h6'], ['Support chatbot', 'M4.5 19.5 5.6 16A8 8 0 1 1 8.3 18.6l-3.8.9ZM9 10.5h6M9 13.5h4'], ['Sales insights', 'M4 19h16M7 16v-4M12 16V8M17 16v-7'], ['Meeting notes', 'M5 4.5h14v15H5zM8.5 9h7M8.5 12.5h7M8.5 16h4'], ['Custom tools', 'M12 5v14M5 12h14']].map(([t, ic], k) => ({ t, i: ic, d: 80 + k * 70 })),
         top: (96 + i * 28) + 'px', badgeC: p.live ? '#bbe3fa' : '#c6d4df', badgeBd: p.live ? 'rgba(187,227,250,.5)' : 'rgba(220,235,245,.3)', bd: p.live ? 'rgba(187,227,250,.4)' : 'rgba(220,235,245,.24)', bg: ['linear-gradient(150deg,#22384c,#152536)', 'linear-gradient(150deg,#1f3447,#13222f)', 'linear-gradient(150deg,#1b2d3d,#111d29)'][i] }; }),
-      visH: lg ? '0' : '320px', visFade: lg ? 'linear-gradient(90deg,#131f2c 0,rgba(19,31,44,0) 28%)' : 'linear-gradient(180deg,#141f2c 0,rgba(20,31,44,0) 30%)', chipOut: '24px', chipOut2: '24px', isMd: md, stackPos: md ? 'sticky' : 'relative', stackGap: md ? '28px' : '16px', stackCols: lg ? 'minmax(0,.95fr) minmax(0,1.05fr)' : 'minmax(0,1fr)', stackH: lg ? 'min(520px,calc(100svh - 190px))' : (md ? '700px' : 'auto'),
+      visH: lg ? '0' : '320px', visFade: lg ? 'linear-gradient(90deg,rgba(17,29,42,.55) 0,rgba(17,29,42,0) 45%),linear-gradient(0deg,rgba(10,18,26,.35) 0,rgba(10,18,26,0) 35%)' : 'linear-gradient(0deg,rgba(17,29,42,.6) 0,rgba(17,29,42,0) 45%)', visLeft: lg ? '-62%' : '0', visMask: lg ? 'linear-gradient(90deg,transparent 0,rgba(0,0,0,.25) 18%,rgba(0,0,0,.8) 38%,#000 52%)' : 'linear-gradient(180deg,#000 55%,transparent 100%)', chipOut: '24px', chipOut2: '24px', isMd: md, stackPos: md ? 'sticky' : 'relative', stackGap: md ? '28px' : '16px', stackCols: lg ? 'minmax(0,.95fr) minmax(0,1.05fr)' : 'minmax(0,1fr)', stackH: lg ? 'min(520px,calc(100svh - 190px))' : (md ? '700px' : 'auto'),
 
       fanJustify: w >= 900 ? 'center' : 'flex-start', fanGap: w >= 900 ? 'clamp(14px,1.6vw,24px)' : '14px', fanPad: w >= 900 ? '24px 0 64px' : '8px 20px 32px', fanOverflow: w >= 900 ? 'visible' : 'auto', fanW: w >= 900 ? 'clamp(230px,21vw,300px)' : 'min(78vw,320px)',
       stmtWords, ...wn, ...wlines, aboutCols: lg ? 'minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)',
