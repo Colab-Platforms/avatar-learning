@@ -7,14 +7,12 @@ import { X } from "lucide-react";
 /** Same-site webinar registration page (https://www.avatarindia.com/webinar in production). */
 const WEBINAR_URL = "/webinar";
 
-/** Pages where the promo would get in the way (the webinar itself, sign-in, admin, learning areas, checkout). */
-const SKIP = [
-  /^\/webinar(\/|$)/,
-  /^\/(admin|dashboard|partner-dashboard|profile|complete-profile|onboarded)(\/|$)/,
-  /^\/(login|register|forgot-password|reset-password)(\/|$)/,
-  /^\/courses\/[^/]+\/(enroll|success|learn|assessment)/,
-  /^\/direct2hire\/success/,
-];
+/**
+ * The Avatar Learning pages the promo opens on: Learning, the Direct2Hire
+ * landing page (the webinar ads link here) and the course list. Not the
+ * AI Adoption pages or the rest of the site.
+ */
+const SHOW_ON = [/^\/learning\/?$/, /^\/direct2hire\/?$/, /^\/courses\/?$/];
 
 /**
  * True when this page load came from clicking a plain <a> link on our own site
@@ -32,9 +30,9 @@ function cameFromOwnSite() {
 }
 
 /**
- * Site-wide webinar promo popup (rendered from the root layout). Opens once
- * per visit: every time someone opens or refreshes the site, on any page
- * except those in SKIP. Moving between pages inside the site doesn't reopen it.
+ * Webinar promo popup (rendered from the root layout). Opens once per visit:
+ * every time someone opens or refreshes one of the SHOW_ON pages. Moving
+ * between pages inside the site doesn't reopen it.
  * Closes with ×, a click outside, or Escape. The button sends the visitor
  * to the webinar page to register there.
  */
@@ -46,7 +44,7 @@ export function WebinarPopup() {
   const ctaRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (shown.current || !pathname || SKIP.some((re) => re.test(pathname))) return;
+    if (shown.current || !pathname || !SHOW_ON.some((re) => re.test(pathname))) return;
     if (cameFromOwnSite()) return;
     const t = window.setTimeout(() => {
       shown.current = true;
