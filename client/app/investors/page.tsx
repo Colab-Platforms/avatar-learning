@@ -7,7 +7,6 @@ import {
   Landmark,
   Search,
   ExternalLink,
-  Calendar,
   ArrowRight,
   Plus,
   Minus,
@@ -49,18 +48,6 @@ export default function InvestorsPage() {
   // Fall back to the upload date's year when the name has no year in it
   const extractYear = (doc: { name: string; createdAt: string }) =>
     extractYearFromName(doc.name) ?? String(new Date(doc.createdAt).getFullYear());
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch (e) {
-      return "";
-    }
-  };
 
   // Client-side search filtering within the selected category
   const filteredDocuments =
@@ -290,10 +277,6 @@ export default function InvestorsPage() {
                                                     </span>
                                                     <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                                                   </a>
-                                                  <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                                                    <Calendar className="h-3.5 w-3.5 text-slate-350" />
-                                                    <span>Published: {formatDate(doc.createdAt)}</span>
-                                                  </div>
                                                 </div>
                                               </div>
 
