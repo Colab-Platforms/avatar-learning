@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { NAV_LINKS } from "./data";
 import pillStyles from "../ui/hoverPill.module.css";
 
@@ -67,17 +68,30 @@ export function EcosystemHeader() {
     };
   }, [menuOpen]);
 
+  const pathname = usePathname();
+  const router = useRouter();
+
   const onNavClick = useCallback(
     (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (href === "#investors" || href === "/#investors" || href.includes("investors")) {
+        e.preventDefault();
+        setMenuOpen(false);
+        router.push("/investors?theme=dark");
+        return;
+      }
       if (href.startsWith("#")) {
         e.preventDefault();
         setMenuOpen(false);
-        scrollToSection(href.slice(1), headerRef.current);
+        if (pathname === "/" || pathname === "") {
+          scrollToSection(href.slice(1), headerRef.current);
+        } else {
+          router.push(`/${href}`);
+        }
       } else {
         setMenuOpen(false);
       }
     },
-    [],
+    [pathname, router],
   );
 
   return (

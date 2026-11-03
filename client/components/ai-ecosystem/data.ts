@@ -312,7 +312,7 @@ export const NAV_LINKS = [
   { href: "#about", label: "About" },
   // { href: "#insights", label: "Insights" },
   { href: "#faq", label: "FAQ" },
-  { href: "/investors", label: "Investors" },
+  { href: "/investors?theme=dark", label: "Investors" },
 ];
 
 export const CONTACT = {
@@ -333,6 +333,6 @@ export const FOOTER_COMPANY = [
   { label: "About", href: "#about" },
   { label: "How it works", href: "#how" },
   // { label: "Insights", href: "#insights" },
-  { label: "Investors", href: "/investors" },
+  { label: "Investors", href: "/investors?theme=dark" },
   { label: "Contact", href: "#contact" },
 ];
