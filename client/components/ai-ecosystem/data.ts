@@ -310,8 +310,9 @@ export const NAV_LINKS = [
   { href: "#how", label: "How it works" },
   { href: "#who", label: "Who it's for" },
   { href: "#about", label: "About" },
-  { href: "#insights", label: "Insights" },
+  // { href: "#insights", label: "Insights" },
   { href: "#faq", label: "FAQ" },
+  { href: "/investors", label: "Investors" },
 ];
 
 export const CONTACT = {
@@ -331,6 +332,7 @@ export const FOOTER_PRODUCTS = [
 export const FOOTER_COMPANY = [
   { label: "About", href: "#about" },
   { label: "How it works", href: "#how" },
-  { label: "Insights", href: "#insights" },
+  // { label: "Insights", href: "#insights" },
+  { label: "Investors", href: "/investors" },
   { label: "Contact", href: "#contact" },
 ];

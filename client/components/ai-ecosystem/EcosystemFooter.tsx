@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { CONTACT, FOOTER_COMPANY, FOOTER_PRODUCTS } from "./data";
 
 export function EcosystemFooter() {
@@ -28,11 +29,17 @@ export function EcosystemFooter() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <strong style={{ fontSize: 13, letterSpacing: ".04em", color: "#f4f6f8" }}>Company</strong>
-            {FOOTER_COMPANY.map((c) => (
-              <a key={c.label} href={c.href} style={{ fontSize: 14, color: "#a3abb5" }}>
-                {c.label}
-              </a>
-            ))}
+            {FOOTER_COMPANY.map((c) =>
+              c.href.startsWith("#") ? (
+                <a key={c.label} href={c.href} style={{ fontSize: 14, color: "#a3abb5" }}>
+                  {c.label}
+                </a>
+              ) : (
+                <Link key={c.label} href={c.href} style={{ fontSize: 14, color: "#a3abb5" }}>
+                  {c.label}
+                </Link>
+              )
+            )}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

@@ -69,9 +69,13 @@ export function EcosystemHeader() {
 
   const onNavClick = useCallback(
     (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-      e.preventDefault();
-      setMenuOpen(false);
-      scrollToSection(href.slice(1), headerRef.current);
+      if (href.startsWith("#")) {
+        e.preventDefault();
+        setMenuOpen(false);
+        scrollToSection(href.slice(1), headerRef.current);
+      } else {
+        setMenuOpen(false);
+      }
     },
     [],
   );
@@ -114,19 +118,40 @@ export function EcosystemHeader() {
           </a>
 
           {isDesktop && (
-            <div style={{ display: "flex", gap: 32, fontSize: 14 }}>
-              {NAV_LINKS.map((l) => (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  onClick={onNavClick(l.href)}
-                  style={{ color: "#a3abb5" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#a3abb5")}
-                >
-                  {l.label}
-                </a>
-              ))}
+            <div
+              style={{
+                display: "flex",
+                gap: "clamp(16px, 2.2vw, 32px)",
+                fontSize: 14,
+                alignItems: "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {NAV_LINKS.map((l) =>
+                l.href.startsWith("#") ? (
+                  <a
+                    key={l.label}
+                    href={l.href}
+                    onClick={onNavClick(l.href)}
+                    style={{ color: "#a3abb5", textDecoration: "none", transition: "color .2s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#a3abb5")}
+                  >
+                    {l.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={l.label}
+                    href={l.href}
+                    onClick={() => setMenuOpen(false)}
+                    style={{ color: "#a3abb5", textDecoration: "none", transition: "color .2s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#a3abb5")}
+                  >
+                    {l.label}
+                  </Link>
+                )
+              )}
             </div>
           )}
 
@@ -254,27 +279,51 @@ export function EcosystemHeader() {
             flexDirection: "column",
           }}
         >
-          {NAV_LINKS.map((m) => (
-            <a
-              key={m.label}
-              href={m.href}
-              onClick={onNavClick(m.href)}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                minHeight: 60,
-                borderBottom: "1px solid rgba(255,255,255,.08)",
-                color: "#f4f6f8",
-                fontSize: 22,
-                fontWeight: 500,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {m.label}
-              <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
-            </a>
-          ))}
+          {NAV_LINKS.map((m) =>
+            m.href.startsWith("#") ? (
+              <a
+                key={m.label}
+                href={m.href}
+                onClick={onNavClick(m.href)}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  minHeight: 60,
+                  borderBottom: "1px solid rgba(255,255,255,.08)",
+                  color: "#f4f6f8",
+                  fontSize: 22,
+                  fontWeight: 500,
+                  letterSpacing: "-0.02em",
+                  textDecoration: "none",
+                }}
+              >
+                {m.label}
+                <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
+              </a>
+            ) : (
+              <Link
+                key={m.label}
+                href={m.href}
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  minHeight: 60,
+                  borderBottom: "1px solid rgba(255,255,255,.08)",
+                  color: "#f4f6f8",
+                  fontSize: 22,
+                  fontWeight: 500,
+                  letterSpacing: "-0.02em",
+                  textDecoration: "none",
+                }}
+              >
+                {m.label}
+                <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
+              </Link>
+            )
+          )}
           <Link
             href={PRODUCT_LINK.href}
             onClick={() => setMenuOpen(false)}
