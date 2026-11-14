@@ -170,6 +170,7 @@ export function EcosystemHeader() {
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+            {/* Avatar Learning button: temporarily hidden. Uncomment to restore.
             <div
               style={{
                 display: "flex",
@@ -214,6 +215,7 @@ export function EcosystemHeader() {
                 <span className={pillStyles.hoverPillLabel}>{PRODUCT_LINK.label}</span>
               </Link>
             </div>
+            */}
             {!isDesktop && (
               <button
                 type="button"
@@ -338,6 +340,7 @@ export function EcosystemHeader() {
               </Link>
             )
           )}
+          {/* Avatar Learning menu item: temporarily hidden. Uncomment to restore.
           <Link
             href={PRODUCT_LINK.href}
             onClick={() => setMenuOpen(false)}
@@ -356,6 +359,7 @@ export function EcosystemHeader() {
             {PRODUCT_LINK.label}
             <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
           </Link>
+          */}
         </div>
       )}
     </>
