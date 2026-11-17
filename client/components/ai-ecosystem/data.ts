@@ -306,7 +306,7 @@ export const MARQUEE_ITEMS = [
 ];
 
 export const NAV_LINKS = [
-  { href: "#products", label: "Products" },
+  { href: "#products", label: "Tools" },
   { href: "#how", label: "How it works" },
   { href: "#who", label: "Who it's for" },
   { href: "#about", label: "About" },
