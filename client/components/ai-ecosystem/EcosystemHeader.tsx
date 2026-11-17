@@ -8,6 +8,8 @@ import { NAV_LINKS } from "./data";
 import pillStyles from "../ui/hoverPill.module.css";
 
 const PRODUCT_LINK = { label: "Avatar Learning", href: "/learning" };
+/** The page's "Get in touch" demo form (BookDemoSection). */
+const DEMO_HREF = "#contact";
 
 function handlePillMouseMove(e: React.MouseEvent<HTMLElement>) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -216,6 +218,39 @@ export function EcosystemHeader() {
               </Link>
             </div>
             */}
+            <a
+              href={DEMO_HREF}
+              onClick={onNavClick(DEMO_HREF)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                height: isDesktop ? 42 : 36,
+                boxSizing: "border-box",
+                padding: isDesktop ? "0 22px" : "0 14px",
+                borderRadius: 999,
+                border: "1px solid rgba(138,181,227,.35)",
+                background: "linear-gradient(135deg,#2A78CC 0%,#205A99 100%)",
+                color: "#fff",
+                fontSize: isDesktop ? 15 : 13,
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                textDecoration: "none",
+                boxShadow: "0 4px 16px rgba(42,120,204,.25),inset 0 1px 0 rgba(255,255,255,.18)",
+                transition: "transform .2s ease, box-shadow .2s ease, filter .2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 6px 24px rgba(42,120,204,.5),0 0 0 3px rgba(111,227,239,.14),inset 0 1px 0 rgba(255,255,255,.22)";
+                e.currentTarget.style.filter = "brightness(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 4px 16px rgba(42,120,204,.25),inset 0 1px 0 rgba(255,255,255,.18)";
+                e.currentTarget.style.filter = "none";
+              }}
+            >
+              Book a Demo
+            </a>
             {!isDesktop && (
               <button
                 type="button"
