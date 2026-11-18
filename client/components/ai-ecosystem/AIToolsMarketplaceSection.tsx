@@ -480,7 +480,7 @@ export function AIToolsMarketplaceSection() {
             style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.03)", fontSize: 15, color: "#a3abb5" }}
           >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fe3ef" }} />
-            Products
+            Tools
           </motion.div>
           <motion.h2
             {...reveal(80)}
