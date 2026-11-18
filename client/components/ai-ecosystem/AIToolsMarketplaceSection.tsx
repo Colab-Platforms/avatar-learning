@@ -473,7 +473,7 @@ export function AIToolsMarketplaceSection() {
 
   return (
     <section id="products" data-screen-label="03 Products" style={{ scrollMarginTop: 68, position: "relative", padding: "clamp(56px,7vw,96px) 24px" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px,4vw,40px)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(24px,3vw,32px)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
           <motion.div
             {...reveal(0)}
@@ -502,9 +502,6 @@ export function AIToolsMarketplaceSection() {
           aria-label="Products"
           className={styles.noScrollbar}
           style={{
-            position: "sticky",
-            top: 68,
-            zIndex: 20,
             display: "flex",
             gap: 8,
             overflowX: "auto",
