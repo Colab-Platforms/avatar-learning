@@ -20,8 +20,13 @@ const registerSchema = Joi.object({
         "any.required": "Password is required",
         "string.pattern.base": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
     }),
-    phoneNo: Joi.string().trim().required().messages({
+  phoneNo: Joi.string()
+    .trim()
+    .pattern(/^[6-9]\d{9}$/)
+    .required()
+    .messages({
         "string.empty": "Phone number is required",
+        "string.pattern.base": "Enter a valid 10-digit Indian mobile number",
         "any.required": "Phone number is required",
     }),
     state: Joi.string().trim().required().messages({
@@ -32,6 +37,11 @@ const registerSchema = Joi.object({
         "string.empty": "Country is required",
         "any.required": "Country is required",
     }),
+    city: Joi.string().trim().required().messages({
+        "string.empty": "City is required",
+        "any.required": "City is required",
+    }),
+    referralCode: Joi.string().trim().uppercase().optional().allow(""),
 });
 
 const loginSchema = Joi.object({
@@ -101,10 +111,61 @@ const resetPasswordSchema = Joi.object({
     }),
 });
 
+const googleAuthSchema = Joi.object({
+    idToken: Joi.string().trim().required().messages({
+        "string.empty": "Google ID token is required",
+        "any.required": "Google ID token is required",
+    }),
+    referralCode: Joi.string().trim().uppercase().optional().allow(""),
+});
+
+const completeProfileSchema = Joi.object({
+    firstName: Joi.string().trim().required().messages({
+        "string.empty": "First name is required",
+        "any.required": "First name is required",
+    }),
+    lastName: Joi.string().trim().required().messages({
+        "string.empty": "Last name is required",
+        "any.required": "Last name is required",
+    }),
+    phoneNo: Joi.string()
+        .trim()
+        .pattern(/^[6-9]\d{9}$/)
+        .required()
+        .messages({
+            "string.empty": "Phone number is required",
+            "string.pattern.base": "Enter a valid 10-digit Indian mobile number",
+            "any.required": "Phone number is required",
+        }),
+    state: Joi.string().trim().optional().allow(""),
+    country: Joi.string().trim().optional().allow(""),
+    city: Joi.string().trim().optional().allow(""),
+    dateOfBirth: Joi.date().iso().max("now").optional().messages({
+        "date.base": "Enter a valid date of birth",
+        "date.format": "Enter a valid date of birth",
+        "date.max": "Date of birth cannot be in the future",
+    }),
+});
+
+const verifyPhoneSchema = Joi.object({
+    email: Joi.string().trim().lowercase().email().required().messages({
+        "string.email": "A valid email is required",
+        "string.empty": "Email is required",
+        "any.required": "Email is required",
+    }),
+    accessToken: Joi.string().trim().required().messages({
+        "string.empty": "Phone verification token is required",
+        "any.required": "Phone verification token is required",
+    }),
+});
+
 export const validateRegisterSchema = (data: unknown) => registerSchema.validate(data, { abortEarly: false });
 export const validateLoginSchema = (data: unknown) => loginSchema.validate(data, { abortEarly: false });
 export const validateVerifyOtpSchema = (data: unknown) => verifyOtpSchema.validate(data, { abortEarly: false });
 export const validateResendOtpSchema = (data: unknown) => resendOtpSchema.validate(data, { abortEarly: false });
+export const validateVerifyPhoneSchema = (data: unknown) => verifyPhoneSchema.validate(data, { abortEarly: false });
+export const validateGoogleAuthSchema = (data: unknown) => googleAuthSchema.validate(data, { abortEarly: false });
+export const validateCompleteProfileSchema = (data: unknown) => completeProfileSchema.validate(data, { abortEarly: false });
 export const validateRefreshTokenSchema = (data: unknown) => refreshTokenSchema.validate(data, { abortEarly: false });
 export const validateForgotPasswordSchema = (data: unknown) => forgotPasswordSchema.validate(data, { abortEarly: false });
 export const validateResetPasswordSchema = (data: unknown) => resetPasswordSchema.validate(data, { abortEarly: false });

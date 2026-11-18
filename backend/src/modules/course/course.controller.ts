@@ -3,6 +3,8 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
 import { AdminCourseService, PublicCourseService } from "./course.service.js";
+import { getCourseImageUploadSignature } from "@/utils/cloudinary.js";
+import { buildCertificatePdf } from "@/utils/certificate.js";
 import {
   getPaginationOptions,
   formatPaginationResponse,
@@ -13,12 +15,24 @@ import {
   validateUpdateCourse,
   validateCreateLesson,
   validateUpdateLesson,
+  validateCreateTopic,
+  validateUpdateTopic,
+  validateCompleteFileUpload,
 } from "./course.validators.js";
 
 const adminService = new AdminCourseService();
 const publicService = new PublicCourseService();
 
 const param = (req: Request, key: string): string => String(req.params[key]);
+
+/**
+ * `?track=basic|d2h` — which plan's content to read for a student who owns
+ * both. Absent means "the one they'd have seen before tracks existed".
+ */
+const trackParam = (req: Request): string | undefined =>
+  typeof req.query.track === "string" && req.query.track.trim()
+    ? req.query.track.trim()
+    : undefined;
 
 //ADMIN Endpoints
 // Categories
@@ -47,12 +61,24 @@ export const createCategory = async (
 };
 
 export const getCategories = async (
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> => {
   try {
-    const categories = await adminService.getCategories();
-    sendResponse(res, true, categories, "Categories fetched");
+    const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
+    const search = typeof req.query.search === "string" ? req.query.search : undefined;
+    const { categories, totalRecords } = await adminService.getCategories(
+      take,
+      skip,
+      search,
+    );
+    const response = formatPaginationResponse(
+      categories,
+      totalRecords,
+      page,
+      pageSize,
+    );
+    sendResponse(res, true, response, "Categories fetched");
   } catch (err: any) {
     sendResponse(
       res,
@@ -71,9 +97,11 @@ export const adminGetAllCourses = async (
 ): Promise<void> => {
   try {
     const { page, pageSize, take, skip } = getPaginationOptions(req.query, 10);
+    const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const { courses, totalRecords } = await adminService.getAllCourses(
       take,
       skip,
+      search,
     );
     const response = formatPaginationResponse(
       courses,
@@ -270,7 +298,73 @@ export const deleteLesson = async (
   }
 };
 
-// ─── Admin – Video Upload (two-step direct upload) ───────────────────────────
+//  Topics
+
+export const createTopic = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateCreateTopic(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const topic = await adminService.createTopic(param(req, "lessonId"), value);
+    sendResponse(res, true, topic, "Topic created", STATUS_CODES.CREATED);
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const updateTopic = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateUpdateTopic(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const topic = await adminService.updateTopic(param(req, "topicId"), value);
+    sendResponse(res, true, topic, "Topic updated");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const deleteTopic = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    await adminService.deleteTopic(param(req, "topicId"));
+    sendResponse(res, true, null, "Topic deleted");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+// ─── Admin – Video Upload (two-step direct upload, scoped to a topic) ────────
 
 // Step 1: create Bunny slot → return { videoGuid, uploadUrl, accessKey } to client
 export const initVideoUpload = async (
@@ -290,7 +384,7 @@ export const initVideoUpload = async (
       return;
     }
     const result = await adminService.initVideoUpload(
-      param(req, "lessonId"),
+      param(req, "topicId"),
       title.trim(),
     );
     sendResponse(res, true, result, "Video slot created", STATUS_CODES.CREATED);
@@ -327,12 +421,58 @@ export const completeVideoUpload = async (
       return;
     }
     const resource = await adminService.completeVideoUpload(
-      param(req, "lessonId"),
+      param(req, "topicId"),
       videoGuid,
       title,
       fileSize ?? 0,
     );
     sendResponse(res, true, resource, "Video saved", STATUS_CODES.CREATED);
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+// ─── Admin – File Upload (signed direct-to-Cloudinary, scoped to a topic) ────
+
+export const signCourseFileUpload = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const signData = adminService.getFileUploadSignature();
+    sendResponse(res, true, signData, "Upload signature generated");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const completeFileUpload = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { error, value } = validateCompleteFileUpload(req.body);
+    if (error) {
+      sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    const resource = await adminService.completeFileUpload(
+      param(req, "topicId"),
+      value,
+    );
+    sendResponse(res, true, resource, "File saved", STATUS_CODES.CREATED);
   } catch (err: any) {
     sendResponse(
       res,
@@ -359,6 +499,15 @@ export const deleteResource = async (
       err.message,
       err.statusCode ?? STATUS_CODES.SERVER_ERROR,
     );
+  }
+};
+
+export const signCourseImageUpload = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const signData = getCourseImageUploadSignature();
+    sendResponse(res, true, signData, "Upload signature generated", STATUS_CODES.OK);
+  } catch (err: any) {
+    sendResponse(res, false, null, err.message, err.statusCode ?? STATUS_CODES.SERVER_ERROR);
   }
 };
 
@@ -512,8 +661,30 @@ export const getEnrolledCourseDetail = async (
     const course = await publicService.getEnrolledCourseDetail(
       param(req, "courseId"),
       req.user!.id,
+      trackParam(req),
     );
     sendResponse(res, true, course, "Course fetched");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const markTopicWatched = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const enrollment = await publicService.markTopicWatched(
+      param(req, "topicId"),
+      req.user!.id,
+    );
+    sendResponse(res, true, enrollment, "Topic marked as watched");
   } catch (err: any) {
     sendResponse(
       res,
@@ -535,6 +706,62 @@ export const checkEnrollment = async (
       req.user!.id,
     );
     sendResponse(res, true, result, "Enrollment status fetched");
+  } catch (err: any) {
+    sendResponse(
+      res,
+      false,
+      null,
+      err.message,
+      err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+    );
+  }
+};
+
+export const downloadCertificate = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const data = await publicService.getCertificateData(
+      param(req, "courseId"),
+      req.user!.id,
+      trackParam(req),
+    );
+
+    const doc = buildCertificatePdf(data);
+    const safeFilename = data.courseTitle.replace(/["\r\n]/g, "").replace(/[^\w\s-]/g, "");
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="Certificate - ${safeFilename}.pdf"`,
+    );
+    res.setHeader("Content-Type", "application/pdf");
+
+    doc.pipe(res);
+    doc.end();
+  } catch (err: any) {
+    if (!res.headersSent) {
+      sendResponse(
+        res,
+        false,
+        null,
+        err.message,
+        err.statusCode ?? STATUS_CODES.SERVER_ERROR,
+      );
+    }
+  }
+};
+
+export const getVideoPlayback = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const playback = await publicService.getVideoPlaybackUrl(
+      param(req, "resourceId"),
+      req.user!.id,
+    );
+    sendResponse(res, true, playback, "Playback URL generated");
   } catch (err: any) {
     sendResponse(
       res,

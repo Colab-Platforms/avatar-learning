@@ -1,0 +1,297 @@
+import { Request, Response } from "express";
+import { sendResponse } from "@/utils/responseUtils.js";
+import STATUS_CODES from "@/utils/statusCodes.js";
+import { Direct2HireAdminService } from "./admin.service.js";
+import { validateStudentUserIdParam } from "./admin.validator.js";
+import { CounsellingService } from "../counselling/counselling.service.js";
+import { validateConfirmCounsellingBooking } from "../counselling/counselling.validator.js";
+import { validateSaveCounsellingFeedback } from "../counselling/counselling-feedback.validator.js";
+import { PaymentService } from "@/modules/payment/payment.service.js";
+import {
+    getPaginationOptions,
+    formatPaginationResponse,
+} from "@/utils/paginationUtils.js";
+
+const service = new Direct2HireAdminService();
+const counsellingService = new CounsellingService();
+const paymentService = new PaymentService();
+
+export const generatePaymentLink = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await paymentService.createDirect2HirePaymentLinkForUser(
+            value.userId,
+        );
+        sendResponse(res, true, result, "Payment link generated");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to generate payment link",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getAllStudents = async (
+    _req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const students = await service.getAllStudents();
+        sendResponse(res, true, students, "Direct2Hire students fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch students",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getAllBasicEnrollments = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { page, pageSize, take, skip } = getPaginationOptions(req.query, 20);
+        const search =
+            typeof req.query.search === "string" ? req.query.search.trim() : undefined;
+        const { rows, totalRecords } = await service.getAllBasicEnrollments(
+            take,
+            skip,
+            search || undefined,
+        );
+        const response = formatPaginationResponse(rows, totalRecords, page, pageSize);
+        sendResponse(res, true, response, "Basic plan enrollments fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch basic plan enrollments",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getBasicStudentProfile = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const profile = await service.getBasicStudentProfile(value.userId);
+        sendResponse(res, true, profile, "Basic plan student profile fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch basic plan student profile",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getStudentProfile = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const profile = await service.getStudentProfile(value.userId);
+        sendResponse(res, true, profile, "Student profile fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch student profile",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const markCounsellingCompleted = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const booking = await counsellingService.markCounsellingCompleted(
+            value.userId,
+        );
+        sendResponse(res, true, booking, "Counselling marked as completed");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to mark counselling as completed",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const confirmBooking = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error: paramError, value: params } =
+            validateStudentUserIdParam(req.params);
+        if (paramError) {
+            sendResponse(
+                res,
+                false,
+                null,
+                paramError.message,
+                STATUS_CODES.BAD_REQUEST,
+            );
+            return;
+        }
+
+        const existing = await counsellingService.getBooking(params.userId);
+        if (!existing) {
+            sendResponse(
+                res,
+                false,
+                null,
+                "Counselling booking not found",
+                STATUS_CODES.NOT_FOUND,
+            );
+            return;
+        }
+
+        const { error, value } = validateConfirmCounsellingBooking(
+            req.body,
+            existing.preferredMode,
+        );
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const booking = await counsellingService.confirmBooking(
+            params.userId,
+            value,
+            existing,
+        );
+        sendResponse(res, true, booking, "Counselling session confirmed");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to confirm counselling session",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const getCounsellingFeedback = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error, value } = validateStudentUserIdParam(req.params);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const feedback = await counsellingService.getFeedbackByUserId(
+            value.userId,
+        );
+        sendResponse(res, true, feedback, "Counselling feedback fetched");
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to fetch counselling feedback",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};
+
+export const saveCounsellingFeedback = async (
+    req: Request,
+    res: Response,
+): Promise<void> => {
+    try {
+        const { error: paramError, value: params } =
+            validateStudentUserIdParam(req.params);
+        if (paramError) {
+            sendResponse(
+                res,
+                false,
+                null,
+                paramError.message,
+                STATUS_CODES.BAD_REQUEST,
+            );
+            return;
+        }
+
+        const { error, value } = validateSaveCounsellingFeedback(req.body);
+        if (error) {
+            sendResponse(res, false, null, error.message, STATUS_CODES.BAD_REQUEST);
+            return;
+        }
+
+        const result = await counsellingService.saveFeedbackAndComplete(
+            params.userId,
+            value,
+        );
+        sendResponse(
+            res,
+            true,
+            result,
+            "Counselling feedback saved and session marked as completed",
+        );
+    } catch (err: unknown) {
+        const error = err as { message?: string; statusCode?: number };
+        sendResponse(
+            res,
+            false,
+            null,
+            error.message ?? "Failed to save counselling feedback",
+            error.statusCode ?? STATUS_CODES.SERVER_ERROR,
+        );
+    }
+};

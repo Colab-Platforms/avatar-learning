@@ -1,0 +1,57 @@
+export type AssessmentTypeValue = "WEEKLY" | "FINAL";
+
+export const WEEKLY_QUESTION_COUNT = 10;
+export const FINAL_QUESTION_COUNT = 30;
+export const DEFAULT_FINAL_MAX_ATTEMPTS = 3;
+
+/** Cooldown between a failed attempt and starting the next one (weekly + final). */
+export const ATTEMPT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+// export const ATTEMPT_COOLDOWN_MS = 1 * 60 * 1000;
+
+/** @deprecated Use ATTEMPT_COOLDOWN_MS */
+export const FINAL_ATTEMPT_COOLDOWN_MS = ATTEMPT_COOLDOWN_MS;
+
+export interface CreateAssessmentBody {
+    tier?: "BASIC" | "D2H" | "BOTH";
+  title: string;
+  description?: string;
+  type: AssessmentTypeValue;
+  lessonId?: string | null;
+  timeLimitMinutes: number;
+  passingScorePercent?: number;
+  maxTabSwitchWarnings?: number;
+  maxAttempts?: number | null;
+}
+
+export interface UpdateAssessmentBody {
+  title?: string;
+  description?: string;
+  timeLimitMinutes?: number;
+  passingScorePercent?: number | null;
+  maxTabSwitchWarnings?: number;
+  maxAttempts?: number | null;
+}
+
+export interface AssessmentOptionInput {
+  optionText: string;
+  isCorrect: boolean;
+  optionOrder: number;
+}
+
+export interface CreateQuestionBody {
+  questionText: string;
+  points?: number;
+  questionOrder: number;
+  options: AssessmentOptionInput[];
+}
+
+export interface UpdateQuestionBody {
+  questionText?: string;
+  points?: number;
+  questionOrder?: number;
+  options?: AssessmentOptionInput[];
+}
+
+export interface SaveAnswerBody {
+  selectedOptionId: string | null;
+}

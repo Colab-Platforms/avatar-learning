@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { CalendarPlus, CheckCircle2, Circle } from "lucide-react";
-import { ScrollReveal } from "@/components/ui";
+import { ArrowUpRight, CalendarPlus, CheckCircle2, Circle } from "lucide-react";
+import { Button, ScrollReveal } from "@/components/ui";
 import { WEBINARS, WEBINARS_SECTION } from "@/data/webinars";
 
 export function WebinarsSection() {
@@ -73,12 +73,12 @@ function WebinarCard({
               FREE
             </span>
           )}
-          <div className="ml-auto text-right shrink-0">
+          {/* <div className="ml-auto text-right shrink-0">
             <p className="text-[13px] font-semibold text-white/80">
               {webinar.date}
             </p>
             <p className="text-[12px] text-white/35 mt-0.5">{webinar.time}</p>
-          </div>
+          </div> */}
         </div>
 
         {/* Title */}
@@ -107,24 +107,34 @@ function WebinarCard({
         <div className="flex-1" />
 
         {/* CTA buttons */}
-        <div className="flex gap-3 pt-1">
-          <Link
-            href={webinar.registerHref}
-            className="flex-1 py-3 rounded-xl bg-brand-500 text-ink-950 text-[14px] font-semibold text-center
-                       transition-all duration-200 hover:bg-brand-400
-                       shadow-[0_4px_16px_rgba(0,200,255,0.28)] hover:shadow-[0_4px_24px_rgba(0,200,255,0.45)]"
+        <div className=" gap-3 ">
+          {/* <button
+            disabled
+            className="flex-1 py-3 rounded-xl bg-brand-600 text-ink-950 text-[14px] font-semibold text-center
+                       transition-all duration-200 cursor-not-allowed
+                       shadow-[0_4px_16px_rgba(0,200,255,0.28)] "
           >
-            Register Now
-          </Link>
-          <Link
-            href={webinar.calendarHref}
-            className="flex-1 py-3 rounded-xl border border-white/12 bg-white/4 text-white/70 text-[14px] font-medium text-center
-                       transition-all duration-200 hover:bg-white/8 hover:border-white/20 hover:text-white
-                       inline-flex items-center justify-center gap-2"
+            Coming Soon
+          </button> */}
+          <ScrollReveal className="flex" animation="fade-up" delay={310}>
+            <Button
+              variant="primary"
+              size="lg"
+              className="flex-1 btn-glow group/btn cursor-not-allowed"
+              disabled
+            >
+              Coming Soon
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-250" />
+            </Button>
+          </ScrollReveal>
+          {/* <button
+            disabled
+            className="flex-1 py-3 rounded-xl cursor-not-allowed border border-white/12 bg-white/4 text-white/70 text-[14px] font-medium text-center
+                       transition-all duration-200 inline-flex items-center justify-center gap-2"
           >
             <CalendarPlus className="h-3.5 w-3.5 shrink-0" />
             Add to Calendar
-          </Link>
+          </button> */}
         </div>
 
         {/* Certificate indicator */}

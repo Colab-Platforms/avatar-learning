@@ -9,7 +9,9 @@ export type AuthRequest = Request & {
     user?: {
         id: string;
         role: Role;
-    }
+    };
+    /** Course the D2H access gate verified for this request. */
+    d2hCourseId?: string;
 };
 
 export const auth = (...allowedRoles: Role[]) => {

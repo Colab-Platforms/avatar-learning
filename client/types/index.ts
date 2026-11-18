@@ -7,7 +7,8 @@ export interface ApiResponse<T> {
 }
 export interface NavItem {
   label: string;
-  href: string;
+  href?: string;
+  children?: Array<{ label: string; href: string }>;
 }
 
 export interface CourseModule {
@@ -81,7 +82,7 @@ export interface FooterColumn {
 }
 
 export interface SocialLink {
-  platform: "facebook" | "instagram" | "linkedin";
+  platform: "facebook" | "instagram" | "linkedin" | "youtube";
   href: string;
   label: string;
 }
@@ -113,5 +114,6 @@ export interface AdvisorCtaData {
   heading: string;
   description: string;
   ctaLabel: string;
+  ctaLabel2: string;
   image: string;
 }

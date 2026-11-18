@@ -5,43 +5,40 @@ import { cn } from "@/lib/utils";
 export const buttonVariants = cva(
   [
     "relative inline-flex items-center justify-center gap-2 rounded-full font-medium",
-    "transition-all duration-250 ease-out",
+    "transition-all duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950",
     "disabled:pointer-events-none disabled:opacity-40 select-none",
-    "active:scale-[0.96] active:duration-75",
-    "overflow-hidden",
-    "after:absolute after:inset-0 after:rounded-full",
-    "after:bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.12)_50%,transparent_60%)]",
-    "after:translate-x-[-100%] hover:after:translate-x-[100%]",
-    "after:transition-transform after:duration-500 after:ease-in-out",
+    "active:scale-[0.98] active:duration-75",
   ].join(" "),
   {
     variants: {
       variant: {
         primary: [
-          "bg-brand-500 text-ink-950 font-semibold",
-          "hover:bg-brand-400 hover:scale-[1.05]",
-          "shadow-[0_2px_16px_rgba(0,200,255,0.40),0_0_0_1px_rgba(0,200,255,0.25)]",
-          "hover:shadow-[0_4px_32px_rgba(0,200,255,0.65),0_0_0_1px_rgba(0,200,255,0.45)]",
+          "bg-brand-500 text-white font-semibold",
+          "hover:bg-brand-600",
+          "shadow-sm hover:shadow-md",
         ].join(" "),
         "ghost-light": [
           "border border-white/15 text-white",
-          "hover:bg-white/8 hover:border-brand-500/30 hover:text-brand-300 hover:scale-[1.04]",
+          "hover:bg-white/8 hover:border-brand-500/30 hover:text-brand-300",
           "backdrop-blur-sm",
         ].join(" "),
         "ghost-dark": [
           "border border-white/10 text-white/60",
-          "hover:bg-brand-500/8 hover:border-brand-500/25 hover:scale-[1.04] hover:text-brand-300",
+          "hover:bg-brand-500/8 hover:border-brand-500/25 hover:text-brand-300",
         ].join(" "),
         dark: [
           "bg-ink-800 text-white border border-white/8",
-          "hover:bg-ink-700 hover:scale-[1.05] hover:border-brand-500/20",
+          "hover:bg-ink-700 hover:border-brand-500/20",
           "shadow-[0_2px_12px_rgba(0,0,0,0.5)]",
         ].join(" "),
         outline: [
-          "border border-brand-500/40 text-brand-400",
-          "hover:bg-brand-500/10 hover:border-brand-500/70 hover:scale-[1.04]",
-          "hover:shadow-[0_0_16px_rgba(0,200,255,0.20)]",
+          "border border-brand-300 text-brand-600 bg-white",
+          "hover:bg-brand-50 hover:border-brand-500",
+        ].join(" "),
+        ghost: [
+          "text-text-muted",
+          "hover:text-text hover:bg-surface-alt",
         ].join(" "),
       },
       size: {

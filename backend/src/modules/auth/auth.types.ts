@@ -6,6 +6,8 @@ export interface RegisterBody {
     phoneNo: string;
     state: string;
     country: string;
+    city: string;
+    referralCode?: string;
 }
 
 export interface LoginBody {
@@ -35,6 +37,26 @@ export interface ResetPasswordBody {
 
 export interface RefreshTokenBody {
     refreshToken: string;
+}
+
+export interface VerifyPhoneBody {
+    email: string;
+    accessToken: string;
+}
+
+export interface GoogleAuthBody {
+    idToken: string;
+    referralCode?: string;
+}
+
+export interface CompleteProfileBody {
+    firstName: string;
+    lastName: string;
+    phoneNo: string;
+    state?: string;
+    country?: string;
+    city?: string;
+    dateOfBirth?: string;
 }
 
 export interface JwtPayload {

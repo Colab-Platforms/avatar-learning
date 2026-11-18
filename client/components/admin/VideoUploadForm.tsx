@@ -3,8 +3,8 @@ import { Upload } from "lucide-react";
 import { uploadVideo } from "@/lib/adminApi";
 import { Field, Spinner, inputCls, primaryBtn } from "./FormField";
 
-export function VideoUploadForm({ lessonId, onDone, onCancel }: {
-    lessonId: string; onDone: () => void; onCancel: () => void;
+export function VideoUploadForm({ topicId, onDone, onCancel }: {
+    topicId: string; onDone: () => void; onCancel: () => void;
 }) {
     const [file, setFile] = useState<File | null>(null);
     const [title, setTitle] = useState("");
@@ -25,7 +25,7 @@ export function VideoUploadForm({ lessonId, onDone, onCancel }: {
         setUploading(true);
         setError("");
         try {
-            await uploadVideo(lessonId, file, title || file.name, setProgress);
+            await uploadVideo(topicId, file, title || file.name, setProgress);
             onDone();
         } catch (err: unknown) {
             const e = err as { response?: { data?: { message?: string } }; message?: string };

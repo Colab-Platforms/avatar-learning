@@ -40,6 +40,8 @@ export interface DBCourse {
   whatYouLearn?: CourseLearnItem[];
   audience?: AudienceItem[];
   isPublished: boolean;
+  isComingSoon: boolean;
+  isDirect2HireCourse?: boolean;
   category: { id: string; name: string; slug: string };
   _count: { lessons: number; enrollments: number };
 }
@@ -49,15 +51,30 @@ export interface DBResource {
   title: string;
   category: string;
   type: string;
-  url: string;
-  downloadUrl?: string;
+  url: string | null;
+  downloadUrl?: string | null;
   bunnyVideoId?: string;
   size?: string;
 }
 
+export interface DBTopic {
+  id: string;
+  title: string;
+  description?: string;
+  topicOrder: number;
+  duration?: number;
+  resources: DBResource[];
+  isCompleted?: boolean;
+  isLocked?: boolean;
+}
+
+export type CourseTier = "BASIC" | "D2H" | "BOTH";
+
 export interface DBLesson {
   id: string;
   weekNumber: number;
+  /** Which plan this week belongs to — ₹499 Basic, ₹4999 D2H, or both. */
+  tier: CourseTier;
   title: string;
   description?: string;
   modules: string[];
@@ -65,6 +82,11 @@ export interface DBLesson {
   isPublished: boolean;
   isFreePreview: boolean;
   resources: DBResource[];
+  topics: DBTopic[];
+  isCompleted?: boolean;
+  topicsComplete?: boolean;
+  isLocked?: boolean;
+  weeklyAssessment?: import("./assessmentApi").LessonAssessmentCard | null;
 }
 
 export interface DBCourseDetail extends DBCourse {
@@ -82,17 +104,39 @@ export interface Enrollment {
 }
 
 export interface EnrolledCourseDetail extends DBCourseDetail {
+  /** Progress here is the viewed track's, not the enrolment row's. */
   enrollment: Enrollment;
+  /** Which plan's content this payload contains. */
+  track: CourseTrack;
+  /** Every plan the user owns for this course — one entry, or two after upgrading. */
+  availableTracks: CourseTrack[];
+  finalAssessment?: import("./assessmentApi").LessonAssessmentCard | null;
+}
+
+/** A plan you can be studying in. Never "BOTH" — that is an entitlement. */
+export type CourseTrack = "BASIC" | "D2H";
+
+export interface EnrollmentTrack {
+  track: CourseTrack;
+  progress: number;
+  isCompleted: boolean;
 }
 
 export interface MyEnrollment {
   id: string;
   userId: string;
   courseId: string;
+  /** Which plan the user bought — decides where their card links to. */
+  tier: CourseTier;
   enrolledAt: string;
   completedAt: string | null;
   progress: number;
   isCompleted: boolean;
+  /**
+   * One entry per plan owned — two for a BOTH enrolment, each with its own
+   * progress, so the single course card can offer both.
+   */
+  tracks: EnrollmentTrack[];
   course: DBCourse;
 }
 
@@ -125,8 +169,25 @@ export const checkEnrollment = (
 
 export const fetchEnrolledCourseDetail = (
   courseId: string,
+  track?: CourseTrack | null,
 ): Promise<EnrolledCourseDetail> =>
-  apiClient.get(`/courses/${courseId}/learn`).then((r) => r.data.data);
+  apiClient
+    .get(`/courses/${courseId}/learn`, {
+      params: track ? { track } : undefined,
+    })
+    .then((r) => r.data.data);
+
+export const markTopicWatched = (topicId: string): Promise<Enrollment> =>
+  apiClient
+    .post(`/courses/topics/${topicId}/watch`)
+    .then((r) => r.data.data);
+
+export const fetchVideoPlaybackUrl = (
+  resourceId: string,
+): Promise<{ embedUrl: string; expiresInSeconds: number }> =>
+  apiClient
+    .get(`/courses/resources/${resourceId}/playback`)
+    .then((r) => r.data.data);
 
 export const fetchMyEnrollments = (): Promise<MyEnrollment[]> =>
   apiClient
@@ -151,6 +212,33 @@ export const downloadResourceFile = async (
       responseType: "blob",
     },
   );
+
+  const disposition = response.headers["content-disposition"] as
+    | string
+    | undefined;
+  const match = disposition?.match(/filename="([^"]+)"/);
+  const resolvedName = match?.[1] ?? filename;
+
+  const blob = response.data as Blob;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = resolvedName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
+export const downloadCourseCertificate = async (
+  courseId: string,
+  filename: string,
+  track?: CourseTrack | null,
+): Promise<void> => {
+  const response = await apiClient.get(`/courses/${courseId}/certificate`, {
+    responseType: "blob",
+    params: track ? { track } : undefined,
+  });
 
   const disposition = response.headers["content-disposition"] as
     | string

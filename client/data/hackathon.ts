@@ -7,7 +7,7 @@ export const HACKATHON: HackathonData = {
     "Build AI solutions that solve real problems. Top teams get internships + cash prizes.",
   date: "18–20 July 2026",
   prizeText: "Prizes Included",
-  ctaLabel: "Register Now",
+  ctaLabel: "Coming Soon...",
   countdown: [
     { value: "06", label: "Days" },
     { value: "18", label: "Hours" },

@@ -1,17 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, BookOpen, Eye, EyeOff, Trash2, Settings2, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-    fetchAdminCourses,
-    fetchAdminCoursesPaginated,
     fetchCategories,
     createCourse,
     deleteCourse,
     toggleCoursePublish,
 } from "@/lib/adminApi";
-import type { PaginatedResponse } from "@/lib/coursesApi";
+import { useAdminCourses } from "@/hooks/queries/useAdminCourses";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/react-query/query-keys";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Category { id: string; name: string; slug: string; }
 interface Course {
@@ -22,6 +25,8 @@ interface Course {
     price: number;
     totalWeeks: number;
     isPublished: boolean;
+    isDirect2HireCourse: boolean;
+    isComingSoon: boolean;
     category: { id: string; name: string };
     _count: { lessons: number; enrollments: number };
 }
@@ -32,57 +37,95 @@ const LEVEL_COLOR: Record<string, string> = {
     ADVANCED: "text-red-400 bg-red-400/10",
 };
 
-export default function AdminCoursesPage() {
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [allCoursesCount, setAllCoursesCount] = useState(0);
-    const [pagination, setPagination] = useState<Omit<PaginatedResponse<Course>, 'data'> | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
+function AdminCoursesContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const queryClient = useQueryClient();
+
+    const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+    const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const urlSearch = searchParams.get("search")?.trim() ?? "";
+
+    const [search, setSearch] = useState(urlSearch);
+    const debouncedSearch = useDebounce(search, 400);
+
+    const { data, isLoading, isFetching } = useAdminCourses(currentPage, 10, urlSearch || undefined);
+    const courses = (data?.data ?? []) as Course[];
+    const allCoursesCount = data?.totalRecords ?? 0;
+    const pagination = data
+        ? {
+              currentPage: data.currentPage,
+              pageSize: data.pageSize,
+              totalRecords: data.totalRecords,
+              totalPages: data.totalPages,
+              hasNextPage: data.hasNextPage,
+              hasPreviousPage: data.hasPreviousPage,
+          }
+        : null;
+    const loading = isLoading;
+
     const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [error, setError] = useState("");
-    const [search, setSearch] = useState("");
     const [filterLevel, setFilterLevel] = useState("ALL");
     const [filterStatus, setFilterStatus] = useState("ALL");
     const [form, setForm] = useState({
         categoryId: "", title: "", description: "", thumbnail: "",
         level: "BEGINNER" as Course["level"], price: 0, totalWeeks: 1,
+        isDirect2HireCourse: false,
     });
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [res, cats] = await Promise.all([fetchAdminCoursesPaginated(currentPage, 10), fetchCategories()]);
-            setCourses(res.data);
-            setAllCoursesCount(res.totalRecords);
-            setPagination({
-                currentPage: res.currentPage,
-                pageSize: res.pageSize,
-                totalRecords: res.totalRecords,
-                totalPages: res.totalPages,
-                hasNextPage: res.hasNextPage,
-                hasPreviousPage: res.hasPreviousPage,
-            });
-            setCategories(cats);
-        } finally { setLoading(false); }
-    }, [currentPage]);
+    useEffect(() => {
+        fetchCategories().then(setCategories);
+    }, []);
 
-    useEffect(() => { load(); }, [load]);
+    const invalidateCourses = useCallback(
+        () => queryClient.invalidateQueries({ queryKey: queryKeys.adminCourses }),
+        [queryClient],
+    );
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
+    const handlePageChange = useCallback(
+        (page: number, nextSearch?: string) => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (page <= 1) {
+                params.delete("page");
+            } else {
+                params.set("page", String(page));
+            }
+            const s = nextSearch !== undefined ? nextSearch : urlSearch;
+            if (s) {
+                params.set("search", s);
+            } else {
+                params.delete("search");
+            }
+            const qs = params.toString();
+            router.push(qs ? `/admin/courses?${qs}` : "/admin/courses");
+        },
+        [router, searchParams, urlSearch],
+    );
+
+    useEffect(() => {
+        if (data && currentPage > data.totalPages && data.totalPages > 0 && currentPage !== 1) {
+            handlePageChange(1);
+        }
+    }, [data, currentPage, handlePageChange]);
+
+    // Sync debounced search into the URL, resetting to page 1
+    useEffect(() => {
+        if (debouncedSearch !== urlSearch) {
+            handlePageChange(1, debouncedSearch);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSearch]);
 
     const filtered = courses.filter((c) => {
-        const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
-            c.category.name.toLowerCase().includes(search.toLowerCase());
         const matchLevel = filterLevel === "ALL" || c.level === filterLevel;
         const matchStatus = filterStatus === "ALL" ||
             (filterStatus === "PUBLISHED" ? c.isPublished : !c.isPublished);
-        return matchSearch && matchLevel && matchStatus;
+        return matchLevel && matchStatus;
     });
 
     const submit = async (e: React.FormEvent) => {
@@ -91,9 +134,9 @@ export default function AdminCoursesPage() {
         setError("");
         try {
             await createCourse(form);
-            setForm({ categoryId: "", title: "", description: "", thumbnail: "", level: "BEGINNER", price: 0, totalWeeks: 1 });
+            setForm({ categoryId: "", title: "", description: "", thumbnail: "", level: "BEGINNER", price: 0, totalWeeks: 1, isDirect2HireCourse: false });
             setShowForm(false);
-            await load();
+            await invalidateCourses();
         } catch (err: any) {
             setError(err?.response?.data?.message ?? "Failed to create course");
         } finally { setSaving(false); }
@@ -101,7 +144,7 @@ export default function AdminCoursesPage() {
 
     const handleToggle = async (id: string) => {
         setTogglingId(id);
-        try { await toggleCoursePublish(id); await load(); }
+        try { await toggleCoursePublish(id); await invalidateCourses(); }
         catch { setError("Failed to toggle publish state"); }
         finally { setTogglingId(null); }
     };
@@ -109,7 +152,7 @@ export default function AdminCoursesPage() {
     const handleDelete = async (id: string, title: string) => {
         if (!confirm(`Delete "${title}" and all its lessons and videos?`)) return;
         setDeletingId(id);
-        try { await deleteCourse(id); await load(); }
+        try { await deleteCourse(id); await invalidateCourses(); }
         catch { setError("Failed to delete course"); }
         finally { setDeletingId(null); }
     };
@@ -159,10 +202,13 @@ export default function AdminCoursesPage() {
                             <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                                 placeholder="Short course description" rows={2} className={`${inputCls} resize-none`} />
                         </Field>
-                        <Field label="Thumbnail URL">
-                            <input value={form.thumbnail} onChange={(e) => setForm((f) => ({ ...f, thumbnail: e.target.value }))}
-                                placeholder="https://..." type="url" className={inputCls} />
-                        </Field>
+                        <div className="sm:col-span-2">
+                            <ImageUploadField
+                                label="Thumbnail"
+                                value={form.thumbnail}
+                                onChange={(url) => setForm((f) => ({ ...f, thumbnail: url }))}
+                            />
+                        </div>
                         <Field label="Level" required>
                             <select value={form.level} onChange={(e) => setForm((f) => ({ ...f, level: e.target.value as Course["level"] }))}
                                 className={selectCls} required>
@@ -179,6 +225,17 @@ export default function AdminCoursesPage() {
                             <input type="number" min={1} value={form.totalWeeks}
                                 onChange={(e) => setForm((f) => ({ ...f, totalWeeks: Number(e.target.value) }))} className={inputCls} />
                         </Field>
+                        <label className="sm:col-span-2 flex items-center gap-2.5 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={form.isDirect2HireCourse}
+                                onChange={(e) => setForm((f) => ({ ...f, isDirect2HireCourse: e.target.checked }))}
+                                className="w-4 h-4 rounded border-white/20 bg-ink-900 accent-brand-500"
+                            />
+                            <span className="text-xs text-white/60">
+                                Part of the Direct2Hire course bundle (auto-enrolled on payment)
+                            </span>
+                        </label>
                         {error && <p className="sm:col-span-2 text-red-400 text-xs">{error}</p>}
                         <div className="sm:col-span-2 flex gap-3">
                             <button type="submit" disabled={saving} className={`${primaryBtn} disabled:opacity-50`}>
@@ -256,6 +313,16 @@ export default function AdminCoursesPage() {
                                             }`}>
                                                 {course.isPublished ? "LIVE" : "DRAFT"}
                                             </span>
+                                            {course.isDirect2HireCourse && (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-elec-500/10 text-elec-400">
+                                                    D2H
+                                                </span>
+                                            )}
+                                            {course.isComingSoon && (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
+                                                    COMING SOON
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -354,6 +421,21 @@ export default function AdminCoursesPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AdminCoursesPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="p-8 space-y-6">
+                    <div className="h-8 w-48 bg-ink-800 rounded-lg animate-pulse" />
+                    <div className="h-64 bg-ink-800 rounded-2xl animate-pulse" />
+                </div>
+            }
+        >
+            <AdminCoursesContent />
+        </Suspense>
     );
 }
 

@@ -36,6 +36,9 @@ export interface CreateCourseBody {
     seats?: string;
     whatYouLearn?: WhatYouLearnItem[];
     audience?: AudienceItem[];
+    isDirect2HireCourse?: boolean;
+    isDirect2HireOnly?: boolean;
+    isComingSoon?: boolean;
 }
 
 export interface UpdateCourseBody {
@@ -58,12 +61,16 @@ export interface UpdateCourseBody {
     seats?: string;
     whatYouLearn?: WhatYouLearnItem[];
     audience?: AudienceItem[];
+    isDirect2HireCourse?: boolean;
+    isDirect2HireOnly?: boolean;
+    isComingSoon?: boolean;
 }
 
 export interface CreateLessonBody {
     weekNumber: number;
     title: string;
     description?: string;
+    tier?: "BASIC" | "D2H" | "BOTH";
     modules?: string[];
     duration?: number;
     lessonOrder: number;
@@ -76,10 +83,32 @@ export interface UpdateLessonBody {
     weekNumber?: number;
     title?: string;
     description?: string;
+    tier?: "BASIC" | "D2H" | "BOTH";
     modules?: string[];
     duration?: number;
     lessonOrder?: number;
     releaseDate?: string;
     isPublished?: boolean;
     isFreePreview?: boolean;
+}
+
+export interface CreateTopicBody {
+    title: string;
+    description?: string;
+    topicOrder: number;
+    duration?: number;
+}
+
+export interface UpdateTopicBody {
+    title?: string;
+    description?: string;
+    topicOrder?: number;
+    duration?: number;
+}
+
+export interface CompleteFileUploadBody {
+    title: string;
+    url: string;
+    size?: number;
+    type: string;
 }

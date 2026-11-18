@@ -1,288 +1,692 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useCallback } from "react";
 import { notFound, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Star, Clock, Users, BadgeCheck, Zap,
-  ChevronDown, ArrowRight, Download, CheckCircle, Loader2,
+  Star,
+  Clock,
+  Users,
+  BadgeCheck,
+  Sparkles,
+  Zap,
+  ChevronDown,
+  ArrowRight,
+  CheckCircle,
+  Loader2,
+  Info,
 } from "lucide-react";
-import { Badge, Button, ScrollReveal, AnimateOnScroll } from "@/components/ui";
+import { Button, ScrollReveal, AnimateOnScroll } from "@/components/ui";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import {
-  fetchCourseBySlug, enrollCourse, checkEnrollment,
-  type DBCourseDetail,
-} from "@/lib/coursesApi";
+import { enrollCourse, type DBCourseDetail } from "@/lib/coursesApi";
+import { useCourse } from "@/hooks/queries/useCourse";
+import { useEnrollment } from "@/hooks/queries/useEnrollment";
 import { useAppSelector } from "@/store/hooks";
+import { useRazorpay } from "@/hooks/useRazorpay";
+import { useCashfree } from "@/hooks/useCashfree";
+import { useCreateOrder } from "@/hooks/mutations/useCreateOrder";
+import { useVerifyPayment } from "@/hooks/mutations/useVerifyPayment";
+import type { CreateOrderResponse } from "@/lib/paymentApi";
+import { usePricing } from "@/hooks/queries/usePricing";
+import { canUpgrade, hasD2H, type EnrolledTier } from "@/lib/courseTier";
+import { basicCourseRoutes, dashboardRoutes } from "@/lib/dashboardRoutes";
 
-interface PageProps { params: Promise<{ id: string }> }
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+// Same for every course — not fetched from the API.
+const OUTCOME_STATS = [
+  {
+    value: "100%",
+    label: "Placement assistance",
+    desc: "Dedicated support until you are hired.",
+  },
+  {
+    value: "90.34%",
+    label: "Placement rate",
+    desc: "Across learners who complete a program.",
+  },
+  {
+    value: "10,000+",
+    label: "Learners guided",
+    desc: "Counselled into an AI career so far.",
+  },
+  {
+    value: "4.5",
+    label: "Average learner rating",
+    desc: "Rated across our AI programs.",
+  },
+];
+
+const OUTCOME_CARDS = [
+  {
+    eyebrow: "After you complete",
+    title: "Guaranteed internship",
+    desc: "Live projects with our partner companies on strong completion.",
+  },
+  {
+    eyebrow: "Proof of skill",
+    title: "Recognised certificate",
+    desc: "Industry-recognised, issued by NSE-listed Avatar India.",
+  },
+  {
+    eyebrow: "Built in class",
+    title: "Portfolio-ready projects",
+    desc: "Real work you can show in an interview, not exercises.",
+  },
+];
 
 export default function CoursePage({ params }: PageProps) {
   const { id } = use(params);
-  const router  = useRouter();
-  const [openWeek, setOpenWeek]         = useState<number | null>(0);
-  const [course, setCourse]             = useState<DBCourseDetail | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [enrolled, setEnrolled]         = useState(false);
-  const [enrolling, setEnrolling]       = useState(false);
-  const [enrollMsg, setEnrollMsg]       = useState("");
+  const router = useRouter();
+  const [openWeek, setOpenWeek] = useState<number | null>(0);
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollMsg, setEnrollMsg] = useState("");
+  const [msgType, setMsgType] = useState<"success" | "error">("success");
   const { user } = useAppSelector((s) => s.auth);
 
+  const razorpayLoaded = useRazorpay();
+  const cashfreeLoaded = useCashfree();
+  const { mutateAsync: createOrder } = useCreateOrder();
+  const { mutateAsync: verifyPayment } = useVerifyPayment();
+
+  const { data: course, isLoading, isError } = useCourse(id);
+  const { data: enrollmentData, refetch: refetchEnrollment } = useEnrollment(
+    course?.id ?? "",
+  );
+  const enrolled = enrollmentData?.enrolled ?? false;
+  const enrolledTier =
+    (enrollmentData?.enrollment as { tier?: EnrolledTier } | null)?.tier ?? null;
+  // Basic-plan owners get a second CTA to buy the ₹4999 track.
+  const showUpgrade = enrolled && canUpgrade(enrolledTier);
+  const { data: pricing } = usePricing(!!user);
+  const d2hPrice = pricing?.fullProgrammeRupees;
   const isFree = course?.price === 0;
+  const isComingSoon = course?.isComingSoon ?? false;
 
-  useEffect(() => {
-    fetchCourseBySlug(id)
-      .then(setCourse)
-      .catch(() => setCourse(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+  const showMsg = (msg: string, type: "success" | "error" = "success") => {
+    setEnrollMsg(msg);
+    setMsgType(type);
+  };
 
-  // Check enrollment status when course + user are loaded
-  useEffect(() => {
-    if (!course || !user) return;
-    checkEnrollment(course.id)
-      .then((r) => setEnrolled(r.enrolled))
-      .catch(() => {});
-  }, [course, user]);
-
-  const handleEnroll = useCallback(async () => {
-    if (!user) { router.push("/login"); return; }
-    if (enrolled) { router.push(`/courses/${id}/learn`); return; }
-    if (!course || course.price > 0) return;
-
+  const handleFreeEnroll = useCallback(async () => {
+    if (!course) return;
     setEnrolling(true);
-    setEnrollMsg("");
+    showMsg("");
     try {
       await enrollCourse(course.id);
-      setEnrolled(true);
-      setEnrollMsg("You're enrolled! Access your course below.");
+      showMsg("You're enrolled! Access your course below.", "success");
+      await refetchEnrollment();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      const msg = e?.response?.data?.message ?? "Enrollment failed. Please try again.";
+      const msg =
+        e?.response?.data?.message ?? "Enrollment failed. Please try again.";
       if (msg.toLowerCase().includes("already enrolled")) {
-        setEnrolled(true);
+        await refetchEnrollment();
       } else {
-        setEnrollMsg(msg);
+        showMsg(msg, "error");
       }
     } finally {
       setEnrolling(false);
     }
-  }, [user, enrolled, course, id, router]);
+  }, [course, refetchEnrollment]);
 
-  if (loading) return (
-    <>
-      <Navbar />
-      <main className="min-h-screen" style={{ background: "linear-gradient(160deg, #060D1A 0%, #091220 25%, #060D1A 50%, #091525 75%, #060D1A 100%)" }}>
-        <div className="h-[340px] sm:h-[440px] md:h-[520px] bg-ink-800 animate-pulse" />
-        <div className="container-x pt-10 space-y-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className={`rounded-2xl bg-ink-800 animate-pulse ${i === 0 ? "h-32" : "h-20"}`} />
-          ))}
-        </div>
-      </main>
-      <Footer />
-    </>
+  const handleRazorpayCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!course || !user) return;
+
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.key,
+          amount: order.amount,
+          currency: order.currency,
+          name: "Avatar India",
+          description: course.title,
+          image: course.thumbnail ?? undefined,
+          order_id: order.orderId,
+          prefill: {
+            name: `${(user as any).firstName ?? ""} ${(user as any).lastName ?? ""}`.trim(),
+            email: (user as any).email ?? "",
+          },
+          theme: { color: "#00C8FF" },
+          retry: { enabled: true, max_count: 3 },
+          handler: async (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) => {
+            try {
+              await verifyPayment({
+                courseId: course.id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              await refetchEnrollment();
+              showMsg(
+                "Payment successful! Redirecting to your course…",
+                "success",
+              );
+              setTimeout(() => router.push(`/courses/${id}/learn`), 1500);
+              resolve();
+            } catch (verifyErr: unknown) {
+              const e = verifyErr as {
+                response?: { data?: { message?: string } };
+              };
+              reject(
+                new Error(
+                  e?.response?.data?.message ?? "Payment verification failed",
+                ),
+              );
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error("cancelled")),
+          },
+        });
+
+        rzp.open();
+      });
+    },
+    [course, user, verifyPayment, refetchEnrollment, id, router],
   );
 
-  if (!course) return notFound();
+  const handleCashfreeCheckout = useCallback(
+    async (order: CreateOrderResponse) => {
+      if (!course) return;
+      if (!order.paymentSessionId) {
+        throw new Error("Missing Cashfree payment session");
+      }
 
-  const weekData     = [...course.lessons].sort((a, b) => a.weekNumber - b.weekNumber);
+      if (!window.Cashfree) {
+        throw new Error("Cashfree SDK not loaded");
+      }
+      const cashfree = window.Cashfree({ mode: order.mode ?? "sandbox" });
+      const result = await cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: "_modal",
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message ?? "Payment failed");
+      }
+
+      await verifyPayment({
+        courseId: course.id,
+        order_id: order.orderId,
+      });
+      await refetchEnrollment();
+      showMsg("Payment successful! Redirecting to your course…", "success");
+      setTimeout(() => router.push(`/courses/${id}/learn`), 1500);
+    },
+    [course, verifyPayment, refetchEnrollment, id, router],
+  );
+
+  const handlePaidEnroll = useCallback(async () => {
+    if (!course || !user) return;
+
+    setEnrolling(true);
+    showMsg("");
+
+    try {
+      const order = await createOrder({ courseId: course.id });
+
+      if (order.provider === "cashfree") {
+        if (!cashfreeLoaded) {
+          showMsg("Payment SDK is still loading. Please try again.", "error");
+          return;
+        }
+        await handleCashfreeCheckout(order);
+        return;
+      }
+
+      if (!razorpayLoaded) {
+        showMsg("Payment SDK is still loading. Please try again.", "error");
+        return;
+      }
+      await handleRazorpayCheckout(order);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Payment failed";
+      if (msg === "cancelled") {
+        showMsg("Payment was cancelled.", "error");
+      } else {
+        showMsg(msg, "error");
+      }
+    } finally {
+      setEnrolling(false);
+    }
+  }, [
+    course,
+    user,
+    razorpayLoaded,
+    cashfreeLoaded,
+    createOrder,
+    handleRazorpayCheckout,
+    handleCashfreeCheckout,
+  ]);
+
+  const handleEnroll = useCallback((plan: "basic" | "d2h" = "basic") => {
+    // A Basic owner upgrading is the one enrolled user who still goes to
+    // checkout; everyone else already enrolled belongs in the dashboard.
+    if (enrolled && !(plan === "d2h" && showUpgrade)) {
+      // Name the track rather than letting /dashboard/{id} guess: someone who
+      // owns both plans lands on Direct2Hire, a Basic-only owner on Basic.
+      router.push(
+        hasD2H(enrolledTier)
+          ? dashboardRoutes(id).root
+          : basicCourseRoutes(id).root,
+      );
+      return;
+    }
+    if (isComingSoon) return;
+    router.push(`/courses/${id}/enroll?plan=${plan}`);
+  }, [enrolled, enrolledTier, showUpgrade, isComingSoon, id, router]);
+
+  if (isLoading)
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-slate-50">
+          <div className="h-[340px] sm:h-[440px] md:h-[520px] bg-slate-200 animate-pulse" />
+          <div className="container-x pt-10 space-y-6">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className={`rounded-2xl bg-slate-100 animate-pulse ${i === 0 ? "h-32" : "h-20"}`}
+              />
+            ))}
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+
+  if (isError || !course) return notFound();
+
+  // Program Structure shows the ₹4999 (D2H) path only — hide Basic-only weeks.
+  const weekData = [...course.lessons]
+    .filter((l) => l.tier !== "BASIC")
+    .sort((a, b) => a.weekNumber - b.weekNumber);
   const whatYouLearn = course.whatYouLearn ?? [];
-  const audience     = course.audience ?? [];
+  const audience = course.audience ?? [];
 
-  const enrollBtnLabel = enrolling ? "Enrolling…"
-    : enrolled ? "Go to Course →"
-    : isFree   ? "Enroll Free"
-    : "Enroll Now";
+  const enrollBtnLabel = enrolling
+    ? "Processing…"
+    : enrolled
+      ? "Go to Course →"
+      : isComingSoon
+        ? "Coming Soon"
+        : "Enroll Now";
+
+  const enrollDisabled = enrolling || (isComingSoon && !enrolled);
+
+  // Secondary CTA shown beside "Go to Course" for Basic-plan owners. Rendered
+  // at every CTA block, so keep it one definition.
+  const upgradeButton = (extraClass = "") =>
+    showUpgrade ? (
+      <button
+        onClick={() => handleEnroll("d2h")}
+        className={`inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-500 bg-emerald-50 px-6 py-3 text-sm font-semibold
+                    text-emerald-700 transition-all duration-250 hover:bg-emerald-100 active:scale-95 cursor-pointer ${extraClass}`}
+      >
+        <Sparkles className="h-4 w-4" />
+        Upgrade to Direct2Hire{d2hPrice ? ` — ₹${d2hPrice}` : ""}
+      </button>
+    ) : null;
 
   return (
     <>
       <Navbar />
-      <main className="min-h-screen text-white overflow-x-hidden"
-        style={{ background: "linear-gradient(160deg, #060D1A 0%, #091220 25%, #060D1A 50%, #091525 75%, #060D1A 100%)" }}
+      <main
+        className="min-h-screen text-slate-800 overflow-x-hidden pb-20 md:pb-0"
+        style={{ background: "#FFFFFF" }}
       >
         {/* ── BANNER ── */}
-        <div className="relative w-full h-[340px] sm:h-[440px] md:h-[520px] overflow-hidden">
+        <div className="relative w-full h-[260px] sm:h-[340px] md:h-[400px] overflow-hidden">
           {course.bannerImage ? (
-            <Image src={course.bannerImage} alt={course.title} fill sizes="100vw"
-              className="object-cover object-center scale-[1.04] transition-transform duration-[8000ms] ease-out"
-              style={{ transformOrigin: "center 40%" }} priority />
+            <Image
+              src={course.bannerImage}
+              alt={course.title}
+              fill
+              sizes="100vw"
+              quality={100}
+              className="object-cover object-center"
+              priority
+            />
           ) : (
-            <div className="absolute inset-0"
-              style={{ background: "linear-gradient(135deg, rgba(0,60,140,0.5) 0%, rgba(0,200,255,0.1) 100%)" }} />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(0,60,140,0.05) 0%, rgba(0,200,255,0.02) 100%)",
+              }}
+            />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/15 to-[#060D1A]" />
-          <div className="absolute inset-0"
-            style={{ background: "radial-gradient(ellipse 90% 70% at 55% 35%, rgba(0,128,255,0.22) 0%, transparent 65%)" }} />
-          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#060D1A] to-transparent" />
+          {/* Subtle top overlay for navbar contrast */}
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent" />
           <div className="absolute top-6 left-1/2 -translate-x-1/2 container-x">
-            <Link href="/courses"
-              className="inline-flex items-center gap-1.5 text-[12px] mt-10 text-white/50 hover:text-white/80
-                         transition-colors duration-200 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10">
+            <Link
+              href="/courses"
+              className="inline-flex items-center gap-1.5 text-[12px] mt-10 text-white/80 hover:text-white
+                         transition-colors duration-200 bg-black/25 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10 shadow-sm"
+            >
               ← All Courses
             </Link>
           </div>
         </div>
 
         {/* ── HERO INFO ── */}
-        <section className="relative -mt-28 pb-20 overflow-hidden">
-          <div className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-[900px] h-[500px]"
-            style={{ background: "radial-gradient(ellipse at top, rgba(0,200,255,0.12) 0%, transparent 65%)", filter: "blur(60px)" }} aria-hidden />
-          <div className="pointer-events-none absolute top-40 right-0 w-[500px] h-[400px] opacity-20"
-            style={{ background: "radial-gradient(ellipse at right, rgba(0,80,200,0.5) 0%, transparent 65%)", filter: "blur(80px)" }} aria-hidden />
-          <div className="pointer-events-none absolute inset-0 dot-grid-dark opacity-35" aria-hidden />
+        <section className="relative pt-4 pb-10 overflow-hidden">
+          <div
+            className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-[900px] h-[500px]"
+            style={{
+              background:
+                "radial-gradient(ellipse at top, rgba(0,128,255,0.06) 0%, transparent 65%)",
+              filter: "blur(60px)",
+            }}
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute top-40 right-0 w-[500px] h-[400px] opacity-20"
+            style={{
+              background:
+                "radial-gradient(ellipse at right, rgba(0,128,255,0.08) 0%, transparent 65%)",
+              filter: "blur(80px)",
+            }}
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 dot-grid opacity-[0.12]"
+            aria-hidden
+          />
 
-          <div className="relative container-x pt-10">
+          <div className="relative container-x pt-4">
             <div className="grid md:grid-cols-[1fr_380px] gap-14 items-start">
-
               {/* LEFT */}
-              <div>
+              <div className="md:self-center">
                 <ScrollReveal animation="fade-up" delay={0} duration={700}>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/30
-                                  bg-brand-500/8 px-3.5 py-1.5 text-[11px] font-semibold uppercase
-                                  tracking-widest text-brand-300 mb-5 cursor-default">
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border border-blue-500/20
+                                  bg-blue-500/5 px-3.5 py-1.5 text-[11px] font-semibold uppercase
+                                  tracking-widest text-blue-600 mb-5 cursor-default"
+                  >
                     <Zap className="h-3 w-3" /> AI Learning Course
                   </div>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={60} duration={700}>
                   <div className="flex flex-wrap items-center gap-2 mb-4">
-                    {isFree && <Badge variant="free">FREE</Badge>}
-                    <Badge variant="level-light">{course.level}</Badge>
+                    {isComingSoon && (
+                      <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700 shadow-sm">
+                        COMING SOON
+                      </span>
+                    )}
+                    {isFree && (
+                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 shadow-sm">
+                        FREE
+                      </span>
+                    )}
                     {course.certificate && (
-                      <Badge variant="level-dark" className="flex items-center gap-1">
-                        <BadgeCheck className="h-3 w-3 text-emerald-400" /> Certificate Included
-                      </Badge>
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full border border-blue-150
+                                       bg-blue-50/60 px-3 py-0.5 text-[11px] font-semibold text-blue-700"
+                      >
+                        <BadgeCheck className="h-3 w-3 text-blue-600" />{" "}
+                        Certificate Included
+                      </span>
                     )}
                     {enrolled && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30
-                                       bg-emerald-500/10 px-3 py-0.5 text-[11px] font-semibold text-emerald-400">
-                        <CheckCircle className="h-3 w-3" /> Enrolled
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200
+                                       bg-emerald-50 px-3 py-0.5 text-[11px] font-semibold text-emerald-700"
+                      >
+                        <CheckCircle className="h-3 w-3" />{" "}
+                        {enrolledTier === "BASIC"
+                          ? "Enrolled — Basic"
+                          : enrolledTier
+                            ? "Enrolled — Direct2Hire"
+                            : "Enrolled"}
                       </span>
                     )}
                   </div>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={120} duration={800}>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-5">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-5 text-slate-900">
                     {course.title}
                   </h1>
                 </ScrollReveal>
 
                 <ScrollReveal animation="fade-up" delay={180} duration={750}>
-                  <p className="text-white/55 text-[16px] leading-relaxed max-w-xl mb-6">{course.description}</p>
+                  <p className="text-slate-600 text-[16px] leading-relaxed max-w-xl mb-6">
+                    {course.description}
+                  </p>
                 </ScrollReveal>
 
-                {/* Rating row */}
-                {(course.rating || course.sessions || course.seats) && (
-                  <ScrollReveal animation="fade-up" delay={230} duration={700}>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm mb-6">
-                      {course.rating && (
-                        <span className="flex items-center gap-1.5">
-                          {[1,2,3,4,5].map((s) => (
-                            <Star key={s} className={`h-4 w-4 ${s <= Math.round(course.rating!) ? "fill-amber-400 text-amber-400" : "text-white/20"}`} />
-                          ))}
-                          <span className="ml-1 font-semibold text-white">{course.rating}</span>
-                          {course.reviews && <span className="text-white/40">({course.reviews})</span>}
-                        </span>
-                      )}
-                      {course.sessions && <span className="flex items-center gap-1.5 text-white/45"><Clock className="h-4 w-4" />{course.sessions}</span>}
-                      {course.seats    && <span className="flex items-center gap-1.5 text-white/45"><Users className="h-4 w-4" />{course.seats}</span>}
-                    </div>
-                  </ScrollReveal>
-                )}
-
-                {/* Meta row */}
-                <ScrollReveal animation="fade-up" delay={280} duration={700}>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/45 border-t border-white/6 pt-5 mb-8">
-                    {course.startDate && <span><span className="text-white/25 mr-1">Starts:</span><span className="text-white/65 font-medium">{course.startDate}</span></span>}
-                    <span><span className="text-white/25 mr-1">Duration:</span><span className="text-white/65 font-medium">{course.totalWeeks} Weeks</span></span>
-                    <span><span className="text-white/25 mr-1">Mode:</span><span className="text-white/65 font-medium">Live + Recorded</span></span>
-                  </div>
-                </ScrollReveal>
-
-                {/* Enrollment message */}
-                {enrollMsg && (
-                  <ScrollReveal animation="fade-up" delay={0} duration={400}>
-                    <div className={`mb-4 rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
-                      enrollMsg.includes("enrolled")
-                        ? "border-emerald-500/25 bg-emerald-500/8 text-emerald-300"
-                        : "border-red-500/25 bg-red-500/8 text-red-300"
-                    }`}>
-                      {enrollMsg.includes("enrolled") ? <CheckCircle className="h-4 w-4 shrink-0" /> : null}
-                      {enrollMsg}
-                    </div>
-                  </ScrollReveal>
-                )}
-
-                {/* CTAs */}
-                <ScrollReveal animation="fade-up" delay={330} duration={700}>
-                  <div className="flex flex-wrap items-center gap-3 mb-6">
-                    <button
-                      onClick={handleEnroll}
-                      disabled={enrolling || (course.price > 0 && !enrolled)}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
-                                 transition-all duration-250 disabled:opacity-60
-                                 bg-brand-500 text-ink-950 hover:bg-brand-400
-                                 shadow-[0_4px_20px_rgba(0,200,255,0.3)]"
-                    >
-                      {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {!enrolling && enrolled && <CheckCircle className="h-4 w-4" />}
-                      {enrollBtnLabel}
-                      {!enrolling && !enrolled && <ArrowRight className="h-4 w-4" />}
-                    </button>
-                    <Button variant="ghost-light" size="lg">
-                      <Download className="h-4 w-4" /> Download Syllabus
-                    </Button>
-                  </div>
-                </ScrollReveal>
-
-                {/* Tool tags */}
+                {/* Tool tags — left side only */}
                 {course.tools?.length > 0 && (
-                  <ScrollReveal animation="fade-up" delay={380} duration={700}>
-                    <div className="flex flex-wrap gap-2">
+                  <ScrollReveal animation="fade-up" delay={220} duration={700}>
+                    <div className="flex flex-wrap gap-2 mb-2">
                       {course.tools.map((tool) => (
-                        <span key={tool}
-                          className="rounded-lg border border-white/8 bg-white/4 px-2.5 py-1 text-[11px]
-                                     font-medium text-white/40 hover:border-brand-500/35 hover:bg-brand-500/8
-                                     hover:text-brand-300 transition-all duration-250 cursor-default">
+                        <span
+                          key={tool}
+                          className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px]
+                                     font-medium text-slate-500 hover:border-blue-500/30 hover:bg-blue-50/30
+                                     hover:text-blue-700 transition-all duration-250 cursor-default"
+                        >
                           {tool}
                         </span>
                       ))}
                     </div>
                   </ScrollReveal>
                 )}
+
+                {/* Mobile-only CTA — visible below description on small screens */}
+                <div className="md:hidden mt-5 space-y-3">
+                  {enrollMsg && (
+                    <div
+                      className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
+                        msgType === "success"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-red-200 bg-red-50 text-red-800"
+                      }`}
+                    >
+                      {msgType === "success" ? (
+                        <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
+                      ) : null}
+                      {enrollMsg}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => handleEnroll("basic")}
+                    disabled={enrollDisabled}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold
+                               transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                    }}
+                  >
+                    {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {!enrolling && enrolled && (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
+                    {enrollBtnLabel}
+                    {!enrolling && !enrolled && !isComingSoon && (
+                      <ArrowRight className="h-4 w-4" />
+                    )}
+                  </button>
+                  {upgradeButton("w-full")}
+                  {/* <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all duration-200 shadow-sm cursor-pointer">
+                    <Download className="h-4 w-4" /> Download Syllabus
+                  </button> */}
+                </div>
               </div>
 
               {/* RIGHT — sticky card */}
-              <ScrollReveal animation="fade-left" delay={200} duration={900} className="hidden md:block">
-                <div className="sticky top-24">
-                  <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-white/8
-                                  group hover:border-brand-500/30 transition-all duration-500"
-                    style={{ boxShadow: "0 24px 64px rgba(0,0,0,0.55)" }}>
-                    {course.heroImage ? (
-                      <Image src={course.heroImage} alt={course.title} fill sizes="380px"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                    ) : (
-                      <div className="absolute inset-0"
-                        style={{ background: "linear-gradient(135deg, rgba(0,60,140,0.5) 0%, rgba(0,200,255,0.1) 100%)" }} />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink-950/65 via-transparent to-transparent" />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{ background: "radial-gradient(ellipse 70% 60% at 50% 80%, rgba(0,200,255,0.08) 0%, transparent 70%)" }} />
-                  </div>
-                  {course._count.enrollments > 0 && (
-                    <div className="absolute -bottom-4 -left-4 rounded-xl border border-white/10
-                                    bg-ink-800/90 backdrop-blur-sm px-4 py-3 shadow-lg
-                                    hover:border-brand-500/25 transition-colors duration-300">
-                      <p className="text-[11px] text-white/35 uppercase tracking-wider">Students enrolled</p>
-                      <p className="text-2xl font-bold text-white mt-0.5">
-                        {course._count.enrollments.toLocaleString("en-IN")}+
-                      </p>
+              <ScrollReveal
+                animation="fade-left"
+                delay={200}
+                duration={900}
+                className="hidden md:block"
+              >
+                <div className="sticky top-24 space-y-4">
+                  {/* Hero image */}
+                  <div className="relative">
+                    <div
+                      className="relative aspect-4/3 rounded-2xl overflow-hidden border border-slate-200
+                                    group hover:border-blue-500/30 transition-all duration-500"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                      }}
+                    >
+                      {course.heroImage ? (
+                        <Image
+                          src={course.heroImage}
+                          alt={course.title}
+                          fill
+                          sizes="380px"
+                          quality={100}
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(0,60,140,0.1) 0%, rgba(0,200,255,0.05) 100%)",
+                          }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-900/20 via-transparent to-transparent" />
                     </div>
-                  )}
+                  </div>
+
+                  {/* Info card below image */}
+                  <div
+                    className="rounded-2xl border border-slate-200 p-5 mt-6 space-y-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                    }}
+                  >
+                    {/* Rating row */}
+                    {(course.rating || course.sessions || course.seats) && (
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                        {course.rating && (
+                          <span className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`h-3.5 w-3.5 ${s <= Math.round(course.rating!) ? "fill-amber-400 text-amber-400" : "text-slate-200"}`}
+                              />
+                            ))}
+                            <span className="ml-1 font-semibold text-slate-800 text-[13px]">
+                              {course.rating}
+                            </span>
+                            {course.reviews && (
+                              <span className="text-slate-400 text-[12px]">
+                                ({course.reviews})
+                              </span>
+                            )}
+                          </span>
+                        )}
+                        {/* {course.sessions && (
+                          <span className="flex items-center gap-1 text-slate-500 text-[13px]">
+                            <Clock className="h-3.5 w-3.5 text-slate-400" />
+                            {course.sessions}
+                          </span>
+                        )} */}
+                        {course.seats && (
+                          <span className="flex items-center gap-1 text-slate-500 text-[13px]">
+                            <Users className="h-3.5 w-3.5 text-slate-400" />
+                            {course.seats}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Meta row */}
+                    <div className="flex flex-col gap-1.5 text-[12px] text-slate-500 border-t border-slate-200/80 pt-3">
+                      {/* <span>
+                        <span className="text-slate-400 mr-1">Duration:</span>
+                        <span className="text-slate-700 font-medium">
+                          {course.totalWeeks} Weeks
+                        </span>
+                      </span> */}
+                      <span>
+                        <span className="text-slate-400 mr-1">Language:</span>
+                        <span className="text-slate-700 font-medium">
+                          Hinglish
+                        </span>
+                      </span>
+                      <span>
+                        <span className="text-slate-400 mr-1">Mode:</span>
+                        <span className="text-slate-700 font-medium">
+                          Self Paced
+                        </span>
+                      </span>
+                      {course.certificate && (
+                        <span>
+                          <span className="text-slate-400 mr-1">
+                            Certificate:
+                          </span>
+                          <span className="text-slate-700 font-medium">
+                            Included
+                          </span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Enrollment message */}
+                    {enrollMsg && (
+                      <div
+                        className={`rounded-xl border px-4 py-3 text-sm flex items-center gap-2 ${
+                          msgType === "success"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "border-red-200 bg-red-50 text-red-800"
+                        }`}
+                      >
+                        {msgType === "success" ? (
+                          <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
+                        ) : null}
+                        {enrollMsg}
+                      </div>
+                    )}
+
+                    {/* CTAs */}
+                    <div className="flex flex-col gap-2.5 pt-1">
+                      <button
+                        onClick={() => handleEnroll("basic")}
+                        disabled={enrollDisabled}
+                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold
+                                   transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                        }}
+                      >
+                        {enrolling && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {!enrolling && enrolled && (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                        {enrollBtnLabel}
+                        {!enrolling && !enrolled && !isComingSoon && (
+                          <ArrowRight className="h-4 w-4" />
+                        )}
+                      </button>
+                      {upgradeButton("w-full")}
+                      {/* <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 active:scale-98 shadow-sm cursor-pointer">
+                        <Download className="h-4 w-4" /> Download Syllabus
+                      </button> */}
+                    </div>
+                  </div>
                 </div>
               </ScrollReveal>
             </div>
@@ -291,24 +695,49 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── WHAT YOU'LL LEARN ── */}
         {whatYouLearn.length > 0 && (
-          <section className="py-24 border-t border-white/5 relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-0"
-              style={{ background: "radial-gradient(ellipse 70% 60% at 20% 50%, rgba(0,80,160,0.12) 0%, transparent 65%)" }} aria-hidden />
+          <section
+            className="py-10 border-t border-slate-100 relative overflow-hidden"
+            style={{ background: "#FFFFFF" }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 70% 60% at 20% 50%, rgba(99,102,241,0.05) 0%, transparent 65%)",
+              }}
+              aria-hidden
+            />
             <div className="relative container-x">
               <ScrollReveal animation="fade-up" duration={700}>
-                <div className="text-center mb-14">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Curriculum Overview</p>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">What You&apos;ll Learn</h2>
-                  <p className="mt-3 text-white/40 max-w-xl mx-auto">Practical real-world skills you can apply in your work immediately.</p>
+                <div className="text-center mb-10">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
+                    Curriculum Overview
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-850">
+                    What You&apos;ll Learn
+                  </h2>
+                  <p className="mt-3 text-slate-500 max-w-xl mx-auto">
+                    Practical real-world skills you can apply in your work
+                    immediately.
+                  </p>
                 </div>
               </ScrollReveal>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {whatYouLearn.map((item, i) => (
                   <AnimateOnScroll key={i} delay={i * 100}>
-                    <div className="group h-full rounded-2xl border border-white/6 p-6 cursor-default hover:border-brand-500/30 hover:-translate-y-1.5 transition-all duration-350"
-                      style={{ background: "linear-gradient(145deg, rgba(13,23,39,0.85) 0%, rgba(9,18,32,0.95) 100%)", boxShadow: "0 4px 24px rgba(0,0,0,0.30)" }}>
-                      <h3 className="font-semibold text-[15px] text-white mb-2 leading-snug group-hover:text-brand-300 transition-colors duration-300">{item.title}</h3>
-                      <p className="text-[13px] text-white/40 leading-relaxed">{item.body}</p>
+                    <div
+                      className="group h-full rounded-2xl border border-slate-200 p-6 cursor-default hover:border-blue-500/30 hover:-translate-y-1.5 transition-all duration-350 shadow-sm hover:shadow-md"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                      }}
+                    >
+                      <h3 className="font-semibold text-[15px] text-slate-855 mb-2 leading-snug group-hover:text-blue-600 transition-colors duration-300">
+                        {item.title}
+                      </h3>
+                      <p className="text-[13px] text-slate-500 leading-relaxed">
+                        {item.body}
+                      </p>
                     </div>
                   </AnimateOnScroll>
                 ))}
@@ -319,43 +748,88 @@ export default function CoursePage({ params }: PageProps) {
 
         {/* ── PROGRAM STRUCTURE ── */}
         {weekData.length > 0 && (
-          <section className="py-24 border-t border-white/5 relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-0"
-              style={{ background: "linear-gradient(180deg, rgba(6,13,26,0) 0%, rgba(9,21,37,0.7) 50%, rgba(6,13,26,0) 100%)" }} aria-hidden />
-            <div className="pointer-events-none absolute inset-0 dot-grid-dark opacity-25" aria-hidden />
+          <section
+            className="py-10 border-t border-slate-100 relative overflow-hidden"
+            style={{ background: "#FAFAFA" }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(99,102,241,0.03) 0%, rgba(59,130,246,0.04) 50%, rgba(99,102,241,0.02) 100%)",
+              }}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-0 dot-grid opacity-[0.08]"
+              aria-hidden
+            />
             <div className="relative container-x">
               <ScrollReveal animation="fade-up" duration={700}>
-                <div className="text-center mb-14">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Curriculum</p>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Program Structure</h2>
-                  <p className="mt-3 text-white/40 max-w-xl mx-auto">A structured week-by-week path — each milestone builds directly on the last.</p>
+                <div className="text-center mb-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
+                    Curriculum
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-850">
+                    Program Structure
+                  </h2>
+                  <p className="mt-3 text-slate-500 max-w-xl mx-auto">
+                    A structured week-by-week path — each milestone builds
+                    directly on the last.
+                  </p>
                 </div>
               </ScrollReveal>
               <div className="max-w-3xl mx-auto space-y-3">
                 {weekData.map((week, i) => (
                   <AnimateOnScroll key={week.id} delay={i * 80}>
-                    <div className="rounded-2xl border overflow-hidden transition-all duration-300"
-                      style={{ borderColor: openWeek === i ? "rgba(0,200,255,0.20)" : "rgba(255,255,255,0.06)",
-                               background: openWeek === i ? "linear-gradient(145deg, rgba(0,200,255,0.04) 0%, rgba(9,18,32,0.98) 100%)" : "linear-gradient(145deg, rgba(13,23,39,0.85) 0%, rgba(9,18,32,0.95) 100%)" }}>
-                      <button onClick={() => setOpenWeek(openWeek === i ? null : i)}
-                        className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-white/[0.02] transition-colors duration-200">
+                    <div
+                      className="rounded-2xl border overflow-hidden transition-all duration-300"
+                      style={{
+                        borderColor:
+                          openWeek === i
+                            ? "rgba(37,99,235,0.25)"
+                            : "rgba(226,232,240,1)",
+                        background:
+                          openWeek === i
+                            ? "linear-gradient(145deg, rgba(37,99,235,0.02) 0%, rgba(255,255,255,1) 100%)"
+                            : "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                      }}
+                    >
+                      <button
+                        onClick={() => setOpenWeek(openWeek === i ? null : i)}
+                        className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-slate-50/50 transition-colors duration-200"
+                      >
                         <div className="flex items-center gap-4">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/12 text-brand-400 text-[13px] font-bold">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-[13px] font-bold">
                             {week.weekNumber}
                           </span>
-                          <span className="font-semibold text-[15px] text-white">{week.title}</span>
+                          <span className="font-semibold text-[15px] text-slate-800">
+                            {week.title}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3 shrink-0 ml-4">
-                          <span className="text-[12px] text-white/30 hidden sm:inline">{week.modules.length} modules</span>
-                          <ChevronDown className={`h-5 w-5 text-white/40 transition-transform duration-400 ${openWeek === i ? "rotate-180 text-brand-400" : ""}`} />
+                          <span className="text-[12px] text-slate-400 hidden sm:inline">
+                            {week.modules.length} modules
+                          </span>
+                          <ChevronDown
+                            className={`h-5 w-5 text-slate-455 transition-transform duration-400 ${openWeek === i ? "rotate-180 text-blue-600" : ""}`}
+                          />
                         </div>
                       </button>
-                      <div className="overflow-hidden transition-all duration-500" style={{ maxHeight: openWeek === i ? "600px" : "0px" }}>
-                        <div className="px-6 pb-5 border-t border-white/5">
+                      <div
+                        className="overflow-hidden transition-all duration-500"
+                        style={{ maxHeight: openWeek === i ? "600px" : "0px" }}
+                      >
+                        <div className="px-6 pb-5 border-t border-slate-100 bg-slate-50/30">
                           <ul className="mt-4 space-y-3">
                             {week.modules.map((mod, j) => (
-                              <li key={j} className="flex items-start gap-3 text-[14px] text-white/55 hover:text-white/80 transition-colors duration-200">
-                                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-500/8 text-brand-400 text-[10px] font-semibold">{j + 1}</span>
+                              <li
+                                key={j}
+                                className="flex items-start gap-3 text-[14px] text-slate-600 hover:text-slate-800 transition-colors duration-200"
+                              >
+                                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold">
+                                  {j + 1}
+                                </span>
                                 {mod}
                               </li>
                             ))}
@@ -366,29 +840,139 @@ export default function CoursePage({ params }: PageProps) {
                   </AnimateOnScroll>
                 ))}
               </div>
+
+              <div className="mt-6 max-w-3xl mx-auto flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3.5">
+                <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-[12.5px] text-slate-500 leading-relaxed">
+                  <strong className="text-slate-600 font-semibold">
+                    Note:
+                  </strong>{" "}
+                  This week-by-week structure is the ₹4,999 plan. The ₹499
+                  plan covers the same program in a shorter, simplified
+                  recorded format.
+                </p>
+              </div>
             </div>
           </section>
         )}
 
+        {/* ── OUTCOME ── */}
+        <section
+          className="py-10 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FFFFFF" }}
+        >
+          <div className="relative container-x">
+            <ScrollReveal animation="fade-up" duration={700}>
+              <div className="text-center mb-10">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
+                  Outcomes
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-850">
+                  What is the outcome?
+                </h2>
+                <p className="mt-3 text-slate-500 max-w-xl mx-auto">
+                  Skills you can prove, and support to put them to work.
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              {OUTCOME_STATS.map((s, i) => (
+                <AnimateOnScroll key={s.label} delay={i * 80}>
+                  <div className="h-full rounded-2xl border border-slate-200 p-5">
+                    <p className="text-3xl font-bold text-blue-600">
+                      {s.value}
+                    </p>
+                    <p className="mt-1 font-semibold text-[13px] text-slate-800">
+                      {s.label}
+                    </p>
+                    <p className="mt-1 text-[12.5px] text-slate-500 leading-relaxed">
+                      {s.desc}
+                    </p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-4">
+              {OUTCOME_CARDS.map((c, i) => (
+                <AnimateOnScroll key={c.title} delay={i * 80}>
+                  <div
+                    className="h-full rounded-2xl p-6 text-white"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                    }}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">
+                      {c.eyebrow}
+                    </p>
+                    <h3 className="text-[17px] font-bold mb-1.5">
+                      {c.title}
+                    </h3>
+                    <p className="text-[13px] text-white/80 leading-relaxed">
+                      {c.desc}
+                    </p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
+            </div>
+
+            <div className="max-w-3xl mx-auto flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3.5">
+              <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-[12.5px] text-slate-500 leading-relaxed">
+                <strong className="text-slate-600 font-semibold">
+                  Note:
+                </strong>{" "}
+                Guaranteed internship, 100% placement assistance, and
+                portfolio-ready projects are included with the ₹4,999 plan.
+                The ₹499 plan includes a week of recorded sessions, followed
+                by an assessment and the certificate.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* ── WHO THIS IS FOR ── */}
         {audience.length > 0 && (
-          <section className="py-24 border-t border-white/5 relative overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 line-grid opacity-20" aria-hidden />
+          <section
+            className="py-10 border-t border-slate-100 relative overflow-hidden"
+            style={{ background: "#FFFFFF" }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0 line-grid opacity-5"
+              aria-hidden
+            />
             <div className="relative container-x">
               <ScrollReveal animation="fade-up" duration={700}>
                 <div className="text-center mb-14">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">Audience</p>
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Who This Program Is For</h2>
-                  <p className="mt-3 text-white/40 max-w-xl mx-auto">Designed for anyone ready to thrive in an AI-powered world.</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
+                    Audience
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-850">
+                    Who This Program Is For
+                  </h2>
+                  <p className="mt-3 text-slate-500 max-w-xl mx-auto">
+                    Designed for anyone ready to thrive in an AI-powered world.
+                  </p>
                 </div>
               </ScrollReveal>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {audience.map((item, i) => (
                   <AnimateOnScroll key={i} delay={i * 100}>
-                    <div className="group h-full rounded-2xl border border-white/6 p-6 cursor-default hover:border-brand-500/30 hover:-translate-y-1.5 transition-all duration-350"
-                      style={{ background: "linear-gradient(145deg, rgba(13,23,39,0.85) 0%, rgba(9,18,32,0.95) 100%)", boxShadow: "0 4px 24px rgba(0,0,0,0.25)" }}>
-                      <h3 className="font-semibold text-[15px] text-white mb-2 group-hover:text-brand-300 transition-colors duration-300">{item.title}</h3>
-                      <p className="text-[13px] text-white/40 leading-relaxed">{item.body}</p>
+                    <div
+                      className="group h-full rounded-2xl border border-slate-200 p-6 cursor-default hover:border-blue-500/30 hover:-translate-y-1.5 transition-all duration-350 shadow-sm hover:shadow-md"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+                      }}
+                    >
+                      <h3 className="font-semibold text-[15px] text-slate-850 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                        {item.title}
+                      </h3>
+                      <p className="text-[13px] text-slate-500 leading-relaxed">
+                        {item.body}
+                      </p>
                     </div>
                   </AnimateOnScroll>
                 ))}
@@ -398,45 +982,120 @@ export default function CoursePage({ params }: PageProps) {
         )}
 
         {/* ── ENROLL CTA ── */}
-        <section className="py-24 border-t border-white/5 relative overflow-hidden">
+        <section
+          className="py-10 border-t border-slate-100 relative overflow-hidden"
+          style={{ background: "#FAFAFA" }}
+        >
           <div className="container-x">
             <ScrollReveal animation="zoom-in" duration={800}>
-              <div className="relative rounded-3xl overflow-hidden border border-brand-500/20 p-10 sm:p-16 text-center"
-                style={{ background: "linear-gradient(135deg, rgba(9,21,37,0.97) 0%, rgba(6,13,26,0.99) 100%)",
-                         boxShadow: "0 0 100px rgba(0,200,255,0.07), inset 0 1px 0 rgba(0,200,255,0.10)" }}>
-                <div className="absolute inset-0 pointer-events-none"
-                  style={{ background: "radial-gradient(ellipse 60% 55% at 50% 55%, rgba(0,200,255,0.08) 0%, transparent 70%)" }} />
-                <div className="absolute top-0 inset-x-0 h-px"
-                  style={{ background: "linear-gradient(90deg, transparent, rgba(0,200,255,0.4) 30%, rgba(0,128,255,0.5) 50%, rgba(0,200,255,0.4) 70%, transparent)" }} />
-                <p className="relative text-[11px] font-semibold uppercase tracking-widest text-brand-400 mb-3">
-                  {enrolled ? "Continue Learning" : isFree ? "100% Free" : "Enrol Now"}
+              <div
+                className="relative rounded-3xl overflow-hidden border border-blue-200/80 p-10 sm:p-16 text-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 50%, #F1F5F9 100%)",
+                  boxShadow:
+                    "0 10px 40px rgba(0, 128, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                }}
+              >
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse 60% 55% at 50% 55%, rgba(0,128,255,0.03) 0%, transparent 70%)",
+                  }}
+                />
+                <div
+                  className="absolute top-0 inset-x-0 h-px"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(59,130,246,0.3) 30%, rgba(37,99,235,0.4) 50%, rgba(59,130,246,0.3) 70%, transparent)",
+                  }}
+                />
+                <p className="relative text-[11px] font-semibold uppercase tracking-widest text-blue-600 mb-3">
+                  {enrolled
+                    ? "Continue Learning"
+                    : isComingSoon
+                      ? "Coming Soon"
+                      : isFree
+                        ? "100% Free"
+                        : "Enroll Now"}
                 </p>
-                <h2 className="relative text-3xl sm:text-4xl font-bold mb-4">
-                  {enrolled ? "You're enrolled — let's go!" : "Ready to start your AI journey?"}
+                <h2 className="relative text-3xl sm:text-4xl font-bold mb-4 text-slate-900">
+                  {enrolled
+                    ? "You're enrolled — let's go!"
+                    : isComingSoon
+                      ? "This program is launching soon"
+                      : "Ready to start your AI journey?"}
                 </h2>
-                <p className="relative text-white/45 max-w-md mx-auto mb-8 text-[15px]">
+                <p className="relative text-slate-500 max-w-md mx-auto mb-8 text-[15px]">
                   {enrolled
                     ? "Access all your course materials, videos and resources below."
-                    : "Join learners who are already building real skills with Avatar India."}
+                    : isComingSoon
+                      ? "We're putting the finishing touches on this course. Check back soon to enroll."
+                      : "Join learners who are already building real skills with Avatar India."}
                 </p>
                 <div className="relative flex flex-wrap justify-center gap-3">
-                  <button onClick={handleEnroll} disabled={enrolling || (course.price > 0 && !enrolled)}
+                  <button
+                    onClick={() => handleEnroll("basic")}
+                    disabled={enrollDisabled}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold
-                               bg-brand-500 text-ink-950 hover:bg-brand-400 transition-colors disabled:opacity-60
-                               shadow-[0_4px_20px_rgba(0,200,255,0.3)]">
+                               transition-colors disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-md cursor-pointer"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+                    }}
+                  >
                     {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {enrolled ? "Go to Course" : isFree ? "Enroll for Free" : "Enroll Now"}
-                    {!enrolling && <ArrowRight className="h-4 w-4" />}
+                    {enrolled
+                      ? "Go to Course"
+                      : isComingSoon
+                        ? "Coming Soon"
+                        : "Enroll Now"}
+                    {!enrolling && !isComingSoon && (
+                      <ArrowRight className="h-4 w-4" />
+                    )}
                   </button>
-                  <Link href="/courses">
-                    <Button variant="ghost-light" size="lg">View All Courses</Button>
-                  </Link>
+                  {upgradeButton()}
                 </div>
               </div>
             </ScrollReveal>
           </div>
         </section>
       </main>
+
+      {/* Sticky bottom bar — mobile only */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 flex gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+        <button
+          onClick={() => handleEnroll("basic")}
+          disabled={enrollDisabled}
+          className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
+                     transition-all duration-250 disabled:opacity-60 text-white hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
+          style={{
+            background: "linear-gradient(135deg, #153C66 0%, #2A78CC 100%)",
+          }}
+        >
+          {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
+          {!enrolling && enrolled && <CheckCircle className="h-4 w-4" />}
+          {enrollBtnLabel}
+          {!enrolling && !enrolled && !isComingSoon && (
+            <ArrowRight className="h-4 w-4" />
+          )}
+        </button>
+        {/* Compact label — the full "Upgrade to Direct2Hire" wraps in this bar. */}
+        {showUpgrade && (
+          <button
+            onClick={() => handleEnroll("d2h")}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold
+                       border-2 border-emerald-500 bg-emerald-50 text-emerald-700 transition-all duration-250
+                       hover:bg-emerald-100 active:scale-95 cursor-pointer"
+          >
+            <Sparkles className="h-4 w-4" />
+            Upgrade{d2hPrice ? ` ₹${d2hPrice}` : ""}
+          </button>
+        )}
+      </div>
+
+
       <Footer />
     </>
   );

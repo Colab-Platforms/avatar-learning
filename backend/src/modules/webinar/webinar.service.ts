@@ -1,0 +1,559 @@
+import crypto from "crypto";
+import Razorpay from "razorpay";
+import prisma from "@root/prisma.js";
+import { ApiError } from "@/utils/ApiError.js";
+import STATUS_CODES from "@/utils/statusCodes.js";
+import { verifyRazorpaySignature } from "@/modules/payment/payment.utils.js";
+import type { RazorpayWebhookPayload } from "@/modules/payment/payment.types.js";
+import {
+  sendWebinarPaymentConfirmationEmail,
+  sendWebinarRecoveryOtpEmail,
+} from "./webinar.mail.js";
+import { googleSheetsService } from "@/services/googleSheets.service.js";
+import type {
+  CreateWebinarOrderBody,
+  CreateWebinarOrderResponse,
+  FreeWebinarRegistrationResponse,
+  AlreadyRegisteredResponse,
+  WebinarRegistrationStatusResponse,
+  WebinarScheduleResponse,
+  CreateWebinarScheduleBody,
+  UpdateWebinarScheduleBody,
+} from "./webinar.types.js";
+
+const WEBINAR_PRICE_PAISE: number = process.env.WEBINAR_PRICE_PAISE
+  ? parseInt(process.env.WEBINAR_PRICE_PAISE)
+  : 700;
+
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+// Email-scoped OTP request throttle. The route-level limiter in
+// webinar.route.ts is keyed by IP, so it can't stop an attacker who rotates
+// IPs/proxies from spamming a single victim's inbox with OTP emails — this
+// caps how many codes a given email can be sent regardless of source IP.
+const OTP_REQUEST_WINDOW_MS = 15 * 60 * 1000;
+const OTP_REQUEST_MAX_PER_WINDOW = 3;
+
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+
+const hashOtp = (otp: string): string =>
+  crypto.createHash("sha256").update(otp).digest("hex");
+
+const generateOtp = (): string =>
+  Math.floor(100000 + Math.random() * 900000).toString();
+
+function getRazorpay(): Razorpay {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) {
+    throw new ApiError(
+      "Razorpay credentials not configured",
+      STATUS_CODES.SERVER_ERROR,
+    );
+  }
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+}
+
+export class WebinarService {
+  // Shared by the free-registration path, /verify-payment, and the Razorpay
+  // webhook — every path that confirms a seat sends the same confirmation
+  // email and appends the same Google Sheets row.
+  private async finalizeAsPaid(
+    registrationId: string,
+    extra: {
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+    } = {},
+  ) {
+    const updated = await prisma.webinarRegistration.update({
+      where: { id: registrationId },
+      data: {
+        status: "PAID",
+        paidAt: new Date(),
+        ...(extra.razorpayPaymentId && { razorpayPaymentId: extra.razorpayPaymentId }),
+        ...(extra.razorpaySignature && { razorpaySignature: extra.razorpaySignature }),
+      },
+      include: { webinarSchedule: true },
+    });
+    void sendWebinarPaymentConfirmationEmail(updated.email, {
+      name: updated.name,
+      amount: updated.amount,
+      currency: updated.currency,
+      webinarTitle: updated.webinarSchedule?.title ?? null,
+      webinarScheduledAt: updated.webinarSchedule?.scheduledAt ?? null,
+    });
+    void googleSheetsService.appendWebinarRegistration({
+      name: updated.name,
+      email: updated.email,
+      phoneNumber: updated.phoneNumber,
+      amountPaid: updated.amount,
+      paidAt: updated.paidAt ?? new Date(),
+      webinarTitle: updated.webinarSchedule?.title ?? null,
+      webinarScheduledAt: updated.webinarSchedule?.scheduledAt ?? null,
+    });
+    return updated;
+  }
+
+  async createOrder(
+    body: CreateWebinarOrderBody,
+  ): Promise<
+    CreateWebinarOrderResponse | FreeWebinarRegistrationResponse | AlreadyRegisteredResponse
+  > {
+    const { name, phoneNumber } = body;
+    const email = normalizeEmail(body.email);
+
+    // Registrations attach to whichever webinar is currently live/published
+    // so admins can tell who registered for which batch.
+    const liveSchedule = await prisma.webinarSchedule.findFirst({
+      where: { isPublished: true, isLive: true },
+    });
+    const priceInPaise = liveSchedule?.priceInPaise ?? WEBINAR_PRICE_PAISE;
+
+    // Only short-circuit as "already registered" if they paid for the batch
+    // that's live right now — a PAID registration for a past/different
+    // webinar shouldn't block registering for the new one.
+    const paidRegistration = await prisma.webinarRegistration.findFirst({
+      where: { email, status: "PAID", webinarScheduleId: liveSchedule?.id ?? null },
+    });
+    if (paidRegistration) {
+      // Already paid — let the frontend redirect straight to the success
+      // page instead of creating a second Razorpay order.
+      return { alreadyRegistered: true, registrationId: paidRegistration.id };
+    }
+
+    // Reuse an existing PENDING registration for this email against the same
+    // live webinar (e.g. retry after an abandoned/failed payment attempt)
+    // instead of creating a new row.
+    let registration = await prisma.webinarRegistration.findFirst({
+      where: { email, status: "PENDING", webinarScheduleId: liveSchedule?.id ?? null },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Free webinar — confirm the seat immediately, no Razorpay order at all.
+    if (priceInPaise === 0) {
+      if (registration) {
+        registration = await prisma.webinarRegistration.update({
+          where: { id: registration.id },
+          data: {
+            name,
+            phoneNumber,
+            amount: 0,
+            currency: "INR",
+            webinarScheduleId: liveSchedule?.id ?? null,
+          },
+        });
+      } else {
+        registration = await prisma.webinarRegistration.create({
+          data: {
+            name,
+            email,
+            phoneNumber,
+            amount: 0,
+            currency: "INR",
+            status: "PENDING",
+            webinarScheduleId: liveSchedule?.id ?? null,
+          },
+        });
+      }
+
+      const confirmed = await this.finalizeAsPaid(registration.id);
+
+      return {
+        isFree: true,
+        registrationId: confirmed.id,
+        name: confirmed.name,
+        email: confirmed.email,
+        phoneNumber: confirmed.phoneNumber,
+      };
+    }
+
+    const razorpay = getRazorpay();
+    const rzpOrder = await razorpay.orders.create({
+      amount: priceInPaise,
+      currency: "INR",
+      receipt: `webinar_rcpt_${Date.now()}`,
+      notes: { name, email, phoneNumber },
+    });
+
+    if (registration) {
+      registration = await prisma.webinarRegistration.update({
+        where: { id: registration.id },
+        data: {
+          name,
+          phoneNumber,
+          amount: priceInPaise,
+          currency: "INR",
+          razorpayOrderId: rzpOrder.id,
+          razorpayPaymentId: null,
+          razorpaySignature: null,
+          webinarScheduleId: liveSchedule?.id ?? null,
+        },
+      });
+    } else {
+      registration = await prisma.webinarRegistration.create({
+        data: {
+          name,
+          email,
+          phoneNumber,
+          amount: priceInPaise,
+          currency: "INR",
+          status: "PENDING",
+          razorpayOrderId: rzpOrder.id,
+          webinarScheduleId: liveSchedule?.id ?? null,
+        },
+      });
+    }
+
+    return {
+      orderId: rzpOrder.id,
+      amount: priceInPaise,
+      currency: "INR",
+      key: process.env.RAZORPAY_KEY_ID!,
+      registrationId: registration.id,
+      name: registration.name,
+      email: registration.email,
+      phoneNumber: registration.phoneNumber,
+    };
+  }
+
+  async verifyPayment(
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string,
+  ): Promise<void> {
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!secret)
+      throw new ApiError(
+        "Razorpay secret not configured",
+        STATUS_CODES.SERVER_ERROR,
+      );
+
+    const isValid = verifyRazorpaySignature(
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      secret,
+    );
+    if (!isValid)
+      throw new ApiError(
+        "Payment signature verification failed",
+        STATUS_CODES.BAD_REQUEST,
+      );
+
+    const registration = await prisma.webinarRegistration.findUnique({
+      where: { razorpayOrderId },
+      include: { webinarSchedule: true },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+
+    // Already processed (e.g. duplicate verify call on refresh/retry) — no-op.
+    if (registration.status === "PAID") return;
+
+    if (registration.status === "FAILED" || registration.status === "REFUNDED") {
+      throw new ApiError(
+        "This registration is no longer valid",
+        STATUS_CODES.CONFLICT,
+      );
+    }
+
+    try {
+      await this.finalizeAsPaid(registration.id, { razorpayPaymentId, razorpaySignature });
+    } catch (err: any) {
+      if (err.code === "P2002") {
+        // Concurrent verify call already recorded this payment — safe to ignore.
+        return;
+      }
+      throw err;
+    }
+  }
+
+  // Fallback path for when the client never completes the /verify-payment call
+  // (tab closed, network drop, app crash right after Razorpay captures the
+  // charge). Razorpay still delivers the webhook independently of the
+  // checkout.js `handler`, so this is the only guaranteed reconciliation path.
+  // Shares the single /api/payment/webhook endpoint — payment.controller.ts
+  // invokes this alongside PaymentService's own webhook handling, and this
+  // silently no-ops for orderIds it doesn't recognise (i.e. non-webinar ones).
+  async handleRazorpayWebhook(payload: RazorpayWebhookPayload): Promise<void> {
+    const event = payload.event;
+
+    if (event === "payment.captured") {
+      const payment = payload.payload.payment?.entity;
+      if (!payment) return;
+
+      const registration = await prisma.webinarRegistration.findUnique({
+        where: { razorpayOrderId: payment.order_id },
+        include: { webinarSchedule: true },
+      });
+      if (!registration || registration.status !== "PENDING") return;
+
+      try {
+        await this.finalizeAsPaid(registration.id, {
+          razorpayPaymentId: payment.id,
+          razorpaySignature: "webhook",
+        });
+      } catch (err: any) {
+        // Concurrent /verify-payment call already recorded this payment.
+        if (err.code !== "P2002") throw err;
+      }
+      return;
+    }
+
+    if (event === "payment.failed") {
+      const payment = payload.payload.payment?.entity;
+      if (!payment) return;
+
+      const registration = await prisma.webinarRegistration.findUnique({
+        where: { razorpayOrderId: payment.order_id },
+      });
+      if (!registration || registration.status !== "PENDING") return;
+
+      await prisma.webinarRegistration.update({
+        where: { id: registration.id },
+        data: { status: "FAILED" },
+      });
+    }
+  }
+
+  async getRegistrationStatus(
+    registrationId: string,
+  ): Promise<WebinarRegistrationStatusResponse> {
+    const registration = await prisma.webinarRegistration.findUnique({
+      where: { id: registrationId },
+      include: { webinarSchedule: true },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+
+    return {
+      registrationId: registration.id,
+      status: registration.status,
+      name: registration.name,
+      amount: registration.amount,
+      currency: registration.currency,
+      paidAt: registration.paidAt,
+      webinarTitle: registration.webinarSchedule?.title ?? null,
+      webinarScheduledAt: registration.webinarSchedule?.scheduledAt ?? null,
+      // The registration's own webinar may no longer be the one currently
+      // live/published — a newer batch can go live after this one paid.
+      isLiveWebinar: registration.webinarSchedule?.isLive ?? false,
+    };
+  }
+
+  // Always resolves — never reveals whether an email is registered, to
+  // prevent enumeration. Only actually sends an OTP when a PAID
+  // registration exists for the email; PENDING/FAILED registrations are
+  // better recovered via the normal /webinar retry flow.
+  async requestRecoveryOtp(rawEmail: string): Promise<void> {
+    const email = normalizeEmail(rawEmail);
+
+    const registration = await prisma.webinarRegistration.findFirst({
+      where: { email, status: "PAID" },
+    });
+    if (!registration) return;
+
+    const recentOtpCount = await prisma.otpVerification.count({
+      where: {
+        email,
+        type: "WEBINAR_RECOVERY",
+        createdAt: { gt: new Date(Date.now() - OTP_REQUEST_WINDOW_MS) },
+      },
+    });
+    if (recentOtpCount >= OTP_REQUEST_MAX_PER_WINDOW) return;
+
+    const otp = generateOtp();
+    await prisma.otpVerification.create({
+      data: {
+        email,
+        otpCode: hashOtp(otp),
+        type: "WEBINAR_RECOVERY",
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      },
+    });
+
+    void sendWebinarRecoveryOtpEmail(email, otp);
+  }
+
+  async verifyRecoveryOtp(
+    rawEmail: string,
+    otp: string,
+  ): Promise<{ registrationId: string }> {
+    const email = normalizeEmail(rawEmail);
+
+    const otpRecord = await prisma.otpVerification.findFirst({
+      where: {
+        email,
+        type: "WEBINAR_RECOVERY",
+        used: false,
+        expiresAt: { gt: new Date() },
+        otpCode: hashOtp(otp),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!otpRecord)
+      throw new ApiError("Invalid or expired code", STATUS_CODES.BAD_REQUEST);
+
+    await prisma.otpVerification.update({
+      where: { id: otpRecord.id },
+      data: { used: true },
+    });
+
+    const registration = await prisma.webinarRegistration.findFirst({
+      where: { email, status: "PAID" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+
+    return { registrationId: registration.id };
+  }
+
+  // Public: the single webinar shown on the /webinar page, if any is
+  // currently published AND marked live.
+  async getLiveSchedule(): Promise<WebinarScheduleResponse | null> {
+    const schedule = await prisma.webinarSchedule.findFirst({
+      where: { isPublished: true, isLive: true },
+    });
+    return schedule ?? null;
+  }
+}
+
+export const webinarService = new WebinarService();
+
+export class AdminWebinarService {
+  async getAll(
+    take?: number,
+    skip?: number,
+    search?: string,
+    status?: "PENDING" | "PAID" | "FAILED" | "REFUNDED",
+  ) {
+    const where = {
+      ...(status ? { status } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" as const } },
+              { email: { contains: search, mode: "insensitive" as const } },
+              {
+                phoneNumber: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const registrations = await prisma.webinarRegistration.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      ...(take !== undefined && { take }),
+      ...(skip !== undefined && { skip }),
+    });
+
+    const totalRecords = await prisma.webinarRegistration.count({ where });
+    return { registrations, totalRecords };
+  }
+
+  async getById(id: string) {
+    const registration = await prisma.webinarRegistration.findUnique({
+      where: { id },
+    });
+    if (!registration)
+      throw new ApiError(
+        "Webinar registration not found",
+        STATUS_CODES.NOT_FOUND,
+      );
+    return registration;
+  }
+}
+
+export const adminWebinarService = new AdminWebinarService();
+
+export class AdminWebinarScheduleService {
+  async getAll() {
+    return prisma.webinarSchedule.findMany({ orderBy: { scheduledAt: "desc" } });
+  }
+
+  async getById(id: string) {
+    const schedule = await prisma.webinarSchedule.findUnique({ where: { id } });
+    if (!schedule)
+      throw new ApiError("Webinar schedule not found", STATUS_CODES.NOT_FOUND);
+    return schedule;
+  }
+
+  async create(body: CreateWebinarScheduleBody) {
+    return prisma.webinarSchedule.create({
+      data: {
+        ...(body.title && { title: body.title }),
+        scheduledAt: new Date(body.scheduledAt),
+        ...(body.durationMinutes && { durationMinutes: body.durationMinutes }),
+        meetLink: body.meetLink || null,
+        ...(body.priceInPaise !== undefined && { priceInPaise: body.priceInPaise }),
+      },
+    });
+  }
+
+  async update(id: string, body: UpdateWebinarScheduleBody) {
+    await this.getById(id);
+    return prisma.webinarSchedule.update({
+      where: { id },
+      data: {
+        ...(body.title !== undefined && { title: body.title }),
+        ...(body.scheduledAt !== undefined && { scheduledAt: new Date(body.scheduledAt) }),
+        ...(body.durationMinutes !== undefined && { durationMinutes: body.durationMinutes }),
+        ...(body.meetLink !== undefined && { meetLink: body.meetLink || null }),
+        ...(body.priceInPaise !== undefined && { priceInPaise: body.priceInPaise }),
+      },
+    });
+  }
+
+  async delete(id: string) {
+    await this.getById(id);
+    await prisma.webinarSchedule.delete({ where: { id } });
+  }
+
+  // Publishing just makes it eligible to be shown — it still needs to be set
+  // live separately before it actually appears on the webinar page.
+  async setPublished(id: string, isPublished: boolean) {
+    await this.getById(id);
+    return prisma.webinarSchedule.update({ where: { id }, data: { isPublished } });
+  }
+
+  // Only one schedule can be live at a time — the one shown on /webinar and
+  // attached to new registrations. Turning one on turns every other off.
+  async setLive(id: string) {
+    const schedule = await this.getById(id);
+    if (!schedule.isPublished)
+      throw new ApiError(
+        "Only a published webinar can be set live",
+        STATUS_CODES.BAD_REQUEST,
+      );
+
+    return prisma.$transaction(async (tx) => {
+      await tx.webinarSchedule.updateMany({
+        where: { isLive: true, id: { not: id } },
+        data: { isLive: false },
+      });
+      return tx.webinarSchedule.update({ where: { id }, data: { isLive: true } });
+    });
+  }
+
+  async unsetLive(id: string) {
+    await this.getById(id);
+    return prisma.webinarSchedule.update({ where: { id }, data: { isLive: false } });
+  }
+}
+
+export const adminWebinarScheduleService = new AdminWebinarScheduleService();

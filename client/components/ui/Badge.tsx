@@ -10,6 +10,9 @@ export const badgeVariants = cva(
         free: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
         "level-dark": "bg-white/8 text-white/70 border border-white/12",
         "level-light": "bg-brand-500/10 text-brand-300 border border-brand-500/20",
+        /* Light-mode card variants (white/near-white backgrounds) */
+        freeLight: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+        level: "bg-brand-50 text-brand-700 border border-brand-200",
       },
     },
     defaultVariants: {

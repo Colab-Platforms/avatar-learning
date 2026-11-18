@@ -1,126 +1,52 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Button, ScrollReveal } from "@/components/ui";
+import { Button, ScrollReveal, ShinyText } from "@/components/ui";
 import { QUIZ_BANNER } from "@/data/quiz";
-import { Brain, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export function QuizBanner() {
   return (
-    <section className="relative bg-ink-950 py-14 overflow-hidden">
-      {/* Top divider */}
-      <div className="absolute top-0 inset-x-0 divider-glow" />
+    <section className="relative bg-white py-6">
+      <div className="container-x">
+        <ScrollReveal animation="fade-up">
+          <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-50/80 via-slate-50 to-indigo-50/80 border border-blue-100/90 shadow-md shadow-blue-900/5 p-6 sm:p-8 md:px-10 md:py-8 overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="pointer-events-none absolute -top-20 -right-20 h-44 w-44 rounded-full bg-blue-200/50 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-20 h-44 w-44 rounded-full bg-indigo-200/40 blur-2xl" />
 
-      <div className="container-x ">
-        <ScrollReveal animation="zoom-in" duration={800} threshold={0.08}>
-          <div
-            className="group/quiz relative overflow-hidden rounded-3xl bg-ink-800 text-white cursor-default
-                        border border-white/6 transition-all duration-600
-                        hover:shadow-[0_50px_120px_-20px_rgba(0,200,255,0.18)] hover:border-brand-500/20"
-            style={{ boxShadow: "0 40px 100px -20px rgba(0,0,0,0.5)" }}
-          >
-            {/* ── Background layers ── */}
-            <div
-              className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(circle, rgba(0,200,255,0.28) 0%, transparent 65%)",
-                filter: "blur(65px)",
-              }}
-            />
-            <div
-              className="absolute -bottom-20 right-28 w-72 h-72 rounded-full pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(circle, rgba(0,128,255,0.20) 0%, transparent 65%)",
-                filter: "blur(55px)",
-              }}
-            />
-            {/* Hover center orb */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/quiz:opacity-100 transition-opacity duration-700">
-              <div
-                className="w-125 h-125 rounded-full"
-                style={{
-                  background:
-                    "radial-gradient(circle, rgba(0,200,255,0.07) 0%, transparent 60%)",
-                  filter: "blur(40px)",
-                }}
-              />
-            </div>
-
-            {/* Top shimmer line */}
-            <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-brand-400/60 to-transparent" />
-            {/* Bottom line */}
-            <div className="absolute bottom-0 inset-x-0 h-px bg-linear-to-r from-transparent via-white/4 to-transparent" />
-
-            {/* Dot pattern */}
-            <div className="absolute inset-0 dot-grid-dark" />
-            <div className="absolute inset-0 noise-overlay opacity-30 pointer-events-none" />
-
-            <div className="relative grid md:grid-cols-2 items-stretch">
-              {/* ── Text side ── */}
-              <div className="p-10 sm:p-14 flex flex-col justify-center z-10">
-                <ScrollReveal animation="fade-right" delay={100} duration={650}>
-                  <p className="eyebrow eyebrow-dark mb-5">
-                    <Brain className="h-3.5 w-3.5" />
-                    {QUIZ_BANNER.eyebrow}
-                  </p>
-                  <h3 className="text-[32px] sm:text-[40px] font-semibold tracking-tight leading-[1.1]">
-                    {QUIZ_BANNER.heading.split("\n").map((line, i, arr) => (
-                      <span key={i}>
-                        {i === 0 ? (
-                          <span className="text-shimmer">{line}</span>
-                        ) : (
-                          <span className="text-white/85">{line}</span>
-                        )}
-                        {i < arr.length - 1 && <br />}
-                      </span>
-                    ))}
-                  </h3>
-                  <p className="mt-5 text-[14px] text-white/42 max-w-sm leading-[1.85]">
-                    {QUIZ_BANNER.description}
-                  </p>
-
-                  {/* Feature chips */}
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {["10 Questions", "2 min", "Instant results"].map(
-                      (chip) => (
-                        <span
-                          key={chip}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/8 px-3 py-1 text-[11px] font-medium text-brand-300"
-                        >
-                          <Sparkles className="h-2.5 w-2.5 text-brand-400" />
-                          {chip}
-                        </span>
-                      ),
-                    )}
-                  </div>
-
-                  <Link href="/quiz">
-                    <Button
-                      variant="primary"
-                      size="md"
-                      className="mt-8 self-start group/btn w-fit btn-glow"
-                    >
-                      {QUIZ_BANNER.ctaLabel}
-                      <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform duration-250" />
-                    </Button>
-                  </Link>
-                </ScrollReveal>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
+              {/* Left Column: Eyebrow, Heading & Subheading */}
+              <div className="flex-1 max-w-2xl">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-xs backdrop-blur-md">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    <ShinyText
+                      text={QUIZ_BANNER.eyebrow}
+                      color="#1d4ed8"
+                      shineColor="#93c5fd"
+                      speed={2.5}
+                    />
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                  Not Sure Which Program Is Right For You?
+                </h3>
+                <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+                  {QUIZ_BANNER.description}
+                </p>
               </div>
 
-              {/* ── Image side ── */}
-              <div className="relative h-72 md:h-auto min-h-80 overflow-hidden">
-                <Image
-                  src={QUIZ_BANNER.image}
-                  alt="Network visualization"
-                  fill
-                  sizes="(min-width:768px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-700 group-hover/quiz:scale-[1.04]"
-                />
-                {/* Left gradient blend */}
-                <div className="absolute inset-0 bg-linear-to-r from-ink-800/80 via-ink-800/25 to-transparent md:from-ink-800/60 md:via-ink-800/10" />
-                {/* Bottom on mobile */}
-                <div className="absolute inset-0 bg-linear-to-t from-ink-800/90 to-transparent md:hidden" />
+              {/* Right Column: CTA Button */}
+              <div className="shrink-0 flex items-center">
+                <Link href="/quiz" className="w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all duration-300 hover:shadow-blue-600/40 hover:-translate-y-0.5 active:translate-y-0 group"
+                  >
+                    {QUIZ_BANNER.ctaLabel}
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
