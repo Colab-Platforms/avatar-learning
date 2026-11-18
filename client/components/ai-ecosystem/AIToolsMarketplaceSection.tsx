@@ -220,7 +220,7 @@ function ProductMock({ slug }: { slug: string }) {
 }
 
 const MARQUEE_SPEED = 30; // px per second
-const MARQUEE_IDLE_MS = 3000; // resume this long after the last interaction
+const MARQUEE_IDLE_MS = 2500; // resume this long after the last interaction
 const COPIES = 3; // the sequence is rendered 3×; the visible window lives in the middle copy
 const GUTTER = 24; // the carousel's left padding
 
@@ -236,29 +236,23 @@ const GUTTER = 24; // the carousel's left padding
  * in a ref, so animation frames never re-render React.
  */
 function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
-  const [playing, setPlaying] = useState(true);
   const s = useRef({
-    pos: 0, base: 0, L: 0, playing: true, visible: false,
-    hover: false, kbFocus: false, drag: false, touching: false, moved: false,
+    pos: 0, base: 0, L: 0, reduced: false, visible: false,
+    kbFocus: false, drag: false, touching: false, moved: false,
     last: -Infinity, lastUserScroll: -Infinity,
-    wrap: () => {},
   });
-
-  // Autoplay is off for people who prefer reduced motion (they can still press play).
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
-  }, []);
-  useEffect(() => {
-    s.current.playing = playing;
-    if (playing) s.current.last = -Infinity; // pressing play starts right away
-  }, [playing]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const st = s.current;
-    const n = PRODUCTS.length;
     const now = () => performance.now();
+
+    // No automatic movement for people who prefer reduced motion; manual scrolling still works.
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onRm = () => (st.reduced = rm.matches);
+    onRm();
+    rm.addEventListener("change", onRm);
 
     const wrap = () => {
       if (st.L <= 0) return;
@@ -267,7 +261,6 @@ function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
         el.scrollLeft = st.pos;
       }
     };
-    st.wrap = wrap;
 
     // Loop distance = width of one full sequence incl. gaps (start of copy 2 − start of copy 1).
     const measure = () => {
@@ -287,7 +280,7 @@ function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
     if (firstCard) ro.observe(firstCard); // card widths change with the breakpoint, not only with the row
 
     const canMove = (t: number) =>
-      st.playing && !st.hover && !st.kbFocus && !st.drag && !st.touching && t - st.last > MARQUEE_IDLE_MS;
+      !st.reduced && !st.kbFocus && !st.drag && !st.touching && t - st.last > MARQUEE_IDLE_MS;
 
     let raf = 0;
     let prev = 0;
@@ -327,13 +320,10 @@ function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
         st.last = st.lastUserScroll = now();
       }
     };
-    const onEnter = (e: PointerEvent) => {
-      if (e.pointerType === "mouse") st.hover = true;
-    };
-    const onLeave = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") return;
-      st.hover = false;
-      st.last = now();
+    // Moving the mouse over the row holds it still; a resting pointer doesn't,
+    // so the carousel resumes after the idle delay even while hovered.
+    const onHoverMove = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") st.last = now();
     };
     // Mouse drag to scroll (touch uses native swiping).
     let startX = 0;
@@ -395,8 +385,7 @@ function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
     };
 
     el.addEventListener("scroll", onScroll, { passive: true });
-    el.addEventListener("pointerenter", onEnter);
-    el.addEventListener("pointerleave", onLeave);
+    el.addEventListener("pointermove", onHoverMove);
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("click", onClickCapture, true);
     el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -413,8 +402,8 @@ function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       el.removeEventListener("scroll", onScroll);
-      el.removeEventListener("pointerenter", onEnter);
-      el.removeEventListener("pointerleave", onLeave);
+      rm.removeEventListener("change", onRm);
+      el.removeEventListener("pointermove", onHoverMove);
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("click", onClickCapture, true);
       el.removeEventListener("touchstart", onTouchStart);
@@ -430,36 +419,8 @@ function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
     s.current.last = performance.now();
   };
 
-  // Arrow buttons: move one card left/right, landing on a card edge.
-  const nudge = (dir: 1 | -1) => {
-    const el = ref.current;
-    const card = el?.querySelector<HTMLElement>('[data-card="1-0"]');
-    const st = s.current;
-    if (!el || !card || st.L <= 0) return;
-    st.wrap();
-    st.last = performance.now();
-    const step = st.L / PRODUCTS.length;
-    const target = st.base + (Math.round((st.pos - st.base) / step) + dir) * step;
-    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: target, behavior: smooth ? "smooth" : "auto" });
-  };
-
-  return { playing, setPlaying, nudge, markInteraction };
+  return { markInteraction };
 }
-
-const ctrlStyle: React.CSSProperties = {
-  width: 36,
-  height: 36,
-  borderRadius: "50%",
-  border: "1px solid rgba(255,255,255,.1)",
-  background: "rgba(255,255,255,.03)",
-  color: "#a3abb5",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  padding: 0,
-};
 
 export function AIToolsMarketplaceSection() {
   const [prod, setProd] = useState(0);
@@ -492,7 +453,7 @@ export function AIToolsMarketplaceSection() {
     return () => clearInterval(id);
   }, [auto]);
 
-  const { playing, setPlaying, nudge, markInteraction } = useMarquee(tabsRef);
+  const { markInteraction } = useMarquee(tabsRef);
 
   const goTo = (i: number) => {
     setProd((i + PRODUCTS.length) % PRODUCTS.length);
@@ -530,21 +491,6 @@ export function AIToolsMarketplaceSection() {
           <motion.p {...reveal(160)} style={{ margin: 0, maxWidth: 480, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>
             Start with one. Add more as you grow.
           </motion.p>
-          <div role="group" aria-label="Product carousel controls" style={{ alignSelf: "flex-end", display: "flex", gap: 8 }}>
-            <button type="button" aria-label="Previous products" aria-controls="product-carousel" onClick={() => nudge(-1)} style={ctrlStyle}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <button type="button" aria-label={playing ? "Pause automatic scrolling" : "Play automatic scrolling"} aria-pressed={!playing} aria-controls="product-carousel" onClick={() => setPlaying((v) => !v)} style={ctrlStyle}>
-              {playing ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>
-              )}
-            </button>
-            <button type="button" aria-label="Next products" aria-controls="product-carousel" onClick={() => nudge(1)} style={ctrlStyle}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-          </div>
         </div>
 
         {/* Product carousel: one row of cards that auto-scrolls in a seamless loop (see useMarquee). */}
