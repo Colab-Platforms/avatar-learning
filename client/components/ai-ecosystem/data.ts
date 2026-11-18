@@ -371,3 +371,12 @@ export const FOOTER_COMPANY = [
   { label: "Investors", href: "/investors?theme=dark" },
   { label: "Contact Us", href: "#contact" },
 ];
+
+/** Social links for the AI Adoption (home) page footer only. The learning
+ * pages' footer keeps its own links in data/navigation.ts. */
+export const ADOPTION_SOCIAL_LINKS = [
+  { platform: "instagram", label: "Instagram", href: "https://www.instagram.com/avataraiadoption/" },
+  { platform: "x", label: "X (Twitter)", href: "https://x.com/avataradoption" },
+  { platform: "youtube", label: "YouTube", href: "https://www.youtube.com/@Avataraiadoption" },
+  { platform: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/company/avatar-india/" },
+] as const;

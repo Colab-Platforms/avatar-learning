@@ -82,7 +82,7 @@ export interface FooterColumn {
 }
 
 export interface SocialLink {
-  platform: "instagram" | "x" | "youtube" | "linkedin";
+  platform: "facebook" | "instagram" | "linkedin" | "youtube";
   href: string;
   label: string;
 }

@@ -70,10 +70,10 @@ function AvatarWordmark() {
 }
 
 /* Inline social icons to avoid deprecated lucide brand icons */
-function XSvg() {
+function FacebookSvg() {
   return (
     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
     </svg>
   );
 }
@@ -115,10 +115,10 @@ function LinkedInSvg() {
 }
 
 const SOCIAL_ICON_MAP: Record<SocialLink["platform"], React.ElementType> = {
+  facebook: FacebookSvg,
   instagram: InstagramSvg,
-  x: XSvg,
-  youtube: YoutubeSvg,
   linkedin: LinkedInSvg,
+  youtube: YoutubeSvg,
 };
 
 export function Footer() {
@@ -155,9 +155,7 @@ export function Footer() {
                   <a
                     key={link.platform}
                     href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${link.label} (opens in a new tab)`}
+                    aria-label={link.label}
                     className="flex items-center justify-center h-8 w-8 rounded-lg border border-white/6 bg-white/2.5
                                text-white/35 hover:text-brand-300 hover:border-brand-500/25 hover:bg-brand-500/8
                                transition-all duration-250"
