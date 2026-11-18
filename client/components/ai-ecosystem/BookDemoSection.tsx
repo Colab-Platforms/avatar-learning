@@ -91,10 +91,15 @@ function ToolsSelect({ value, onChange, invalid }: { value: string[]; onChange: 
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  // Close on outside click or Escape.
+  // Close on outside click/tap, when keyboard focus moves outside, or on Escape.
+  // (Not on blur: pressing an option's text blurs the button with no new focus
+  // target, and closing then would swallow the click on that option.)
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onFocusIn = (e: FocusEvent) => {
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
@@ -105,7 +110,9 @@ function ToolsSelect({ value, onChange, invalid }: { value: string[]; onChange: 
     };
     document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
+    document.addEventListener("focusin", onFocusIn);
     return () => {
+      document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
     };
@@ -119,9 +126,6 @@ function ToolsSelect({ value, onChange, invalid }: { value: string[]; onChange: 
     <div
       ref={wrapRef}
       style={{ position: "relative" }}
-      onBlur={(e) => {
-        if (!wrapRef.current?.contains(e.relatedTarget as Node | null)) setOpen(false);
-      }}
     >
       <button
         ref={btnRef}
@@ -222,7 +226,7 @@ export function BookDemoSection() {
       role: f.get("role"),
       companySize: f.get("companySize"),
       interestedTools: tools, // product slugs, e.g. ["crm", "hrms"]
-      customRequirements: tools.includes("custom") ? f.get("customRequirements") : undefined,
+      customRequirements: tools.includes("custom") ? String(f.get("customRequirements") ?? "").trim() : undefined,
       message: f.get("message"),
     };
     // NOTE: this form is not connected to a backend yet, so the payload isn't
@@ -368,12 +372,25 @@ export function BookDemoSection() {
                     </span>
                   )}
                 </div>
+                {/* Only rendered while Custom Tools is ticked; unticking unmounts it, which clears its value and validation state. */}
                 {tools.includes("custom") && (
                   <label className={styles.fadeIn} style={{ ...labelStyle, gridColumn: "1 / -1" }}>
-                    <span>
-                      Describe your custom requirement <span style={{ color: "#8a939e" }}>(optional)</span>
+                    Which custom tool are you looking for?
+                    <input
+                      required
+                      pattern=".*\S.*"
+                      title="Please describe the tool you need."
+                      name="customRequirements"
+                      type="text"
+                      placeholder="e.g. Billing software, ERP, custom CRM"
+                      aria-describedby="demo-custom-help"
+                      style={fieldStyle}
+                      onFocus={onFocusGlow}
+                      onBlur={onBlurGlow}
+                    />
+                    <span id="demo-custom-help" style={{ fontSize: 13, color: "#8a939e" }}>
+                      Briefly describe the software or automation solution your business needs.
                     </span>
-                    <input name="customRequirements" type="text" placeholder="e.g. a booking tool for our clinics" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
                   </label>
                 )}
                 <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>

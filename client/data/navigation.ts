@@ -53,23 +53,23 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 
 export const SOCIAL_LINKS: SocialLink[] = [
   {
-    platform: "facebook",
-    href: "https://www.facebook.com/profile.php?id=61589319364156",
-    label: "Facebook",
-  },
-  {
     platform: "instagram",
-    href: "https://www.instagram.com/avatar.india/",
+    href: "https://www.instagram.com/avataraiadoption/",
     label: "Instagram",
   },
   {
-    platform: "linkedin",
-    href: "https://www.linkedin.com/company/avatar-india/?viewAsMember=true",
-    label: "LinkedIn",
+    platform: "x",
+    href: "https://x.com/avataradoption",
+    label: "X (Twitter)",
   },
   {
     platform: "youtube",
-    href: "https://www.youtube.com/@AvatarIndia-g1i",
+    href: "https://www.youtube.com/@Avataraiadoption",
     label: "YouTube",
+  },
+  {
+    platform: "linkedin",
+    href: "https://www.linkedin.com/company/avatar-india/",
+    label: "LinkedIn",
   },
 ];
