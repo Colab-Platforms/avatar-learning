@@ -13,8 +13,6 @@ const reveal = (delay = 0) => ({
 });
 
 const CYCLE_MS = 7000;
-const AI_CONTENT_COPY =
-  "This Diwali, light up your home with our festive collection. Up to 30% off, only this week.";
 
 function Dot({ label, color }: { label: string; color: string }) {
   return (
@@ -24,14 +22,11 @@ function Dot({ label, color }: { label: string; color: string }) {
   );
 }
 
-function ProductMock({ index, typed }: { index: number; typed: string }) {
-  if (index === 0) {
-    const cols: [string, { t: string; s: string; hot?: boolean }[]][] = [
-      ["New · 12", [{ t: "Sharma Textiles", s: "Website enquiry" }, { t: "Kiran Foods", s: "Referral" }]],
-      ["Contacted · 7", [{ t: "Mehta Logistics", s: "Follow up today", hot: true }, { t: "Rao & Sons", s: "Demo booked" }]],
-      ["Won · 4", [{ t: "Nair Retail", s: "Closed this week" }]],
-    ];
-    return (
+type KanbanCols = [string, { t: string; s: string; hot?: boolean }[]][];
+
+/** Three-column pipeline board (used by CRM and Recruitment CRM). */
+function KanbanMock({ cols }: { cols: KanbanCols }) {
+  return (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 10 }} className={styles.fadeIn}>
         {cols.map(([label, cards]) => (
           <div key={label} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -58,61 +53,131 @@ function ProductMock({ index, typed }: { index: number; typed: string }) {
           </div>
         ))}
       </div>
+  );
+}
+
+/** Small table + progress bar (used by OMS, HRMS and IMS). */
+function TableMock({ head, rows, firstCol = 72, bar }: { head: [string, string, string]; rows: [string, string, string][]; firstCol?: number; bar: { label: string; pct: number } }) {
+  const cols = `${firstCol}px 1fr 1fr`;
+  return (
+    <div className={styles.fadeIn} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: cols, fontSize: 11, letterSpacing: ".08em", color: "#8a939e", fontFamily: "var(--font-geist-mono),monospace" }}>
+        {head.map((h) => (
+          <span key={h}>{h}</span>
+        ))}
+      </div>
+      {rows.map((r) => (
+        <div key={r[0]} style={{ display: "grid", gridTemplateColumns: cols, fontSize: 13, color: "#dfe4ea", borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 10 }}>
+          <span>{r[0]}</span>
+          <span>{r[1]}</span>
+          <span style={{ color: "#8fe9f2" }}>{r[2]}</span>
+        </div>
+      ))}
+      <div style={{ marginTop: 4 }}>
+        <span style={{ fontSize: 12, color: "#a3abb5" }}>{bar.label}</span>
+        <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,.06)", overflow: "hidden", marginTop: 6 }}>
+          <div className={styles.fill} style={{ width: `${bar.pct}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#6b7cff,#6fe3ef)", transformOrigin: "0 50%" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductMock({ slug }: { slug: string }) {
+  if (slug === "crm") {
+    return (
+      <KanbanMock
+        cols={[
+          ["New · 12", [{ t: "Sharma Textiles", s: "Website enquiry" }, { t: "Kiran Foods", s: "Referral" }]],
+          ["Contacted · 7", [{ t: "Mehta Logistics", s: "Follow up today", hot: true }, { t: "Rao & Sons", s: "Demo booked" }]],
+          ["Won · 4", [{ t: "Nair Retail", s: "Closed this week" }]],
+        ]}
+      />
     );
   }
 
-  if (index === 1) {
-    const rows: [string, string, string][] = [
-      ["#2041", "Pune", "Delivered"],
-      ["#2042", "Jaipur", "Shipped"],
-      ["#2043", "Kochi", "Packed"],
+  if (slug === "orders") {
+    return (
+      <TableMock
+        head={["ORDER", "CITY", "STATUS"]}
+        rows={[
+          ["#2041", "Pune", "Delivered"],
+          ["#2042", "Jaipur", "Shipped"],
+          ["#2043", "Kochi", "Packed"],
+        ]}
+        bar={{ label: "Stock level · Cotton kurta", pct: 68 }}
+      />
+    );
+  }
+
+  if (slug === "recruitment") {
+    return (
+      <KanbanMock
+        cols={[
+          ["Applied · 18", [{ t: "Priya Menon", s: "Sales executive" }, { t: "Arjun Patel", s: "Accountant" }]],
+          ["Interview · 6", [{ t: "Neha Kulkarni", s: "Interview today", hot: true }, { t: "Rahul Verma", s: "Round 2" }]],
+          ["Offer · 2", [{ t: "Sneha Iyer", s: "Offer accepted" }]],
+        ]}
+      />
+    );
+  }
+
+  if (slug === "hrms") {
+    return (
+      <TableMock
+        head={["EMPLOYEE", "IN", "STATUS"]}
+        firstCol={110}
+        rows={[
+          ["Anita Desai", "9:02", "Present"],
+          ["Vikram Singh", "9:15", "Present"],
+          ["Farah Khan", "—", "On leave"],
+        ]}
+        bar={{ label: "Attendance today · 46 of 50", pct: 92 }}
+      />
+    );
+  }
+
+  if (slug === "inventory") {
+    return (
+      <TableMock
+        head={["ITEM", "STOCK", "STATUS"]}
+        firstCol={110}
+        rows={[
+          ["Cotton kurta", "240", "In stock"],
+          ["Silk saree", "18", "Low stock"],
+          ["Linen shirt", "96", "In stock"],
+        ]}
+        bar={{ label: "Warehouse capacity · Mumbai", pct: 74 }}
+      />
+    );
+  }
+
+  if (slug === "script") {
+    const steps: [string, string, boolean][] = [
+      ["Send WhatsApp welcome", "Done", true],
+      ["Assign to a sales rep", "Done", true],
+      ["Schedule follow-up call", "Running", false],
     ];
     return (
-      <div className={styles.fadeIn} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr", fontSize: 11, letterSpacing: ".08em", color: "#8a939e", fontFamily: "var(--font-geist-mono),monospace" }}>
-          <span>ORDER</span>
-          <span>CITY</span>
-          <span>STATUS</span>
-        </div>
-        {rows.map((r) => (
-          <div key={r[0]} style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr", fontSize: 13, color: "#dfe4ea", borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 10 }}>
-            <span>{r[0]}</span>
-            <span>{r[1]}</span>
-            <span style={{ color: "#8fe9f2" }}>{r[2]}</span>
+      <div className={styles.fadeIn} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <span style={{ fontSize: 12, color: "#8a939e" }}>When a new enquiry arrives</span>
+        {steps.map(([t, v, done]) => (
+          <div key={t} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 10 }}>
+            <span style={{ color: "#dfe4ea" }}>{t}</span>
+            <span className={done ? undefined : styles.blink} style={{ color: done ? "#8fe9f2" : "#a3abb5", fontSize: 12 }}>{v}</span>
           </div>
         ))}
         <div style={{ marginTop: 4 }}>
-          <span style={{ fontSize: 12, color: "#a3abb5" }}>Stock level &middot; Cotton kurta</span>
+          <span style={{ fontSize: 12, color: "#a3abb5" }}>Tasks automated this week &middot; 128</span>
           <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,.06)", overflow: "hidden", marginTop: 6 }}>
-            <div className={styles.fill} style={{ width: "68%", height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#6b7cff,#6fe3ef)", transformOrigin: "0 50%" }} />
+            <div className={styles.fill} style={{ width: "80%", height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#6b7cff,#6fe3ef)", transformOrigin: "0 50%" }} />
           </div>
         </div>
       </div>
     );
   }
 
-  if (index === 2) {
-    return (
-      <div className={styles.fadeIn} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <span style={{ fontSize: 12, color: "#8a939e" }}>Write an Instagram post for our Diwali sale</span>
-        <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.03)", padding: 14, fontSize: 13, lineHeight: 1.6, color: "#dfe4ea", minHeight: 72 }}>
-          {typed}
-          <span className={styles.blink} style={{ display: "inline-block", width: 2, height: "1em", marginLeft: 2, verticalAlign: "-2px", background: "#8fe9f2" }} />
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, color: "#8a939e" }}>Tone: Warm</span>
-          <span style={{ padding: "3px 8px", borderRadius: 999, fontSize: 11, border: "1px solid rgba(111,227,239,.4)", color: "#8fe9f2" }}>English</span>
-          <span style={{ padding: "3px 8px", borderRadius: 999, fontSize: 11, border: "1px solid rgba(255,255,255,.12)", color: "#a3abb5" }}>Hindi</span>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <span style={{ padding: "7px 14px", borderRadius: 999, background: "#f4f6f8", color: "#07080b", fontSize: 12, fontWeight: 500 }}>Approve</span>
-          <span style={{ padding: "7px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,.14)", color: "#dfe4ea", fontSize: 12 }}>Rewrite</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (index === 3) {
+  if (slug === "learning") {
     const courses: [string, string, boolean][] = [
       ["AI basics for sales teams", "Completed", true],
       ["Writing with AI", "64%", false],
@@ -154,51 +219,293 @@ function ProductMock({ index, typed }: { index: number; typed: string }) {
   );
 }
 
+const MARQUEE_SPEED = 30; // px per second
+const MARQUEE_IDLE_MS = 3000; // resume this long after the last interaction
+const COPIES = 3; // the sequence is rendered 3×; the visible window lives in the middle copy
+const GUTTER = 24; // the carousel's left padding
+
+/**
+ * Seamless auto-scrolling marquee for the product carousel.
+ *
+ * The row is a native horizontal scroller (so mouse-drag, touch swipe and
+ * trackpad scrolling all work), and a requestAnimationFrame loop advances its
+ * scrollLeft by elapsed time. The 8 products are rendered three times; the
+ * position is kept inside the middle copy, and when it crosses a copy boundary
+ * it is shifted by exactly one sequence width (measured, gaps included), which
+ * looks identical, so the loop never visibly resets. All per-frame state lives
+ * in a ref, so animation frames never re-render React.
+ */
+function useMarquee(ref: React.RefObject<HTMLDivElement | null>) {
+  const [playing, setPlaying] = useState(true);
+  const s = useRef({
+    pos: 0, base: 0, L: 0, playing: true, visible: false,
+    hover: false, kbFocus: false, drag: false, touching: false, moved: false,
+    last: -Infinity, lastUserScroll: -Infinity,
+    wrap: () => {},
+  });
+
+  // Autoplay is off for people who prefer reduced motion (they can still press play).
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
+  }, []);
+  useEffect(() => {
+    s.current.playing = playing;
+    if (playing) s.current.last = -Infinity; // pressing play starts right away
+  }, [playing]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const st = s.current;
+    const n = PRODUCTS.length;
+    const now = () => performance.now();
+
+    const wrap = () => {
+      if (st.L <= 0) return;
+      if (st.pos < st.base || st.pos >= st.base + st.L) {
+        st.pos = st.base + ((((st.pos - st.base) % st.L) + st.L) % st.L);
+        el.scrollLeft = st.pos;
+      }
+    };
+    st.wrap = wrap;
+
+    // Loop distance = width of one full sequence incl. gaps (start of copy 2 − start of copy 1).
+    const measure = () => {
+      const a = el.querySelector<HTMLElement>('[data-card="0-0"]');
+      const b = el.querySelector<HTMLElement>('[data-card="1-0"]');
+      if (!a || !b) return;
+      const rel = st.L > 0 ? (((st.pos - st.base) / st.L) % 1 + 1) % 1 : 0; // keep place on resize
+      st.L = b.offsetLeft - a.offsetLeft;
+      st.base = b.offsetLeft - GUTTER;
+      st.pos = st.base + rel * st.L;
+      el.scrollLeft = st.pos;
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const firstCard = el.querySelector<HTMLElement>('[data-card="1-0"]');
+    if (firstCard) ro.observe(firstCard); // card widths change with the breakpoint, not only with the row
+
+    const canMove = (t: number) =>
+      st.playing && !st.hover && !st.kbFocus && !st.drag && !st.touching && t - st.last > MARQUEE_IDLE_MS;
+
+    let raf = 0;
+    let prev = 0;
+    const tick = (t: number) => {
+      const dt = prev ? Math.min(100, t - prev) : 0;
+      prev = t;
+      if (!st.drag && t - st.lastUserScroll > 200) wrap(); // re-centre after manual scrolling settles
+      if (canMove(t) && st.L > 0) {
+        st.pos += (MARQUEE_SPEED * dt) / 1000;
+        if (st.pos >= st.base + st.L) st.pos -= st.L;
+        el.scrollLeft = st.pos;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    // Only animate while the carousel is on screen and the tab is visible.
+    const sync = () => {
+      const run = st.visible && !document.hidden;
+      if (run && !raf) {
+        prev = 0;
+        raf = requestAnimationFrame(tick);
+      } else if (!run && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    const io = new IntersectionObserver(([e]) => {
+      st.visible = e.isIntersecting;
+      sync();
+    });
+    io.observe(el);
+    document.addEventListener("visibilitychange", sync);
+
+    // Any scroll we didn't cause (trackpad, swipe, arrows, focus) = user interaction.
+    const onScroll = () => {
+      if (Math.abs(el.scrollLeft - st.pos) > 1.5) {
+        st.pos = el.scrollLeft;
+        st.last = st.lastUserScroll = now();
+      }
+    };
+    const onEnter = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") st.hover = true;
+    };
+    const onLeave = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      st.hover = false;
+      st.last = now();
+    };
+    // Mouse drag to scroll (touch uses native swiping).
+    let startX = 0;
+    let startPos = 0;
+    const onMove = (e: PointerEvent) => {
+      const dx = e.clientX - startX;
+      if (!st.moved && Math.abs(dx) > 5) st.moved = true;
+      if (st.moved) {
+        st.pos = startPos - dx;
+        el.scrollLeft = st.pos;
+      }
+    };
+    const onUp = () => {
+      st.drag = false;
+      st.last = now();
+      // The click (if any) fires right after pointerup; clear the drag flag
+      // after it so a later click or Enter key isn't swallowed.
+      window.setTimeout(() => (st.moved = false), 0);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    const onDown = (e: PointerEvent) => {
+      st.last = now();
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      st.drag = true;
+      st.moved = false;
+      startX = e.clientX;
+      startPos = st.pos;
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    };
+    // A drag must not also count as a click on the card under the cursor.
+    const onClickCapture = (e: MouseEvent) => {
+      if (!st.moved) return;
+      e.preventDefault();
+      e.stopPropagation();
+      st.moved = false;
+    };
+    const onTouchStart = () => {
+      st.touching = true;
+      st.last = now();
+    };
+    const onTouchEnd = () => {
+      st.touching = false;
+      st.last = now();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) st.last = now(); // horizontal trackpad scroll
+    };
+    // Keyboard focus inside the carousel pauses it until focus leaves.
+    const onFocusIn = (e: FocusEvent) => {
+      st.kbFocus = (e.target as Element).matches?.(":focus-visible") ?? false;
+      st.last = now();
+    };
+    const onFocusOut = (e: FocusEvent) => {
+      if (el.contains(e.relatedTarget as Node | null)) return;
+      st.kbFocus = false;
+      st.last = now();
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    el.addEventListener("pointerenter", onEnter);
+    el.addEventListener("pointerleave", onLeave);
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("click", onClickCapture, true);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("focusin", onFocusIn);
+    el.addEventListener("focusout", onFocusOut);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("pointerenter", onEnter);
+      el.removeEventListener("pointerleave", onLeave);
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("click", onClickCapture, true);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("focusin", onFocusIn);
+      el.removeEventListener("focusout", onFocusOut);
+    };
+  }, [ref]);
+
+  const markInteraction = () => {
+    s.current.last = performance.now();
+  };
+
+  // Arrow buttons: move one card left/right, landing on a card edge.
+  const nudge = (dir: 1 | -1) => {
+    const el = ref.current;
+    const card = el?.querySelector<HTMLElement>('[data-card="1-0"]');
+    const st = s.current;
+    if (!el || !card || st.L <= 0) return;
+    st.wrap();
+    st.last = performance.now();
+    const step = st.L / PRODUCTS.length;
+    const target = st.base + (Math.round((st.pos - st.base) / step) + dir) * step;
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollTo({ left: target, behavior: smooth ? "smooth" : "auto" });
+  };
+
+  return { playing, setPlaying, nudge, markInteraction };
+}
+
+const ctrlStyle: React.CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: "50%",
+  border: "1px solid rgba(255,255,255,.1)",
+  background: "rgba(255,255,255,.03)",
+  color: "#a3abb5",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  padding: 0,
+};
+
 export function AIToolsMarketplaceSection() {
   const [prod, setProd] = useState(0);
   const [auto, setAuto] = useState(true);
-  const [typedN, setTypedN] = useState(0);
-  const [hovered, setHovered] = useState(-1);
-  const [stacked, setStacked] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [vw, setVw] = useState(1440);
   const tabsRef = useRef<HTMLDivElement>(null);
   const msgBoxRef = useRef<string>("");
 
   useEffect(() => {
-    // The panel's two columns (text / mockup) stack below ~760px, where the
-    // fixed heights that keep the desktop row from jumping between products
-    // are no longer needed and would just leave dead space.
-    const onResize = () => setStacked(window.innerWidth < 760);
+    const onResize = () => setVw(window.innerWidth);
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // The panel's two columns (text / mockup) stack below ~760px, where the
+  // fixed heights that keep the desktop row from jumping between products
+  // are no longer needed and would just leave dead space.
+  const stacked = vw < 760;
+  // Product carousel: how many cards are visible at once. The fraction leaves
+  // part of the next card peeking in, so it is clear the row scrolls.
+  // (The row runs into the 24px side gutters, so the visible count is a bit
+  // higher than this: ≈1.4 on phones, ≈2.5 on tablets, ≈4.5 on desktop.)
+  const cardsInView = vw < 600 ? 1.25 : vw < 1000 ? 2.4 : 4.3;
+
   useEffect(() => {
     if (!auto) return;
-    const id = setInterval(() => {
-      setProd((p) => (p + 1) % PRODUCTS.length);
-      setTypedN(0);
-    }, CYCLE_MS);
+    const id = setInterval(() => setProd((p) => (p + 1) % PRODUCTS.length), CYCLE_MS);
     return () => clearInterval(id);
   }, [auto]);
 
-  useEffect(() => {
-    if (prod !== 2) return;
-    const copy = AI_CONTENT_COPY;
-    const id = setInterval(() => {
-      setTypedN((n) => (n < copy.length ? n + 2 : n));
-    }, 40);
-    return () => clearInterval(id);
-  }, [prod]);
+  const { playing, setPlaying, nudge, markInteraction } = useMarquee(tabsRef);
 
   const goTo = (i: number) => {
-    const n = (i + PRODUCTS.length) % PRODUCTS.length;
-    setProd(n);
+    setProd((i + PRODUCTS.length) % PRODUCTS.length);
     setAuto(false);
-    setTypedN(0);
-    const el = tabsRef.current;
-    const btn = el?.querySelectorAll("button")[n] as HTMLElement | undefined;
-    if (btn && el) el.scrollTo({ left: Math.max(0, btn.offsetLeft - 24), behavior: "smooth" });
+    markInteraction(); // clicking a card pauses the carousel so the panel can be read
+  };
+
+  // Left/Right arrow keys move between the (canonical) product cards.
+  const onCardKey = (e: React.KeyboardEvent<HTMLButtonElement>, i: number) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const n = (i + (e.key === "ArrowRight" ? 1 : -1) + PRODUCTS.length) % PRODUCTS.length;
+    tabsRef.current?.querySelector<HTMLButtonElement>(`[data-card="1-${n}"]`)?.focus();
   };
 
   const product = PRODUCTS[prod];
@@ -223,105 +530,74 @@ export function AIToolsMarketplaceSection() {
           <motion.p {...reveal(160)} style={{ margin: 0, maxWidth: 480, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>
             Start with one. Add more as you grow.
           </motion.p>
+          <div role="group" aria-label="Product carousel controls" style={{ alignSelf: "flex-end", display: "flex", gap: 8 }}>
+            <button type="button" aria-label="Previous products" aria-controls="product-carousel" onClick={() => nudge(-1)} style={ctrlStyle}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+            <button type="button" aria-label={playing ? "Pause automatic scrolling" : "Play automatic scrolling"} aria-pressed={!playing} aria-controls="product-carousel" onClick={() => setPlaying((v) => !v)} style={ctrlStyle}>
+              {playing ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>
+              )}
+            </button>
+            <button type="button" aria-label="Next products" aria-controls="product-carousel" onClick={() => nudge(1)} style={ctrlStyle}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+            </button>
+          </div>
         </div>
 
-        {stacked ? (
-          <div
-            ref={tabsRef}
-            className={styles.noScrollbar}
-            style={{
-              position: "sticky",
-              top: 68,
-              zIndex: 20,
-              display: "flex",
-              flexDirection: "row",
-              gap: 22,
-              overflowX: "auto",
-              margin: "0 -24px",
-              padding: "6px 24px 14px",
-              background: "transparent",
-              borderBottom: "1px solid rgba(255,255,255,.08)",
-              scrollSnapType: "x mandatory",
-            }}
-          >
-            {PRODUCTS.map((p, i) => {
+        {/* Product carousel: one row of cards that auto-scrolls in a seamless loop (see useMarquee). */}
+        <div
+          id="product-carousel"
+          ref={tabsRef}
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Products"
+          className={styles.noScrollbar}
+          style={{
+            position: "sticky",
+            top: 68,
+            zIndex: 20,
+            display: "flex",
+            gap: 8,
+            overflowX: "auto",
+            margin: "0 -24px",
+            padding: "6px 24px",
+            background: "transparent",
+            overscrollBehaviorX: "contain",
+          }}
+        >
+            {Array.from({ length: COPIES }, (_, c) => PRODUCTS.map((p, i) => {
               const on = i === prod;
+              const hot = hovered === p.slug;
+              // Copy 1 (the middle) is the real, keyboard-reachable set; the
+              // other copies only exist to make the loop seamless.
+              const clone = c !== 1;
               return (
                 <button
-                  key={p.slug}
+                  key={`${c}-${p.slug}`}
+                  data-card={`${c}-${i}`}
+                  type="button"
+                  tabIndex={clone ? -1 : undefined}
+                  aria-hidden={clone || undefined}
                   onClick={() => goTo(i)}
+                  onKeyDown={(e) => onCardKey(e, i)}
+                  onMouseEnter={() => setHovered(p.slug)}
+                  onMouseLeave={() => setHovered(null)}
+                  onDragStart={(e) => e.preventDefault()}
                   aria-pressed={on}
                   style={{
-                    scrollSnapAlign: "start",
-                    flex: "none",
+                    // Fixed card width: `cardsInView` cards (incl. the gaps
+                    // between them) fill the row; the rest scroll into view.
+                    flex: `0 0 calc((100% - ${Math.floor(cardsInView) * 8}px) / ${cardsInView})`,
                     position: "relative",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    border: 0,
-                    background: "transparent",
-                    padding: "6px 0 12px",
-                    fontSize: 15,
-                    fontWeight: on ? 600 : 500,
-                    color: on ? "#f4f6f8" : "#8a939e",
-                    transition: "color .3s",
-                  }}
-                >
-                  {p.plain}
-                  {on && (
-                    <motion.span
-                      layoutId="product-tab-underline-mobile"
-                      transition={{ type: "spring", stiffness: 420, damping: 38 }}
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        bottom: -1,
-                        height: 2,
-                        borderRadius: 2,
-                        background: "linear-gradient(90deg,#6b7cff,#6fe3ef)",
-                        boxShadow: "0 0 8px rgba(111,227,239,.5)",
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div
-            ref={tabsRef}
-            className={styles.noScrollbar}
-            style={{
-              position: "sticky",
-              top: 68,
-              zIndex: 20,
-              display: "grid",
-              gridTemplateColumns: "repeat(5,minmax(160px,1fr))",
-              gap: 8,
-              overflowX: "auto",
-              margin: "0 -24px",
-              padding: "6px 24px",
-              background: "transparent",
-              scrollSnapType: "x mandatory",
-            }}
-          >
-            {PRODUCTS.map((p, i) => {
-              const on = i === prod;
-              const hot = i === hovered;
-              return (
-                <button
-                  key={p.slug}
-                  onClick={() => goTo(i)}
-                  onMouseEnter={() => setHovered(i)}
-                  onMouseLeave={() => setHovered(-1)}
-                  aria-pressed={on}
-                  style={{
-                    scrollSnapAlign: "start",
-                    position: "relative",
+                    userSelect: "none",
                     overflow: "hidden",
                     cursor: "pointer",
                     textAlign: "left",
-                    whiteSpace: "nowrap",
+                    whiteSpace: "normal",
+                    overflowWrap: "break-word",
                     padding: "16px 16px 18px",
                     borderRadius: 14,
                     border: `1px solid ${on ? "rgba(111,227,239,.35)" : hot ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.08)"}`,
@@ -376,9 +652,8 @@ export function AIToolsMarketplaceSection() {
                   )}
                 </button>
               );
-            })}
+            }))}
           </div>
-        )}
 
         <div
           style={{
@@ -417,7 +692,7 @@ export function AIToolsMarketplaceSection() {
                 style={{ display: "flex", flexDirection: "column", gap: 18 }}
               >
                 <span style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#6fe3ef" }}>
-                  {String(prod + 1).padStart(2, "0")} / 05
+                  {String(prod + 1).padStart(2, "0")} / {String(PRODUCTS.length).padStart(2, "0")}
                   <span style={{ padding: "3px 9px", borderRadius: 999, border: "1px solid rgba(111,227,239,.3)", color: "#bff5fa", letterSpacing: ".04em" }}>
                     {product.tag || product.name}
                   </span>
@@ -428,7 +703,7 @@ export function AIToolsMarketplaceSection() {
                   style={
                     stacked
                       ? { display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch" }
-                      : { display: "flex", flexDirection: "row", gap: 8, flexWrap: "nowrap" }
+                      : { display: "flex", flexDirection: "row", gap: 8, flexWrap: "wrap" }
                   }
                 >
                   {product.bullets.map((b) => (
@@ -496,7 +771,7 @@ export function AIToolsMarketplaceSection() {
                 <span style={{ marginLeft: 10, fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, color: "#8a939e" }}>avatar / {product.slug}</span>
               </div>
               <div style={{ padding: 18, height: 300, boxSizing: "border-box", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <ProductMock index={prod} typed={AI_CONTENT_COPY.slice(0, typedN)} />
+                <ProductMock slug={product.slug} />
               </div>
             </div>
           </div>

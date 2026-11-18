@@ -8,8 +8,8 @@ import { NAV_LINKS } from "./data";
 import pillStyles from "../ui/hoverPill.module.css";
 
 const PRODUCT_LINK = { label: "Avatar Learning", href: "/learning" };
-/** The page's "Get in touch" demo form (BookDemoSection). */
-const DEMO_HREF = "#contact";
+/** The page's "Get in touch" demo form card (BookDemoSection). */
+const DEMO_HREF = "#demo-form";
 
 function handlePillMouseMove(e: React.MouseEvent<HTMLElement>) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -95,6 +95,48 @@ export function EcosystemHeader() {
     },
     [pathname, router],
   );
+
+  // Book a Demo: bring the enquiry form itself into view (not just the section
+  // heading), then put the cursor in its first field so the visitor can type.
+  // On pages without the form, the link's href opens /#demo-form instead.
+  const goToDemoForm = useCallback((card: HTMLElement) => {
+    // The card fades in sliding up (a translateY), so aim at where it ends up,
+    // not where it is mid-animation.
+    const targetTop = () => {
+      const offset = (headerRef.current?.getBoundingClientRect().height ?? 0) + 8;
+      const shift = new DOMMatrixReadOnly(getComputedStyle(card).transform).m42;
+      return Math.max(card.getBoundingClientRect().top - shift + window.scrollY - offset, 0);
+    };
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: targetTop(), behavior: smooth ? "smooth" : "auto" });
+    // Content above can still shift while scrolling; settle on the form, then focus it.
+    window.setTimeout(() => {
+      const top = targetTop();
+      if (Math.abs(top - window.scrollY) > 4) window.scrollTo({ top, behavior: smooth ? "smooth" : "auto" });
+      window.setTimeout(() => card.querySelector<HTMLInputElement>("form input")?.focus({ preventScroll: true }), smooth ? 350 : 0);
+    }, smooth ? 800 : 0);
+  }, []);
+
+  const onDemoClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      const card = document.getElementById(DEMO_HREF.slice(1));
+      if (!card) return;
+      e.preventDefault();
+      setMenuOpen(false);
+      goToDemoForm(card);
+    },
+    [goToDemoForm],
+  );
+
+  // Arriving from another page via /#demo-form: land on the form the same way.
+  useEffect(() => {
+    if (window.location.hash !== DEMO_HREF) return;
+    const t = window.setTimeout(() => {
+      const card = document.getElementById(DEMO_HREF.slice(1));
+      if (card) goToDemoForm(card);
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [goToDemoForm]);
 
   return (
     <>
@@ -219,8 +261,8 @@ export function EcosystemHeader() {
             </div>
             */}
             <a
-              href={DEMO_HREF}
-              onClick={onNavClick(DEMO_HREF)}
+              href={`/${DEMO_HREF}`}
+              onClick={onDemoClick}
               style={{
                 display: "inline-flex",
                 alignItems: "center",

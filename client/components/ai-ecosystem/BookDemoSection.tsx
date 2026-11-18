@@ -118,8 +118,9 @@ export function BookDemoSection() {
         </div>
 
         <motion.div
+          id="demo-form"
           {...reveal(0)}
-          style={{ borderRadius: 24, padding: 1, background: "linear-gradient(180deg,rgba(143,233,242,.4),rgba(255,255,255,.06) 50%)" }}
+          style={{ scrollMarginTop: 76, borderRadius: 24, padding: 1, background: "linear-gradient(180deg,rgba(143,233,242,.4),rgba(255,255,255,.06) 50%)" }}
         >
           <div style={{ borderRadius: 23, background: "#0b0d12", padding: "clamp(24px,3.5vw,40px)", height: "100%", boxSizing: "border-box" }}>
             {!sent ? (

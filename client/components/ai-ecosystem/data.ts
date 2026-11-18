@@ -94,12 +94,12 @@ export const PRODUCTS: Product[] = [
     bullets: ["Order status", "Inventory updates", "Delivery status"],
   },
   {
-    name: "AI Content",
-    plain: "Content writing",
-    slug: "content",
-    desc: "Create blog posts, social captions and product copy in minutes. Set your brand tone once, and every draft sounds like you before it reaches your team for approval.",
-    cta: "Ask about AI Content",
-    bullets: ["Blog and social posts", "Brand tone control", "Faster approvals"],
+    name: "Script Automation",
+    plain: "Workflow automation",
+    slug: "script",
+    desc: "Automate the repetitive steps in your daily work. Set a trigger once, and messages, task assignments and follow-ups run on their own, so your team can focus on the work that matters.",
+    cta: "Ask about Script Automation",
+    bullets: ["Automated workflows", "Instant follow-ups", "Fewer manual tasks"],
   },
   {
     name: "LMS",
@@ -108,6 +108,30 @@ export const PRODUCTS: Product[] = [
     desc: "Give your team ready-made AI courses they can take at their own pace. Track progress, award certificates and add new lessons as your tools and needs grow.",
     cta: "Ask about LMS",
     bullets: ["Ready-made AI courses", "Progress tracking", "Certificates"],
+  },
+  {
+    name: "Recruitment CRM",
+    plain: "Hiring pipeline",
+    slug: "recruitment",
+    desc: "Track every candidate from application to offer in one pipeline. Schedule interviews, share feedback and see where each opening stands without chasing emails.",
+    cta: "Ask about Recruitment CRM",
+    bullets: ["Candidate tracking", "Interview scheduling", "Hiring dashboards"],
+  },
+  {
+    name: "HRMS",
+    plain: "HR & attendance",
+    slug: "hrms",
+    desc: "Manage attendance, leave and employee records in one place. Staff check in from their phones, managers approve leave in a tap and payroll gets accurate numbers.",
+    cta: "Ask about HRMS",
+    bullets: ["Attendance tracking", "Leave approvals", "Employee records"],
+  },
+  {
+    name: "IMS",
+    plain: "Inventory management",
+    slug: "inventory",
+    desc: "See stock levels across every location in real time. Get alerts before items run out, and know exactly what to reorder and when.",
+    cta: "Ask about IMS",
+    bullets: ["Live stock levels", "Low-stock alerts", "Reorder planning"],
   },
   {
     name: "Custom",
@@ -150,7 +174,8 @@ export const ROLES: Role[] = [
     name: "Marketing team",
     q: "Need more content, without more people?",
     d: "Create blog posts, social captions and product copy in a fraction of the time. Every draft follows your brand tone, so your team spends less time writing and more time on ideas.",
-    products: ["AI Content", "LMS"],
+    // Not a product name: shown as-is, so the Marketing team chip stays "Content writing".
+    products: ["Content writing", "LMS"],
     cta: "See a content demo",
     chips: ["Posts", "Blogs", "Tone", "Reviews"],
   },
@@ -249,7 +274,7 @@ export const INSIGHT_POSTS: InsightPost[] = [
 ];
 
 export const ABOUT_TEXT =
-  "Avatar is a complete AI partner. Beyond software, we help businesses learn about AI, find the right talent and put solutions into practice.";
+  "Avatar AI is a complete AI partner. Beyond software, we help businesses learn about AI, find the right talent and put solutions into practice.";
 
 export interface Pillar {
   n: string;
@@ -310,7 +335,7 @@ export const NAV_LINKS = [
   { href: "#how", label: "How it works" },
   { href: "#who", label: "Who it's for" },
   { href: "#about", label: "About" },
-  // { href: "#insights", label: "Insights" },
+  { href: "#insights", label: "Insights" },
   { href: "#faq", label: "FAQ" },
   { href: "/investors?theme=dark", label: "Investors" },
 ];
@@ -321,18 +346,28 @@ export const CONTACT = {
   whatsapp: "+91 91367 74304",
 };
 
+/** Official corporate details shown in the footer. */
+export const COMPANY = {
+  name: "AVATAR Industries Limited",
+  formerly: "(Formerly known as ASL INDUSTRIES LIMITED)",
+  cin: "L62099MH1992PLC464238",
+  registeredOffice: "NESCO IT Park, 10th Floor, Building 4, Goregaon East, Mumbai, Maharashtra, India – 400063.",
+};
+
 export const FOOTER_PRODUCTS = [
-  "Sales pipeline (CRM)",
-  "Order tracking (OMS)",
-  "Content writing (AI)",
-  "Team training (LMS)",
-  "Custom tools",
+  "CRM – Sales & Customer Management",
+  "HRMS – Human Resource Management",
+  "OMS – Order Management",
+  "IMS – Inventory Management",
+  "Recruitment CRM",
+  "Script Automation",
 ];
 
 export const FOOTER_COMPANY = [
-  { label: "About", href: "#about" },
-  { label: "How it works", href: "#how" },
-  // { label: "Insights", href: "#insights" },
+  { label: "About Us", href: "#about" },
+  { label: "Our Solutions", href: "#products" },
+  { label: "How It Works", href: "#how" },
+  { label: "Insights", href: "#insights" },
   { label: "Investors", href: "/investors?theme=dark" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact Us", href: "#contact" },
 ];
