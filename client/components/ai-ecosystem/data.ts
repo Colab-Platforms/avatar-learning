@@ -341,7 +341,7 @@ export const NAV_LINKS = [
 ];
 
 export const CONTACT = {
-  email: "business@avatarindia.com",
+  email: "adoption@avatarindia.com",
   phone: "+91 89768 30779",
   whatsapp: "+91 91367 74304",
 };
