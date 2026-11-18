@@ -187,7 +187,7 @@ export const LA_CONTACT_COPY = {
 };
 
 export const LA_CONTACT = [
-  { icon: "mail", label: "Email", value: "business@avatarindia.com", href: "mailto:business@avatarindia.com" },
+  { icon: "mail", label: "Email", value: "adoption@avatarindia.com", href: "mailto:adoption@avatarindia.com" },
   { icon: "phone", label: "Phone", value: "+91 89768 30779", href: "tel:+918976830779" },
   { icon: "chat", label: "WhatsApp", value: "+91 91367 74304", href: "https://wa.me/919136774304" },
 ];

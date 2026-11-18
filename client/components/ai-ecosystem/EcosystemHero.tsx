@@ -13,6 +13,13 @@ const reveal = (delay = 0) => ({
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
+/** Decorative pills floating to the right of the headline (desktop only).
+ * Positions are relative to the headline box. */
+const HERO_FLOAT_LABELS = [
+  { text: "Reports", left: "calc(100% + 18px)", top: "4%", delay: "0s" },
+  { text: "Team Training", left: "calc(100% + 6px)", top: "60%", delay: "-3.5s" },
+];
+
 /** Rotating point-cloud "globe" rendered on canvas, with lines between nearby
  * points and a handful of labelled anchor nodes that light up near the cursor. */
 const SPHERE_H = 980;
@@ -340,7 +347,7 @@ function HeroSphere({ width }: { width: number }) {
 function HeroPromptPill({ width }: { width: number }) {
   const promptRef = useRef<HTMLSpanElement>(null);
   const sm = width < 600;
-  const pw = Math.min(560, width);
+  const pw = Math.min(670, width);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -401,7 +408,7 @@ function HeroPromptPill({ width }: { width: number }) {
         height: "1.1em",
         marginLeft: 2,
         verticalAlign: "-3px",
-        background: "#8fe9f2",
+        background: "#f4f6f8",
       }}
     />
   );
@@ -409,19 +416,19 @@ function HeroPromptPill({ width }: { width: number }) {
     <span
       style={{
         flex: "none",
-        width: sm ? 34 : 36,
-        height: sm ? 34 : 36,
+        width: sm ? 36 : 44,
+        height: sm ? 36 : 44,
         borderRadius: "50%",
         background: "#f4f6f8",
         color: "#07080b",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 16,
-        fontWeight: 600,
       }}
     >
-      ↑
+      <svg width={sm ? 16 : 18} height={sm ? 16 : 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
     </span>
   );
 
@@ -474,8 +481,8 @@ function HeroPromptPill({ width }: { width: number }) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              padding: "12px 12px 12px 20px",
+              gap: 14,
+              padding: "14px 14px 14px 22px",
               borderRadius: 999,
               background: "rgba(10,12,16,.92)",
               backdropFilter: "blur(10px)",
@@ -483,7 +490,7 @@ function HeroPromptPill({ width }: { width: number }) {
             }}
           >
             {badge}
-            <span style={{ flex: 1, minWidth: 0, fontSize: 16, color: "#f4f6f8", whiteSpace: "nowrap", overflow: "hidden" }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 17, color: "#f4f6f8", whiteSpace: "nowrap", overflow: "hidden" }}>
               <span ref={promptRef} />
               {caret}
             </span>
@@ -664,24 +671,58 @@ export function EcosystemHero() {
           </span>
         </motion.div>
 
-        <motion.h1
-          {...reveal(80)}
-          style={{
-            margin: 0,
-            maxWidth: 651,
-            fontSize: mobile ? "clamp(34px,10.5vw,48px)" : "clamp(44px,7.4vw,92px)",
-            lineHeight: mobile ? 1.04 : 0.98,
-            letterSpacing: "-0.045em",
-            fontWeight: 600,
-            textWrap: "balance",
-            background: "linear-gradient(180deg,#ffffff 35%,#8e98a4 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
-          }}
-        >
-          Make AI work for you.
-        </motion.h1>
+        <motion.div {...reveal(80)} style={{ position: "relative", maxWidth: "100%" }}>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: mobile ? "clamp(30px,10vw,46px)" : "clamp(44px,7.2vw,96px)",
+              lineHeight: mobile ? 1.06 : 1.02,
+              letterSpacing: "-0.045em",
+              fontWeight: 600,
+            }}
+          >
+            <span style={{ display: "block", whiteSpace: "nowrap", color: "#ffffff" }}>Put AI to work</span>
+            <span
+              style={{
+                display: "block",
+                whiteSpace: "nowrap",
+                paddingBottom: "0.08em",
+                background: "linear-gradient(180deg,#e6eaee 0%,#b9c0c8 55%,#8e98a4 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              in your business
+            </span>
+          </h1>
+
+          {width >= 900 &&
+            HERO_FLOAT_LABELS.map((l) => (
+              <span key={l.text} aria-hidden="true" style={{ position: "absolute", left: l.left, top: l.top, pointerEvents: "none" }}>
+                <span
+                  className={styles.floaty}
+                  style={{
+                    display: "inline-block",
+                    whiteSpace: "nowrap",
+                    padding: "7px 15px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(143,168,199,.28)",
+                    background: "rgba(12,16,24,.55)",
+                    backdropFilter: "blur(6px)",
+                    WebkitBackdropFilter: "blur(6px)",
+                    color: "#c3cad3",
+                    fontSize: 13,
+                    letterSpacing: ".01em",
+                    animationDelay: l.delay,
+                    animationDuration: "7s",
+                  }}
+                >
+                  {l.text}
+                </span>
+              </span>
+            ))}
+        </motion.div>
 
         <motion.p
           {...reveal(160)}

@@ -304,7 +304,7 @@ export function EcosystemOverviewSection() {
             }}
           >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fe3ef" }} />
-            Why Avatar
+            Why Avatar AI
           </motion.div>
           <motion.h2
             {...reveal(80)}
@@ -422,7 +422,7 @@ export function EcosystemOverviewSection() {
           <p
             style={{
               margin: 0,
-              maxWidth: 640,
+              maxWidth: 900,
               fontSize: "clamp(24px,3vw,34px)",
               lineHeight: 1.2,
               fontWeight: 600,
@@ -434,14 +434,14 @@ export function EcosystemOverviewSection() {
               color: "transparent",
             }}
           >
-            These barriers are where Avatar comes in.
+            These barriers are where Avatar AI comes in.
           </p>
         </motion.div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <motion.div {...reveal(0)} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16 }}>
             <span style={{ fontSize: "clamp(22px,2.2vw,26px)", fontWeight: 600, letterSpacing: "-0.02em", color: "#f4f6f8" }}>
-              How Avatar closes the gap
+              How Avatar AI closes the gap
             </span>
             <span className="hidden max-[999px]:inline" style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, letterSpacing: ".08em", color: "#98a1ac" }}>
               SWIPE →
