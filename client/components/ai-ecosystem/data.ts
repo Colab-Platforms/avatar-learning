@@ -330,5 +330,5 @@ export const ADOPTION_SOCIAL_LINKS = [
   { platform: "instagram", label: "Instagram", href: "https://www.instagram.com/avataraiadoption/" },
   { platform: "x", label: "X (Twitter)", href: "https://x.com/avataradoption" },
   { platform: "youtube", label: "YouTube", href: "https://www.youtube.com/@Avataraiadoption" },
-  { platform: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/company/avatar-india/" },
+  { platform: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/in/avatar-ai-1b8859450/" },
 ] as const;
