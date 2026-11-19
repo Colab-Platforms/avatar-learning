@@ -63,6 +63,7 @@ Browser → axios `apiClient` (`NEXT_PUBLIC_API_BASE_URL`, adds `Authorization: 
 | Google Sign-In | OAuth ID-token login | `utils/googleAuth.ts` | `GOOGLE_CLIENT_ID` (+ client `NEXT_PUBLIC_GOOGLE_CLIENT_ID`) |
 | Google Sheets | Secondary reporting sync (users, leads, enrollments, webinar, abandoned checkout, quiz) | `services/googleSheets.service.ts` | `GOOGLE_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY` |
 | Pabbly webhooks | Purchase/signup → Excel + WhatsApp | `payment.service.ts`, `auth.service.ts` | `PABBLY_D2H_PURCHASE_WEBHOOK_URL, PABBLY_BASIC_COURSE_PURCHASE_WEBHOOK_URL, PABBLY_SIGNUP_WEBHOOK_URL` |
+| WhatsApp Cloud API (Meta) | Incoming messages + delivery/read/failed statuses via webhook; optional outbound `WhatsappClient` (not called yet) | `modules/whatsapp`, `/api/whatsapp/webhook` | `WHATSAPP_ENABLED, WHATSAPP_APP_SECRET, WHATSAPP_WEBHOOK_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_BUSINESS_ACCOUNT_ID, WHATSAPP_GRAPH_API_VERSION` |
 | MSG91 | Phone-verification widget | `utils/msg91.ts` | `MSG91_AUTH_KEY, MSG91_WIDGET_ID, MSG91_TOKEN_AUTH` |
 
 ## Other env var names

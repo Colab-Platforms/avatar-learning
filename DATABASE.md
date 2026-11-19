@@ -30,13 +30,15 @@ Conventions: `id String @id @default(cuid())`; tables snake_case via `@map`/`@@m
 - Webinar: `webinar_schedules` (isLive, isPublished, priceInPaise) ← `webinar_registrations` (razorpayOrderId/PaymentId unique, status; idx email, phoneNumber, status). Not linked to `users`.
 - Partners: `partners` (userId unique, referralCode unique, walletBalance Int, KYC fields/files, bank fields — **sensitive PII: aadhar, PAN, bank account**), `partner_referrals` (referredUserId unique, direct2hireEnrollmentId unique, eligibleAt idx, isRefunded), `partner_claims`.
 
+**WhatsApp:** `whatsapp_messages` (`wa_message_id` **unique**, direction INBOUND|OUTBOUND, status RECEIVED|SENT|DELIVERED|READ|FAILED, contact_wa_id, text_body, sent/delivered/read/failed_at, error_*; idx contact_wa_id, status, [direction, created_at]). No FK to `users`. Migration `20261118130000_add_whatsapp_messages` (branch `feature/whatsapp-webhook`, not applied to any database).
+
 **Internships (public listings):** `internships` (slug unique, Json outcome fields), `internship_applications` (`@@unique[userId,internshipId]`). **CMS/other:** `investor_categories` (slug unique), `investor_documents` (soft delete), `contacts` (idx isRead, createdAt).
 
 ## Key relationships
 User 1—N almost everything (cascade). Courses 1—N lessons/assessments/enrollments/payment orders; Courses 1—1 placement_assessment. PaymentOrder → Courses? / Direct2HireEnrollment? / Coupon?. PartnerReferral → Partner, referred User, Direct2HireEnrollment?.
 
 ## Migrations
-`backend/prisma/migrations/` holds only **3** migrations (+ `migration_lock.toml`, provider postgresql):
+`backend/prisma/migrations/` holds only **3** migrations (plus 1 unapplied WhatsApp migration on `feature/whatsapp-webhook`) (+ `migration_lock.toml`, provider postgresql):
 1. `20260727130000_add_counselling_booking_phone_number`
 2. `20260729130000_add_job_placement_entries`
 3. `20260901120000_make_course_recommendation_course_optional`

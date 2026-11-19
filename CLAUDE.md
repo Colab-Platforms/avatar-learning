@@ -38,7 +38,7 @@ Env: copy `backend/.env.example` / `client/.env.example`; the backend reads more
 - Match surrounding style; don't refactor unrelated code.
 
 ## Testing requirements
-- **No automated tests exist** (no test runner, no `*.test.*`). Only manual HTTP samples in `backend/test/*.http`.
+- Automated tests exist only for the WhatsApp webhook (`cd backend && npm test`, Node's built-in runner via tsx; `npm run type-check:test`) on branch `feature/whatsapp-webhook`. Everything else has none; manual HTTP samples live in `backend/test/*.http`.
 - Minimum before declaring work done: `npm run type-check` in `backend/` for backend changes; `npm run build` (or at least `npm run lint`) in `client/` for frontend changes. Report honestly if not run.
 - Prefer adding tests only if the user asks or a test runner is introduced; if you add one, record it in PROGRESS.md.
 - Never claim runtime behaviour was verified unless you actually ran it.

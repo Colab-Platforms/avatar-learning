@@ -15,6 +15,8 @@ Status as of 2026-11-18, established by **reading code only** (**[code]**). **No
 - Insights (blogs): 11 markdown articles served at `/insights` (listing, filters) and `/insights/<slug>`; linked from header/footer nav and a homepage preview. Content in `client/content/insights/*.md`, registered in `client/content/insights/registry.ts`, loaded by `client/lib/insights.ts` (see registry file header for how to add one). Production build, tsc and a headless-Chrome run were verified 2026-11-18; no automated test suite.
 - Frontend pages for all above, plus marketing home (`/` AI Adoption Ecosystem), `/learning`, about, blog (static), legal.
 
+- WhatsApp Cloud API webhook (branch `feature/whatsapp-webhook`, **not merged/deployed**): GET verification + signed POST for messages and statuses, idempotent storage in `whatsapp_messages`. Verified by automated tests with mocked Meta/Prisma and a local route-mount check; **never run against a real database or Meta**. Setup: [WHATSAPP_WEBHOOK_SETUP.md](WHATSAPP_WEBHOOK_SETUP.md).
+
 ## Partially implemented / in flux
 - Header/nav: many items commented out (Internships, Marketplace, Webinar, Contact) and "Avatar Learning" button temporarily hidden ([client/data/navigation.ts](client/data/navigation.ts), recent commits).
 - `app/marketplace`, `app/coming-soon`, `app/onboarded`: purpose UNVERIFIED.
@@ -38,7 +40,7 @@ Automated tests; CI/CD config; deployment config (Dockerfile, vercel/render file
 10. `client/README.md` is stale/incorrect. Unused deps possibly: twilio, prisma-qb, pagination-helper. Partner KYC (Aadhar/PAN/bank) stored as plain columns/URLs.
 
 ## Testing status
-- Automated tests: **none**. Manual `.http` samples: `backend/test/auth.http, pabbly.http, webhok.http`.
+- Automated tests: only `backend/test/whatsapp/*.test.ts` (`npm test`, node:test via tsx; WhatsApp webhook only) on branch `feature/whatsapp-webhook`; none elsewhere. Manual `.http` samples: `backend/test/auth.http, pabbly.http, webhok.http`.
 - Type-check / build / lint: **not run** by the doc author (no commands executed).
 - Runtime verification of any flow: **none**.
 
@@ -80,6 +82,7 @@ Method: read-only SQL (SELECT only), file/Git inspection, one local run of backe
 **Open actions (owner decisions):** confirm Neon branch (above); switch local Razorpay to test keys; set local `FRONTEND_URL`; decide fix for `isProd` flag + add `creditedAt: null` guard; consider a per-environment switch to disable cron jobs locally (e.g. `ENABLE_JOBS` env) — none implemented.
 
 ## Update log
+- 2026-11-18: Pre-deployment review of the WhatsApp webhook. Findings: branch `feature/whatsapp-webhook` is based on the tip of `dev-vishwa` (= `origin/dev-vishwa`, `bb3e2be`), but its changes are **uncommitted**; the migration `20261118130000_add_whatsapp_messages` was **already applied** to the Neon database (by someone else, 13:15 UTC) and a read-only DB->schema diff is empty (no drift); `_prisma_migrations` also lists 2 migrations that are not in this repo (`20260819120000_add_direct2hire_plans` only on `origin/d2h-pricing`, `20260828120000_rename_direct2hire_only_flag` on no branch), so never run `migrate dev`/`db push`/`reset` there; a NUL character in a message would have caused endless 500 retries -> fixed in the parser (+tests, 60 passing). Details in WHATSAPP_WEBHOOK_SETUP.md.
 - 2026-11-18: Insights feature added (11 articles, nav + homepage links). Only `client/` changed; no backend/schema changes.
 - 2026-11-18: Environment & security audit added (see above); `client/.gitignore` updated. No application source, schema, migration or DB data changed.
 - 2026-11-18: Initial documentation set created from code inspection (no code changes, no commands run besides read-only git/file inspection).

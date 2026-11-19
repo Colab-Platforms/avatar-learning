@@ -60,6 +60,9 @@ Gate `requireDirect2HireAccess` (full paid): `/internship` (`/upload/sign`, `/ta
 ## Partners — `/api/partners` (U+P)
 `GET /kyc/upload/sign` · `POST /apply` · `GET /me` · `GET /me/referrals` · `POST /me/claim`.
 
+## WhatsApp webhook — `/api/whatsapp` (Pub; secured by verify token / HMAC, not JWT)
+`GET /webhook` Meta verification handshake (echoes `hub.challenge`, 403 on token mismatch) · `POST /webhook` event delivery: inbound messages + `sent/delivered/read/failed` statuses, requires a valid `X-Hub-Signature-256`; `503` unless `WHATSAPP_ENABLED=true` and the secrets are set. Details: [WHATSAPP_WEBHOOK_SETUP.md](WHATSAPP_WEBHOOK_SETUP.md). Implemented and tested with mocks on branch `feature/whatsapp-webhook`; not deployed.
+
 ## Other public
 `GET /api/health` · `GET /api/investors` (categories+documents) · `POST /api/contact` · `POST /api/chatbot` + `DELETE /api/chatbot/:sessionId` (limited 10 / 15 min; chat history is in-memory per process) · `GET /api/chatbot/health`.
 

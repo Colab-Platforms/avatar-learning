@@ -1624,3 +1624,62 @@ model JobPlacementEntry {
   @@index([userId, leftAt])
   @@map("job_placement_entries")
 }
+
+// ─── WhatsApp Cloud API (Meta webhook) ───────────────────────────────────────
+// Messages received from customers and delivery/read/failure state of messages
+// the business sent. Populated only by the webhook at /api/whatsapp/webhook.
+
+enum WhatsappMessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum WhatsappMessageStatus {
+  RECEIVED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model WhatsappMessage {
+  id String @id @default(cuid())
+
+  // Meta message id (wamid...). Unique, so duplicate webhook deliveries cannot create a second row.
+  waMessageId String @unique @map("wa_message_id")
+
+  direction WhatsappMessageDirection
+  status    WhatsappMessageStatus
+
+  // Customer WhatsApp ID (phone number, digits only): sender for INBOUND, recipient for OUTBOUND.
+  contactWaId String  @map("contact_wa_id")
+  contactName String? @map("contact_name")
+
+  // Business phone number id the event was delivered for.
+  phoneNumberId String? @map("phone_number_id")
+
+  messageType String? @map("message_type")
+  textBody    String? @map("text_body")
+  // Timestamp carried by the message itself (INBOUND only).
+  messageTimestamp DateTime? @map("message_timestamp")
+
+  sentAt      DateTime? @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  readAt      DateTime? @map("read_at")
+  failedAt    DateTime? @map("failed_at")
+
+  errorCode    Int?    @map("error_code")
+  errorTitle   String? @map("error_title")
+  errorDetails String? @map("error_details")
+
+  // Original Meta message object for INBOUND messages (media ids, locations, ...).
+  payload Json?
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@index([contactWaId])
+  @@index([status])
+  @@index([direction, createdAt])
+  @@map("whatsapp_messages")
+}

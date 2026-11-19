@@ -14,6 +14,8 @@
     "db:seed": "tsx prisma/seeds/index.ts",
     "db:studio": "prisma studio",
     "type-check": "tsc --noEmit",
+    "type-check:test": "tsc --noEmit -p tsconfig.test.json",
+    "test": "tsx --test \"test/**/*.test.ts\"",
     "sync:users": "tsx scripts/sync-exist-users.ts",
     "sync:leads": "tsx scripts/sync-exist-leads.ts",
     "sync:enrollments": "tsx scripts/sync-exist-enrollments.ts",
