@@ -13,13 +13,6 @@ const reveal = (delay = 0) => ({
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
-/** Decorative pills floating to the right of the headline (desktop only).
- * Positions are relative to the headline box. */
-const HERO_FLOAT_LABELS = [
-  { text: "Reports", left: "calc(100% + 18px)", top: "4%", delay: "0s" },
-  { text: "Team Training", left: "calc(100% + 6px)", top: "60%", delay: "-3.5s" },
-];
-
 /** Rotating point-cloud "globe" rendered on canvas, with lines between nearby
  * points and a handful of labelled anchor nodes that light up near the cursor. */
 const SPHERE_H = 980;
@@ -696,32 +689,6 @@ export function EcosystemHero() {
               in your business
             </span>
           </h1>
-
-          {width >= 900 &&
-            HERO_FLOAT_LABELS.map((l) => (
-              <span key={l.text} aria-hidden="true" style={{ position: "absolute", left: l.left, top: l.top, pointerEvents: "none" }}>
-                <span
-                  className={styles.floaty}
-                  style={{
-                    display: "inline-block",
-                    whiteSpace: "nowrap",
-                    padding: "7px 15px",
-                    borderRadius: 999,
-                    border: "1px solid rgba(143,168,199,.28)",
-                    background: "rgba(12,16,24,.55)",
-                    backdropFilter: "blur(6px)",
-                    WebkitBackdropFilter: "blur(6px)",
-                    color: "#c3cad3",
-                    fontSize: 13,
-                    letterSpacing: ".01em",
-                    animationDelay: l.delay,
-                    animationDuration: "7s",
-                  }}
-                >
-                  {l.text}
-                </span>
-              </span>
-            ))}
         </motion.div>
 
         <motion.p

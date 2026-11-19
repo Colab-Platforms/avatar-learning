@@ -2,8 +2,8 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { adoptionAuth } from "@/lib/adoptionSession";
-import { Heading, TextLink, errorMessage, focusRing, primaryBtn, primaryHover, useSignedInRedirect } from "../../_components/ui";
-import { BackLink, CodeStep, EMAIL_RE, Field, FormError, PasswordField } from "../../_components/form";
+import { Heading, TextLink, errorMessage, focusRing, primaryBtn, primaryHover, useSignedInRedirect } from "../../../_components/ui";
+import { BackLink, CodeStep, EMAIL_RE, Field, FormError, PasswordField } from "../../../_components/form";
 
 type Errors = { email?: string; password?: string };
 
