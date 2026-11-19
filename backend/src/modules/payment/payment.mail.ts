@@ -1,13 +1,7 @@
 import { resend, FROM_EMAIL, APP_NAME } from "@/utils/mailer.js";
+import { getRequiredLink, missingRequiredLinks } from "@/utils/requiredLinks.js";
 
 const LOGO_URL = `${process.env.FRONTEND_URL || "http://localhost:3000"}/favicon.png`;
-
-const WHATSAPP_COMMUNITY_LINK = process.env.WHATSAPP_COMMUNITY_LINK;
-if (!WHATSAPP_COMMUNITY_LINK) {
-  throw new Error(
-    "WHATSAPP_COMMUNITY_LINK is required in backend environment variables.",
-  );
-}
 
 export interface PaymentConfirmationData {
   name: string;
@@ -21,6 +15,8 @@ function formatAmount(amountInPaise: number): string {
 }
 
 function buildHtml(data: PaymentConfirmationData): string {
+  // Read at send time (not import time); throws MissingConfigError if unusable.
+  const WHATSAPP_COMMUNITY_LINK = getRequiredLink("WHATSAPP_COMMUNITY_LINK");
   const amountLabel = formatAmount(data.amount);
 
   const orderSummaryRows = `
@@ -124,6 +120,14 @@ export async function sendPaymentConfirmationEmail(
   email: string,
   data: PaymentConfirmationData,
 ): Promise<void> {
+  const missingLinks = missingRequiredLinks(["WHATSAPP_COMMUNITY_LINK"]);
+  if (missingLinks.length > 0) {
+    // Fail safe: never send an email with an empty/placeholder link. Variable names only - no personal data.
+    console.error(
+      `[Payment Mail] Email NOT sent: required configuration missing or invalid: ${missingLinks.join(", ")} (CONFIG_NOT_SET).`,
+    );
+    return;
+  }
   console.log(`[Resend] Sending payment confirmation email to: ${email}`);
   try {
     const { data: sendData, error } = await resend.emails.send({

@@ -1,4 +1,5 @@
 import { resend, FROM_EMAIL, APP_NAME } from "@/utils/mailer.js";
+import { getRequiredLink, missingRequiredLinks } from "@/utils/requiredLinks.js";
 
 const LOGO_URL = `${process.env.FRONTEND_URL || "http://localhost:3000"}/favicon.png`;
 
@@ -20,22 +21,10 @@ function formatSchedule(date: Date): string {
   return `${datePart} &middot; ${timePart} IST`;
 }
 
-// General community — for interaction/networking, open to everyone.
-const WHATSAPP_COMMUNITY_LINK = process.env.WHATSAPP_COMMUNITY_LINK;
-if (!WHATSAPP_COMMUNITY_LINK) {
-  throw new Error(
-    "WHATSAPP_COMMUNITY_LINK is required in backend environment variables.",
-  );
-}
-
-// Webinar-specific group — where the joining link/session updates for this
-// batch are shared, only for confirmed attendees.
-const WEBINAR_WHATSAPP_GROUP_LINK = process.env.WEBINAR_WHATSAPP_GROUP_LINK;
-if (!WEBINAR_WHATSAPP_GROUP_LINK) {
-  throw new Error(
-    "WEBINAR_WHATSAPP_GROUP_LINK is required in backend environment variables.",
-  );
-}
+// Links are read lazily when the confirmation email is built (never at import):
+//  - WHATSAPP_COMMUNITY_LINK: general community, open to everyone.
+//  - WEBINAR_WHATSAPP_GROUP_LINK: webinar-specific group for confirmed attendees.
+const WEBINAR_CONFIRMATION_LINKS = ["WHATSAPP_COMMUNITY_LINK", "WEBINAR_WHATSAPP_GROUP_LINK"];
 
 export interface WebinarPaymentConfirmationData {
   name: string;
@@ -50,6 +39,8 @@ function formatAmount(amount: number, currency: string): string {
 }
 
 function buildHtml(data: WebinarPaymentConfirmationData): string {
+  const WHATSAPP_COMMUNITY_LINK = getRequiredLink("WHATSAPP_COMMUNITY_LINK");
+  const WEBINAR_WHATSAPP_GROUP_LINK = getRequiredLink("WEBINAR_WHATSAPP_GROUP_LINK");
   const webinarTitle = data.webinarTitle ?? WEBINAR_TITLE;
   const webinarSchedule = data.webinarScheduledAt
     ? formatSchedule(data.webinarScheduledAt)
@@ -207,6 +198,14 @@ export async function sendWebinarPaymentConfirmationEmail(
   email: string,
   data: WebinarPaymentConfirmationData,
 ): Promise<void> {
+  const missingLinks = missingRequiredLinks(WEBINAR_CONFIRMATION_LINKS);
+  if (missingLinks.length > 0) {
+    // Fail safe: never send an email with an empty/placeholder link. Variable names only - no personal data.
+    console.error(
+      `[Webinar Mail] Email NOT sent: required configuration missing or invalid: ${missingLinks.join(", ")} (CONFIG_NOT_SET).`,
+    );
+    return;
+  }
   console.log(`[Resend] Sending webinar payment confirmation email to: ${email}`);
   try {
     const { data: sendData, error } = await resend.emails.send({
