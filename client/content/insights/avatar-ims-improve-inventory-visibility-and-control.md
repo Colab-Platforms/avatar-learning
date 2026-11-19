@@ -1,16 +1,16 @@
 ## Title
 
-Avatar IMS: Improve Inventory Visibility and Control
+IMS: Improve Inventory Visibility and Control
 
 ## Overview
 
-How Avatar IMS helps businesses organize and monitor inventory information more effectively, supporting stock visibility and purchasing and replenishment decisions.
+How IMS helps businesses organize and monitor inventory information more effectively, supporting stock visibility and purchasing and replenishment decisions.
 
 ---
 
 ## Full Info
 
-# Avatar IMS: Improve Inventory Visibility and Control
+# IMS: Improve Inventory Visibility and Control
 
 Inventory management plays a critical role in retail, manufacturing, distribution, and other product-based businesses.
 

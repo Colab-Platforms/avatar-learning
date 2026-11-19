@@ -1,16 +1,16 @@
 ## Title
 
-Avatar OMS: Bring Structure to the Entire Order Journey
+OMS: Bring Structure to the Entire Order Journey
 
 ## Overview
 
-How Avatar OMS helps businesses organize order information, monitor order progress and manage operational workflows with greater visibility.
+How OMS helps businesses organize order information, monitor order progress and manage operational workflows with greater visibility.
 
 ---
 
 ## Full Info
 
-# Avatar OMS: Bring Structure to the Entire Order Journey
+# OMS: Bring Structure to the Entire Order Journey
 
 An order represents more than a transaction.
 

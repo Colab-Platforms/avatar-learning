@@ -1,22 +1,22 @@
 ## Title
 
-Avatar Recruitment CRM: Organize Hiring and Candidate Management
+Recruitment CRM: Organize Hiring and Candidate Management
 
 ## Overview
 
-How Avatar Recruitment CRM can help HR teams maintain candidate information, coordinate hiring activities and improve visibility into recruitment progress.
+How Recruitment CRM can help HR teams maintain candidate information, coordinate hiring activities and improve visibility into recruitment progress.
 
 ---
 
 ## Full Info
 
-# Avatar Recruitment CRM: Organize Hiring and Candidate Management
+# Recruitment CRM: Organize Hiring and Candidate Management
 
 As businesses expand, recruitment becomes an increasingly important operational responsibility.
 
 Managing candidate information, applications, interview schedules, and hiring communication across disconnected systems can create unnecessary administrative complexity.
 
-[Avatar Recruitment CRM](https://www.avatarindia.com/ai-adoption/recruitment-crm) is another solution organizations can explore to bring greater structure to recruitment workflows.
+[Recruitment CRM](https://www.avatarindia.com/ai-adoption/recruitment-crm) is another solution organizations can explore to bring greater structure to recruitment workflows.
 
 An organized recruitment process can help HR teams maintain candidate information, coordinate hiring activities, and improve visibility into recruitment progress.
 

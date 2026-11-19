@@ -25,6 +25,7 @@ export interface InsightArticle {
   body: string;
   readingMinutes: number;
   art: string;
+  image?: string;
   featured: boolean;
 }
 
@@ -67,6 +68,7 @@ function loadArticle(entry: (typeof INSIGHT_REGISTRY)[number]): InsightArticle {
     body,
     readingMinutes: Math.max(1, Math.ceil(words / WORDS_PER_MINUTE)),
     art: entry.art,
+    image: entry.image,
     featured: !!entry.featured,
   };
 }
@@ -90,6 +92,7 @@ export function getInsightPosts(): InsightPost[] {
     ex: a.excerpt,
     meta: `${a.readingMinutes} min read`,
     art: a.art,
+    image: a.image,
     featured: a.featured,
   }));
 }

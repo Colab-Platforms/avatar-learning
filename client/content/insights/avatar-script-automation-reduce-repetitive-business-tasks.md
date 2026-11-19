@@ -1,22 +1,22 @@
 ## Title
 
-Avatar Script Automation: Reduce Repetitive Business Tasks
+Script Automation: Reduce Repetitive Business Tasks
 
 ## Overview
 
-How Avatar Script Automation focuses on simplifying suitable repetitive business processes so employees can focus on higher-value responsibilities.
+How Script Automation focuses on simplifying suitable repetitive business processes so employees can focus on higher-value responsibilities.
 
 ---
 
 ## Full Info
 
-# Avatar Script Automation: Reduce Repetitive Business Tasks
+# Script Automation: Reduce Repetitive Business Tasks
 
 Many business processes involve repetitive activities that consume employee time without requiring substantial human judgment.
 
 These may include recurring data updates, routine information processing, repetitive report preparation, and predefined administrative workflows.
 
-[Avatar Script Automation](https://www.avatarindia.com/ai-adoption/script-automation) focuses on opportunities to simplify suitable repetitive processes through automation.
+[Script Automation](https://www.avatarindia.com/ai-adoption/script-automation) focuses on opportunities to simplify suitable repetitive processes through automation.
 
 By identifying activities that follow predictable steps, organizations can explore ways to reduce manual effort, improve process consistency, and allow employees to focus on higher-value responsibilities.
 
