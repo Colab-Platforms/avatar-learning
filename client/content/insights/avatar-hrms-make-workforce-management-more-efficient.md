@@ -1,16 +1,16 @@
 ## Title
 
-Avatar HRMS: Make Workforce Management More Efficient
+HRMS: Make Workforce Management More Efficient
 
 ## Overview
 
-How Avatar HRMS helps organizations manage employee information, attendance, leave requests and HR activities with more structure and visibility.
+How HRMS helps organizations manage employee information, attendance, leave requests and HR activities with more structure and visibility.
 
 ---
 
 ## Full Info
 
-# Avatar HRMS: Make Workforce Management More Efficient
+# HRMS: Make Workforce Management More Efficient
 
 Employees are one of an organization's most valuable resources.
 

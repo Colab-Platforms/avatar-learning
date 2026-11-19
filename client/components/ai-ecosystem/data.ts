@@ -222,6 +222,7 @@ export interface InsightPost {
   ex: string;
   meta: string;
   art: string;
+  image?: string;
   featured?: boolean;
 }
 

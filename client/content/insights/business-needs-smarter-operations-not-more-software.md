@@ -86,7 +86,7 @@ Additional solutions, including Recruitment CRM and Script Automation, extend th
 
 Together, these tools provide organizations with options for addressing operational challenges according to their specific requirements.
 
-### 1. Avatar CRM: Turn Customer Relationships into Business Opportunities
+### 1. CRM: Turn Customer Relationships into Business Opportunities
 
 A successful sales operation requires more than a database of contacts.
 
@@ -110,7 +110,7 @@ The objective is straightforward: help sales professionals spend less time organ
 
 **Better customer management creates a stronger foundation for sustainable sales growth.**
 
-### 2. Avatar HRMS: Make Workforce Management More Efficient
+### 2. HRMS: Make Workforce Management More Efficient
 
 Employees are one of an organization's most valuable resources.
 
@@ -140,7 +140,7 @@ It is to create an environment where HR professionals can focus more on employee
 
 **Better workforce management begins with better visibility.**
 
-### 3. Avatar IMS: Improve Inventory Visibility and Control
+### 3. IMS: Improve Inventory Visibility and Control
 
 Inventory management plays a critical role in retail, manufacturing, distribution, and other product-based businesses.
 
@@ -165,7 +165,7 @@ When managers can access relevant stock information, they are better positioned 
 
 **When inventory information becomes easier to access and manage, operational planning becomes more reliable.**
 
-### 4. Avatar OMS: Bring Structure to the Entire Order Journey
+### 4. OMS: Bring Structure to the Entire Order Journey
 
 An order represents more than a transaction.
 
@@ -191,25 +191,25 @@ Better order visibility can help managers identify processing requirements and c
 
 **A well-managed order journey contributes to more consistent operations and better customer experiences.**
 
-### 5. Avatar Recruitment CRM: Organize Hiring and Candidate Management
+### 5. Recruitment CRM: Organize Hiring and Candidate Management
 
 As businesses expand, recruitment becomes an increasingly important operational responsibility.
 
 Managing candidate information, applications, interview schedules, and hiring communication across disconnected systems can create unnecessary administrative complexity.
 
-[Avatar Recruitment CRM](https://www.avatarindia.com/ai-adoption/recruitment-crm) is another solution organizations can explore to bring greater structure to recruitment workflows.
+[Recruitment CRM](https://www.avatarindia.com/ai-adoption/recruitment-crm) is another solution organizations can explore to bring greater structure to recruitment workflows.
 
 An organized recruitment process can help HR teams maintain candidate information, coordinate hiring activities, and improve visibility into recruitment progress.
 
 For businesses expanding their workforce, structured recruitment management supports more consistent hiring operations.
 
-### 6. Avatar Script Automation: Reduce Repetitive Business Tasks
+### 6. Script Automation: Reduce Repetitive Business Tasks
 
 Many business processes involve repetitive activities that consume employee time without requiring substantial human judgment.
 
 These may include recurring data updates, routine information processing, repetitive report preparation, and predefined administrative workflows.
 
-[Avatar Script Automation](https://www.avatarindia.com/ai-adoption/script-automation) focuses on opportunities to simplify suitable repetitive processes through automation.
+[Script Automation](https://www.avatarindia.com/ai-adoption/script-automation) focuses on opportunities to simplify suitable repetitive processes through automation.
 
 By identifying activities that follow predictable steps, organizations can explore ways to reduce manual effort, improve process consistency, and allow employees to focus on higher-value responsibilities.
 

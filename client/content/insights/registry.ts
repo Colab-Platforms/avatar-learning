@@ -19,53 +19,64 @@ export interface InsightRegistryEntry {
   category: InsightCategory;
   /** CSS background for the thumbnail artwork (same gradients the design already used). */
   art: string;
+  /** Optional photo (path under /public) shown on the cards instead of the gradient. */
+  image?: string;
   featured?: boolean;
 }
 
 export const INSIGHT_REGISTRY: InsightRegistryEntry[] = [
   {
     slug: "business-needs-smarter-operations-not-more-software",
+    image: "/blogs/insights/business-needs-smarter-operations-not-more-software.png",
     category: "blog",
     featured: true,
     art: "radial-gradient(circle at 72% 28%,rgba(111,227,239,.55),transparent 45%),radial-gradient(circle at 22% 82%,rgba(107,124,255,.65),transparent 50%),#0c0e13",
   },
   {
     slug: "lead-to-delivery-connected-business-crm-ims-oms",
+    image: "/blogs/insights/lead-to-delivery-connected-business-crm-ims-oms.png",
     category: "blog",
     art: "radial-gradient(circle at 30% 30%,rgba(181,189,255,.55),transparent 50%),linear-gradient(160deg,#1c1f5e,#0b0d12)",
   },
   {
     slug: "avatar-crm-turn-customer-relationships-into-business-opportunities",
+    image: "/blogs/insights/avatar-crm-turn-customer-relationships-into-business-opportunities.png",
     category: "blog",
     art: "radial-gradient(circle at 50% 115%,rgba(111,227,239,.65),transparent 60%),#0b0d12",
   },
   {
     slug: "avatar-hrms-make-workforce-management-more-efficient",
+    image: "/blogs/insights/avatar-hrms-make-workforce-management-more-efficient.png",
     category: "blog",
     art: "radial-gradient(circle at 80% 20%,rgba(107,124,255,.55),transparent 50%),radial-gradient(circle at 20% 90%,rgba(111,227,239,.4),transparent 50%),#10131a",
   },
   {
     slug: "avatar-ims-improve-inventory-visibility-and-control",
+    image: "/blogs/insights/avatar-ims-improve-inventory-visibility-and-control.png",
     category: "blog",
     art: "conic-gradient(from 210deg at 60% 60%,#0c0e13,rgba(111,227,239,.45),#2b2f8f,#0c0e13)",
   },
   {
     slug: "avatar-oms-bring-structure-to-the-entire-order-journey",
+    image: "/blogs/insights/avatar-oms-bring-structure-to-the-entire-order-journey.png",
     category: "blog",
     art: "radial-gradient(circle at 25% 25%,rgba(111,227,239,.45),transparent 45%),linear-gradient(200deg,#2c3196,#0b0d12 70%)",
   },
   {
     slug: "avatar-recruitment-crm-organize-hiring-and-candidate-management",
+    image: "/blogs/insights/avatar-recruitment-crm-organize-hiring-and-candidate-management.png",
     category: "blog",
     art: "radial-gradient(circle at 70% 75%,rgba(181,189,255,.5),transparent 50%),linear-gradient(20deg,#0b0d12,#1c1f5e)",
   },
   {
     slug: "avatar-script-automation-reduce-repetitive-business-tasks",
+    image: "/blogs/insights/avatar-script-automation-reduce-repetitive-business-tasks.png",
     category: "blog",
     art: "radial-gradient(circle at 20% 20%,rgba(107,124,255,.6),transparent 48%),radial-gradient(circle at 85% 85%,rgba(111,227,239,.35),transparent 50%),#0c0e13",
   },
   {
     slug: "where-ai-fits-into-business-automation",
+    image: "/blogs/insights/where-ai-fits-into-business-automation.png",
     category: "blog",
     art: "conic-gradient(from 40deg at 40% 55%,#0b0d12,rgba(107,124,255,.5),rgba(111,227,239,.4),#0b0d12)",
   },
