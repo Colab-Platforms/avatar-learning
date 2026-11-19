@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useAppDispatch } from "@/store/hooks";
-import { logoutThunk, type AuthUser } from "@/store/authSlice";
+import Link from "next/link";
+import { adoptionAuth, type AdoptionUser } from "@/lib/adoptionSession";
 
 /** Navbar account button shown in place of "Login" once signed in. */
-export function AccountMenu({ user }: { user: AuthUser }) {
-  const dispatch = useAppDispatch();
+export function AccountMenu({ user }: { user: AdoptionUser }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
-  const initial = (user.firstName || user.email || "?").trim().charAt(0).toUpperCase();
+  const name = user.fullName;
+  const initial = (user.fullName || user.email || "?").trim().charAt(0).toUpperCase();
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +39,7 @@ export function AccountMenu({ user }: { user: AuthUser }) {
 
   const onLogout = async () => {
     setBusy(true);
-    await dispatch(logoutThunk()); // revokes the refresh token on the server and clears the session
+    await adoptionAuth.logout(); // revokes the AI Adoption session on the server and clears it here
     setBusy(false);
     setOpen(false);
   };
@@ -71,10 +70,19 @@ export function AccountMenu({ user }: { user: AuthUser }) {
             {name && <div style={{ fontSize: 14, color: "#f4f6f8", fontWeight: 500 }}>{name}</div>}
             <div style={{ fontSize: 13, color: "#8a939e", overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</div>
           </div>
+          <Link
+            href="/adoption/account"
+            role="menuitem"
+            autoFocus
+            onClick={() => setOpen(false)}
+            className="text-[#f4f6f8] hover:bg-white/[0.05] focus-visible:bg-white/[0.07] focus-visible:outline-none"
+            style={{ display: "block", padding: "10px 12px", borderRadius: 8, fontSize: 14, textDecoration: "none" }}
+          >
+            My account
+          </Link>
           <button
             type="button"
             role="menuitem"
-            autoFocus
             onClick={onLogout}
             disabled={busy}
             className="text-[#f4f6f8] hover:bg-white/[0.05] focus-visible:bg-white/[0.07] focus-visible:outline-none disabled:opacity-60"

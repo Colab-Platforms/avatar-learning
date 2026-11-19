@@ -20,6 +20,7 @@ import adminCouponRoutes from "./modules/coupon/admin.route.js";
 import adminDashboardRoutes from "./modules/dashboard/admin.route.js";
 import webinarRoutes from "./modules/webinar/webinar.route.js";
 import adminWebinarRoutes from "./modules/webinar/admin.route.js";
+import adoptionAuthRoutes from "./modules/adoption/adoption.route.js";
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.get("/health", (_req: Request, res: Response) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/adoption/auth", adoptionAuthRoutes); // AI Adoption accounts (separate from /auth)
 router.use("/courses", courseRoutes);
 router.use("/internships", internshipRoutes);
 router.use("/admin", adminCourseRoutes);

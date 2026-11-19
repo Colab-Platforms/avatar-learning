@@ -6,8 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NAV_LINKS } from "./data";
 import { AccountMenu } from "./AccountMenu";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { logoutThunk } from "@/store/authSlice";
+import { adoptionAuth, useAdoptionSession } from "@/lib/adoptionSession";
 import pillStyles from "../ui/hoverPill.module.css";
 
 const PRODUCT_LINK = { label: "Avatar Learning", href: "/learning" };
@@ -76,10 +75,8 @@ export function EcosystemHeader() {
     };
   }, [menuOpen]);
 
-  // Signed-in visitors (shared Avatar account session) see an account menu instead of Login.
-  const { user, hasHydrated } = useAppSelector((s) => s.auth);
-  const signedInUser = hasHydrated ? user : null;
-  const dispatch = useAppDispatch();
+  // Signed-in AI Adoption visitors see an account menu instead of Login.
+  const { user: signedInUser } = useAdoptionSession();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -467,7 +464,7 @@ export function EcosystemHeader() {
               type="button"
               onClick={() => {
                 setMenuOpen(false);
-                dispatch(logoutThunk());
+                void adoptionAuth.logout();
               }}
               style={{
                 display: "flex",

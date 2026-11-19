@@ -4,11 +4,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { googleLogin, clearError } from "@/store/authSlice";
+import { adoptionAuth, useAdoptionSession, AdoptionApiError } from "@/lib/adoptionSession";
 
-/** Where people land after signing in from the AI Adoption pages. */
-export const AFTER_LOGIN = "/";
+/** Where people land after signing in: their AI Adoption account page. */
+export const AFTER_LOGIN = "/adoption/account";
 
 export const ERROR_COLOR = "#ff8a8a";
 
@@ -80,35 +79,30 @@ export function TextLink({ href, children }: { href: string; children: React.Rea
 }
 
 /**
- * Sends signed-in visitors on to AFTER_LOGIN, both when they arrive already
- * signed in and right after a successful sign-in (the session is only set once
- * the backend confirms it).
+ * Sends signed-in visitors on to AFTER_LOGIN (or a safe ?next= path), both when
+ * they arrive already signed in and right after the backend confirms a sign-in.
  */
 export function useSignedInRedirect() {
   const router = useRouter();
-  const { user, hasHydrated } = useAppSelector((s) => s.auth);
+  const { status } = useAdoptionSession();
   useEffect(() => {
-    if (hasHydrated && user) router.replace(AFTER_LOGIN);
-  }, [hasHydrated, user, router]);
-  return hasHydrated && !!user;
+    if (status !== "signedIn") return;
+    const next = new URLSearchParams(window.location.search).get("next");
+    router.replace(next && next.startsWith("/adoption/") ? next : AFTER_LOGIN);
+  }, [status, router]);
+  return status === "signedIn";
 }
 
-/** Clear any error left over from another auth page. */
-export function useFreshAuthErrors() {
-  const dispatch = useAppDispatch();
-  useEffect(() => {
-    dispatch(clearError());
-  }, [dispatch]);
-}
+export const errorMessage = (e: unknown) => (e instanceof AdoptionApiError || e instanceof Error ? e.message : "Something went wrong. Please try again.");
 
 /**
- * Google's own sign-in button (Google Identity Services), wired to the existing
- * backend: the ID token goes to POST /auth/google, which signs in existing
- * users and creates accounts for new ones. Nothing here is simulated.
+ * Google's own sign-in button (Google Identity Services). The ID token is
+ * verified by the AI Adoption backend (POST /api/adoption/auth/google), which
+ * signs in existing Adoption users and creates accounts for new ones.
+ * Nothing here is simulated.
  */
 export function GoogleButton({ text }: { text: "continue_with" | "signup_with" }) {
-  const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((s) => s.auth);
+  const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
@@ -124,14 +118,20 @@ export function GoogleButton({ text }: { text: "continue_with" | "signup_with" }
     return () => ro.disconnect();
   }, []);
 
-  const onSuccess = (res: CredentialResponse) => {
+  const onSuccess = async (res: CredentialResponse) => {
     setLocalError("");
     if (!res.credential) {
       setLocalError("Google didn't return a sign-in. Please try again.");
       return;
     }
-    dispatch(clearError());
-    dispatch(googleLogin({ idToken: res.credential }));
+    setLoading(true);
+    try {
+      await adoptionAuth.google(res.credential); // useSignedInRedirect takes over on success
+    } catch (e) {
+      setLocalError(errorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -151,7 +151,7 @@ export function GoogleButton({ text }: { text: "continue_with" | "signup_with" }
           />
         )}
       </div>
-      {(localError || error) && <ErrorBox>{localError || error}</ErrorBox>}
+      {localError && <ErrorBox>{localError}</ErrorBox>}
     </div>
   );
 }
