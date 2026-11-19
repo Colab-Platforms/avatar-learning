@@ -81,5 +81,6 @@ Method: read-only SQL (SELECT only), file/Git inspection, one local run of backe
 
 ## Update log
 - 2026-11-18: Insights feature added (11 articles, nav + homepage links). Only `client/` changed; no backend/schema changes.
+- 2026-11-19: Insights internal linking — render-time keyword auto-linker (`client/lib/insightLinks.ts`, config `client/content/insights/links.json`), per-article CTA + Related Articles (`InsightArticleFooter.tsx`), absolute avatarindia.com links normalised to internal paths, card images (`public/blogs/insights/`), "Avatar" prefix removed from product names in article text. Link validator: `npm run check:links` (offline). Verified: tsc, `next build`, generated HTML inspected [code]; not browser/mobile-tested. Product detail pages do not exist; product links go to `/#products`, demo CTAs to `/#contact`.
 - 2026-11-18: Environment & security audit added (see above); `client/.gitignore` updated. No application source, schema, migration or DB data changed.
 - 2026-11-18: Initial documentation set created from code inspection (no code changes, no commands run besides read-only git/file inspection).
