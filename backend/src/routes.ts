@@ -21,6 +21,8 @@ import adminDashboardRoutes from "./modules/dashboard/admin.route.js";
 import webinarRoutes from "./modules/webinar/webinar.route.js";
 import adminWebinarRoutes from "./modules/webinar/admin.route.js";
 import adoptionAuthRoutes from "./modules/adoption/adoption.route.js";
+import { accountRouter as adoptionAccountRoutes, adminRouter as adminAdoptionRoutes } from "./modules/adoption/adoption.access.js";
+import { profileRouter as adoptionProfileRoutes, demoRouter as adoptionDemoRoutes, adminDemoRouter as adminAdoptionDemoRoutes } from "./modules/adoption/adoption.profile.js";
 
 const router = Router();
 
@@ -30,6 +32,9 @@ router.get("/health", (_req: Request, res: Response) => {
 
 router.use("/auth", authRoutes);
 router.use("/adoption/auth", adoptionAuthRoutes); // AI Adoption accounts (separate from /auth)
+router.use("/adoption/account", adoptionAccountRoutes); // AI Adoption: my tools, open tool, request access
+router.use("/adoption/account", adoptionProfileRoutes); // AI Adoption: profile, email, password, my demo requests
+router.use("/adoption/demo-requests", adoptionDemoRoutes); // AI Adoption: Book a Demo submissions
 router.use("/courses", courseRoutes);
 router.use("/internships", internshipRoutes);
 router.use("/admin", adminCourseRoutes);
@@ -50,5 +55,7 @@ router.use("/admin", adminCouponRoutes);
 router.use("/admin", adminDashboardRoutes);
 router.use("/webinar", webinarRoutes);
 router.use("/admin", adminWebinarRoutes);
+router.use("/admin", adminAdoptionRoutes); // AI Adoption tool access (admin only)
+router.use("/admin", adminAdoptionDemoRoutes); // AI Adoption demo requests (admin only)
 
 export default router;

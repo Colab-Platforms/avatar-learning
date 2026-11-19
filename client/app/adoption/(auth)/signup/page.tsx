@@ -2,8 +2,8 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { adoptionAuth } from "@/lib/adoptionSession";
-import { Divider, ERROR_COLOR, GoogleButton, Heading, TextLink, errorMessage, focusRing, primaryBtn, primaryHover, useSignedInRedirect } from "../_components/ui";
-import { CodeStep, EMAIL_RE, Field, FormError, PasswordField, PasswordRules, passwordOk } from "../_components/form";
+import { Divider, ERROR_COLOR, GoogleButton, Heading, TextLink, errorMessage, focusRing, primaryBtn, primaryHover, useSignedInRedirect } from "../../_components/ui";
+import { CodeStep, EMAIL_RE, Field, FormError, PasswordField, PasswordRules, passwordOk } from "../../_components/form";
 
 type Errors = Partial<Record<"fullName" | "email" | "password" | "confirm" | "terms", string>>;
 

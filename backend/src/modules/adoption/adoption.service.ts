@@ -4,7 +4,8 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { hashPassword, comparePassword } from "@/utils/auth.js";
 import { verifyGoogleIdToken } from "@/utils/googleAuth.js";
-import { sendAdoptionVerifyEmail, sendAdoptionResetEmail } from "./adoption.mailer.js";
+import { sendAdoptionVerifyEmail, sendAdoptionResetEmail, sendAdoptionChangeEmail } from "./adoption.mailer.js";
+import { effectiveStatus } from "./adoption.products.js";
 
 /**
  * AI Adoption accounts. Entirely separate from the learning platform's
@@ -18,7 +19,7 @@ const CODE_MINUTES = 10;
 const MAX_CODE_ATTEMPTS = 5;
 const RESEND_COOLDOWN_SECONDS = 45;
 
-type Purpose = "VERIFY_EMAIL" | "RESET_PASSWORD";
+type Purpose = "VERIFY_EMAIL" | "RESET_PASSWORD" | "CHANGE_EMAIL";
 
 const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 const sixDigits = () => crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
@@ -33,14 +34,21 @@ export type PublicAdoptionUser = {
   emailVerified: boolean;
   hasPassword: boolean;
   hasGoogle: boolean;
+  /** Tools with ACTIVE, unexpired access (the full list with statuses is GET /api/adoption/account/tools). */
   products: string[];
+  phone: string | null;
+  jobRole: string | null;
+  companyName: string | null;
+  companySize: string | null;
+  /** A new email waiting for its verification code. */
+  pendingEmail: string | null;
   createdAt: Date;
 };
 
-async function toPublic(userId: string): Promise<PublicAdoptionUser> {
+export async function toPublic(userId: string): Promise<PublicAdoptionUser> {
   const u = await prisma.adoptionUser.findUniqueOrThrow({
     where: { id: userId },
-    include: { entitlements: { select: { product: true }, orderBy: { grantedAt: "asc" } } },
+    include: { entitlements: { select: { product: true, status: true, expiresAt: true }, orderBy: { grantedAt: "asc" } } },
   });
   return {
     id: u.id,
@@ -49,7 +57,12 @@ async function toPublic(userId: string): Promise<PublicAdoptionUser> {
     emailVerified: u.emailVerified,
     hasPassword: !!u.passwordHash,
     hasGoogle: !!u.googleId,
-    products: u.entitlements.map((e) => e.product),
+    products: u.entitlements.filter((e) => effectiveStatus(e) === "ACTIVE").map((e) => e.product),
+    phone: u.phone,
+    jobRole: u.jobRole,
+    companyName: u.companyName,
+    companySize: u.companySize,
+    pendingEmail: u.pendingEmail,
     createdAt: u.createdAt,
   };
 }
@@ -67,7 +80,7 @@ async function createSession(userId: string, userAgent?: string) {
   return { token, user: await toPublic(userId) };
 }
 
-async function issueCode(userId: string, purpose: Purpose) {
+export async function issueCode(userId: string, purpose: Purpose) {
   const recent = await prisma.adoptionEmailCode.findFirst({
     where: { userId, purpose, used: false },
     orderBy: { createdAt: "desc" },
@@ -84,7 +97,7 @@ async function issueCode(userId: string, purpose: Purpose) {
   return code;
 }
 
-async function consumeCode(userId: string, purpose: Purpose, code: string) {
+export async function consumeCode(userId: string, purpose: Purpose, code: string) {
   const rec = await prisma.adoptionEmailCode.findFirst({
     where: { userId, purpose, used: false },
     orderBy: { createdAt: "desc" },
@@ -225,6 +238,54 @@ export class AdoptionAuthService {
       const code = await issueCode(user.id, "RESET_PASSWORD");
       await sendAdoptionResetEmail(user.email, code, user.fullName);
     }
+  }
+
+  /** Step 1 of changing email: re-check the password (if the account has one), then email a code to the NEW address. */
+  async requestEmailChange(userId: string, newEmail: string, currentPassword?: string) {
+    const user = await prisma.adoptionUser.findUniqueOrThrow({ where: { id: userId } });
+    if (newEmail === user.email) throw new ApiError("That's already your email address.", STATUS_CODES.BAD_REQUEST);
+    if (user.passwordHash) {
+      if (!currentPassword || !(await comparePassword(currentPassword, user.passwordHash))) {
+        throw new ApiError("Your current password is incorrect.", STATUS_CODES.UNAUTHORIZED);
+      }
+    }
+    const taken = await prisma.adoptionUser.findUnique({ where: { email: newEmail } });
+    if (taken) throw new ApiError("Another account already uses that email.", STATUS_CODES.CONFLICT);
+    await prisma.adoptionUser.update({ where: { id: userId }, data: { pendingEmail: newEmail } });
+    const code = await issueCode(userId, "CHANGE_EMAIL");
+    await sendAdoptionChangeEmail(newEmail, code, user.fullName);
+    return { pendingEmail: newEmail };
+  }
+
+  /** Step 2: the code sent to the new address proves ownership; only then does the email change. */
+  async confirmEmailChange(userId: string, code: string) {
+    const user = await prisma.adoptionUser.findUniqueOrThrow({ where: { id: userId } });
+    if (!user.pendingEmail) throw new ApiError("There's no email change waiting for a code.", STATUS_CODES.BAD_REQUEST);
+    await consumeCode(userId, "CHANGE_EMAIL", code);
+    const taken = await prisma.adoptionUser.findUnique({ where: { email: user.pendingEmail } });
+    if (taken && taken.id !== userId) throw new ApiError("Another account already uses that email.", STATUS_CODES.CONFLICT);
+    await prisma.adoptionUser.update({ where: { id: userId }, data: { email: user.pendingEmail, pendingEmail: null, emailVerified: true } });
+    return toPublic(userId);
+  }
+
+  async cancelEmailChange(userId: string) {
+    await prisma.adoptionUser.update({ where: { id: userId }, data: { pendingEmail: null } });
+    await prisma.adoptionEmailCode.updateMany({ where: { userId, purpose: "CHANGE_EMAIL", used: false }, data: { used: true } });
+    return toPublic(userId);
+  }
+
+  /** Email/password accounts only. Signs out every other session. */
+  async changePassword(userId: string, sessionId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.adoptionUser.findUniqueOrThrow({ where: { id: userId } });
+    if (!user.passwordHash) throw new ApiError("This account signs in with Google and has no password.", STATUS_CODES.BAD_REQUEST);
+    if (!(await comparePassword(currentPassword, user.passwordHash))) throw new ApiError("Your current password is incorrect.", STATUS_CODES.UNAUTHORIZED);
+    await prisma.adoptionUser.update({ where: { id: userId }, data: { passwordHash: await hashPassword(newPassword) } });
+    await prisma.adoptionSession.deleteMany({ where: { userId, NOT: { id: sessionId } } });
+  }
+
+  async signOutOthers(userId: string, sessionId: string) {
+    const r = await prisma.adoptionSession.deleteMany({ where: { userId, NOT: { id: sessionId } } });
+    return { signedOut: r.count };
   }
 
   async resetPassword(data: { email: string; code: string; password: string }) {

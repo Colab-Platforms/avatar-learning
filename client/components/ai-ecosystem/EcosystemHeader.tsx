@@ -459,6 +459,27 @@ export function EcosystemHeader() {
               </Link>
             )
           )}
+          {signedInUser && (
+            <Link
+              href="/account"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                minHeight: 60,
+                borderBottom: "1px solid rgba(255,255,255,.08)",
+                color: "#f4f6f8",
+                fontSize: 22,
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+                textDecoration: "none",
+              }}
+            >
+              My Account
+              <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
+            </Link>
+          )}
           {signedInUser ? (
             <button
               type="button"

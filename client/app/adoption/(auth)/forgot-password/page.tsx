@@ -3,8 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { adoptionAuth } from "@/lib/adoptionSession";
-import { Heading, errorMessage, focusRing, primaryBtn, primaryHover } from "../_components/ui";
-import { BackLink, CodeStep, EMAIL_RE, Field, FormError, PasswordField, PasswordRules, passwordOk } from "../_components/form";
+import { Heading, errorMessage, focusRing, primaryBtn, primaryHover } from "../../_components/ui";
+import { BackLink, CodeStep, EMAIL_RE, Field, FormError, PasswordField, PasswordRules, passwordOk } from "../../_components/form";
 
 export default function AdoptionForgotPasswordPage() {
   const router = useRouter();

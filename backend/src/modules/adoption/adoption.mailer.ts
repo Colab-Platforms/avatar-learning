@@ -30,6 +30,16 @@ export async function sendAdoptionVerifyEmail(to: string, code: string, name?: s
   if (error) throw new Error(`Failed to send verification email: ${error.message}`);
 }
 
+export async function sendAdoptionChangeEmail(to: string, code: string, name?: string) {
+  const { error } = await resend.emails.send({
+    from: `${BRAND} <${FROM_EMAIL}>`,
+    to,
+    subject: `Confirm your new ${BRAND} email`,
+    html: codeEmail("Confirm your new email", "use this code to make this your Avatar AI Adoption sign-in email.", code, name),
+  });
+  if (error) throw new Error(`Failed to send email-change code: ${error.message}`);
+}
+
 export async function sendAdoptionResetEmail(to: string, code: string, name?: string) {
   const { error } = await resend.emails.send({
     from: `${BRAND} <${FROM_EMAIL}>`,

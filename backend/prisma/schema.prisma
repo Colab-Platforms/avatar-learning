@@ -1641,9 +1641,32 @@ enum AdoptionProduct {
   CUSTOM
 }
 
+/// Stored access state. "Expired" is derived (ACTIVE with expiresAt in the past);
+/// "No access" means there is no entitlement row.
+enum AdoptionAccessStatus {
+  ACTIVE
+  PENDING_SETUP
+  SUSPENDED
+}
+
+enum AdoptionRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
 enum AdoptionCodePurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
+  CHANGE_EMAIL
+}
+
+enum AdoptionDemoStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  SCHEDULED
+  COMPLETED
+  CANCELLED
 }
 
 model AdoptionUser {
@@ -1654,12 +1677,22 @@ model AdoptionUser {
   googleId      String?  @unique @map("google_id")
   emailVerified Boolean  @default(false) @map("email_verified")
   isActive      Boolean  @default(true) @map("is_active")
+  /// Profile details (all optional).
+  phone         String?
+  jobRole       String?  @map("job_role")
+  companyName   String?  @map("company_name")
+  companySize   String?  @map("company_size")
+  /// New email waiting for its verification code; the email only changes once confirmed.
+  pendingEmail  String?  @map("pending_email")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   sessions     AdoptionSession[]
   codes        AdoptionEmailCode[]
   entitlements AdoptionEntitlement[]
+  accessEvents AdoptionEntitlementEvent[]
+  requests     AdoptionAccessRequest[]
+  demoRequests AdoptionDemoRequest[]
 
   @@map("adoption_users")
 }
@@ -1696,14 +1729,84 @@ model AdoptionEmailCode {
 }
 
 model AdoptionEntitlement {
-  id        String          @id @default(cuid())
-  userId    String          @map("user_id")
-  user      AdoptionUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String               @id @default(cuid())
+  userId    String               @map("user_id")
+  user      AdoptionUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   AdoptionProduct
-  grantedAt DateTime        @default(now()) @map("granted_at")
+  status    AdoptionAccessStatus @default(PENDING_SETUP)
+  /// Access stops working after this moment (shown as "Expired").
+  expiresAt DateTime?            @map("expires_at")
+  note      String?
+  grantedAt DateTime             @default(now()) @map("granted_at")
   /// Who granted it (admin email / note), for auditing.
-  grantedBy String?         @map("granted_by")
+  grantedBy String?              @map("granted_by")
+  updatedAt DateTime             @default(now()) @updatedAt @map("updated_at")
 
   @@unique([userId, product])
   @@map("adoption_entitlements")
+}
+
+/// Audit trail of every access change made by an admin.
+model AdoptionEntitlementEvent {
+  id         String                @id @default(cuid())
+  userId     String                @map("user_id")
+  user       AdoptionUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    AdoptionProduct
+  /// GRANTED | UPDATED | REVOKED
+  action     String
+  fromStatus AdoptionAccessStatus? @map("from_status")
+  toStatus   AdoptionAccessStatus? @map("to_status")
+  expiresAt  DateTime?             @map("expires_at")
+  note       String?
+  actorId    String?               @map("actor_id")
+  actorEmail String?               @map("actor_email")
+  createdAt  DateTime              @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("adoption_entitlement_events")
+}
+
+/// A customer asking for access to a tool. Never activates anything by itself.
+model AdoptionAccessRequest {
+  id        String                @id @default(cuid())
+  userId    String                @map("user_id")
+  user      AdoptionUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   AdoptionProduct
+  message   String?
+  status    AdoptionRequestStatus @default(PENDING)
+  createdAt DateTime              @default(now()) @map("created_at")
+  handledAt DateTime?             @map("handled_at")
+  handledBy String?               @map("handled_by")
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("adoption_access_requests")
+}
+
+/// A Book a Demo submission from the AI Adoption site. Linked to an account only
+/// when submitted while signed in (never matched by email). A copy also goes to
+/// the Contacts inbox so the existing sales workflow keeps working.
+model AdoptionDemoRequest {
+  id                String             @id @default(cuid())
+  userId            String?            @map("user_id")
+  user              AdoptionUser?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name              String
+  email             String
+  company           String?
+  phone             String?
+  role              String
+  companySize       String             @map("company_size")
+  tools             AdoptionProduct[]
+  customRequirement String?            @map("custom_requirement")
+  message           String?
+  status            AdoptionDemoStatus @default(SUBMITTED)
+  /// Set when the team confirms a demo time.
+  scheduledAt       DateTime?          @map("scheduled_at")
+  adminNote         String?            @map("admin_note")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("adoption_demo_requests")
 }
