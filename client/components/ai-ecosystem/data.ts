@@ -213,65 +213,17 @@ export const FAQS: FaqItem[] = [
   },
 ];
 
+/** One card in the Insights section. Built from the markdown articles in client/content/insights (see lib/insights.ts). */
 export interface InsightPost {
+  slug: string;
   k: "case" | "blog";
   type: string;
   t: string;
   ex: string;
   meta: string;
   art: string;
+  featured?: boolean;
 }
-
-export const INSIGHT_POSTS: InsightPost[] = [
-  {
-    k: "case",
-    type: "Case study",
-    t: "How a textile distributor stopped losing leads with CRM",
-    ex: "Enquiries came in through calls, WhatsApp and the website, and many were never followed up. One shared pipeline changed that.",
-    meta: "5 min read",
-    art: "radial-gradient(circle at 72% 28%,rgba(111,227,239,.55),transparent 45%),radial-gradient(circle at 22% 82%,rgba(107,124,255,.65),transparent 50%),#0c0e13",
-  },
-  {
-    k: "blog",
-    type: "Blog",
-    t: "Where to start with AI in a small business",
-    ex: "A simple way to find the one process where AI will save your team the most time, before you spend on any tool.",
-    meta: "6 min read",
-    art: "radial-gradient(circle at 30% 30%,rgba(181,189,255,.55),transparent 50%),linear-gradient(160deg,#1c1f5e,#0b0d12)",
-  },
-  {
-    k: "case",
-    type: "Case study",
-    t: "Bringing orders from three channels onto one dashboard",
-    ex: "A growing D2C brand was tracking orders across spreadsheets and marketplaces. Here is how they moved to a single view.",
-    meta: "4 min read",
-    art: "radial-gradient(circle at 50% 115%,rgba(111,227,239,.65),transparent 60%),#0b0d12",
-  },
-  {
-    k: "blog",
-    type: "Blog",
-    t: "Five everyday sales tasks you can hand to AI",
-    ex: "From follow-up reminders to call notes, small tasks that add up to hours saved every week.",
-    meta: "4 min read",
-    art: "radial-gradient(circle at 80% 20%,rgba(107,124,255,.55),transparent 50%),radial-gradient(circle at 20% 90%,rgba(111,227,239,.4),transparent 50%),#10131a",
-  },
-  {
-    k: "case",
-    type: "Case study",
-    t: "Getting a sales team confident with AI tools",
-    ex: "How hands-on training and short LMS courses helped a team move from curious to comfortable.",
-    meta: "6 min read",
-    art: "conic-gradient(from 210deg at 60% 60%,#0c0e13,rgba(111,227,239,.45),#2b2f8f,#0c0e13)",
-  },
-  {
-    k: "blog",
-    type: "Blog",
-    t: "Writing on-brand content with AI without losing your voice",
-    ex: "Set your tone once and keep every post, caption and product description sounding like you.",
-    meta: "5 min read",
-    art: "radial-gradient(circle at 25% 25%,rgba(111,227,239,.45),transparent 45%),linear-gradient(200deg,#2c3196,#0b0d12 70%)",
-  },
-];
 
 export const ABOUT_TEXT =
   "Avatar AI is a complete AI partner. Beyond software, we help businesses learn about AI, find the right talent and put solutions into practice.";
@@ -335,7 +287,7 @@ export const NAV_LINKS = [
   { href: "#how", label: "How it works" },
   { href: "#who", label: "Who it's for" },
   { href: "#about", label: "About" },
-  { href: "#insights", label: "Insights" },
+  { href: "/insights", label: "Insights" },
   { href: "#faq", label: "FAQ" },
   { href: "/investors?theme=dark", label: "Investors" },
 ];
@@ -367,7 +319,16 @@ export const FOOTER_COMPANY = [
   { label: "About Us", href: "#about" },
   { label: "Our Solutions", href: "#products" },
   { label: "How It Works", href: "#how" },
-  { label: "Insights", href: "#insights" },
+  { label: "Insights", href: "/insights" },
   { label: "Investors", href: "/investors?theme=dark" },
   { label: "Contact Us", href: "#contact" },
 ];
+
+/** Social links for the AI Adoption (home) page footer only. The learning
+ * pages' footer keeps its own links in data/navigation.ts. */
+export const ADOPTION_SOCIAL_LINKS = [
+  { platform: "instagram", label: "Instagram", href: "https://www.instagram.com/avataraiadoption/" },
+  { platform: "x", label: "X (Twitter)", href: "https://x.com/avataradoption" },
+  { platform: "youtube", label: "YouTube", href: "https://www.youtube.com/@Avataraiadoption" },
+  { platform: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/in/avatar-ai-1b8859450/" },
+] as const;

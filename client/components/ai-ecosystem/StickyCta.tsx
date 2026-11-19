@@ -14,43 +14,65 @@ export function StickyCta() {
   const [visible, setVisible] = useState(false);
   const pillRef = useRef<HTMLDivElement>(null);
 
+  // Visibility is driven by IntersectionObservers only (no scroll listeners):
+  //  • hidden until the hero has scrolled away;
+  //  • hidden while anything it must not cover — the footer, the contact
+  //    section, other "#contact" buttons, submit buttons, [data-avoid-sticky] —
+  //    is inside the bottom-right zone the pill occupies. The footer counts as
+  //    soon as its top edge enters that zone, so the pill is gone before it can
+  //    sit on the footer's links, copyright or legal links.
   useEffect(() => {
     const hero = document.getElementById("top");
-    const onScroll = () => {
-      if (!hero) return;
-      const pastHero = hero.getBoundingClientRect().bottom < 0;
-      if (!pastHero) {
-        setVisible(false);
-        return;
-      }
+    let pastHero = false;
+    const inZone = new Set<Element>();
+    const update = () => setVisible(pastHero && inZone.size === 0); // same value → no re-render
 
+    const heroIo = hero
+      ? new IntersectionObserver(([e]) => {
+          pastHero = !e.isIntersecting && e.boundingClientRect.bottom < 0;
+          update();
+        })
+      : null;
+    if (hero) heroIo!.observe(hero);
+
+    let zoneIo: IntersectionObserver | null = null;
+    const watchZone = () => {
+      zoneIo?.disconnect();
+      inZone.clear();
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const zoneLeft = vw - MARGIN - PILL_W;
-      const zoneTop = vh - MARGIN - PILL_H;
-
-      const candidates = document.querySelectorAll<HTMLElement>(
-        '#contact, a[href="#contact"], button[type="submit"], [data-avoid-sticky]',
+      // Shrink the observer's root to the pill's corner (plus a little slack).
+      const top = Math.max(0, vh - MARGIN - PILL_H - 16);
+      const left = Math.max(0, vw - MARGIN - PILL_W);
+      zoneIo = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) inZone.add(e.target);
+            else inZone.delete(e.target);
+          }
+          update();
+        },
+        { rootMargin: `-${top}px 0px 0px -${left}px` },
       );
-      let collides = false;
-      for (const el of candidates) {
-        if (pillRef.current?.contains(el)) continue;
-        const r = el.getBoundingClientRect();
-        if (r.right > zoneLeft && r.left < vw && r.bottom > zoneTop && r.top < vh) {
-          collides = true;
-          break;
-        }
-      }
-      setVisible(!collides);
+      document
+        .querySelectorAll<HTMLElement>('footer, #contact, a[href="#contact"], button[type="submit"], [data-avoid-sticky]')
+        .forEach((el) => {
+          if (!pillRef.current?.contains(el)) zoneIo!.observe(el);
+        });
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    const id = setInterval(onScroll, 500);
+    watchZone();
+    // The zone is in pixels, so rebuild it when the viewport size changes.
+    let t = 0;
+    const onResize = () => {
+      clearTimeout(t);
+      t = window.setTimeout(watchZone, 150);
+    };
+    window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      clearInterval(id);
+      heroIo?.disconnect();
+      zoneIo?.disconnect();
+      clearTimeout(t);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -65,7 +87,7 @@ export function StickyCta() {
         transform: visible ? "translateY(0)" : "translateY(140%)",
         opacity: visible ? 1 : 0,
         pointerEvents: visible ? "auto" : "none",
-        transition: "transform .5s cubic-bezier(.2,.7,.1,1), opacity .4s",
+        transition: "transform .25s ease, opacity .25s ease",
       }}
     >
       <div

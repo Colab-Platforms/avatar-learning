@@ -1,5 +1,33 @@
 import Link from "next/link";
-import { COMPANY, CONTACT, FOOTER_COMPANY, FOOTER_PRODUCTS } from "./data";
+import { ADOPTION_SOCIAL_LINKS, COMPANY, CONTACT, FOOTER_COMPANY, FOOTER_PRODUCTS } from "./data";
+
+// Social icons (inline SVGs, 14–16px, drawn in currentColor).
+const SOCIAL_ICONS: Record<(typeof ADOPTION_SOCIAL_LINKS)[number]["platform"], React.ReactNode> = {
+  instagram: (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  ),
+  x: (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  ),
+  youtube: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+      <path fillRule="evenodd" d="M23.5 6.2a3.01 3.01 0 0 0-2.12-2.13C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.57A3.01 3.01 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3.01 3.01 0 0 0 2.12 2.13C4.5 20.5 12 20.5 12 20.5s7.5 0 9.38-.57a3.01 3.01 0 0 0 2.12-2.13C24 15.9 24 12 24 12s0-3.9-.5-5.8z M9.5 15.5V8.5L15.8 12L9.5 15.5Z" />
+    </svg>
+  ),
+  linkedin: (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  ),
+};
 
 // Shared text styles (unchanged from the original footer).
 const headingStyle: React.CSSProperties = { fontSize: 13, letterSpacing: ".04em", color: "#f4f6f8" };
@@ -28,6 +56,23 @@ export function EcosystemFooter() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, marginTop: 16 }}>
               <span style={{ fontSize: 12, color: "#8a939e", lineHeight: 1.5 }}>{COMPANY.formerly}</span>
               <span style={{ fontSize: 14, color: "#a3abb5", lineHeight: 1.5 }}>AI adoption for growing businesses.</span>
+            </div>
+            {/* Social icons (this page's footer only) */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 20 }}>
+              {ADOPTION_SOCIAL_LINKS.map((link) => {
+                return (
+                  <a
+                    key={link.platform}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${link.label} (opens in a new tab)`}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-[#a3abb5] transition-colors duration-200 hover:border-[#6fe3ef]/40 hover:bg-[#6fe3ef]/[0.08] hover:text-[#6fe3ef] focus-visible:border-[#6fe3ef]/60 focus-visible:text-[#6fe3ef] focus-visible:outline-none"
+                  >
+                    {SOCIAL_ICONS[link.platform]}
+                  </a>
+                );
+              })}
             </div>
           </div>
 

@@ -12,6 +12,7 @@ Status as of 2026-11-18, established by **reading code only** (**[code]**). **No
 - Webinar: schedules (publish/live), paid registration, OTP recovery, emails.
 - Partners: apply+KYC, approval, referral tracking, wallet, claims, commission cron.
 - Investor CMS, contact inbox, admin dashboard overview, internships listing/applications, chatbot "Ava", Google Sheets + Pabbly sync.
+- Insights (blogs): 11 markdown articles served at `/insights` (listing, filters) and `/insights/<slug>`; linked from header/footer nav and a homepage preview. Content in `client/content/insights/*.md`, registered in `client/content/insights/registry.ts`, loaded by `client/lib/insights.ts` (see registry file header for how to add one). Production build, tsc and a headless-Chrome run were verified 2026-11-18; no automated test suite.
 - Frontend pages for all above, plus marketing home (`/` AI Adoption Ecosystem), `/learning`, about, blog (static), legal.
 
 ## Partially implemented / in flux
@@ -79,5 +80,6 @@ Method: read-only SQL (SELECT only), file/Git inspection, one local run of backe
 **Open actions (owner decisions):** confirm Neon branch (above); switch local Razorpay to test keys; set local `FRONTEND_URL`; decide fix for `isProd` flag + add `creditedAt: null` guard; consider a per-environment switch to disable cron jobs locally (e.g. `ENABLE_JOBS` env) — none implemented.
 
 ## Update log
+- 2026-11-18: Insights feature added (11 articles, nav + homepage links). Only `client/` changed; no backend/schema changes.
 - 2026-11-18: Environment & security audit added (see above); `client/.gitignore` updated. No application source, schema, migration or DB data changed.
 - 2026-11-18: Initial documentation set created from code inspection (no code changes, no commands run besides read-only git/file inspection).
