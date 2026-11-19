@@ -1,4 +1,4 @@
-import type { InboundMessageEvent, ParsedWebhook, StatusEvent } from "./whatsapp.types.js";
+import type { InboundMessageEvent, ParsedWebhook, SkipRecord, StatusEvent } from "./whatsapp.types.js";
 
 type Obj = Record<string, unknown>;
 
@@ -22,6 +22,14 @@ const deepClean = <T,>(v: T): T => {
   if (isObj(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [clean(k), deepClean(x)])) as T;
   return v;
 };
+
+/** Meta field names are plain identifiers; anything else is not echoed into logs. */
+const safeFieldName = (v: unknown): string | undefined =>
+  typeof v === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(v) ? v : undefined;
+
+/** Names of the required keys that are absent (values are never inspected beyond presence). */
+const missingKeys = (item: unknown, keys: Record<string, string | undefined>): string[] =>
+  !isObj(item) ? ["(not an object)"] : Object.entries(keys).filter(([, v]) => !v).map(([k]) => k);
 
 /** Meta sends unix seconds as a string. */
 function toDate(v: unknown): Date | undefined {
@@ -49,23 +57,28 @@ function extractText(message: Obj, type: string): string | undefined {
  * @param expectedPhoneNumberId when set, changes for other numbers are skipped.
  */
 export function parseWhatsappWebhook(payload: unknown, expectedPhoneNumberId?: string): ParsedWebhook {
-  const result: ParsedWebhook = { inbound: [], statuses: [], skipped: 0 };
+  const result: ParsedWebhook = { inbound: [], statuses: [], skipped: 0, skips: [] };
+  const skip = (record: SkipRecord) => {
+    result.skipped++;
+    result.skips.push(record);
+  };
   if (!isObj(payload) || !Array.isArray(payload.entry)) return result;
 
   for (const entry of payload.entry) {
     if (!isObj(entry) || !Array.isArray(entry.changes)) {
-      result.skipped++;
+      skip({ reason: "entry_malformed" });
       continue;
     }
     for (const change of entry.changes) {
       if (!isObj(change) || change.field !== "messages" || !isObj(change.value)) {
-        result.skipped++;
+        skip({ reason: "change_field_unsupported", field: isObj(change) ? safeFieldName(change.field) : undefined });
         continue;
       }
       const value = change.value;
       const phoneNumberId = isObj(value.metadata) ? str(value.metadata.phone_number_id) : undefined;
       if (expectedPhoneNumberId && phoneNumberId !== expectedPhoneNumberId) {
-        result.skipped++;
+        // Only whether an ID was present is kept - never the ID itself.
+        skip({ reason: "phone_number_id_mismatch", incomingPhoneNumberIdPresent: phoneNumberId !== undefined });
         continue;
       }
 
@@ -83,7 +96,7 @@ export function parseWhatsappWebhook(payload: unknown, expectedPhoneNumberId?: s
           const id = isObj(m) ? str(m.id) : undefined;
           const from = isObj(m) ? str(m.from) : undefined;
           if (!isObj(m) || !id || !from) {
-            result.skipped++;
+            skip({ reason: "message_missing_keys", missingKeys: missingKeys(m, { id, from }) });
             continue;
           }
           const type = str(m.type) ?? "unknown";
@@ -106,7 +119,7 @@ export function parseWhatsappWebhook(payload: unknown, expectedPhoneNumberId?: s
           const id = isObj(s) ? str(s.id) : undefined;
           const status = isObj(s) ? str(s.status) : undefined;
           if (!isObj(s) || !id || !status) {
-            result.skipped++;
+            skip({ reason: "status_missing_keys", missingKeys: missingKeys(s, { id, status }) });
             continue;
           }
           const first = Array.isArray(s.errors) && isObj(s.errors[0]) ? s.errors[0] : undefined;

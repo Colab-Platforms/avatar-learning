@@ -1,4 +1,5 @@
 import { parseWhatsappWebhook } from "./whatsapp.parser.js";
+import { countSkipReasons, describeSkips } from "./whatsapp.skips.js";
 import type { WebhookResult, WhatsappStore } from "./whatsapp.types.js";
 
 /** Applies a verified webhook payload to the store. Safe to call repeatedly with the same payload. */
@@ -11,6 +12,8 @@ export class WhatsappWebhookService {
       inbound: { created: 0, duplicate: 0 },
       statuses: { applied: 0, duplicate: 0, ignored: 0 },
       skipped: parsed.skipped,
+      skipReasons: countSkipReasons(parsed.skips),
+      skipDetail: describeSkips(parsed.skips),
     };
 
     // Sequential: events in one delivery can concern the same message (sent → delivered → read).

@@ -99,7 +99,8 @@ export function createWhatsappController({ service, getConfig }: WhatsappControl
       const result = await service.handlePayload(payload, config.phoneNumberId);
       logger.info(
         `[WhatsApp] Webhook processed: inbound created=${result.inbound.created} duplicate=${result.inbound.duplicate}; ` +
-          `status applied=${result.statuses.applied} duplicate=${result.statuses.duplicate} ignored=${result.statuses.ignored}; skipped=${result.skipped}`,
+          `status applied=${result.statuses.applied} duplicate=${result.statuses.duplicate} ignored=${result.statuses.ignored}; skipped=${result.skipped}` +
+          (result.skipDetail ? ` (${result.skipDetail})` : ""),
       );
       sendResponse(res, true, result, "EVENT_RECEIVED", STATUS_CODES.OK);
     } catch (err) {
