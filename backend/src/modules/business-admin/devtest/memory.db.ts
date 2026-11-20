@@ -245,7 +245,7 @@ export class MemoryInboxDb implements InboxDb {
       const emails: string[] = adminClause ? adminClause.AND[1].OR.map((e: any) => String(e.email.equals).toLowerCase()) : [];
       return this.users
         .filter((u) => !u.isDeleted)
-        .filter((u) => u.roles.includes("SUPERADMIN") || (u.roles.includes("ADMIN") && emails.includes(u.email.toLowerCase())))
+        .filter((u) => u.roles.includes("SUPERADMIN") || ((u.roles.includes("ADMIN") || u.roles.includes("BUSINESS_ADMIN")) && emails.includes(u.email.toLowerCase())))
         .map(out);
     },
   };

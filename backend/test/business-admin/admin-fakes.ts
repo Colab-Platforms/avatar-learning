@@ -17,12 +17,16 @@ const newId = () => `cadm${Date.now().toString(36)}${(++seq).toString(36).padSta
  * business_admin_access table and refresh sessions. Extends the shared inbox fake so one object serves the whole API.
  */
 export class AdminFakeDb extends MemoryInboxDb {
-  accessRows: Array<{ id: string; userId: string; roleKey: string; modules: string[]; createdByUserId?: string | null }> = [];
+  accessRows: Array<{ id: string; userId: string; roleKey: string; modules: string[]; permissions?: unknown; createdByUserId?: string | null }> = [];
+  auditRows: Array<Record<string, any>> = [];
+  /** Set to make audit writes fail (proves a logging failure never breaks the change). */
+  failAudit = false;
   sessions: Array<{ id: string; userId: string }> = [];
   rolesTable = [
     { id: "role-user", name: "USER" },
     { id: "role-admin", name: "ADMIN" },
     { id: "role-super", name: "SUPERADMIN" },
+    { id: "role-staff", name: "BUSINESS_ADMIN" },
   ];
   /** Set to make the next matching call throw. */
   failUser: Error | null = null;
@@ -36,7 +40,9 @@ export class AdminFakeDb extends MemoryInboxDb {
   }
 
   private matchUser(u: AdminFakeUser, where: any): boolean {
-    if (where.id && u.id !== where.id) return false;
+    if (typeof where.id === "string" && u.id !== where.id) return false;
+    if (where.id?.in && !where.id.in.includes(u.id)) return false;
+    if (where.isActive !== undefined && (u.isActive !== false) !== where.isActive) return false;
     if (where.isDeleted !== undefined && !!u.isDeleted !== where.isDeleted) return false;
     if (where.email?.equals && u.email.toLowerCase() !== String(where.email.equals).toLowerCase()) return false;
     const names: string[] | undefined = where.userRoleMappings?.some?.role?.name?.in;
@@ -72,7 +78,7 @@ export class AdminFakeDb extends MemoryInboxDb {
       const granted: string[] = ands.flatMap((a) => (a[1]?.id?.in ? a[1].id.in : []));
       return this.all
         .filter((u) => !u.isDeleted && (where.isActive === undefined || (u.isActive !== false) === where.isActive))
-        .filter((u) => u.roles.includes("SUPERADMIN") || (u.roles.includes("ADMIN") && (emails.includes(u.email.toLowerCase()) || granted.includes(u.id))))
+        .filter((u) => u.roles.includes("SUPERADMIN") || ((u.roles.includes("ADMIN") || u.roles.includes("BUSINESS_ADMIN")) && (emails.includes(u.email.toLowerCase()) || granted.includes(u.id))))
         .map(out);
     },
     findFirst: async (args: any) => {
@@ -129,6 +135,22 @@ export class AdminFakeDb extends MemoryInboxDb {
       this.accessRows.push(made);
       return { ...made };
     },
+  };
+
+  businessAdminAuditLog = {
+    create: async ({ data }: any) => {
+      if (this.failAudit) throw new Error("audit down");
+      const row = { id: newId(), createdAt: new Date(), ...data };
+      this.auditRows.push(row);
+      return row;
+    },
+    findMany: async (args: any = {}) => {
+      const w = args.where ?? {};
+      const rows = this.auditRows.filter((r) => (w.targetUserId ? r.targetUserId === w.targetUserId : true)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const start = args.skip ?? 0;
+      return rows.slice(start, start + (args.take ?? rows.length));
+    },
+    count: async (args: any = {}) => this.auditRows.filter((r) => (args.where?.targetUserId ? r.targetUserId === args.where.targetUserId : true)).length,
   };
 
   role = { findUnique: async ({ where }: any) => this.rolesTable.find((r) => r.name === where.name) ?? null };

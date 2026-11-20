@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:local": "tsx --env-file=.env --env-file=.env.local-test watch src/index.ts",
     "prebuild": "prisma generate",
     "build": "tsc && tsc-alias",
     "start": "node dist/src/index.js",
@@ -21,7 +22,9 @@
     "sync:enrollments": "tsx scripts/sync-exist-enrollments.ts",
     "sync:webinar": "tsx scripts/sync-exist-webinar-registrations.ts",
     "convert:ist": "tsx scripts/convert-time-to-ist.ts",
-    "backfill:tiers": "tsx scripts/backfill-course-tiers.ts"
+    "backfill:tiers": "tsx scripts/backfill-course-tiers.ts",
+    "bootstrap:superadmin": "tsx scripts/bootstrap-superadmin.ts",
+    "bootstrap:superadmin:local": "tsx --env-file=.env --env-file=.env.local-test scripts/bootstrap-superadmin.ts"
   },
   "keywords": [],
   "author": "",

@@ -5,11 +5,13 @@ import apiClient from "./apiClient";
 export type BusinessAccess = "superadmin" | "permissions" | "allowlist";
 
 export interface BusinessAdminMe {
-  role: "ADMIN" | "SUPERADMIN";
+  role: "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
   access: BusinessAccess;
   userId?: string;
   /** Modules this person may use (the server enforces the same list on every endpoint). */
   modules: string[];
+  /** What they may do in each module (view | create | edit | delete | manage). */
+  permissions?: Record<string, string[]>;
   isSuperAdmin: boolean;
 }
 
@@ -306,16 +308,30 @@ export interface AdminAccount {
   name: string;
   email: string;
   isActive: boolean;
-  role: "ADMIN" | "SUPERADMIN";
+  role: "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
   roleKey: RoleKey | null;
   modules: string[];
+  permissions: Record<string, string[]>;
   source: "superadmin" | "permissions" | "allowlist" | "none";
   createdAt: string;
 }
 
+export type Permissions = Record<string, string[]>;
+
 export interface AdminMeta {
+  actions: { key: string; label: string }[];
   modules: { key: string; label: string }[];
-  roles: { key: RoleKey; label: string; description: string; modules: string[] }[];
+  roles: { key: RoleKey; label: string; description: string; modules: string[]; permissions: Permissions }[];
+}
+
+export interface AuditEntry {
+  id: string;
+  at: string;
+  actorEmail: string | null;
+  action: string;
+  targetEmail: string | null;
+  targetUserId: string | null;
+  details: Record<string, unknown> | null;
 }
 
 export interface AdminList {
@@ -327,13 +343,16 @@ export interface AdminList {
 
 export const fetchAdminMeta = (): Promise<AdminMeta> => apiClient.get("/business-admin/admins/meta").then((r) => r.data.data);
 
-export const fetchAdmins = (q: string, page = 1, pageSize = 25): Promise<AdminList> =>
-  apiClient.get("/business-admin/admins", { params: { page, pageSize, ...(q && { q }) } }).then((r) => r.data.data);
+export const fetchAdmins = (q: string, page = 1, pageSize = 25, filters: { status?: string; module?: string } = {}): Promise<AdminList> =>
+  apiClient.get("/business-admin/admins", { params: { page, pageSize, ...(q && { q }), ...(filters.status && { status: filters.status }), ...(filters.module && { module: filters.module }) } }).then((r) => r.data.data);
 
-export const createAdmin = (input: { name: string; email: string; password: string; roleKey: RoleKey; modules?: string[] }): Promise<AdminAccount> =>
+export const fetchAdminAudit = (page = 1, pageSize = 25): Promise<{ items: AuditEntry[]; total: number; page: number; pageSize: number }> =>
+  apiClient.get("/business-admin/admins/audit-log", { params: { page, pageSize } }).then((r) => r.data.data);
+
+export const createAdmin = (input: { name: string; email: string; password: string; roleKey: RoleKey; permissions?: Permissions }): Promise<AdminAccount> =>
   apiClient.post("/business-admin/admins", input).then((r) => r.data.data);
 
-export const updateAdmin = (id: string, patch: { name?: string; roleKey?: RoleKey; modules?: string[]; isActive?: boolean }): Promise<AdminAccount> =>
+export const updateAdmin = (id: string, patch: { name?: string; roleKey?: RoleKey; permissions?: Permissions; isActive?: boolean }): Promise<AdminAccount> =>
   apiClient.patch(`/business-admin/admins/${encodeURIComponent(id)}`, patch).then((r) => r.data.data);
 
 export const resetAdminPassword = (id: string, password: string): Promise<{ reset: boolean }> =>
