@@ -40,6 +40,25 @@ Conventions: `id String @id @default(cuid())`; tables snake_case via `@map`/`@@m
 ## Key relationships
 User 1—N almost everything (cascade). Courses 1—N lessons/assessments/enrollments/payment orders; Courses 1—1 placement_assessment. PaymentOrder → Courses? / Direct2HireEnrollment? / Coupon?. PartnerReferral → Partner, referred User, Direct2HireEnrollment?.
 
+## Applying migrations: the exact procedure (verified on a local scratch database)
+**Why they show as "pending":** they are new and were never applied to your database, so `_prisma_migrations` does not list them. That is expected. Pending now: `20260901120000`, `20261118130000`, the two adoption migrations `20261119120000` and `20261119150000`, `20261119180000`, `20261119190000`, `20261120100000`, `20261120110000`, `20261121100000` and `20261123100000`. All are additive (17 new tables, 10 enums, indexes, foreign keys, one `ADD COLUMN`, one relaxing `DROP NOT NULL`); none drops, deletes or rewrites data.
+
+**There is NO baseline migration.** The oldest one (`20260727130000`) alters `counselling_bookings`, which no migration creates, so `migrate deploy` on an EMPTY database fails at the first migration (P3018, relation does not exist). Tested.
+
+**A. You already have a developer database with the older tables and `_prisma_migrations` listing `20260727…` and `20260729…`:** from `backend/`, after confirming `DATABASE_URL` is YOUR database (never Neon or a shared one without the owner's approval):
+```
+npx prisma migrate status
+npx prisma migrate deploy
+npx prisma migrate status    # expect: Database schema is up to date!
+```
+Tested: all ten apply cleanly in order and `migrate diff` against `schema.prisma` is empty (no drift).
+
+**B. Fresh local database (no tables):** do not run `migrate deploy` (fails as above) and do not hand-edit history. Create the schema once with `npx prisma db push` (local only), then `npm run db:seed`. Because `db push` records no history, `migrate status` will list everything as pending on that database; that is expected and harmless for local work. Do not run `migrate deploy` on it afterwards (the tables already exist).
+
+**C. A database built by `db push` that you want to track with migrations:** the schema already matches (verified: zero drift), so the history must be baselined with `npx prisma migrate resolve --applied <name>` for each folder in `prisma/migrations`. That edits migration history, so only do it deliberately, on a database you own, and only for local/dev.
+
+**Never** run any of this against Neon, production or a shared database without explicit authorization from its owner. Use `npm run dev:local` / `.env.local-test` for a local database.
+
 ## Migrations
 `backend/prisma/migrations/` holds only **3** migrations (plus 1 unapplied WhatsApp migration on `feature/whatsapp-webhook`) (+ `migration_lock.toml`, provider postgresql):
 1. `20260727130000_add_counselling_booking_phone_number`
@@ -48,6 +67,9 @@ User 1—N almost everything (cascade). Courses 1—N lessons/assessments/enroll
 There is **no baseline/init migration** for the other ~50 tables → the DB was likely created via `prisma db push` or migrations were squashed/reset (UNVERIFIED). Consequence: `prisma migrate dev` on a fresh DB cannot rebuild the schema from these files alone. Treat as a gap before any schema work; ask the user how environments are provisioned.
 Commands: `npm run db:migrate` (dev), `db:deploy` (prod), `db:generate`, `db:seed` (roles only), `db:studio`. Config: [backend/prisma.config.ts](backend/prisma.config.ts).
 Data scripts (`backend/scripts/*.ts`): `sync-exist-{users,leads,enrollments,webinar-registrations}` (push to Google Sheets), `convert-time-to-ist`, `backfill-course-tiers` — operate on live data; don't run unasked.
+
+## Admin permissions and audit log (migration `20261123100000_add_admin_permissions_and_audit_log`: created, **NOT applied** anywhere)
+`business_admin_access.permissions JSONB NULL` (per-module actions) and new table `business_admin_audit_logs` (`actor_user_id/email`, `action`, `target_user_id/email`, `details JSONB`, `created_at`; indexes on `created_at` and `(target_user_id, created_at)`). Additive only. Also needs a `BUSINESS_ADMIN` row in `roles` (data, created by `npm run db:seed`, not by the migration).
 
 ## WhatsApp Template Manager & Automation (migration `20261121100000_add_whatsapp_automation` — created, **NOT applied** anywhere)
 - `whatsapp_templates` (`WhatsappTemplate`): name+language unique, `status` text ("DRAFT" = local only; otherwise exactly what Meta reported), `draft` JSON (header/body/footer/buttons/examples), `rejected_reason`, `last_error`, `meta_template_id`.

@@ -64,16 +64,18 @@ async function notifyPabblyOnSignup(user: {
 
 const getHighestRole = (
   roleNames: string[],
-): "USER" | "ADMIN" | "SUPERADMIN" => {
+): "USER" | "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN" => {
   if (roleNames.includes("SUPERADMIN") || roleNames.includes("SUPER_ADMIN"))
     return "SUPERADMIN";
   if (roleNames.includes("ADMIN")) return "ADMIN";
+  // Business Admin staff only: never gains Learning Admin or learner access through this role.
+  if (roleNames.includes("BUSINESS_ADMIN")) return "BUSINESS_ADMIN";
   return "USER";
 };
 
 const signAccessToken = (
   userId: string,
-  role: "USER" | "ADMIN" | "SUPERADMIN",
+  role: "USER" | "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN",
 ): string => {
   if (!process.env.JWT_SECRET)
     throw new ApiError("JWT secret is not defined", STATUS_CODES.SERVER_ERROR);

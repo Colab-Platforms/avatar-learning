@@ -22,7 +22,7 @@ import { AdminFakeDb, type AdminFakeUser } from "./admin-fakes.js";
 export const JWT_SECRET = "test_jwt_secret_for_business_admin";
 process.env.JWT_SECRET = JWT_SECRET;
 
-export type Role = "USER" | "ADMIN" | "SUPERADMIN";
+export type Role = "USER" | "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
 export const tokenFor = (role: Role, id = `${role.toLowerCase()}-user-1`) => jwt.sign({ id, role }, JWT_SECRET, { expiresIn: "5m" });
 
 export const integrations: IntegrationStatus = {
@@ -88,7 +88,7 @@ export async function startInboxApp(opts: { users?: AdminFakeUser[]; env?: Recor
     const u = db.users.find((x) => x.id === id) as AdminFakeUser | undefined;
     if (!u) return null;
     const row = db.accessRows.find((r) => r.userId === id);
-    return { email: u.email, isActive: u.isActive !== false, isDeleted: !!u.isDeleted, modules: row ? row.modules : null };
+    return { email: u.email, isActive: u.isActive !== false, isDeleted: !!u.isDeleted, modules: row ? row.modules : null, permissions: row ? row.permissions ?? null : null };
   };
 
   const app = express();

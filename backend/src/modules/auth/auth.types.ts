@@ -61,5 +61,5 @@ export interface CompleteProfileBody {
 
 export interface JwtPayload {
     id: string;
-    role: "USER" | "ADMIN" | "SUPERADMIN";
+    role: "USER" | "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
 }

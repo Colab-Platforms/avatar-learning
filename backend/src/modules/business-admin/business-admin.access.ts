@@ -3,7 +3,7 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { logger } from "@/utils/logger.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
-import { ADMINS_MODULE, MODULE_KEYS, normalizeModules } from "./business-admin.modules.js";
+import { ACTIONS, ADMINS_MODULE, MODULE_KEYS, normalizePermissions, modulesOfPermissions, permissionsFromModules, type Action, type PermissionMap } from "./business-admin.modules.js";
 
 type Env = Record<string, string | undefined>;
 
@@ -23,6 +23,8 @@ export interface BusinessAccount {
   isDeleted: boolean;
   /** Modules from the user's business_admin_access row; null = no row. */
   modules: string[] | null;
+  /** Per-module actions from the same row; null/undefined = an older row (every action on its modules). */
+  permissions?: unknown;
 }
 
 export interface ResolvedAccess {
@@ -30,7 +32,12 @@ export interface ResolvedAccess {
   isSuperAdmin: boolean;
   /** Modules this person may use (a SUPERADMIN also gets "admins"). */
   modules: string[];
+  /** What they may do in each module (a SUPERADMIN also gets "admins"). */
+  permissions: Record<string, Action[]>;
 }
+
+const allActions = (): Action[] => [...ACTIONS];
+const full = (modules: readonly string[]): Record<string, Action[]> => Object.fromEntries(modules.map((m) => [m, allActions()]));
 
 /**
  * Business Admin is a separate permission from Learning Admin:
@@ -42,14 +49,20 @@ export interface ResolvedAccess {
  */
 export function resolveAccess(role: string | undefined, account: BusinessAccount | null, env: Env = process.env): ResolvedAccess | null {
   if (!account || !account.isActive || account.isDeleted) return null;
-  if (role === "SUPERADMIN") return { via: "superadmin", isSuperAdmin: true, modules: [...MODULE_KEYS, ADMINS_MODULE] };
-  if (role !== "ADMIN") return null;
+  if (role === "SUPERADMIN") return { via: "superadmin", isSuperAdmin: true, modules: [...MODULE_KEYS, ADMINS_MODULE], permissions: full([...MODULE_KEYS, ADMINS_MODULE]) };
+  // BUSINESS_ADMIN is the staff role created in Admin Management: it only ever has what its permission row grants (no allowlist).
+  if (role !== "ADMIN" && role !== "BUSINESS_ADMIN") return null;
   if (account.modules !== null) {
-    const modules = normalizeModules(account.modules);
-    return modules.length > 0 ? { via: "permissions", isSuperAdmin: false, modules } : null;
+    // New rows carry per-action permissions; older rows only a module list (= every action). Only listed modules count.
+    // `modules` is the coarse gate: a permission for a module that is not listed there never counts.
+    const listed = new Set(account.modules);
+    const base: PermissionMap = account.permissions ? normalizePermissions(account.permissions) : permissionsFromModules(account.modules);
+    const perms = Object.fromEntries(Object.entries(base).filter(([m]) => listed.has(m))) as PermissionMap;
+    const modules = modulesOfPermissions(perms);
+    return modules.length > 0 ? { via: "permissions", isSuperAdmin: false, modules, permissions: perms as Record<string, Action[]> } : null;
   }
-  if (account.email && businessAdminEmails(env).includes(account.email.trim().toLowerCase())) {
-    return { via: "allowlist", isSuperAdmin: false, modules: [...MODULE_KEYS] };
+  if (role === "ADMIN" && account.email && businessAdminEmails(env).includes(account.email.trim().toLowerCase())) {
+    return { via: "allowlist", isSuperAdmin: false, modules: [...MODULE_KEYS], permissions: full(MODULE_KEYS) };
   }
   return null;
 }
@@ -67,7 +80,7 @@ export interface AccessDeps {
   env?: Env;
 }
 
-export type BusinessRequest = AuthRequest & { businessAccess?: AccessVia; businessModules?: string[]; businessIsSuper?: boolean };
+export type BusinessRequest = AuthRequest & { businessAccess?: AccessVia; businessModules?: string[]; businessPermissions?: Record<string, Action[]>; businessIsSuper?: boolean };
 
 /** Must run after auth("ADMIN"). Answers 403 (never revealing the allowlist) to anyone without access. */
 export function requireBusinessAdmin({ findAccount, findEmail, env }: AccessDeps): RequestHandler {
@@ -77,7 +90,7 @@ export function requireBusinessAdmin({ findAccount, findEmail, env }: AccessDeps
       if (!user) throw new ApiError("Authentication required", STATUS_CODES.UNAUTHORIZED);
       const e = env ?? process.env;
       let account: BusinessAccount | null = null;
-      if (user.role === "SUPERADMIN" || user.role === "ADMIN") {
+      if (user.role === "SUPERADMIN" || user.role === "ADMIN" || user.role === "BUSINESS_ADMIN") {
         try {
           if (findAccount) account = await findAccount(user.id);
           else if (findEmail) account = { email: await findEmail(user.id), isActive: true, isDeleted: false, modules: null };
@@ -92,6 +105,7 @@ export function requireBusinessAdmin({ findAccount, findEmail, env }: AccessDeps
       const r = req as BusinessRequest;
       r.businessAccess = resolved.via;
       r.businessModules = resolved.modules;
+      r.businessPermissions = resolved.permissions;
       r.businessIsSuper = resolved.isSuperAdmin;
       next();
     } catch (err) {
@@ -100,11 +114,22 @@ export function requireBusinessAdmin({ findAccount, findEmail, env }: AccessDeps
   };
 }
 
-/** Per-route permission: allowed when the person has ANY of the listed modules. Enforced on the server for every endpoint. */
-export function requireModule(...keys: string[]): RequestHandler {
+const AUTO_ACTION: Record<string, Action> = { GET: "view", HEAD: "view", OPTIONS: "view", POST: "create", PUT: "edit", PATCH: "edit", DELETE: "delete" };
+
+/**
+ * Per-route permission, enforced on the server for every endpoint: allowed when the person holds the action in ANY of the
+ * listed modules. "auto" derives the action from the HTTP method (GET view, POST create, PUT/PATCH edit, DELETE delete); routes
+ * whose meaning differs from their method (marking read, assigning, recording consent, submitting to Meta) name it explicitly.
+ * Unknown methods and missing permissions fail closed.
+ */
+export function requireAccess(action: Action | "auto", ...keys: string[]): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
-    const modules = (req as BusinessRequest).businessModules ?? [];
-    if (keys.some((k) => modules.includes(k))) return next();
+    const perms = (req as BusinessRequest).businessPermissions ?? {};
+    const needed = action === "auto" ? AUTO_ACTION[req.method.toUpperCase()] : action;
+    if (needed && keys.some((k) => perms[k]?.includes(needed))) return next();
     next(new ApiError("You do not have permission to use this part of Business Admin.", STATUS_CODES.FORBIDDEN));
   };
 }
+
+/** Per-route permission by module (the action follows the HTTP method). */
+export const requireModule = (...keys: string[]): RequestHandler => requireAccess("auto", ...keys);
