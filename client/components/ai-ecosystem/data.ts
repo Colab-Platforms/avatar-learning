@@ -284,10 +284,12 @@ export const MARQUEE_ITEMS = [
 ];
 
 export const NAV_LINKS = [
-  { href: "#products", label: "Tools" },
-  { href: "#how", label: "How it works" },
-  { href: "#who", label: "Who it's for" },
-  { href: "#about", label: "About" },
+  { href: "/tools", label: "Tools" },
+  // Temporarily hidden from the navbar (desktop + mobile menu). The homepage
+  // sections (#how, #who) are unchanged; uncomment to bring the tabs back.
+  // { href: "#how", label: "How it works" },
+  // { href: "#who", label: "Who it's for" },
+  { href: "/adoption/about", label: "About" },
   { href: "/insights", label: "Insights" },
   { href: "#faq", label: "FAQ" },
   { href: "/investors?theme=dark", label: "Investors" },
@@ -317,12 +319,12 @@ export const FOOTER_PRODUCTS = [
 ];
 
 export const FOOTER_COMPANY = [
-  { label: "About Us", href: "#about" },
-  { label: "Our Solutions", href: "#products" },
-  { label: "How It Works", href: "#how" },
+  { label: "About Us", href: "/adoption/about" },
+  { label: "Our Solutions", href: "/tools" },
+  { label: "How It Works", href: "/#how" },
   { label: "Insights", href: "/insights" },
   { label: "Investors", href: "/investors?theme=dark" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "Contact Us", href: "/#contact" },
 ];
 
 /** Social links for the AI Adoption (home) page footer only. The learning

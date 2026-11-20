@@ -12,9 +12,8 @@ export const metadata: Metadata = {
 export default function InsightsPage() {
   return (
     <InsightsShell>
-      <div style={{ paddingTop: "clamp(24px,4vw,48px)" }}>
-        <InsightsSection showAll />
-      </div>
+      {/* Top spacing comes from the section itself (--ad-page-top when showAll). */}
+      <InsightsSection showAll />
     </InsightsShell>
   );
 }

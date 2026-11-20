@@ -101,7 +101,7 @@ export default function ThankYouPage() {
             {signedIn && <p style={{ margin: 0, fontSize: 13.5, color: "#8a939e" }}>You can track this request under My Account → Demo requests.</p>}
 
             <div style={{ width: "100%", display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link href="/#products" className={`${focusRing} ${primaryHover}`} style={btn(primaryBtn)}>Explore AI Tools</Link>
+              <Link href="/tools" className={`${focusRing} ${primaryHover}`} style={btn(primaryBtn)}>Explore AI Tools</Link>
               <Link href={secondary.href} className={`${focusRing} ${secondaryHover}`} style={btn(secondaryBtn)}>{secondary.label}</Link>
             </div>
           </>

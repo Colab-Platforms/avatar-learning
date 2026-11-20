@@ -83,7 +83,7 @@ export function AboutFaq() {
         </motion.p>
         <motion.a
           {...reveal(240)}
-          href="#contact"
+          href="/adoption/book-demo"
           className="transition-colors hover:border-[#6fe3ef]/45 hover:bg-[#6fe3ef]/[0.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]"
           style={{ marginTop: "clamp(22px,2.4vw,28px)", display: "inline-flex", alignItems: "center", gap: 14, padding: "14px 20px 14px 16px", borderRadius: 14, border: "1px solid rgba(111,227,239,.22)", background: "rgba(111,227,239,.03)", textDecoration: "none" }}
         >

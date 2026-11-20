@@ -35,7 +35,7 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
   };
 
   return (
-    <section id="insights" data-screen-label="07 Insights" style={{ scrollMarginTop: 68, position: "relative", padding: "clamp(56px,7vw,96px) 24px" }}>
+    <section id="insights" data-screen-label="07 Insights" style={{ scrollMarginTop: 68, position: "relative", padding: showAll ? "var(--ad-page-top) var(--ad-gutter) var(--ad-section-y)" : "var(--ad-section-y) var(--ad-gutter)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(24px,4vw,36px)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
           <motion.div

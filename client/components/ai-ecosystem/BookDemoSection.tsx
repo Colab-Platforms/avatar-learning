@@ -46,18 +46,19 @@ export function BookDemoSection() {
   // footer) opens the actual form. Buttons with data-demo-tools also tick those tools.
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const a = (e.target as Element).closest?.<HTMLElement>('a[href="#contact"], [data-demo-tools]');
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element).closest?.<HTMLElement>('a[href="#contact"], a[href="/#contact"], [data-demo-tools]');
       if (!a) return;
       const tools = a.dataset.demoTools?.split(",").filter(Boolean);
       if (openDemoForm(tools)) e.preventDefault();
     };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    // Capture phase: runs before Next.js <Link> handles "/#contact" (which would only scroll to the section).
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
   }, []);
 
   return (
-    <section id="contact" data-screen-label="09 Get in touch" style={{ scrollMarginTop: 68, position: "relative", overflowX: "clip", overflowY: "visible", padding: "clamp(56px,7vw,96px) 24px" }}>
+    <section id="contact" data-screen-label="09 Get in touch" style={{ scrollMarginTop: 68, position: "relative", overflowX: "clip", overflowY: "visible", padding: "var(--ad-section-y) var(--ad-gutter)" }}>
       <div
         className={styles.breathe}
         aria-hidden="true"

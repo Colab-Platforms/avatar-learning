@@ -47,7 +47,7 @@ export default async function InsightArticlePage({ params }: Props) {
 
   return (
     <InsightsShell>
-      <article style={{ maxWidth: 760, margin: "0 auto", padding: "clamp(32px,5vw,64px) 24px clamp(56px,7vw,96px)" }}>
+      <article style={{ maxWidth: 760, margin: "0 auto", padding: "var(--ad-page-top) var(--ad-gutter) var(--ad-section-y)" }}>
         <Link href="/insights" style={backLink}>
           ← Back to Insights
         </Link>
