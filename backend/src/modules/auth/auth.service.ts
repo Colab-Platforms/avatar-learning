@@ -27,6 +27,8 @@ const REFRESH_TOKEN_TTL_DAYS = 30;
 const ACCESS_TOKEN_TTL = "1d";
 const MIN_PROFILE_AGE_YEARS = 10;
 
+import { emitAutomationEvent } from "@/modules/business-admin/automation.emit.js";
+
 async function notifyPabblyOnSignup(user: {
   firstName: string | null;
   lastName: string | null;
@@ -287,6 +289,8 @@ class AuthService {
       });
       user.isEmailVerified = true;
       void notifyPabblyOnSignup(user);
+      // WhatsApp automation hook: only after the email OTP really verified a new account.
+      emitAutomationEvent({ event: "user.registered", eventId: user.id, phone: user.phoneNo, fields: { name: user.firstName, email: user.email } });
     }
 
     const readyUser = await ensureEmailProfileCompleted(user);

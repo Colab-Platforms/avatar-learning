@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 // "/" is the AI Adaptation Ecosystem page; "/ai-adaption-ecosystem" now just
 // redirects there but is kept here in case anything still links to it mid-flight.
 const EXCLUDED_PATHS = ["/"];
-const EXCLUDED_PATH_PREFIXES = ["/ai-adaption-ecosystem"];
+// /admin-adaption is the internal Business Admin: no public-site chatbot, help bubble or quiz prompt there.
+const EXCLUDED_PATH_PREFIXES = ["/ai-adaption-ecosystem", "/admin-adaption"];
 
 // These three widgets (chatbot, help bubble, career-quiz prompt) are global
 // but not part of first paint — none of them are visible until the user has

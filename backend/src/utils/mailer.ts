@@ -1,26 +1,65 @@
 import "dotenv/config";
 import { Resend } from "resend";
+import { ApiError } from "./ApiError.js";
+import STATUS_CODES from "./statusCodes.js";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-if (!RESEND_API_KEY) {
-  throw new Error(
-    "RESEND_API_KEY is required in backend environment variables.",
+/**
+ * Thrown by email-sending operations when RESEND_API_KEY / SMTP_FROM_EMAIL are
+ * not configured. The backend still starts without them (e.g. local WhatsApp
+ * development); only sending email fails, loudly, with this error.
+ */
+export class MailConfigError extends ApiError {
+  readonly code = "MAIL_NOT_CONFIGURED";
+  constructor() {
+    super(
+      "Email sending is not configured (RESEND_API_KEY and SMTP_FROM_EMAIL are required).",
+      STATUS_CODES.SERVICE_UNAVAILABLE,
+    );
+    Object.setPrototypeOf(this, MailConfigError.prototype);
+  }
+}
+
+type ResendLike = { emails: { send: (...args: any[]) => Promise<any> } };
+
+/**
+ * Builds the mail client from an env object. Never throws. When not configured
+ * the returned client has the same shape as Resend but every send rejects with
+ * MailConfigError (so an unsent email can never be reported as sent).
+ */
+export const createMailClient = (
+  env: Record<string, string | undefined>,
+  ResendCtor: new (key: string) => ResendLike = Resend as any,
+) => {
+  const apiKey = env.RESEND_API_KEY?.trim();
+  const fromEmail = env.SMTP_FROM_EMAIL?.trim() ?? "";
+  const configured = Boolean(apiKey && fromEmail);
+  const client: ResendLike = configured
+    ? new ResendCtor(apiKey as string)
+    : {
+        emails: {
+          send: async () => {
+            throw new MailConfigError();
+          },
+        },
+      };
+  return { configured, client, fromEmail };
+};
+
+const mail = createMailClient(process.env);
+if (!mail.configured) {
+  console.warn(
+    "[Mailer] RESEND_API_KEY / SMTP_FROM_EMAIL not set - email sending is disabled; email operations will fail with MAIL_NOT_CONFIGURED.",
   );
 }
 
-const FROM_EMAIL = process.env.SMTP_FROM_EMAIL;
-if (!FROM_EMAIL) {
-  throw new Error(
-    "SMTP_FROM_EMAIL is required in backend environment variables and must be a verified sender on Resend.",
-  );
-}
-
-const resend = new Resend(RESEND_API_KEY);
+const resend = mail.client as Resend;
+const FROM_EMAIL = mail.fromEmail;
+const isMailConfigured = mail.configured;
 const APP_NAME = process.env.APP_NAME || "Avatar India";
 
 // Exported so other modules (e.g. counselling notifications) can reuse the
 // same Resend client/sender identity instead of creating their own.
-export { resend, FROM_EMAIL, APP_NAME };
+export { resend, FROM_EMAIL, APP_NAME, isMailConfigured };
 
 //send OTP email via Resend
 export const sendOtpEmail = async (

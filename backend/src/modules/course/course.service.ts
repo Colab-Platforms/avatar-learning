@@ -1,4 +1,5 @@
 import prisma from "@root/prisma.js";
+import { emitUserAutomationEvent } from "@/modules/business-admin/automation.emit.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import {
@@ -504,9 +505,12 @@ export class PublicCourseService {
         STATUS_CODES.CONFLICT,
       );
 
-    return prisma.courseUserMapper.create({
+    const enrollment = await prisma.courseUserMapper.create({
       data: { userId, courseId: course.id },
     });
+    // WhatsApp automation hook: only after the enrolment row exists.
+    emitUserAutomationEvent(userId, "course.enrolled", `${userId}:${course.id}`, { course_name: course.title });
+    return enrollment;
   }
 
   async unenrollUser(slugOrId: string, userId: string) {

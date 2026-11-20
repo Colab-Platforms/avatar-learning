@@ -7,6 +7,7 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { ApiError } from "@/utils/ApiError.js";
 import { ContactService } from "@/modules/contact/contact.service.js";
+import { emitAutomationEvent, toWaPhone } from "@/modules/business-admin/automation.emit.js";
 import type { AdoptionProduct, AdoptionDemoStatus } from "@prisma/client";
 import { requireAdoptionSession } from "./adoption.controller.js";
 import { AdoptionAuthService, toPublic } from "./adoption.service.js";
@@ -185,6 +186,12 @@ demoRouter.post(
         message: v.message || null,
       },
     });
+    // WhatsApp automation hook (demo.requested): only after the request is saved. Fire-and-forget and a no-op unless
+    // WHATSAPP_AUTOMATION_ENABLED=true, so it can never fail or slow the customer's submission. The engine still enforces
+    // recorded opt-in, the 24-hour window and approved templates. The request id is the event id (one message per request).
+    if (toWaPhone(v.phone).length >= 10) {
+      emitAutomationEvent({ event: "demo.requested", eventId: request.id, phone: v.phone, fields: { name: v.name, email: v.email } });
+    }
     // Same request in the existing Contacts inbox, so the sales workflow is unchanged.
     const toolNames = v.tools.map(productName).join(", ");
     await contactService
