@@ -10,10 +10,18 @@ export interface WhatsappConfig {
   /** Business phone number ID. If set, events for other numbers are ignored. */
   phoneNumberId?: string;
   businessAccountId?: string;
+  /** Meta app id; only needed to upload sample media for template headers. */
+  appId?: string;
   graphApiVersion: string;
+  /**
+   * Explicit switch for SENDING messages (WHATSAPP_OUTBOUND_ENABLED=true). Receiving webhooks never needs it.
+   * Optional so existing configs keep working; absent means off.
+   */
+  outboundEnabled?: boolean;
 }
 
-export type WhatsappMessageStatusValue = "RECEIVED" | "SENT" | "DELIVERED" | "READ" | "FAILED";
+/** SENDING = saved by the Business Admin inbox but not yet accepted by WhatsApp (never produced by webhooks). */
+export type WhatsappMessageStatusValue = "RECEIVED" | "SENDING" | "SENT" | "DELIVERED" | "READ" | "FAILED";
 
 /** A customer → business message, normalised from Meta's payload. */
 export interface InboundMessageEvent {

@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { WhatsappApiError, WhatsappClient } from "../../src/modules/whatsapp/whatsapp.client.js";
 import { baseConfig, SECRETS } from "./helpers.js";
 
-type Call = { url: string; init: { method: string; headers: Record<string, string>; body: string } };
+type Call = { url: string; init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal } };
 
 /** Mock of Meta's Graph API. No real network request can happen in these tests. */
 function mockFetch(response: { ok: boolean; status: number; body: unknown }) {
   const calls: Call[] = [];
-  const fetchImpl = async (url: string, init: Call["init"]) => {
-    calls.push({ url, init });
+  const fetchImpl = async (url: string, init: { method: string; headers: Record<string, string>; body?: string | FormData; signal?: AbortSignal }) => {
+    calls.push({ url, init: init as Call["init"] });
     return { ok: response.ok, status: response.status, json: async () => response.body };
   };
   return { calls, fetchImpl };

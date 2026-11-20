@@ -1640,6 +1640,8 @@ enum WhatsappMessageStatus {
   DELIVERED
   READ
   FAILED
+  // Outbound message saved but not yet accepted by WhatsApp (appended last: additive ALTER TYPE).
+  SENDING
 }
 
 model WhatsappMessage {
@@ -1672,6 +1674,10 @@ model WhatsappMessage {
   errorTitle   String? @map("error_title")
   errorDetails String? @map("error_details")
 
+  // Outbound only: the team member who sent it, and the idempotency key that makes retries/double clicks safe.
+  sentByUserId    String? @map("sent_by_user_id")
+  clientRequestId String? @unique @map("client_request_id")
+
   // Original Meta message object for INBOUND messages (media ids, locations, ...).
   payload Json?
 
@@ -1682,4 +1688,202 @@ model WhatsappMessage {
   @@index([status])
   @@index([direction, createdAt])
   @@map("whatsapp_messages")
+}
+
+// Business Admin WhatsApp Inbox: per-contact team state. Created lazily (first assignment / read / note);
+// a contact with no row is simply unassigned and fully unread. No FK to users so history survives user removal.
+model WhatsappConversation {
+  id          String @id @default(cuid())
+  contactWaId String @unique @map("contact_wa_id")
+
+  assignedToUserId String?   @map("assigned_to_user_id")
+  assignedAt       DateTime? @map("assigned_at")
+
+  // Team-wide read marker: inbound messages created after this are "unread".
+  lastReadAt       DateTime? @map("last_read_at")
+  lastReadByUserId String?   @map("last_read_by_user_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@index([assignedToUserId])
+  @@map("whatsapp_conversations")
+}
+
+enum WhatsappConversationEventType {
+  ASSIGNED
+  UNASSIGNED
+  NOTE
+}
+
+// Append-only internal history for a contact: assignment changes and internal notes. Never sent to customers.
+model WhatsappConversationEvent {
+  id          String                        @id @default(cuid())
+  contactWaId String                        @map("contact_wa_id")
+  type        WhatsappConversationEventType
+  authorUserId   String? @map("author_user_id")
+  assigneeUserId String? @map("assignee_user_id")
+  body           String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([contactWaId, createdAt])
+  @@map("whatsapp_conversation_events")
+}
+
+// Business Admin (Avatar Adaption) per-admin module permissions. One row per Learning-platform ADMIN user who has been
+// granted Business Admin access by a Super Admin. No row = no access (unless on the legacy BUSINESS_ADMIN_EMAILS list).
+// SUPERADMIN users never need a row. No FK to users, like the other WhatsApp/inbox tables.
+model BusinessAdminAccess {
+  id      String   @id @default(cuid())
+  userId  String   @unique @map("user_id")
+  // MANAGER | SUPPORT_AGENT | ANALYST | CUSTOM (a label; the effective permissions are `modules`)
+  roleKey String   @map("role_key")
+  // Module keys this admin may use: dashboard, inbox, leads, customers, agents, automations, integrations, analytics, team, settings
+  modules String[]
+
+  createdByUserId String?   @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+
+  @@map("business_admin_access")
+}
+
+enum WhatsappOptInStatus {
+  UNKNOWN
+  GRANTED
+  WITHDRAWN
+}
+
+// Business Admin WhatsApp contacts. A contact is a person/business the team has saved (or imported); conversations are
+// matched to contacts by wa_id. This table is also the interim consent register for BUSINESS-INITIATED (template)
+// messages: sending a template outside the 24h window requires opt_in_status = GRANTED with recorded evidence, and
+// WITHDRAWN blocks every outbound message. No FK to users, like the other inbox tables.
+model WhatsappContact {
+  id    String   @id @default(cuid())
+  waId  String   @unique @map("wa_id") // digits only, with country code (the WhatsApp id)
+  name  String
+  email String?
+  company String?
+  notes   String?
+  tags    String[]
+  source  String @default("manual") // manual | import | inbound
+
+  optInStatus       WhatsappOptInStatus @default(UNKNOWN) @map("opt_in_status")
+  optInEvidence     String?             @map("opt_in_evidence") // how/where the customer agreed (required to grant)
+  optInAt           DateTime?           @map("opt_in_at")
+  optOutAt          DateTime?           @map("opt_out_at")
+  optStatusByUserId String?             @map("opt_status_by_user_id") // null = the customer themselves (e.g. replied STOP)
+
+  createdByUserId String?   @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+
+  @@index([name])
+  @@index([optInStatus])
+  @@map("whatsapp_contacts")
+}
+
+// Business Admin website analytics: raw responses from Microsoft Clarity's Data Export API. Clarity only returns the last
+// 1-3 days and allows 10 requests per project per day, so every response is stored: it is both the cache and the only
+// way history longer than 3 days can ever exist (it starts accumulating from the day the token is first connected).
+model ClaritySnapshot {
+  id        String   @id @default(cuid())
+  numOfDays Int      @map("num_of_days") // 1..3: the window Clarity was asked for
+  dimension String   @default("") // "" = overall, otherwise one of Clarity's dimensions (Device, Browser, ...)
+  payload   Json // Clarity's response, unmodified
+  fetchedAt DateTime @default(now()) @map("fetched_at")
+
+  @@index([fetchedAt])
+  @@index([dimension, numOfDays, fetchedAt])
+  @@map("clarity_snapshots")
+}
+
+// WhatsApp Template Manager: local record of every template (drafts, submitted, and mirrored from Meta). `status` is
+// "DRAFT" until Meta answers; after that it is only ever set from Meta responses (submit / edit / sync), never from local input.
+model WhatsappTemplate {
+  id              String    @id @default(cuid())
+  name            String // Meta: lowercase letters, digits, underscores
+  language        String // Meta language code, e.g. en, en_US, hi
+  category        String // UTILITY | MARKETING | AUTHENTICATION
+  parameterFormat String    @default("POSITIONAL") @map("parameter_format") // POSITIONAL | NAMED
+  status          String    @default("DRAFT") // DRAFT (local only) | PENDING | APPROVED | REJECTED | PAUSED | DISABLED | ... (as Meta reports)
+  metaTemplateId  String?   @map("meta_template_id")
+  // Structured, editable content: { header, body, footer, buttons, authentication }
+  draft           Json
+  rejectedReason  String?   @map("rejected_reason")
+  lastError       String?   @map("last_error") // last failed Meta call (submit/edit), user-safe text
+  submittedAt     DateTime? @map("submitted_at")
+  lastSyncedAt    DateTime? @map("last_synced_at")
+  createdByUserId String?   @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+
+  @@unique([name, language])
+  @@index([status])
+  @@map("whatsapp_templates")
+}
+
+// WhatsApp automation rule: when `triggerEvent` happens, send the approved template with variables filled from the event.
+// Created INACTIVE. Nothing sends unless the rule is active AND the server has WHATSAPP_AUTOMATION_ENABLED + outbound on.
+model AutomationRule {
+  id               String    @id @default(cuid())
+  name             String
+  triggerEvent     String    @map("trigger_event")
+  templateName     String    @map("template_name")
+  templateLanguage String    @map("template_language")
+  // { "<variable>": { source: "field" | "static", key?: string, value?: string, fallback?: string } }
+  variableMapping  Json      @map("variable_mapping")
+  isActive         Boolean   @default(false) @map("is_active")
+  createdByUserId  String?   @map("created_by_user_id")
+  updatedByUserId  String?   @map("updated_by_user_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @updatedAt @map("updated_at")
+
+  @@index([triggerEvent, isActive])
+  @@map("automation_rules")
+}
+
+enum AutomationExecutionStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  SKIPPED
+}
+
+// One row per (rule, event). `idempotencyKey` (ruleId + eventId) is unique, so the same event can never send twice.
+model AutomationExecution {
+  id               String                    @id @default(cuid())
+  ruleId           String                    @map("rule_id")
+  ruleName         String                    @map("rule_name")
+  triggerEvent     String                    @map("trigger_event")
+  eventId          String                    @map("event_id")
+  idempotencyKey   String                    @unique @map("idempotency_key")
+  contactWaId      String                    @map("contact_wa_id")
+  templateName     String                    @map("template_name")
+  templateLanguage String                    @map("template_language")
+  params           Json                      @default("[]") // resolved template values, in fill order
+  status           AutomationExecutionStatus @default(QUEUED)
+  attempts         Int                       @default(0)
+  maxAttempts      Int                       @default(4) @map("max_attempts")
+  nextAttemptAt    DateTime?                 @map("next_attempt_at")
+  lockedAt         DateTime?                 @map("locked_at")
+  expiresAt        DateTime                  @map("expires_at") // a queued item older than this is skipped, never sent late
+  messageId        String?                   @map("message_id") // WhatsappMessage.id of the latest attempt
+  waMessageId      String?                   @map("wa_message_id")
+  skipReason       String?                   @map("skip_reason") // stable code, e.g. CONSENT_WITHDRAWN
+  lastErrorCode    Int?                      @map("last_error_code")
+  lastError        String?                   @map("last_error")
+  history          Json                      @default("[]") // [{ at, event, detail }] attempt-by-attempt log
+  sentAt           DateTime?                 @map("sent_at")
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime?                 @updatedAt @map("updated_at")
+
+  @@index([status, nextAttemptAt])
+  @@index([ruleId, createdAt])
+  @@index([createdAt])
+  @@map("automation_executions")
 }

@@ -67,6 +67,8 @@ Browser → axios `apiClient` (`NEXT_PUBLIC_API_BASE_URL`, adds `Authorization: 
 | MSG91 | Phone-verification widget | `utils/msg91.ts` | `MSG91_AUTH_KEY, MSG91_WIDGET_ID, MSG91_TOKEN_AUTH` |
 
 ## Other env var names
+
+Business Admin analytics: `CLARITY_API_TOKEN`, `CLARITY_PROJECT_ID` (backend, read per request); `NEXT_PUBLIC_CLARITY_PROJECT_ID` (client; the public-site Clarity tag loads only on public paths after consent, see `client/lib/clarityConsent.ts`). WhatsApp templates also need `WHATSAPP_BUSINESS_ACCOUNT_ID`.
 Backend: `DATABASE_URL, PORT, NODE_ENV, LOG_LEVEL, DEFAULT_PAGE_SIZE, JWT_SECRET, FRONTEND_URL, WEBINAR_PRICE_PAISE, WHATSAPP_COMMUNITY_LINK, WEBINAR_WHATSAPP_GROUP_LINK, DIRECT2HIRE_PRICE_RUPEES, DIRECT2HIRE_ASSESSMENT_PRICE_RUPEES, COURSE_BASIC_PRICE_RUPEES`.
 Client: `NEXT_PUBLIC_API_BASE_URL, NEXT_PUBLIC_GOOGLE_CLIENT_ID, NEXT_PUBLIC_D2H_DEV_UNLOCK`.
 Note `DIRECT2HIRE_*_PRICE_RUPEES` are `parseInt`'d at import time with `!` — missing var → `NaN` (gap).

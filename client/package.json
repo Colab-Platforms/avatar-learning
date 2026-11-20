@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:logic": "node ../backend/node_modules/tsx/dist/cli.mjs --test lib/inboxLogic.test.ts lib/businessTheme.test.ts lib/analyticsMetrics.test.ts lib/templateLogic.test.ts"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.8",

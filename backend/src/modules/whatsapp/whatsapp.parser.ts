@@ -43,6 +43,8 @@ function toDate(v: unknown): Date | undefined {
 function extractText(message: Obj, type: string): string | undefined {
   if (type === "text" && isObj(message.text)) return str(message.text.body);
   if (type === "button" && isObj(message.button)) return str(message.button.text);
+  // Media captions are the human-readable text of an image/video/document message.
+  if ((type === "image" || type === "video" || type === "document") && isObj(message[type])) return str((message[type] as Obj).caption);
   if (type === "interactive" && isObj(message.interactive)) {
     const i = message.interactive;
     if (isObj(i.button_reply)) return str(i.button_reply.title);

@@ -21,6 +21,7 @@ import adminDashboardRoutes from "./modules/dashboard/admin.route.js";
 import webinarRoutes from "./modules/webinar/webinar.route.js";
 import adminWebinarRoutes from "./modules/webinar/admin.route.js";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.route.js";
+import businessAdminRoutes from "./modules/business-admin/business-admin.route.js";
 
 const router = Router();
 
@@ -50,5 +51,6 @@ router.use("/admin", adminDashboardRoutes);
 router.use("/webinar", webinarRoutes);
 router.use("/admin", adminWebinarRoutes);
 router.use("/whatsapp", whatsappRoutes);
+router.use("/business-admin", businessAdminRoutes);
 
 export default router;

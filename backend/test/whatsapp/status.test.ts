@@ -98,7 +98,13 @@ describe("signature and config helpers", () => {
       WHATSAPP_BUSINESS_ACCOUNT_ID: "b",
       WHATSAPP_GRAPH_API_VERSION: "v99.0",
     } as NodeJS.ProcessEnv);
-    assert.deepEqual(cfg, { enabled: true, appSecret: "s", verifyToken: "t", accessToken: "a", phoneNumberId: "p", businessAccountId: "b", graphApiVersion: "v99.0" });
+    assert.deepEqual(cfg, { enabled: true, appSecret: "s", verifyToken: "t", accessToken: "a", phoneNumberId: "p", businessAccountId: "b", appId: undefined, graphApiVersion: "v99.0", outboundEnabled: false });
+  });
+
+  it("outbound sending is OFF unless WHATSAPP_OUTBOUND_ENABLED is exactly true", () => {
+    assert.equal(getWhatsappConfig({} as NodeJS.ProcessEnv).outboundEnabled, false);
+    assert.equal(getWhatsappConfig({ WHATSAPP_OUTBOUND_ENABLED: "yes" } as NodeJS.ProcessEnv).outboundEnabled, false);
+    assert.equal(getWhatsappConfig({ WHATSAPP_OUTBOUND_ENABLED: " True " } as NodeJS.ProcessEnv).outboundEnabled, true);
   });
 
   it("is disabled by default and reports only variable NAMES when config is missing", () => {

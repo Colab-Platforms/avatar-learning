@@ -6,12 +6,13 @@ import type { MessageState, StatusEvent, WhatsappMessageStatusValue } from "./wh
  * a message never moves backwards, late timestamps are still filled in, and an
  * event that changes nothing is reported as a duplicate.
  *
- * Rank: RECEIVED < SENT < FAILED < DELIVERED < READ.
+ * Rank: RECEIVED = SENDING < SENT < FAILED < DELIVERED < READ.
  * `failed` after `delivered`/`read` is impossible in practice, so it is ignored;
  * a late `sent` after `failed` must not resurrect the message.
  */
 const RANK: Record<WhatsappMessageStatusValue, number> = {
   RECEIVED: 0,
+  SENDING: 0,
   SENT: 1,
   FAILED: 2,
   DELIVERED: 3,

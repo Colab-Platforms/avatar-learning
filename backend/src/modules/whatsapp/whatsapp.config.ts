@@ -16,7 +16,9 @@ export function getWhatsappConfig(env: NodeJS.ProcessEnv = process.env): Whatsap
     accessToken: clean(env.WHATSAPP_ACCESS_TOKEN),
     phoneNumberId: clean(env.WHATSAPP_PHONE_NUMBER_ID),
     businessAccountId: clean(env.WHATSAPP_BUSINESS_ACCOUNT_ID),
+    appId: clean(env.WHATSAPP_APP_ID),
     graphApiVersion: clean(env.WHATSAPP_GRAPH_API_VERSION) ?? DEFAULT_GRAPH_API_VERSION,
+    outboundEnabled: clean(env.WHATSAPP_OUTBOUND_ENABLED)?.toLowerCase() === "true",
   };
 }
 
