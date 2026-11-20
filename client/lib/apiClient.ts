@@ -104,12 +104,22 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       }
 
+      // The local dev sandbox login (dev only, 8-hour token, no refresh token): send an expired sandbox session back to the
+      // sandbox sign-in page; the normal /login cannot sign that account in.
+      let isDevSandbox = false;
+      try {
+        isDevSandbox = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}")?.user?.email === "adaption.test@localhost.test";
+      } catch {
+        /* unreadable storage: treat as a normal session */
+      }
+
       const { store } = await import("@/store");
       const { logout } = await import("@/store/authSlice");
       store.dispatch(logout());
 
-      if (!window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+      const signIn = isDevSandbox ? "/dev-adaption-login" : "/login";
+      if (!window.location.pathname.startsWith(signIn)) {
+        window.location.href = signIn;
       }
     }
 

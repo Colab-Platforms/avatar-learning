@@ -236,6 +236,7 @@ export default function PrivacyPolicyPage() {
               <p>Avatar may use cookies, SDKs, pixels, local storage, and similar technologies for authentication, security, analytics, personalization, session continuity, performance monitoring, and marketing.</p>
               <p>Because cookies may involve collection or use of personal data, notice and consent-based practices are prudent in the evolving Indian privacy landscape, particularly for non-essential cookies.</p>
               <p>Users may manage cookie preferences through browser settings or any cookie consent tools made available on the platform. Blocking certain cookies may affect the functionality of login, checkout, dashboards, course tracking, or personalized recommendations.</p>
+              <p>Microsoft Clarity: on our public marketing pages we use Microsoft Clarity, a website analytics service, to understand how visitors use the site (for example clicks, scrolling, pages viewed and technical errors) through session recordings and heatmaps. Clarity, Google Tag Manager and the Meta Pixel are loaded only after you choose Accept in the analytics notice, and are never loaded on sign-in, registration, payment, dashboard, profile or administration pages. Text typed into form fields is masked and is not recorded. You can decline, and you can change your choice at any time by clearing this site&apos;s data in your browser. Microsoft processes this data as our service provider under its own privacy terms.</p>
             </div>
           </section>
 

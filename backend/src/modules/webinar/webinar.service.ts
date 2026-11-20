@@ -54,6 +54,8 @@ function getRazorpay(): Razorpay {
   return new Razorpay({ key_id: keyId, key_secret: keySecret });
 }
 
+import { emitAutomationEvent, formatEventDate } from "@/modules/business-admin/automation.emit.js";
+
 export class WebinarService {
   // Shared by the free-registration path, /verify-payment, and the Razorpay
   // webhook — every path that confirms a seat sends the same confirmation
@@ -90,6 +92,13 @@ export class WebinarService {
       paidAt: updated.paidAt ?? new Date(),
       webinarTitle: updated.webinarSchedule?.title ?? null,
       webinarScheduledAt: updated.webinarSchedule?.scheduledAt ?? null,
+    });
+    // WhatsApp automation hook: the registration is now confirmed (free, verified payment, or webhook).
+    emitAutomationEvent({
+      event: "webinar.registered",
+      eventId: updated.id,
+      phone: updated.phoneNumber,
+      fields: { name: updated.name, email: updated.email, webinar_title: updated.webinarSchedule?.title ?? "our webinar", webinar_date: formatEventDate(updated.webinarSchedule?.scheduledAt) },
     });
     return updated;
   }
