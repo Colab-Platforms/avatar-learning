@@ -14,6 +14,7 @@ import { partnerService } from "@/modules/partners/partner.service.js";
 import { couponService } from "@/modules/coupon/coupon.service.js";
 import { googleSheetsService } from "@/services/googleSheets.service.js";
 import { sendPaymentConfirmationEmail } from "./payment.mail.js";
+import { emitUserAutomationEvent } from "@/modules/business-admin/automation.emit.js";
 import type {
   CreateOrderResponse,
   CreatePaymentLinkResponse,
@@ -219,6 +220,34 @@ async function saveDirect2HireLead(
   }
 }
 
+// WhatsApp automation hooks for a payment that was just recorded for the first time. Fire-and-forget (see automation.emit.ts).
+function emitPaymentAutomation(
+  order: { userId: string; productType: string; courseId: string | null; amount: number; gatewayOrderId: string },
+  gatewayPaymentId: string,
+  newlyEnrolledCourse: boolean,
+): void {
+  void (async () => {
+    try {
+      let productName = "Direct2Hire Programme";
+      let courseName: string | null = null;
+      if (order.productType === "COURSE" && order.courseId) {
+        const course = await prisma.courses.findUnique({ where: { id: order.courseId }, select: { title: true } });
+        courseName = course?.title ?? "Course";
+        productName = courseName;
+      } else if (order.productType === "D2H_ASSESSMENT_COUNSELLING") {
+        productName = "Direct2Hire Assessment + Counselling";
+      }
+      // Keyed on the ORDER (not the gateway payment id) so verify, Razorpay and Cashfree webhooks for the same order always share one event id.
+      emitUserAutomationEvent(order.userId, "payment.succeeded", order.gatewayOrderId, { amount: order.amount / 100, product_name: productName, payment_id: gatewayPaymentId });
+      if (newlyEnrolledCourse && order.courseId) {
+        emitUserAutomationEvent(order.userId, "course.enrolled", `${order.userId}:${order.courseId}`, { course_name: courseName ?? "your course" });
+      }
+    } catch {
+      /* never affects the payment */
+    }
+  })();
+}
+
 async function completePayment(params: {
   orderId: string;
   gatewayPaymentId: string;
@@ -269,6 +298,7 @@ async function completePayment(params: {
     let enrolledUserSheetEmail = "";
     let enrolledUserSheetPhone: string | null = null;
     let didEnroll = false;
+    let newlyEnrolledCourse = false;
 
     await prisma.$transaction(async (tx) => {
       await tx.paymentTransaction.create({
@@ -355,6 +385,7 @@ async function completePayment(params: {
               tier: "BASIC",
             },
           });
+          newlyEnrolledCourse = true;
         }
       }
     });
@@ -395,6 +426,7 @@ async function completePayment(params: {
       }
     }
 
+    emitPaymentAutomation(order, gatewayPaymentId, newlyEnrolledCourse);
     await sendPurchaseConfirmationEmailForOrder(order);
     await notifyPabblyOnPurchase(order, gatewayPaymentId);
   } catch (err: any) {

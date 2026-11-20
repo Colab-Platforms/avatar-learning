@@ -1,0 +1,258 @@
+/*
+ * Business Admin (/admin-adaption) light theme.
+ *
+ * The components use the dark palette directly (bg-ink-*, text-white/NN, border-white/NN ...). Light mode re-maps exactly
+ * those utility classes, scoped to the Business Admin root element. Every selector starts with
+ * `.ba-root[data-ba-theme="light"]`, so this file cannot affect /admin or any other page, and dark mode (the default)
+ * is untouched. If you use a new colour utility in a Business Admin component, add its light mapping here.
+ */
+
+.ba-root {
+  color-scheme: dark; /* native controls (select lists, scrollbars) match the dark theme */
+}
+
+.ba-root[data-ba-theme="light"] {
+  color-scheme: light;
+  --ba-page: #f1f5f9;
+  --ba-surface: #ffffff;
+  --ba-input: #f8fafc;
+  --ba-line: rgb(15 23 42 / 0.1);
+  --ba-text: #0f172a;
+  --ba-text-2: #334155;
+  --ba-text-3: #475569;
+  --ba-text-4: #4f5f77;
+  --ba-text-5: #5f6f86;
+  --ba-brand: #205a99;
+  --ba-brand-hover: #153c66;
+  background: var(--ba-page);
+  color: var(--ba-text);
+}
+
+/* ── surfaces ───────────────────────────────────────────────────────────── */
+.ba-root[data-ba-theme="light"] .bg-ink-950 { background-color: var(--ba-page); }
+.ba-root[data-ba-theme="light"] .bg-ink-900 { background-color: var(--ba-surface); }
+.ba-root[data-ba-theme="light"] .bg-ink-900\/95 { background-color: rgb(255 255 255 / 0.95); }
+.ba-root[data-ba-theme="light"] .bg-ink-900\/60 { background-color: rgb(255 255 255 / 0.7); }
+.ba-root[data-ba-theme="light"] .bg-ink-950\/60 { background-color: var(--ba-input); }
+
+/* subtle fills that were white-on-dark become slate-on-light */
+.ba-root[data-ba-theme="light"] .bg-white\/4 { background-color: rgb(15 23 42 / 0.04); }
+.ba-root[data-ba-theme="light"] .bg-white\/5 { background-color: rgb(15 23 42 / 0.05); }
+.ba-root[data-ba-theme="light"] .bg-white\/6 { background-color: rgb(15 23 42 / 0.06); }
+.ba-root[data-ba-theme="light"] .bg-white\/8 { background-color: rgb(15 23 42 / 0.08); }
+.ba-root[data-ba-theme="light"] .hover\:bg-white\/4:hover { background-color: rgb(15 23 42 / 0.05); }
+.ba-root[data-ba-theme="light"] .hover\:bg-white\/5:hover { background-color: rgb(15 23 42 / 0.06); }
+.ba-root[data-ba-theme="light"] .hover\:bg-white\/12:hover { background-color: rgb(15 23 42 / 0.12); }
+
+/* ── borders and dividers ───────────────────────────────────────────────── */
+.ba-root[data-ba-theme="light"] .border-white\/5 { border-color: rgb(15 23 42 / 0.08); }
+.ba-root[data-ba-theme="light"] .border-white\/6 { border-color: rgb(15 23 42 / 0.09); }
+.ba-root[data-ba-theme="light"] .border-white\/8 { border-color: rgb(15 23 42 / 0.12); }
+.ba-root[data-ba-theme="light"] .border-white\/10 { border-color: rgb(15 23 42 / 0.14); }
+.ba-root[data-ba-theme="light"] .divide-white\/5 > :not(:last-child) { border-color: rgb(15 23 42 / 0.08); }
+.ba-root[data-ba-theme="light"] .focus\:border-brand-500\/50:focus { border-color: rgb(42 120 204 / 0.7); }
+
+/* ── text ───────────────────────────────────────────────────────────────── */
+.ba-root[data-ba-theme="light"] .text-white { color: var(--ba-text); }
+.ba-root[data-ba-theme="light"] .text-white\/85,
+.ba-root[data-ba-theme="light"] .text-white\/80,
+.ba-root[data-ba-theme="light"] .text-white\/75 { color: var(--ba-text-2); }
+.ba-root[data-ba-theme="light"] .text-white\/70,
+.ba-root[data-ba-theme="light"] .text-white\/60,
+.ba-root[data-ba-theme="light"] .text-white\/55,
+.ba-root[data-ba-theme="light"] .text-white\/50 { color: var(--ba-text-3); }
+.ba-root[data-ba-theme="light"] .text-white\/45,
+.ba-root[data-ba-theme="light"] .text-white\/40,
+.ba-root[data-ba-theme="light"] .text-white\/35 { color: var(--ba-text-4); }
+.ba-root[data-ba-theme="light"] .text-white\/30,
+.ba-root[data-ba-theme="light"] .text-white\/25,
+.ba-root[data-ba-theme="light"] .text-white\/20 { color: var(--ba-text-5); }
+.ba-root[data-ba-theme="light"] .placeholder\:text-white\/30::placeholder { color: var(--ba-text-5); }
+.ba-root[data-ba-theme="light"] .hover\:text-white:hover { color: var(--ba-text); }
+.ba-root[data-ba-theme="light"] .hover\:text-white\/80:hover { color: var(--ba-text-2); }
+.ba-root[data-ba-theme="light"] .hover\:text-white\/60:hover { color: var(--ba-text-3); }
+.ba-root[data-ba-theme="light"] .text-ink-950 { color: #ffffff; } /* dark text that sat on solid brand badges */
+
+/* brand + status colours: the dark-theme tints are too pale on white */
+.ba-root[data-ba-theme="light"] .text-brand-300,
+.ba-root[data-ba-theme="light"] .text-brand-400 { color: var(--ba-brand); }
+.ba-root[data-ba-theme="light"] .hover\:text-brand-300:hover { color: var(--ba-brand-hover); }
+.ba-root[data-ba-theme="light"] .text-emerald-300 { color: #047857; }
+.ba-root[data-ba-theme="light"] .text-amber-100\/70,
+.ba-root[data-ba-theme="light"] .text-amber-200,
+.ba-root[data-ba-theme="light"] .text-amber-200\/70,
+.ba-root[data-ba-theme="light"] .text-amber-200\/90 { color: #92400e; }
+.ba-root[data-ba-theme="light"] .text-amber-300,
+.ba-root[data-ba-theme="light"] .text-amber-300\/90,
+.ba-root[data-ba-theme="light"] .text-amber-400 { color: #b45309; }
+.ba-root[data-ba-theme="light"] .text-red-200,
+.ba-root[data-ba-theme="light"] .text-red-300 { color: #b91c1c; }
+.ba-root[data-ba-theme="light"] .text-sky-300,
+.ba-root[data-ba-theme="light"] .text-sky-400 { color: #0369a1; }
+.ba-root[data-ba-theme="light"] .border-amber-300\/15,
+.ba-root[data-ba-theme="light"] .border-amber-400\/30,
+.ba-root[data-ba-theme="light"] .border-amber-500\/20 { border-color: rgb(180 83 9 / 0.35); }
+.ba-root[data-ba-theme="light"] .border-red-400\/30,
+.ba-root[data-ba-theme="light"] .border-red-500\/25 { border-color: rgb(185 28 28 / 0.35); }
+.ba-root[data-ba-theme="light"] .border-emerald-500\/20 { border-color: rgb(4 120 87 / 0.35); }
+.ba-root[data-ba-theme="light"] .bg-amber-300\/5 { background-color: rgb(245 158 11 / 0.1); }
+.ba-root[data-ba-theme="light"] .hover\:bg-red-500\/10:hover { background-color: rgb(185 28 28 / 0.08); }
+
+/* solid brand surfaces keep white text in both themes */
+.ba-root[data-ba-theme="light"] .bg-brand-500.text-white,
+.ba-root[data-ba-theme="light"] .hover\:bg-brand-600:hover.text-white,
+.ba-root[data-ba-theme="light"] .bg-linear-to-br.text-white { color: #ffffff; }
+.ba-root[data-ba-theme="light"] .bg-brand-500\/20.text-white { color: var(--ba-text); }
+
+/* sidebar active item and pills read well on white with the stronger brand tone */
+.ba-root[data-ba-theme="light"] .bg-brand-500\/8 { background-color: rgb(42 120 204 / 0.1); }
+.ba-root[data-ba-theme="light"] .bg-brand-500\/15 { background-color: rgb(42 120 204 / 0.14); }
+.ba-root[data-ba-theme="light"] .border-brand-500\/18,
+.ba-root[data-ba-theme="light"] .border-brand-500\/20,
+.ba-root[data-ba-theme="light"] .border-brand-500\/40 { border-color: rgb(42 120 204 / 0.35); }
+
+/* soft elevation instead of dark-on-dark depth */
+.ba-root[data-ba-theme="light"] aside,
+.ba-root[data-ba-theme="light"] header { box-shadow: 0 1px 0 rgb(15 23 42 / 0.04); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Inbox redesign: (1) light-theme mappings that were missing (the cause of pale text/blank fills on white),
+ * (2) semantic status + chat tokens that are defined for BOTH themes, so new components never depend on a
+ * dark-palette utility being remapped. Everything stays scoped to .ba-root.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* (1) missing light mappings ------------------------------------------------ */
+.ba-root[data-ba-theme="light"] .text-white\/90 { color: var(--ba-text); }
+.ba-root[data-ba-theme="light"] .text-white\/65 { color: var(--ba-text-3); }
+.ba-root[data-ba-theme="light"] .text-emerald-200 { color: #065f46; }
+.ba-root[data-ba-theme="light"] .text-emerald-400 { color: #047857; }
+.ba-root[data-ba-theme="light"] .text-red-400,
+.ba-root[data-ba-theme="light"] .text-red-200\/70 { color: #b91c1c; }
+.ba-root[data-ba-theme="light"] .text-amber-200\/80 { color: #92400e; }
+.ba-root[data-ba-theme="light"] .bg-amber-500\/10 { background-color: rgb(245 158 11 / 0.14); }
+.ba-root[data-ba-theme="light"] .bg-emerald-500\/10 { background-color: rgb(16 185 129 / 0.13); }
+.ba-root[data-ba-theme="light"] .bg-red-500\/10 { background-color: rgb(220 38 38 / 0.08); }
+.ba-root[data-ba-theme="light"] .bg-brand-500\/10 { background-color: rgb(42 120 204 / 0.1); }
+.ba-root[data-ba-theme="light"] .bg-brand-500\/25 { background-color: rgb(42 120 204 / 0.18); }
+.ba-root[data-ba-theme="light"] .bg-ink-800 { background-color: #ffffff; }
+.ba-root[data-ba-theme="light"] .bg-ink-950\/40 { background-color: transparent; }
+.ba-root[data-ba-theme="light"] .bg-white\/7,
+.ba-root[data-ba-theme="light"] .bg-white\/10 { background-color: rgb(15 23 42 / 0.08); }
+.ba-root[data-ba-theme="light"] .bg-white\/15 { background-color: rgb(15 23 42 / 0.12); }
+.ba-root[data-ba-theme="light"] .hover\:bg-white\/10:hover { background-color: rgb(15 23 42 / 0.1); }
+.ba-root[data-ba-theme="light"] .hover\:bg-brand-500\/10:hover { background-color: rgb(42 120 204 / 0.1); }
+.ba-root[data-ba-theme="light"] .divide-white\/6 > :not(:last-child) { border-color: rgb(15 23 42 / 0.09); }
+.ba-root[data-ba-theme="light"] .border-amber-500\/25,
+.ba-root[data-ba-theme="light"] .border-amber-500\/30 { border-color: rgb(180 83 9 / 0.35); }
+.ba-root[data-ba-theme="light"] .border-brand-500\/30 { border-color: rgb(42 120 204 / 0.4); }
+.ba-root[data-ba-theme="light"] .border-brand-400,
+.ba-root[data-ba-theme="light"] .ring-brand-400 { border-color: var(--ba-brand); --tw-ring-color: var(--ba-brand); }
+.ba-root[data-ba-theme="light"] .hover\:bg-brand-400:hover { background-color: var(--ba-brand-hover); }
+.ba-root[data-ba-theme="light"] .hover\:bg-brand-400:hover.text-white { color: #ffffff; }
+/* modal scrim: dark mode keeps its black wash, light mode uses a lighter slate one instead of a heavy grey overlay */
+.ba-root[data-ba-theme="light"] .bg-black\/60 { background-color: rgb(15 23 42 / 0.45); }
+
+/* (2) semantic tokens ---------------------------------------------------------
+ * Dark values are the default; the light block below overrides them. */
+.ba-root {
+  --st-ok-fg: #6ee7b7;      --st-ok-bg: rgb(16 185 129 / 0.16);  --st-ok-bd: rgb(52 211 153 / 0.45);
+  --st-pend-fg: #fcd34d;    --st-pend-bg: rgb(245 158 11 / 0.16); --st-pend-bd: rgb(251 191 36 / 0.45);
+  --st-bad-fg: #fca5a5;     --st-bad-bg: rgb(239 68 68 / 0.16);  --st-bad-bd: rgb(248 113 113 / 0.5);
+  --st-draft-fg: #cbd5e1;   --st-draft-bg: rgb(148 163 184 / 0.16); --st-draft-bd: rgb(148 163 184 / 0.45);
+  --st-read-fg: #93c5fd;    --st-read-bg: rgb(59 130 246 / 0.18); --st-read-bd: rgb(96 165 250 / 0.5);
+  --st-deliv-fg: #5eead4;   --st-deliv-bg: rgb(20 184 166 / 0.16); --st-deliv-bd: rgb(45 212 191 / 0.45);
+  --st-sim-fg: #ddd6fe;     --st-sim-bg: rgb(139 92 246 / 0.28); --st-sim-bd: rgb(196 181 253 / 0.7);
+  --chat-bg: #0b141a;
+  --chat-dot: rgb(255 255 255 / 0.035);
+  --bub-in-bg: #202c33;  --bub-in-fg: #e9edef;  --bub-in-meta: #aebac1;
+  --bub-out-bg: #005c4b; --bub-out-fg: #f1f5f4; --bub-out-meta: #c5dcd6;
+  --bub-fail-bg: #3b1d1d; --bub-fail-fg: #fde2e2; --bub-fail-bd: rgb(248 113 113 / 0.55);
+  --chat-chip-bg: #182229; --chat-chip-fg: #cbd5dc;
+  --var-fill-bg: rgb(250 204 21 / 0.22); --var-fill-fg: inherit;
+  --var-empty-bg: rgb(148 163 184 / 0.25); --var-empty-fg: #e2e8f0;
+}
+.ba-root[data-ba-theme="light"] {
+  --st-ok-fg: #065f46;      --st-ok-bg: #d1fae5;  --st-ok-bd: #6ee7b7;
+  --st-pend-fg: #92400e;    --st-pend-bg: #fef3c7; --st-pend-bd: #fcd34d;
+  --st-bad-fg: #991b1b;     --st-bad-bg: #fee2e2;  --st-bad-bd: #fca5a5;
+  --st-draft-fg: #334155;   --st-draft-bg: #e2e8f0; --st-draft-bd: #cbd5e1;
+  --st-read-fg: #1e40af;    --st-read-bg: #dbeafe;  --st-read-bd: #93c5fd;
+  --st-deliv-fg: #0f766e;   --st-deliv-bg: #ccfbf1; --st-deliv-bd: #5eead4;
+  --st-sim-fg: #5b21b6;     --st-sim-bg: #ede9fe;  --st-sim-bd: #a78bfa;
+  --chat-bg: #efeae2;
+  --chat-dot: rgb(15 23 42 / 0.05);
+  --bub-in-bg: #ffffff;  --bub-in-fg: #0f172a;  --bub-in-meta: #475569;
+  --bub-out-bg: #d9fdd3; --bub-out-fg: #0f172a; --bub-out-meta: #3f5a4a;
+  --bub-fail-bg: #fee2e2; --bub-fail-fg: #7f1d1d; --bub-fail-bd: #f87171;
+  --chat-chip-bg: #ffffff; --chat-chip-fg: #334155;
+  --var-fill-bg: #fde68a; --var-fill-fg: #422006;
+  --var-empty-bg: #e2e8f0; --var-empty-fg: #334155;
+}
+
+/* status pills: one palette for template approval AND message delivery states */
+.ba-pill { display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 9999px; border: 1px solid; padding: 0.125rem 0.625rem; font-size: 11px; font-weight: 700; line-height: 1.25rem; white-space: nowrap; }
+.ba-pill--approved, .ba-pill--ok { color: var(--st-ok-fg); background: var(--st-ok-bg); border-color: var(--st-ok-bd); }
+.ba-pill--pending, .ba-pill--sending { color: var(--st-pend-fg); background: var(--st-pend-bg); border-color: var(--st-pend-bd); }
+.ba-pill--rejected, .ba-pill--failed, .ba-pill--bad { color: var(--st-bad-fg); background: var(--st-bad-bg); border-color: var(--st-bad-bd); }
+.ba-pill--draft, .ba-pill--sent, .ba-pill--other { color: var(--st-draft-fg); background: var(--st-draft-bg); border-color: var(--st-draft-bd); }
+.ba-pill--delivered { color: var(--st-deliv-fg); background: var(--st-deliv-bg); border-color: var(--st-deliv-bd); }
+.ba-pill--read { color: var(--st-read-fg); background: var(--st-read-bg); border-color: var(--st-read-bd); }
+.ba-tick--read { color: #2563eb; }
+.ba-root:not([data-ba-theme="light"]) .ba-tick--read { color: #60a5fa; }
+.ba-tick--delivered, .ba-tick--sent, .ba-tick--sending { color: var(--bub-out-meta); }
+.ba-tick--failed { color: #dc2626; }
+.ba-root:not([data-ba-theme="light"]) .ba-tick--failed { color: #f87171; }
+
+/* chat surface */
+.ba-chat-bg {
+  background-color: var(--chat-bg);
+  background-image: radial-gradient(var(--chat-dot) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.ba-bubble { border-radius: 0.9rem; padding: 0.4rem 0.7rem 0.3rem; box-shadow: 0 1px 1px rgb(0 0 0 / 0.12); overflow-wrap: anywhere; }
+.ba-bubble--in { background: var(--bub-in-bg); color: var(--bub-in-fg); border-bottom-left-radius: 0.2rem; }
+.ba-bubble--out { background: var(--bub-out-bg); color: var(--bub-out-fg); border-bottom-right-radius: 0.2rem; }
+.ba-bubble--fail { background: var(--bub-fail-bg); color: var(--bub-fail-fg); border: 1px solid var(--bub-fail-bd); }
+.ba-bubble-meta { color: var(--bub-in-meta); }
+.ba-bubble--out .ba-bubble-meta { color: var(--bub-out-meta); }
+.ba-bubble--fail .ba-bubble-meta { color: var(--bub-fail-fg); }
+.ba-chat-chip { background: var(--chat-chip-bg); color: var(--chat-chip-fg); border-radius: 0.5rem; padding: 0.15rem 0.6rem; font-size: 11px; font-weight: 600; box-shadow: 0 1px 1px rgb(0 0 0 / 0.1); }
+.ba-tpl-tag { display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 0.375rem; padding: 0.1rem 0.45rem; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; background: rgb(0 0 0 / 0.14); color: inherit; }
+.ba-root[data-ba-theme="light"] .ba-tpl-tag { background: rgb(15 23 42 / 0.08); }
+
+/* template preview variable highlighting: real values vs unfilled placeholders */
+.ba-var-fill { background: var(--var-fill-bg); color: var(--var-fill-fg); border-radius: 0.25rem; padding: 0 0.2rem; font-weight: 600; }
+.ba-var-empty { background: var(--var-empty-bg); color: var(--var-empty-fg); border-radius: 0.25rem; padding: 0 0.25rem; font-family: ui-monospace, monospace; font-size: 0.92em; }
+.ba-wa-btn { display: flex; align-items: center; justify-content: center; gap: 0.4rem; border-radius: 0.6rem; background: var(--bub-in-bg); color: #0369a1; padding: 0.5rem; font-size: 13px; font-weight: 600; box-shadow: 0 1px 1px rgb(0 0 0 / 0.12); }
+.ba-root:not([data-ba-theme="light"]) .ba-wa-btn { color: #7dd3fc; }
+
+/* selection + filter chips that must be unmistakable in both themes */
+.ba-selected { background: rgb(42 120 204 / 0.14); box-shadow: inset 3px 0 0 #2a78cc; }
+.ba-root[data-ba-theme="light"] .ba-selected { background: #dbeafe; box-shadow: inset 3px 0 0 #1d4ed8; }
+.ba-chip { border: 1px solid rgb(255 255 255 / 0.18); color: rgb(255 255 255 / 0.8); border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: 12px; font-weight: 600; }
+.ba-chip[aria-pressed="true"],
+.ba-chip[aria-selected="true"] { background: #2a78cc; border-color: #2a78cc; color: #ffffff; }
+.ba-root[data-ba-theme="light"] .ba-chip { border-color: #94a3b8; color: #334155; background: #ffffff; }
+.ba-root[data-ba-theme="light"] .ba-chip[aria-pressed="true"],
+.ba-root[data-ba-theme="light"] .ba-chip[aria-selected="true"] { background: #1d4ed8; border-color: #1d4ed8; color: #ffffff; }
+
+/* Dark theme: raise the faint end of the muted-text scale. white/20-45 measured below 4.5:1 on the dark surfaces; every
+ * step now stays readable while keeping the same primary > secondary > tertiary order. */
+.ba-root:not([data-ba-theme="light"]) .text-white\/20,
+.ba-root:not([data-ba-theme="light"]) .text-white\/25,
+.ba-root:not([data-ba-theme="light"]) .text-white\/30,
+.ba-root:not([data-ba-theme="light"]) .text-white\/35,
+.ba-root:not([data-ba-theme="light"]) .text-white\/40,
+.ba-root:not([data-ba-theme="light"]) .text-white\/45 { color: rgb(255 255 255 / 0.66); }
+.ba-root:not([data-ba-theme="light"]) .text-white\/50,
+.ba-root:not([data-ba-theme="light"]) .text-white\/55,
+.ba-root:not([data-ba-theme="light"]) .text-white\/60 { color: rgb(255 255 255 / 0.74); }
+.ba-root:not([data-ba-theme="light"]) .placeholder\:text-white\/30::placeholder { color: rgb(255 255 255 / 0.5); }
+
+/* unread count badge: solid fill + white text clears 4.5:1 in both themes */
+.ba-badge { background: #1d63b8; color: #ffffff; }
+
+/* Sandbox: a simulated message has its own identity (violet, dashed) that no real WhatsApp status uses. */
+.ba-pill--simulated { color: var(--st-sim-fg); background: var(--st-sim-bg); border-color: var(--st-sim-bd); }
+.ba-tick--simulated { color: var(--st-sim-fg); }
+.ba-bubble--sim { outline: 1.5px dashed var(--st-sim-bd); outline-offset: -1px; }
