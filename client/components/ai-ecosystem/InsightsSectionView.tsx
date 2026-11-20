@@ -94,15 +94,22 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
               style={{ display: "flex", flexDirection: "column", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)", color: "#f4f6f8", ...(showAll ? { alignSelf: "start", position: "sticky", top: 88 } : {}) }}
             >
               <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
-                <div style={{ position: "absolute", inset: 0, background: featured.art }} />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundImage: "linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px)",
-                    backgroundSize: "32px 32px",
-                  }}
-                />
+                {featured.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={featured.image} alt={featured.t} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <>
+                    <div style={{ position: "absolute", inset: 0, background: featured.art }} />
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        backgroundImage: "linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px)",
+                        backgroundSize: "32px 32px",
+                      }}
+                    />
+                  </>
+                )}
                 <span style={{ position: "absolute", left: 18, top: 18, padding: "5px 10px", borderRadius: 999, background: "rgba(7,8,11,.72)", fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", color: "#bff5fa" }}>
                   FEATURED
                 </span>
@@ -138,7 +145,12 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
                 }}
               >
                 <span style={{ position: "relative", display: "block", height: 84, borderRadius: 12, overflow: "hidden" }}>
-                  <span style={{ position: "absolute", inset: 0, background: p.art, display: "block" }} />
+                  {p.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span style={{ position: "absolute", inset: 0, background: p.art, display: "block" }} />
+                  )}
                 </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
                   <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "#98a1ac" }}>

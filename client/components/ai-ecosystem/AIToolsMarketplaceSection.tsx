@@ -673,6 +673,7 @@ export function AIToolsMarketplaceSection() {
                 </div>
                 <a
                   href="#contact"
+                  data-demo-tools={product.slug} // opens the demo form with this tool ticked
                   onClick={() => {
                     const full = product.plain + (product.tag ? "" : ` (${product.name})`);
                     msgBoxRef.current = `Hi, I'd like to know more about ${full} for my business.`;

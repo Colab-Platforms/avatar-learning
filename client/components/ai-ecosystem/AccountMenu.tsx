@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useAppDispatch } from "@/store/hooks";
-import { logoutThunk, type AuthUser } from "@/store/authSlice";
+import Link from "next/link";
+import { adoptionAuth, type AdoptionUser } from "@/lib/adoptionSession";
 
-/** Navbar account button shown in place of "Login" once signed in. */
-export function AccountMenu({ user }: { user: AuthUser }) {
-  const dispatch = useAppDispatch();
+/** Navbar "My Account" button shown in place of "Login" once signed in. */
+export function AccountMenu({ user }: { user: AdoptionUser }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const name = [user.firstName, user.lastName].filter(Boolean).join(" ");
-  const initial = (user.firstName || user.email || "?").trim().charAt(0).toUpperCase();
+  const name = user.fullName;
+  const initial = (user.fullName || user.email || "?").trim().charAt(0).toUpperCase();
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +39,7 @@ export function AccountMenu({ user }: { user: AuthUser }) {
 
   const onLogout = async () => {
     setBusy(true);
-    await dispatch(logoutThunk()); // revokes the refresh token on the server and clears the session
+    await adoptionAuth.logout(); // revokes the AI Adoption session on the server and clears it here
     setBusy(false);
     setOpen(false);
   };
@@ -52,7 +51,7 @@ export function AccountMenu({ user }: { user: AuthUser }) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Account${name ? `: ${name}` : ""}`}
+        aria-label={`My Account${name ? `: ${name}` : ""}`}
         onClick={() => setOpen((o) => !o)}
         className="border border-white/[0.14] bg-white/[0.03] text-[#f4f6f8] transition-colors hover:border-white/30 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]"
         style={{ display: "inline-flex", alignItems: "center", gap: 8, height: 42, boxSizing: "border-box", padding: "0 14px 0 6px", borderRadius: 999, fontSize: 15, fontWeight: 500, whiteSpace: "nowrap", cursor: "pointer" }}
@@ -60,7 +59,7 @@ export function AccountMenu({ user }: { user: AuthUser }) {
         <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(111,227,239,.12)", color: "#8fe9f2", fontSize: 13, fontWeight: 600 }}>
           {initial}
         </span>
-        Account
+        My Account
       </button>
       {open && (
         <div
@@ -71,10 +70,19 @@ export function AccountMenu({ user }: { user: AuthUser }) {
             {name && <div style={{ fontSize: 14, color: "#f4f6f8", fontWeight: 500 }}>{name}</div>}
             <div style={{ fontSize: 13, color: "#8a939e", overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</div>
           </div>
+          <Link
+            href="/account"
+            role="menuitem"
+            autoFocus
+            onClick={() => setOpen(false)}
+            className="text-[#f4f6f8] hover:bg-white/[0.05] focus-visible:bg-white/[0.07] focus-visible:outline-none"
+            style={{ display: "block", padding: "10px 12px", borderRadius: 8, fontSize: 14, textDecoration: "none" }}
+          >
+            My account
+          </Link>
           <button
             type="button"
             role="menuitem"
-            autoFocus
             onClick={onLogout}
             disabled={busy}
             className="text-[#f4f6f8] hover:bg-white/[0.05] focus-visible:bg-white/[0.07] focus-visible:outline-none disabled:opacity-60"

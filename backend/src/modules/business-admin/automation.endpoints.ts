@@ -21,8 +21,8 @@ export interface EndpointInfo {
 
 export const ENDPOINTS: EndpointInfo[] = [
   {
-    event: "demo.requested", status: "connected", method: "POST", route: "/api/demo/book", source: "backend/src/modules/demo/demo.service.ts", alsoVia: [],
-    firesWhen: "After the Book a demo form is validated and the booking row is saved (or found again on a repeated submit). Validation failures and failed saves fire nothing. The booking never depends on the WhatsApp result.",
+    event: "demo.requested", status: "connected", method: "POST", route: "/api/adoption/demo-requests", source: "backend/src/modules/adoption/adoption.profile.ts", alsoVia: [],
+    firesWhen: "After a Book a Demo request (AdoptionDemoRequest) is validated and saved, if it has a phone number. Validation failures fire nothing. Sending still needs recorded WhatsApp opt-in (or an open 24-hour window).",
     needs: null,
   },
   {

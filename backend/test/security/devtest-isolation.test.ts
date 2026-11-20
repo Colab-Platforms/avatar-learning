@@ -94,6 +94,22 @@ function parseRouteTable(): Endpoint[] {
     const file = importFile.get(m[2]);
     if (file) scan(file, m[1], seen);
   }
+  // Named router exports (the AI Adoption module): alias -> { file, exported variable }. Each export is scanned for its own
+  // `<exported>.<method>("/path")` routes under the prefix it is mounted at.
+  const named = new Map<string, { file: string; exported: string }>();
+  for (const m of routesSrc.matchAll(/import \{([^}]+)\} from "\.\/(modules\/[^"]+)\.js";/g)) {
+    for (const part of m[1].split(",")) {
+      const [exported, alias] = part.trim().split(/\s+as\s+/);
+      if (exported) named.set((alias ?? exported).trim(), { file: path.join(SRC, `${m[2]}.ts`), exported: exported.trim() });
+    }
+  }
+  for (const m of routesSrc.matchAll(/router\.use\("([^"]+)",\s*(\w+)\)/g)) {
+    const target = named.get(m[2]);
+    if (!target || !fs.existsSync(target.file)) continue;
+    const src = fs.readFileSync(target.file, "utf8");
+    const re = new RegExp(`\\b${target.exported}\\s*\\.(get|post|put|patch|delete)\\(\\s*["'\`]([^"'\`]+)["'\`]`, "g");
+    for (const r of src.matchAll(re)) out.push({ method: r[1].toUpperCase(), url: param(`/api${m[1]}${r[2] === "/" ? "" : r[2]}`), file: path.relative(SRC, target.file) });
+  }
   return out;
 }
 
@@ -148,13 +164,17 @@ const PUBLIC = [
   /^(GET|POST) \/api\/payment\/(webhook|cashfree|razorpay)/,
   /^(GET|POST) \/api\/whatsapp\/webhook$/,
   /^POST \/api\/business-admin\/dev-login$/,
+  // Reviewed (from main): the AI Adoption customer site has its OWN accounts, separate from this platform's users.
+  // Sign-up, sign-in (email and Google), email verification and password reset must be public; each is rate limited and
+  // none reads or honours this platform's JWTs, so a dev token neither helps nor harms there. The demo form is public too
+  // (customers are not signed in); it only validates and saves a request, and links an account solely via a valid
+  // adoption session.
+  /^POST \/api\/adoption\/auth\/(register|verify-email|resend-verification|login|google|forgot-password|reset-password)$/,
+  /^POST \/api\/adoption\/demo-requests$/,
   // Reviewed: public by design in the existing code. POST /api/users creates a plain USER only (no role field in its
   // schema); /api/payment/config returns only the payment provider name. Neither is affected by the dev token.
   /^POST \/api\/users$/,
   /^GET \/api\/payment\/config$/,
-  // Reviewed: the public Book a demo form (customers are not signed in). It only validates, saves a DemoBooking and emits
-  // the demo.requested event; it reads nothing, grants nothing, is rate-limited, and ignores any token entirely.
-  /^POST \/api\/demo\/book$/,
 ];
 const isPublic = (e: Endpoint) => PUBLIC.some((re) => re.test(`${e.method} ${e.url}`));
 

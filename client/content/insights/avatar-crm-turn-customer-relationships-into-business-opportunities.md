@@ -1,16 +1,16 @@
 ## Title
 
-Avatar CRM: Turn Customer Relationships into Business Opportunities
+CRM: Turn Customer Relationships into Business Opportunities
 
 ## Overview
 
-How Avatar CRM helps businesses organize customer information, manage leads, monitor sales pipelines and coordinate follow-up activities.
+How CRM helps businesses organize customer information, manage leads, monitor sales pipelines and coordinate follow-up activities.
 
 ---
 
 ## Full Info
 
-# Avatar CRM: Turn Customer Relationships into Business Opportunities
+# CRM: Turn Customer Relationships into Business Opportunities
 
 A successful sales operation requires more than a database of contacts.
 

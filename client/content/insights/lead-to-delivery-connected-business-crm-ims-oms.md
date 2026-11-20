@@ -42,7 +42,7 @@ The challenge is not simply generating more sales. It is ensuring that business 
 
 **A growing business needs more than a successful sales team. It needs an operational system capable of supporting every sale, from the first customer enquiry to final fulfilment.**
 
-This is where solutions such as [Avatar CRM](https://www.avatarindia.com/ai-adoption/crm), [Avatar IMS](https://www.avatarindia.com/ai-adoption/ims), and [Avatar OMS](https://www.avatarindia.com/ai-adoption/oms) become relevant within a broader business management strategy.
+This is where solutions such as [CRM](https://www.avatarindia.com/ai-adoption/crm), [IMS](https://www.avatarindia.com/ai-adoption/ims), and [OMS](https://www.avatarindia.com/ai-adoption/oms) become relevant within a broader business management strategy.
 
 ### Three Critical Functions. One Business Journey.
 
@@ -60,7 +60,7 @@ When these functions operate through coordinated processes, organizations can im
 
 Understanding the role of each system is the first step toward building a more connected business.
 
-### 1. Avatar CRM: Where Business Opportunities Begin
+### 1. CRM: Where Business Opportunities Begin
 
 Every successful transaction begins with a customer opportunity.
 
@@ -89,7 +89,7 @@ For business owners, it supports better visibility into the sales process.
 
 **The objective of CRM is not simply to manage customer records. It is to create a structured foundation for stronger customer relationships and more consistent sales execution.**
 
-### 2. Avatar IMS: Connecting Customer Demand with Inventory Availability
+### 2. IMS: Connecting Customer Demand with Inventory Availability
 
 Every confirmed order creates an operational requirement.
 
@@ -116,7 +116,7 @@ When stock information is organized and accessible, managers can make more infor
 
 **The goal is not simply to know what is available in inventory. It is to make inventory information useful for business decisions.**
 
-### 3. Avatar OMS: Converting Customer Orders into Operational Execution
+### 3. OMS: Converting Customer Orders into Operational Execution
 
 Once a customer places an order, the business must move from sales activity to operational fulfilment.
 
@@ -299,7 +299,7 @@ This approach helps organizations build a digital transformation strategy around
 
 Avatar India's AI Adoption Ecosystem is built around a practical principle: technology should make everyday business processes easier to manage.
 
-Through solutions such as [Avatar CRM](https://www.avatarindia.com/ai-adoption/crm), [Avatar IMS](https://www.avatarindia.com/ai-adoption/ims), and [Avatar OMS](https://www.avatarindia.com/ai-adoption/oms), businesses can explore tools that address important stages of the sales-to-fulfilment journey.
+Through solutions such as [CRM](https://www.avatarindia.com/ai-adoption/crm), [IMS](https://www.avatarindia.com/ai-adoption/ims), and [OMS](https://www.avatarindia.com/ai-adoption/oms), businesses can explore tools that address important stages of the sales-to-fulfilment journey.
 
 Rather than treating every operational challenge independently, organizations can evaluate how different technologies may support their wider business requirements.
 

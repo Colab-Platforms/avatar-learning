@@ -18,9 +18,6 @@ import type { IntegrationStatus } from "../business-admin.types.js";
 import type { WhatsappSender } from "../inbox.types.js";
 import type { WhatsappConfig } from "../../whatsapp/whatsapp.types.js";
 import { MemoryInboxDb } from "./memory.db.js";
-import { MemoryDemoBookings } from "./demo.memory.js";
-import { setSandboxDemoDb } from "../../demo/demo.service.js";
-import { setSandboxAutomationTrigger } from "../automation.emit.js";
 import { DEV_TEST_EMAIL, DEV_TEST_USER_ID, devAuth, devLogin, devTestEnabled, hasValidDevToken } from "./devtest.auth.js";
 
 type Env = Record<string, string | undefined>;
@@ -119,15 +116,6 @@ export function createDevTestRouter(env: Env = process.env): Router {
     });
   }
   const automation = new AutomationService({ store: autoStore, templates, inbox: service, inboxStore: inbox, isEnabled: () => true });
-  // The public Book a demo form, in the sandbox: the booking and the contact's consent are kept in memory, and the
-  // demo.requested event goes to THIS engine (mock sender), so the confirmation appears in the inbox as "Simulated".
-  setSandboxDemoDb({ demoBooking: new MemoryDemoBookings(), whatsappContact: db.whatsappContact as never });
-  setSandboxAutomationTrigger(async (i) => {
-    const r = await automation.trigger(i);
-    await automation.processDue();
-    await automation.syncDelivery();
-    return r;
-  });
   const SAMPLE: Record<string, string> = { name: "Asha", email: "asha@example.com", demo_date: "25 Nov", demo_time: "4:00 PM", subject: "Course question", webinar_title: "AI for Beginners", webinar_date: "28 Nov 2026", amount: "499", product_name: "AI Foundations", payment_id: "pay_sandbox", course_name: "AI Foundations" };
   const simulate = async (i: { event: string; phone: string; eventId?: string; fields?: Record<string, unknown> }) => {
     if (!eventByKey(i.event)) throw new Error("unknown event");

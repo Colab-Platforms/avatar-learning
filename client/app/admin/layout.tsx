@@ -19,6 +19,7 @@ import {
   Tag,
   CalendarClock,
   Wallet,
+  KeyRound,
 } from "lucide-react";
 import { fetchContactUnreadCount } from "@/lib/adminApi";
 import Image from "next/image";
@@ -165,6 +166,13 @@ const NAV: NavItem[] = [
     href: "/admin/users",
     label: "Users",
     icon: Users,
+    exact: false,
+  },
+  {
+    kind: "link",
+    href: "/admin/adoption",
+    label: "AI Adoption Access",
+    icon: KeyRound,
     exact: false,
   },
 ];

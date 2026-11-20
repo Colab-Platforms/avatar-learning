@@ -1,0 +1,12 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+
+# VS Code (optional — remove if you want to share settings)
+# .vscode/
+
+# OS
+.DS_Store
+Thumbs.db
