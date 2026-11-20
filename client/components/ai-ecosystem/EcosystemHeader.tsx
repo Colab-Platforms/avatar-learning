@@ -148,6 +148,13 @@ export function EcosystemHeader() {
 
   return (
     <>
+      <style>{`
+        @media (min-width: 920px) { .nav-mobile-only { display: none !important } }
+        @media (max-width: 919px) {
+          .nav-desktop-only { display: none !important }
+          .nav-demo { height: 36px !important; padding: 0 14px !important; font-size: 13px !important }
+        }
+      `}</style>
       <nav
         ref={headerRef}
         style={{
@@ -162,9 +169,11 @@ export function EcosystemHeader() {
       >
         <div
           style={{
-            maxWidth: 1200,
+            // Padding sits inside this box, so add it to the width: the logo/links then
+            // line up with the 1200px content edge of every section below.
+            maxWidth: "calc(var(--ad-container) + 2 * var(--ad-gutter))",
             margin: "0 auto",
-            padding: "0 24px",
+            padding: "0 var(--ad-gutter)",
             height: 68,
             display: "flex",
             alignItems: "center",
@@ -172,7 +181,7 @@ export function EcosystemHeader() {
             gap: 24,
           }}
         >
-          <a href="#top" aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
+          <a href={pathname === "/" ? "#top" : "/"} aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
             <Image
               src="/landingpage-images/Avatar_logo_Light.svg"
               alt="Avatar"
@@ -183,8 +192,8 @@ export function EcosystemHeader() {
             />
           </a>
 
-          {isDesktop && (
-            <div
+          <div
+              className="nav-desktop-only"
               style={{
                 display: "flex",
                 gap: "clamp(16px, 2.2vw, 32px)",
@@ -219,7 +228,6 @@ export function EcosystemHeader() {
                 )
               )}
             </div>
-          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
             {/* Avatar Learning button: temporarily hidden. Uncomment to restore.
@@ -271,17 +279,18 @@ export function EcosystemHeader() {
             <a
               href={`/${DEMO_HREF}`}
               onClick={onDemoClick}
+              className="nav-demo"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                height: isDesktop ? 42 : 36,
+                height: 42,
                 boxSizing: "border-box",
-                padding: isDesktop ? "0 22px" : "0 14px",
+                padding: "0 22px",
                 borderRadius: 999,
                 border: "1px solid rgba(138,181,227,.35)",
                 background: "linear-gradient(135deg,#2A78CC 0%,#205A99 100%)",
                 color: "#fff",
-                fontSize: isDesktop ? 15 : 13,
+                fontSize: 15,
                 fontWeight: 600,
                 whiteSpace: "nowrap",
                 textDecoration: "none",
@@ -302,11 +311,15 @@ export function EcosystemHeader() {
               Book a Demo
             </a>
             {/* Login: secondary to Book a Demo. Desktop only here; on smaller screens it's in the menu. */}
-            {isDesktop && signedInUser && <AccountMenu user={signedInUser} />}
-            {isDesktop && !signedInUser && (
+            {signedInUser && (
+              <div className="nav-desktop-only">
+                <AccountMenu user={signedInUser} />
+              </div>
+            )}
+            {!signedInUser && (
               <Link
                 href={LOGIN_HREF}
-                className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]"
+                className="nav-desktop-only focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -335,9 +348,10 @@ export function EcosystemHeader() {
                 Login
               </Link>
             )}
-            {!isDesktop && (
+            {(
               <button
                 type="button"
+                className="nav-mobile-only"
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Menu"
                 aria-expanded={menuOpen}
@@ -409,7 +423,7 @@ export function EcosystemHeader() {
             background: "rgba(7,8,11,.97)",
             backdropFilter: "blur(14px)",
             WebkitBackdropFilter: "blur(14px)",
-            padding: "16px 24px 32px",
+            padding: "16px var(--ad-gutter) 32px",
             display: "flex",
             flexDirection: "column",
           }}

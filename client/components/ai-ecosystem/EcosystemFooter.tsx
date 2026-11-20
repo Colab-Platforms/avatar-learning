@@ -42,7 +42,7 @@ const GRID = "grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-[25
 
 export function EcosystemFooter() {
   return (
-    <footer data-screen-label="10 Footer" style={{ position: "relative", overflow: "hidden", borderTop: "1px solid rgba(255,255,255,.06)", padding: "64px 24px 32px" }}>
+    <footer data-screen-label="10 Footer" style={{ position: "relative", overflow: "hidden", borderTop: "1px solid rgba(255,255,255,.06)", padding: "64px var(--ad-gutter) 32px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 32 }}>
         {/* Row 1: brand + three link columns */}
         <div className={GRID}>
@@ -79,7 +79,7 @@ export function EcosystemFooter() {
           <nav aria-label="Our solutions" style={columnStyle}>
             <strong style={headingStyle}>Our Solutions</strong>
             {FOOTER_PRODUCTS.map((p) => (
-              <a key={p} href="#products" style={linkStyle}>
+              <a key={p} href="/tools" style={linkStyle}>
                 {p}
               </a>
             ))}
@@ -88,7 +88,7 @@ export function EcosystemFooter() {
           <nav aria-label="Explore" style={columnStyle}>
             <strong style={headingStyle}>Explore</strong>
             {FOOTER_COMPANY.map((c) =>
-              c.href.startsWith("#") ? (
+              c.href.startsWith("#") || c.href.startsWith("/#") ? ( // homepage sections: plain links (the homepage intercepts /#contact to open the demo form)
                 <a key={c.label} href={c.href} style={linkStyle}>
                   {c.label}
                 </a>

@@ -203,7 +203,7 @@ export function PathToAdoptionSection() {
   const vizScale = wide ? 1 : Math.min(1, (width - 72) / 460);
 
   return (
-    <section id="how" data-screen-label="04 How it works" style={{ scrollMarginTop: 68, position: "relative", padding: "clamp(56px,7vw,96px) 24px" }}>
+    <section id="how" data-screen-label="04 How it works" style={{ scrollMarginTop: 68, position: "relative", padding: "var(--ad-section-y) var(--ad-gutter)" }}>
       <div style={{ position: "relative", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(28px,5vw,56px)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
           <motion.div

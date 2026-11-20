@@ -1133,3 +1133,18 @@
     }
   }
 }
+/* ── AI Adoption layout tokens ───────────────────────────────────────────────
+   Shared spacing for the AI Adoption pages (components/ai-ecosystem, /tools,
+   /insights, /adoption/*, /thank-you). Only those components read these
+   variables, so nothing else on the site changes.
+   Container pattern: section padding-inline = gutter, inner maxWidth = container
+   → content width = min(100% - 2 × gutter, container). */
+:root {
+  --ad-container: 1200px;
+  --ad-gutter: 20px;                                      /* phones */
+  --ad-section-y: clamp(56px, calc(40px + 3.9vw), 96px);  /* ≈56 phone · 70 tablet · 96 desktop */
+  --ad-page-top: clamp(40px, 5vw, 72px);                  /* first block below the navbar on inner pages */
+}
+@media (min-width: 640px) {
+  :root { --ad-gutter: clamp(32px, 4vw, 56px); }          /* 32 tablet → ~48 desktop */
+}

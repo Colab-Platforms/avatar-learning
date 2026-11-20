@@ -43,7 +43,7 @@ declare global {
 
 /**
  * Reports one lead conversion per confirmed request, through the analytics the
- * site already loads (Meta Pixel + Google Tag Manager in app/layout.tsx).
+ * site loads after consent (Meta Pixel + Google Tag Manager, components/ui/AnalyticsConsent.tsx).
  * Refreshing or revisiting /thank-you doesn't report it again; Meta also gets
  * the request id as eventID so it can de-duplicate on its side.
  */
@@ -55,12 +55,28 @@ export function trackDemoLeadOnce(c: DemoConfirmation) {
     tracked = [];
   }
   if (tracked.includes(c.id)) return false;
-  try {
-    window.fbq?.("track", "Lead", { content_name: "AI Adoption demo request", content_category: c.tools.join(",") }, { eventID: `demo-${c.id}` });
-  } catch {
-    /* analytics must never break the page */
+  // Meta Pixel only exists after the visitor has accepted analytics (components/ui/AnalyticsConsent.tsx),
+  // and it is injected a moment after this page mounts — or later, if they accept the banner here.
+  // So wait for it (up to 30s) instead of dropping the Lead. No consent → no pixel → nothing is sent.
+  const sendMetaLead = () => {
+    try {
+      window.fbq?.("track", "Lead", { content_name: "AI Adoption demo request", content_category: c.tools.join(",") }, { eventID: `demo-${c.id}` });
+    } catch {
+      /* analytics must never break the page */
+    }
+  };
+  if (window.fbq) sendMetaLead();
+  else {
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      if (window.fbq) {
+        window.clearInterval(timer);
+        sendMetaLead();
+      } else if (++tries >= 60) window.clearInterval(timer);
+    }, 500);
   }
   try {
+    // Queued until Google Tag Manager loads (after consent); GTM then processes it.
     (window.dataLayer = window.dataLayer || []).push({
       event: "generate_lead",
       lead_type: "ai_adoption_demo",

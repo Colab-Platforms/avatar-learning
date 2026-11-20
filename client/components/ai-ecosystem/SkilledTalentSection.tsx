@@ -200,7 +200,7 @@ export function SkilledTalentSection() {
   const vizHeight = stacked ? Math.round(340 * vizScale) : 340;
 
   return (
-    <section id="who" data-screen-label="05 Who it's for" style={{ scrollMarginTop: 68, padding: "clamp(56px,7vw,96px) 24px" }}>
+    <section id="who" data-screen-label="05 Who it's for" style={{ scrollMarginTop: 68, padding: "var(--ad-section-y) var(--ad-gutter)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px,4vw,48px)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
           <motion.div
