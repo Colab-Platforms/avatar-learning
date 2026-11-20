@@ -10,7 +10,7 @@ import { automationSwitchOn, emitAutomationEvent, setAutomationTrigger, toWaPhon
 const SRC = path.resolve(import.meta.dirname, "../../src");
 const read = (rel: string) => fs.readFileSync(path.join(SRC, rel.replace(/^backend\/src\//, "")), "utf8");
 const mounts = read("routes.ts");
-const ROUTE_FILE: Record<string, string> = { auth: "modules/auth/auth.route.ts", webinar: "modules/webinar/webinar.route.ts", payment: "modules/payment/payment.route.ts", courses: "modules/course/course.route.ts", contact: "modules/contact/contact.route.ts" };
+const ROUTE_FILE: Record<string, string> = { auth: "modules/auth/auth.route.ts", webinar: "modules/webinar/webinar.route.ts", payment: "modules/payment/payment.route.ts", courses: "modules/course/course.route.ts", contact: "modules/contact/contact.route.ts", demo: "modules/demo/demo.route.ts" };
 
 describe("activity catalog", () => {
   it("has exactly the nine requested activities, each with endpoint info", () => {
@@ -41,13 +41,16 @@ describe("endpoint-to-event mapping is real", () => {
       assert.match(src, new RegExp(`event: "${ep.event.replace(".", "\\.")}"|"${ep.event.replace(".", "\\.")}"`), "source emits this event");
     });
   }
-  it("activities without an endpoint really have none (no demo route anywhere; contact form has no phone)", () => {
+  it("activities without an endpoint really have none (only demo.requested has a route; contact form has no phone)", () => {
     const routeFiles: string[] = [];
     const walk = (d: string) => fs.readdirSync(d, { withFileTypes: true }).forEach((f) => (f.isDirectory() ? walk(path.join(d, f.name)) : /\.route\.ts$/.test(f.name) && routeFiles.push(path.join(d, f.name))));
     walk(path.join(SRC, "modules"));
-    const demo = routeFiles.filter((f) => !f.includes("business-admin") && /demo/i.test(fs.readFileSync(f, "utf8")));
-    assert.deepEqual(demo, [], "a demo route now exists: connect it in automation.endpoints.ts");
-    assert.ok(ENDPOINTS.filter((e) => e.event.startsWith("demo.")).every((e) => e.status === "missing" && e.route === null && e.needs));
+    // Exactly one public demo route exists (Book a demo -> demo.requested). Scheduling/rescheduling/cancelling have none.
+    const demo = routeFiles.filter((f) => !f.includes("business-admin") && /demo/i.test(fs.readFileSync(f, "utf8"))).map((f) => path.basename(f));
+    assert.deepEqual(demo, ["demo.route.ts"], "another demo route now exists: connect it in automation.endpoints.ts");
+    assert.ok(ENDPOINTS.filter((e) => e.event.startsWith("demo.") && e.event !== "demo.requested").every((e) => e.status === "missing" && e.route === null && e.needs));
+    const requested = ENDPOINTS.find((e) => e.event === "demo.requested")!;
+    assert.deepEqual([requested.status, requested.method, requested.route], ["connected", "POST", "/api/demo/book"]);
     const contact = ENDPOINTS.find((e) => e.event === "contact.submitted")!;
     assert.equal(contact.status, "no_phone");
     assert.ok(!/phone/i.test(read("modules/contact/contact.validators.ts")), "contact form gained a phone field: connect it");
@@ -64,6 +67,7 @@ describe("hooks fire only after the activity succeeded", () => {
     assert.ok(h > a, `${file}: hook must come after "${anchor}"`);
     assert.equal(s.split(hook).length - 1, 1, `${file}: hook appears more than once`);
   };
+  it("demo booking: only after the booking row is saved", () => after("modules/demo/demo.service.ts", "row = await this.db.demoBooking.create", 'event: "demo.requested"'));
   it("registration: only after the email is verified", () => after("modules/auth/auth.service.ts", "data: { isEmailVerified: true }", 'event: "user.registered"'));
   it("webinar: only after the registration was saved as PAID", () => after("modules/webinar/webinar.service.ts", 'status: "PAID"', 'event: "webinar.registered"'));
   it("course enrolment: only after the enrolment row is created", () => after("modules/course/course.service.ts", "const enrollment = await prisma.courseUserMapper.create", '"course.enrolled"'));

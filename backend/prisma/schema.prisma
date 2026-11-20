@@ -1102,6 +1102,31 @@ model Contact {
   @@map("contacts")
 }
 
+// Website "Book a demo" requests. The customer-facing action: it must succeed or fail on its own, so the WhatsApp
+// confirmation (automation event demo.requested) is fire-and-forget AFTER this row is saved and can never undo it.
+model DemoBooking {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String
+  phone              String // as the customer typed it
+  waPhone            String   @map("wa_phone") // digits with country code (the WhatsApp id)
+  company            String?
+  role               String?
+  companySize        String?  @map("company_size")
+  interestedTools    String[] @map("interested_tools")
+  customRequirements String?  @map("custom_requirements")
+  message            String?
+  preferredAt        DateTime @map("preferred_at") // the preferred date + time (entered in IST), stored as UTC
+  whatsappConsent    Boolean  @default(false) @map("whatsapp_consent") // the customer ticked the WhatsApp opt-in box
+  requestKey         String   @unique @map("request_key") // sha256(phone|email|preferredAt): a repeated submit finds the same row
+  status             String   @default("REQUESTED")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([preferredAt])
+  @@map("demo_bookings")
+}
+
 model LessonProgress {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")

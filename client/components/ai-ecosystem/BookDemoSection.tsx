@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { CONTACT, PRODUCTS } from "./data";
+import { bookDemo } from "@/lib/demoApi";
+import { buildDemoPayload, confirmationLines, describeBookingError, formatPreferred, todayInIst, validateDemoForm, type DemoFormErrors } from "@/lib/demoBooking";
 import styles from "./ecosystem.module.css";
 
 const reveal = (delay = 0) => ({
@@ -206,34 +208,55 @@ function ToolsSelect({ value, onChange, invalid }: { value: string[]; onChange: 
 }
 
 export function BookDemoSection() {
-  const [sent, setSent] = useState(false);
+  const [done, setDone] = useState<{ when: string; consent: boolean; duplicate: boolean } | null>(null);
   const [tools, setTools] = useState<string[]>([]);
   const [toolsError, setToolsError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<DemoFormErrors>({});
+  const today = todayInIst();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitting) return;
     if (tools.length === 0) {
       setToolsError(true);
       document.getElementById("demo-tools")?.focus();
       return;
     }
     const f = new FormData(e.currentTarget);
-    const payload = {
-      name: f.get("name"),
-      company: f.get("company"),
-      email: f.get("email"),
-      phone: f.get("phone"),
-      role: f.get("role"),
-      companySize: f.get("companySize"),
+    const str = (k: string) => String(f.get(k) ?? "");
+    const values = {
+      name: str("name"),
+      company: str("company"),
+      email: str("email"),
+      phone: str("phone"),
+      role: str("role"),
+      companySize: str("companySize"),
+      preferredDate: str("preferredDate"),
+      preferredTime: str("preferredTime"),
       interestedTools: tools, // product slugs, e.g. ["crm", "hrms"]
-      customRequirements: tools.includes("custom") ? String(f.get("customRequirements") ?? "").trim() : undefined,
-      message: f.get("message"),
+      customRequirements: str("customRequirements"),
+      message: str("message"),
+      whatsappConsent: f.get("whatsappConsent") === "on",
     };
-    // NOTE: this form is not connected to a backend yet, so the payload isn't
-    // sent anywhere. Once an endpoint exists, POST `payload` to it and only
-    // call setSent(true) after it confirms.
-    if (process.env.NODE_ENV !== "production") console.info("Demo request (not sent: no backend yet)", payload);
-    setSent(true);
+    const problems = validateDemoForm(values);
+    setFieldErrors(problems);
+    if (problems.phone || problems.preferredAt) {
+      document.getElementById(problems.phone ? "demo-phone" : "demo-date")?.focus();
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      // The confirmation below is shown only after the booking is SAVED. WhatsApp is separate and can never fail it.
+      const r = await bookDemo(buildDemoPayload(values));
+      setDone({ when: formatPreferred(values.preferredDate, values.preferredTime), consent: values.whatsappConsent, duplicate: r.duplicate });
+    } catch (err) {
+      setError(describeBookingError(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -308,7 +331,7 @@ export function BookDemoSection() {
           style={{ scrollMarginTop: 76, borderRadius: 24, padding: 1, background: "linear-gradient(180deg,rgba(143,233,242,.4),rgba(255,255,255,.06) 50%)" }}
         >
           <div style={{ borderRadius: 23, background: "#0b0d12", padding: "clamp(24px,3.5vw,40px)", height: "100%", boxSizing: "border-box" }}>
-            {!sent ? (
+            {!done ? (
               <form onSubmit={handleSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,200px),1fr))", gap: 16 }}>
                 <label style={labelStyle}>
                   Name
@@ -325,10 +348,13 @@ export function BookDemoSection() {
                   <input required name="email" type="email" placeholder="you@company.com" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
                 </label>
                 <label style={labelStyle}>
-                  <span>
-                    Phone <span style={{ color: "#8a939e" }}>(optional)</span>
-                  </span>
-                  <input name="phone" type="tel" placeholder="+91" style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                  Phone
+                  <input id="demo-phone" required name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91" aria-invalid={!!fieldErrors.phone} aria-describedby={fieldErrors.phone ? "demo-phone-error" : undefined} style={fieldStyle} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                  {fieldErrors.phone && (
+                    <span id="demo-phone-error" role="alert" style={{ fontSize: 13, color: ERROR_COLOR }}>
+                      {fieldErrors.phone}
+                    </span>
+                  )}
                 </label>
                 <label style={labelStyle}>
                   Your Role
@@ -393,6 +419,19 @@ export function BookDemoSection() {
                     </span>
                   </label>
                 )}
+                <label style={labelStyle}>
+                  Preferred demo date
+                  <input id="demo-date" required name="preferredDate" type="date" min={today} aria-invalid={!!fieldErrors.preferredAt} aria-describedby={fieldErrors.preferredAt ? "demo-when-error" : undefined} style={{ ...fieldStyle, colorScheme: "dark" }} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                </label>
+                <label style={labelStyle}>
+                  Preferred time <span style={{ color: "#8a939e" }}>(India time)</span>
+                  <input required name="preferredTime" type="time" aria-invalid={!!fieldErrors.preferredAt} aria-describedby={fieldErrors.preferredAt ? "demo-when-error" : undefined} style={{ ...fieldStyle, colorScheme: "dark" }} onFocus={onFocusGlow} onBlur={onBlurGlow} />
+                </label>
+                {fieldErrors.preferredAt && (
+                  <span id="demo-when-error" role="alert" style={{ gridColumn: "1 / -1", fontSize: 13, color: ERROR_COLOR, marginTop: -8 }}>
+                    {fieldErrors.preferredAt}
+                  </span>
+                )}
                 <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
                   How can we help?
                   <textarea
@@ -405,9 +444,21 @@ export function BookDemoSection() {
                     onBlur={onBlurGlow}
                   />
                 </label>
+                {/* Unchecked by default and never pre-selected: a WhatsApp opt-in must be a deliberate tick. */}
+                <label style={{ gridColumn: "1 / -1", display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, lineHeight: 1.45, color: "#a3abb5", cursor: "pointer" }}>
+                  <input type="checkbox" name="whatsappConsent" style={{ width: 16, height: 16, marginTop: 2, accentColor: "#6fe3ef", cursor: "pointer", flexShrink: 0 }} />
+                  <span>Yes, you may send me WhatsApp messages about this demo booking. I can reply STOP at any time. (Optional)</span>
+                </label>
+                {error && (
+                  <p role="alert" style={{ gridColumn: "1 / -1", margin: 0, padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,138,138,.4)", background: "rgba(255,138,138,.08)", color: ERROR_COLOR, fontSize: 14 }}>
+                    {error}
+                  </p>
+                )}
                 <button
                   type="submit"
-                  style={{ gridColumn: "1 / -1", cursor: "pointer", height: 52, border: 0, borderRadius: 999, background: "#f4f6f8", color: "#07080b", fontSize: 15, fontWeight: 500, transition: "box-shadow .3s" }}
+                  disabled={submitting}
+                  aria-busy={submitting}
+                  style={{ gridColumn: "1 / -1", cursor: submitting ? "progress" : "pointer", opacity: submitting ? 0.7 : 1, height: 52, border: 0, borderRadius: 999, background: "#f4f6f8", color: "#07080b", fontSize: 15, fontWeight: 500, transition: "box-shadow .3s" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "#fff";
                     e.currentTarget.style.boxShadow = "0 0 32px rgba(111,227,239,.5)";
@@ -417,7 +468,7 @@ export function BookDemoSection() {
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  Send message
+                  {submitting ? "Booking…" : "Book my demo"}
                 </button>
                 <p style={{ gridColumn: "1 / -1", margin: "-4px 0 0", textAlign: "center", fontSize: 13, color: "#98a1ac" }}>
                   We reply within 1 business day.
@@ -428,8 +479,19 @@ export function BookDemoSection() {
                 <div className={styles.glow} style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(111,227,239,.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8fe9f2", fontSize: 22 }}>
                   ✓
                 </div>
-                <strong style={{ fontSize: 22, fontWeight: 600, color: "#f4f6f8" }}>Thanks, we&apos;ve got your message</strong>
-                <span style={{ color: "#a3abb5" }}>Our team will be in touch shortly.</span>
+                {(() => {
+                  const c = confirmationLines({ whatsappConsent: done.consent, when: done.when, duplicate: done.duplicate });
+                  return (
+                    <div role="status" data-testid="demo-confirmation" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <strong style={{ fontSize: 22, fontWeight: 600, color: "#f4f6f8" }}>{c.title}</strong>
+                      {c.lines.map((l) => (
+                        <span key={l} style={{ color: "#a3abb5" }}>
+                          {l}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

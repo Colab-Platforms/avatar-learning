@@ -49,6 +49,9 @@ There is **no baseline/init migration** for the other ~50 tables → the DB was 
 Commands: `npm run db:migrate` (dev), `db:deploy` (prod), `db:generate`, `db:seed` (roles only), `db:studio`. Config: [backend/prisma.config.ts](backend/prisma.config.ts).
 Data scripts (`backend/scripts/*.ts`): `sync-exist-{users,leads,enrollments,webinar-registrations}` (push to Google Sheets), `convert-time-to-ist`, `backfill-course-tiers` — operate on live data; don't run unasked.
 
+## Demo bookings (migration `20261122100000_add_demo_bookings`: created, **NOT applied** anywhere)
+`demo_bookings` (model `DemoBooking`): `id`, `name`, `email`, `phone` (as typed), `wa_phone` (digits with country code), optional `company` / `role` / `company_size` / `custom_requirements` / `message`, `interested_tools text[]`, `preferred_at` (UTC; entered in IST), `whatsapp_consent bool`, `request_key` **unique** (sha256 of wa_phone|email|preferred_at, so a repeated submit finds the same row), `status` (default REQUESTED), `created_at`; indexes on `created_at` and `preferred_at`. Additive: one new table, no change to existing ones. Written only by `POST /api/demo/book`.
+
 ## WhatsApp Template Manager & Automation (migration `20261121100000_add_whatsapp_automation` — created, **NOT applied** anywhere)
 - `whatsapp_templates` (`WhatsappTemplate`): name+language unique, `status` text ("DRAFT" = local only; otherwise exactly what Meta reported), `draft` JSON (header/body/footer/buttons/examples), `rejected_reason`, `last_error`, `meta_template_id`.
 - `automation_rules` (`AutomationRule`): trigger event, template name+language, `variable_mapping` JSON, `is_active` (default false).

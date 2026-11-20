@@ -21,8 +21,9 @@ export interface EndpointInfo {
 
 export const ENDPOINTS: EndpointInfo[] = [
   {
-    event: "demo.requested", status: "missing", method: null, route: null, source: null, alsoVia: [],
-    firesWhen: "—", needs: "No demo-booking endpoint exists in the codebase (no demo model, route or form). Implement a demo booking endpoint that collects the customer's phone number, then call emitAutomationEvent after it saves.",
+    event: "demo.requested", status: "connected", method: "POST", route: "/api/demo/book", source: "backend/src/modules/demo/demo.service.ts", alsoVia: [],
+    firesWhen: "After the Book a demo form is validated and the booking row is saved (or found again on a repeated submit). Validation failures and failed saves fire nothing. The booking never depends on the WhatsApp result.",
+    needs: null,
   },
   {
     event: "user.registered", status: "connected", method: "POST", route: "/api/auth/verify-otp", source: "backend/src/modules/auth/auth.service.ts", alsoVia: [],

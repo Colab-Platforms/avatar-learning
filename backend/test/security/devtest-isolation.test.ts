@@ -152,6 +152,9 @@ const PUBLIC = [
   // schema); /api/payment/config returns only the payment provider name. Neither is affected by the dev token.
   /^POST \/api\/users$/,
   /^GET \/api\/payment\/config$/,
+  // Reviewed: the public Book a demo form (customers are not signed in). It only validates, saves a DemoBooking and emits
+  // the demo.requested event; it reads nothing, grants nothing, is rate-limited, and ignores any token entirely.
+  /^POST \/api\/demo\/book$/,
 ];
 const isPublic = (e: Endpoint) => PUBLIC.some((re) => re.test(`${e.method} ${e.url}`));
 
