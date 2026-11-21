@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bot,
   LayoutDashboard,
+  Mail,
   MessageCircle,
   Plug,
   Settings,
@@ -30,6 +31,8 @@ export const BUSINESS_NAV: BusinessNavItem[] = [
   { href: `${BASE}/leads`, label: "CRM & Leads", icon: Target, module: "leads" },
   { href: `${BASE}/agents`, label: "AI Agents", icon: Bot, module: "agents" },
   { href: `${BASE}/automations`, label: "Automations", icon: Workflow, module: "automations" },
+  // Email Automation (Resend). Its API is gated by the "integrations" module, so the page is too.
+  { href: `${BASE}/email-automation`, label: "Email Automation", icon: Mail, module: "integrations" },
   { href: `${BASE}/integrations`, label: "Integrations", icon: Plug, module: "integrations" },
   { href: `${BASE}/analytics`, label: "Analytics", icon: BarChart3, module: "analytics" },
   { href: `${BASE}/monitoring`, label: "Live Monitoring", icon: Activity, module: "monitoring" },

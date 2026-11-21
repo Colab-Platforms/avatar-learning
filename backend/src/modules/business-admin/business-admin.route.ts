@@ -17,6 +17,7 @@ import { TemplateManagerService } from "./template-manager.service.js";
 import { PrismaTemplateStore, type TemplateDb } from "./template-manager.store.js";
 import { withDevTestLogin } from "./devtest/devtest.router.js";
 import { monitoring } from "../monitoring/monitoring.track.js";
+import { emailAutomation } from "../email-automation/email-automation.runtime.js";
 
 const getIntegrations = (): IntegrationStatus => {
   const c = getWhatsappConfig();
@@ -98,6 +99,7 @@ const realRouter = createBusinessAdminRouter({
   service,
   extras: { inbox, service, contacts, templates, media },
   automation: { automation, templates: templateManager, approved: templates },
+  email: emailAutomation,
   // Read per request so the token can be set or rotated without a restart.
   clarity: new ClarityService({ store: new PrismaSnapshotStore(prisma as unknown as ClarityDb), getConfig: () => readClarityConfig() }),
   getIntegrations,

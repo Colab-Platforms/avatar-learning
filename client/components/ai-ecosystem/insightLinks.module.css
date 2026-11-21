@@ -1,0 +1,98 @@
+/* Article hyperlinks: teal text, soft resting underline (so links are not colour-only), solid on hover, clear keyboard focus. */
+.link {
+  color: #8fe9f2;
+  text-decoration: underline;
+  text-decoration-color: rgba(143, 233, 242, 0.28);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  border-radius: 3px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.link:hover {
+  color: #b9f4f9;
+  text-decoration-color: currentColor;
+}
+.link:focus-visible {
+  outline: 2px solid #8fe9f2;
+  outline-offset: 3px;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Related articles + CTA */
+.related {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: #f4f6f8;
+  transition: border-color 0.2s, background 0.2s;
+}
+.card:hover {
+  border-color: rgba(111, 227, 239, 0.35);
+  background: rgba(111, 227, 239, 0.04);
+}
+.card:focus-visible {
+  outline: 2px solid #8fe9f2;
+  outline-offset: 3px;
+}
+.cardTitle {
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.cardTitle:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:focus-visible {
+  outline: 2px solid #8fe9f2;
+  outline-offset: 3px;
+}
+.btnPrimary {
+  background: #f4f6f8;
+  color: #07080b;
+  box-shadow: 0 0 30px rgba(111, 227, 239, 0.25);
+}
+.btnPrimary:hover {
+  background: #fff;
+}
+.btnGhost {
+  color: #f4f6f8;
+  border: 1px solid rgba(143, 233, 242, 0.4);
+}
+.btnGhost:hover {
+  background: rgba(111, 227, 239, 0.08);
+  border-color: rgba(143, 233, 242, 0.7);
+}
