@@ -96,3 +96,6 @@ Razorpay & Cashfree (orders, verification, payment links), Resend (email), Bunny
 
 ## Gaps / UNVERIFIED
 Exact request/response bodies for non-auth endpoints; pagination parameters (uses `pagination-helper`/`DEFAULT_PAGE_SIZE` — not inspected); no OpenAPI spec; sample requests exist only in `backend/test/*.http`.
+
+### Unified login (2026-11-21)
+`POST /api/adoption/auth/login` and `POST /api/auth/login` accept the same email + password for the same person (see ARCHITECTURE.md, Unified authentication). Adoption responses to Super Admin / Business Admin staff include `data.learning = { user, accessToken, refreshToken }` (a normal Learning session); other users get only `{ token, user }`. Adoption password reset/change now also changes the Learning password and ends sessions in both modules; Learning reset does the same for Adoption. No new endpoints, no schema change.

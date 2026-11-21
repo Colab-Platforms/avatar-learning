@@ -245,6 +245,6 @@ describe("Learning Admin (/admin) is isolated from Business Admin staff", () => 
     const hits: string[] = [];
     const walk = (d: string) => fs.readdirSync(d, { withFileTypes: true }).forEach((f) => (f.isDirectory() ? walk(path.join(d, f.name)) : /\.ts$/.test(f.name) && !d.includes("business-admin") && /BUSINESS_ADMIN/.test(fs.readFileSync(path.join(d, f.name), "utf8")) && hits.push(path.join(d, f.name))));
     walk(root);
-    assert.deepEqual(hits.map((h) => path.basename(h)).sort(), ["auth.route.ts", "auth.service.ts", "auth.types.ts"], "only the shared auth plumbing mentions the new role");
+    assert.deepEqual(hits.map((h) => path.basename(h)).sort(), ["adoption.service.ts", "auth.route.ts", "auth.service.ts", "auth.types.ts"], "only the shared auth plumbing (and the Adoption staff-session bridge) mention the new role");
   });
 });
