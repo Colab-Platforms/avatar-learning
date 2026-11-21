@@ -12,6 +12,15 @@ import pillStyles from "../ui/hoverPill.module.css";
 const PRODUCT_LINK = { label: "Avatar Learning", href: "/learning" };
 /** The page's "Get in touch" demo form card (BookDemoSection). */
 const DEMO_HREF = "#demo-form";
+/** Old homepage hash links for content that now has its own clean page. */
+const OLD_HASH_PAGES: Record<string, string> = {
+  "#faq": "/faq",
+  "#tools": "/tools",
+  "#blogs": "/blogs",
+  "#insights": "/blogs",
+  "#investors": "/investors?theme=dark",
+  "#book-demo": "/book-demo",
+};
 /** AI Adoption sign-in page (separate from the learning platform's /login). */
 const LOGIN_HREF = "/adoption/login";
 
@@ -150,16 +159,25 @@ export function EcosystemHeader() {
     [pathname],
   );
 
-  // Old links ending in "/#top" (the logo used to add it): the page loads at the top
-  // anyway, so remove the obsolete fragment without reloading. Other hashes are left alone.
+  // Old hash links:
+  //  • "/#top" (the logo used to add it): the page loads at the top anyway, so just drop the fragment.
+  //  • Hashes for things that are now their own pages (/#faq → /faq, …): replace with that page, so the
+  //    old URL isn't kept in history (Back doesn't bounce). Server redirects can't see fragments.
+  //  • Real in-page sections (#how, #who, #about, #contact, #demo-form, …) are left alone.
   useEffect(() => {
-    const dropTop = () => {
-      if (window.location.hash === "#top") window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    const onHash = () => {
+      const hash = window.location.hash;
+      if (hash === "#top") {
+        window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+        return;
+      }
+      const page = window.location.pathname === "/" ? OLD_HASH_PAGES[hash] : undefined;
+      if (page) router.replace(page);
     };
-    dropTop();
-    window.addEventListener("hashchange", dropTop);
-    return () => window.removeEventListener("hashchange", dropTop);
-  }, []);
+    onHash();
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [router]);
 
   // Arriving from another page via /#demo-form: land on the form the same way.
   useEffect(() => {
@@ -302,7 +320,8 @@ export function EcosystemHeader() {
             </div>
             */}
             <a
-              href={`/${DEMO_HREF}`}
+              // Homepage: scrolls to the form on the page (onDemoClick). Elsewhere: the Book a Demo page.
+              href={pathname === "/" ? `/${DEMO_HREF}` : "/book-demo"}
               onClick={onDemoClick}
               className="nav-demo"
               style={{

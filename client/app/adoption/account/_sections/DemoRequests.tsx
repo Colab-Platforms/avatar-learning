@@ -36,7 +36,7 @@ export function DemoRequestsSection() {
     <section aria-labelledby="demos" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <h2 id="demos" style={sectionTitle}>My demo requests</h2>
-        <Link href="/adoption/book-demo" className={`${focusRing} ${primaryHover}`} style={smallBtn}>Book a New Demo</Link>
+        <Link href="/book-demo" className={`${focusRing} ${primaryHover}`} style={smallBtn}>Book a New Demo</Link>
       </div>
       {error ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

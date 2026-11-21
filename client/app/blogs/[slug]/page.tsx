@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = getInsightBySlug(slug);
   if (!article) return {};
-  const url = `${SITE_URL}/insights/${article.slug}`;
+  const url = `${SITE_URL}/blogs/${article.slug}`;
   return {
     title: `${article.title} | Avatar India`,
     description: article.excerpt,
@@ -48,7 +48,7 @@ export default async function InsightArticlePage({ params }: Props) {
   return (
     <InsightsShell>
       <article style={{ maxWidth: 760, margin: "0 auto", padding: "var(--ad-page-top) var(--ad-gutter) var(--ad-section-y)" }}>
-        <Link href="/insights" style={backLink}>
+        <Link href="/blogs" style={backLink}>
           ← Back to Blogs
         </Link>
 
@@ -89,7 +89,7 @@ export default async function InsightArticlePage({ params }: Props) {
         </div>
 
         <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,.08)" }}>
-          <Link href="/insights" style={backLink}>
+          <Link href="/blogs" style={backLink}>
             ← Back to Blogs
           </Link>
         </div>

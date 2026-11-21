@@ -12,18 +12,13 @@ const reveal = (delay = 0) => ({
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
-const TABS = ["All", "Blogs", "Case studies"] as const;
-const FILTER_KEY = ["all", "blog", "case"] as const;
-
-const EMPTY_LABEL = ["articles", "blogs", "case studies"] as const;
-
-/** The right-hand list starts with this many articles. The homepage links to /insights; /insights reveals more on demand. */
+/** The right-hand list starts with this many articles. The homepage links to /blogs; /blogs reveals more on demand. */
 const PREVIEW_LIST_SIZE = 4;
 
 export function InsightsSectionView({ posts, showAll = false }: { posts: InsightPost[]; showAll?: boolean }) {
-  const [tab, setTab] = useState(0);
   const [visible, setVisible] = useState(PREVIEW_LIST_SIZE);
-  const filtered = posts.filter((p) => FILTER_KEY[tab] === "all" || p.k === FILTER_KEY[tab]);
+  // Blogs only: case studies are not published (lib/insights.ts already leaves them out; this is a second guard).
+  const filtered = posts.filter((p) => p.k === "blog");
   const featured = filtered.find((p) => p.featured) ?? filtered[0];
   const others = filtered.filter((p) => p !== featured);
   const rest = others.slice(0, visible);
@@ -31,11 +26,11 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
   const canCollapse = showAll && visible > PREVIEW_LIST_SIZE;
   const collapse = () => {
     setVisible(PREVIEW_LIST_SIZE);
-    document.getElementById("insights")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("blogs")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
-    <section id="insights" data-screen-label="07 Insights" style={{ scrollMarginTop: 68, position: "relative", padding: showAll ? "var(--ad-page-top) var(--ad-gutter) var(--ad-section-y)" : "var(--ad-section-y) var(--ad-gutter)" }}>
+    <section id="blogs" data-screen-label="07 Blogs" style={{ scrollMarginTop: 68, position: "relative", padding: showAll ? "var(--ad-page-top) var(--ad-gutter) var(--ad-section-y)" : "var(--ad-section-y) var(--ad-gutter)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(24px,4vw,36px)" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 18 }}>
           <motion.div
@@ -49,48 +44,22 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
             {...reveal(80)}
             style={{ margin: 0, fontSize: "clamp(34px,4.8vw,58px)", lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 600, textWrap: "balance", background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
-            Blogs and case studies
+            Blogs
           </motion.h2>
           <motion.p {...reveal(160)} style={{ margin: 0, maxWidth: 520, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>
             Guides and stories from businesses putting AI to work.
           </motion.p>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
-          {TABS.map((t, i) => {
-            const on = i === tab;
-            return (
-              <button
-                key={t}
-                onClick={() => {
-                  setTab(i);
-                  setVisible(PREVIEW_LIST_SIZE);
-                }}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 999,
-                  border: `1px solid ${on ? "rgba(111,227,239,.5)" : "rgba(255,255,255,.1)"}`,
-                  background: on ? "rgba(111,227,239,.1)" : "rgba(255,255,255,.02)",
-                  color: on ? "#f4f6f8" : "#a3abb5",
-                  fontSize: 14,
-                  cursor: "pointer",
-                }}
-              >
-                {t}
-              </button>
-            );
-          })}
-        </div>
-
         <motion.div {...reveal(0)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,440px),1fr))", gap: "clamp(20px,3vw,40px)", alignItems: "stretch" }}>
           {!featured && (
             <p style={{ gridColumn: "1 / -1", margin: 0, textAlign: "center", fontSize: 16, color: "#a3abb5" }}>
-              No {EMPTY_LABEL[tab]} published yet.
+              No blogs published yet.
             </p>
           )}
           {featured && (
             <Link
-              href={`/insights/${featured.slug}`}
+              href={`/blogs/${featured.slug}`}
               style={{ display: "flex", flexDirection: "column", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)", color: "#f4f6f8", ...(showAll ? { alignSelf: "start", position: "sticky", top: 88 } : {}) }}
             >
               <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
@@ -136,7 +105,7 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
             {rest.map((p) => (
               <Link
                 key={p.slug}
-                href={`/insights/${p.slug}`}
+                href={`/blogs/${p.slug}`}
                 style={{
                   display: "grid",
                   gridTemplateColumns: "112px minmax(0,1fr) 32px",
@@ -165,8 +134,8 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
               </Link>
             ))}
             {!showAll && (
-            <Link href="/insights" style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, marginTop: 12, fontSize: 15, fontWeight: 500, color: "#8fe9f2" }}>
-              View all insights →
+            <Link href="/blogs" style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, marginTop: 12, fontSize: 15, fontWeight: 500, color: "#8fe9f2" }}>
+              View all blogs →
             </Link>
             )}
             {(hasMore || canCollapse) && (

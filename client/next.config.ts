@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
       fallback: [],
     };
   },
+  // AI Adoption "Insights" was renamed to "Blogs": keep old links and search results working.
+  async redirects() {
+    return [
+      { source: "/insights", destination: "/blogs", permanent: true },
+      { source: "/insights/:slug", destination: "/blogs/:slug", permanent: true },
+      // Book a Demo moved to its clean URL; the query (e.g. ?tools=CRM) is kept automatically.
+      { source: "/adoption/book-demo", destination: "/book-demo", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
     qualities: [75, 95, 100],

@@ -28,6 +28,11 @@ const SUBTITLES: Record<string, string> = {
 };
 const DISPLAY_NAME: Record<string, string> = { custom: "Custom Tools" };
 
+/** Card entrance: the first batch waits this long after the intro loader starts its 400ms fade. */
+const FIRST_BATCH_DELAY = 220;
+/** Gap between cards that come into view together. */
+const CARD_STAGGER = 80;
+
 const sv = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
 const ICONS: Record<string, React.ReactNode> = {
   crm: (<svg {...sv}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.8-3 3-4.6 5.5-4.6s4.7 1.6 5.5 4.6" /><path d="M16 5.5a3 3 0 0 1 0 5.6M18 14.6c1.3.6 2.2 1.9 2.6 3.9" /></svg>),
@@ -109,24 +114,42 @@ export function ToolsPage() {
 
   // False while the /tools intro loader covers the page; entrance animations wait for it.
   const revealed = useToolsReveal();
+  // False when the page was already uncovered before JS ran (see the layout effect below): skip entrances.
+  const [animateIn, setAnimateIn] = useState(true);
 
   // Cards are visible in the server HTML; only once JS runs do we "arm" them and
   // reveal each as it enters the viewport (once). No JS → no hidden content.
   const motionOk = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window;
   useLayoutEffect(() => {
-    if (motionOk()) gridRef.current?.classList.add("tp-armed");
+    // Only hide the cards for their entrance while the intro loader still covers them. If JS arrives
+    // late (slow device/network) and the loader's CSS failsafe already uncovered the page, the cards
+    // are on screen: leave them, instead of hiding and re-showing them (a visible flicker).
+    const overlay = document.querySelector<HTMLElement>(".tpl-root");
+    const cs = overlay && getComputedStyle(overlay);
+    const covered = !!overlay && overlay.getClientRects().length > 0 && cs!.visibility !== "hidden" && Number(cs!.opacity) > 0.5;
+    if (motionOk() && covered) gridRef.current?.classList.add("tp-armed");
+    else if (!covered) setAnimateIn(false); // layout effect: applied before the next paint
   }, []);
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid || !revealed || !motionOk()) return;
+    // Cards that come into view together are staggered among themselves (so a card reached by
+    // scrolling appears right away, not after a fixed per-card delay). The first batch starts a
+    // moment into the intro loader's fade, so the slide-in is actually seen rather than played under it.
+    let first = true;
     const io = new IntersectionObserver(
       (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add("tp-in");
-            io.unobserve(e.target);
-          }
-        }
+        const hits = entries
+          .filter((e) => e.isIntersecting)
+          .map((e) => e.target as HTMLElement)
+          .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+        hits.forEach((el, k) => {
+          // Same diagonal wave as before (column + row) within the batch.
+          el.style.transitionDelay = `${(first ? FIRST_BATCH_DELAY : 0) + ((k % 4) + Math.floor(k / 4)) * CARD_STAGGER}ms`;
+          el.classList.add("tp-in");
+          io.unobserve(el);
+        });
+        if (hits.length) first = false;
       },
       { rootMargin: "0px 0px -8% 0px" },
     );
@@ -141,11 +164,12 @@ export function ToolsPage() {
   const closeTool = () => {
     setOpen(null);
     const i = lastTrigger.current;
-    if (i !== null) requestAnimationFrame(() => cardRefs.current[i]?.focus()); // restore focus to the card
+    // Restore focus to the card without the focus ring/flip (it would turn the card over by itself after Esc).
+    if (i !== null) requestAnimationFrame(() => cardRefs.current[i]?.focus({ focusVisible: false } as FocusOptions));
   };
 
   return (
-    <section className={revealed ? "tp-root" : "tp-root tp-hold"} aria-labelledby="tp-title">
+    <section className={revealed && animateIn ? "tp-root" : "tp-root tp-hold"} aria-labelledby="tp-title">
       <style>{TP_CSS}</style>
       <div aria-hidden="true" className="tp-grid-bg" />
       <div aria-hidden="true" className="tp-glow tp-glow-a" />
@@ -168,7 +192,7 @@ export function ToolsPage() {
 
         <ul ref={gridRef} className="tp-cards" aria-label="Avatar AI Adoption tools">
           {PRODUCTS.map((p, i) => (
-            <li key={p.slug} className="tp-card-wrap" style={{ transitionDelay: `${(i % 4) * 80 + Math.floor(i / 4) * 80}ms` }}>
+            <li key={p.slug} className="tp-card-wrap">
               <button
                 ref={(el) => { cardRefs.current[i] = el; }}
                 type="button"
@@ -176,16 +200,44 @@ export function ToolsPage() {
                 onClick={() => openTool(i)}
                 aria-haspopup="dialog"
               >
-                <span className="tp-card-top">
-                  <span className="tp-icon">{ICONS[p.slug]}</span>
-                  <span style={{ ...mono, fontSize: 12, color: "#8a939e" }}>{String(i + 1).padStart(2, "0")}</span>
-                </span>
-                <span className="tp-card-name">{DISPLAY_NAME[p.slug] ?? p.name}</span>
-                <span className="tp-card-sub">{SUBTITLES[p.slug]}</span>
-                <span className="tp-card-desc">{p.desc}</span>
-                <span className="tp-card-cta">
-                  Explore
-                  <span aria-hidden="true" className="tp-arrow">→</span>
+                {/* Flip card (Uiverse.io by ElSombrero2, recoloured): front = the card as before; on hover
+                    (mouse) or keyboard focus it turns over to the back — key features inside a spinning cyan border. */}
+                <span className="tp-flip">
+                  <span className="tp-face tp-front">
+                    <span className="tp-card-top">
+                      <span className="tp-icon">{ICONS[p.slug]}</span>
+                      <span style={{ ...mono, fontSize: 12, color: "#8a939e" }}>{String(i + 1).padStart(2, "0")}</span>
+                    </span>
+                    <span className="tp-card-name">{DISPLAY_NAME[p.slug] ?? p.name}</span>
+                    <span className="tp-card-sub">{SUBTITLES[p.slug]}</span>
+                    <span className="tp-card-desc">{p.desc}</span>
+                    <span className="tp-card-cta">
+                      Explore
+                      <span aria-hidden="true" className="tp-arrow">→</span>
+                    </span>
+                  </span>
+                  <span className="tp-face tp-back" aria-hidden="true">
+                    <span className="tp-back-inner">
+                      <span className="tp-card-top">
+                        <span className="tp-icon tp-icon-on">{ICONS[p.slug]}</span>
+                        <span style={{ ...mono, fontSize: 12, color: "#8a939e" }}>{String(i + 1).padStart(2, "0")}</span>
+                      </span>
+                      <span className="tp-card-name">{DISPLAY_NAME[p.slug] ?? p.name}</span>
+                      <span className="tp-back-label">Key features</span>
+                      <span className="tp-back-list">
+                        {p.bullets.map((b) => (
+                          <span key={b} className="tp-back-item">
+                            <span className="tp-back-dot" />
+                            {b}
+                          </span>
+                        ))}
+                      </span>
+                      <span className="tp-card-cta">
+                        View details
+                        <span className="tp-arrow">→</span>
+                      </span>
+                    </span>
+                  </span>
                 </span>
               </button>
             </li>
@@ -228,15 +280,44 @@ const TP_CSS = `
 .tp-cards.tp-armed .tp-card-wrap { opacity: 0; transform: translateY(18px); transition: opacity .45s cubic-bezier(.2,.7,.1,1), transform .45s cubic-bezier(.2,.7,.1,1) }
 .tp-cards.tp-armed .tp-card-wrap.tp-in { opacity: 1; transform: none }
 
-.tp-card { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; cursor: pointer;
-  padding: 22px; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); background: linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)); color: inherit;
-  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease }
+/* The button is the 3D stage; the front face carries the card's look (unchanged). */
+.tp-card { width: 100%; display: flex; padding: 0; border: 0; border-radius: 18px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; perspective: 1200px }
 .tp-card:focus-visible { outline: 2px solid #6fe3ef; outline-offset: 3px }
-@media (hover: hover) and (pointer: fine) {
-  .tp-card:hover { transform: translateY(-5px); border-color: rgba(111,227,239,.4); box-shadow: 0 18px 40px -18px rgba(111,227,239,.35); background: linear-gradient(180deg,rgba(111,227,239,.06),rgba(255,255,255,.015)) }
-  .tp-card:hover .tp-arrow { transform: translateX(4px) }
+.tp-flip { position: relative; width: 100%; display: grid; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.2,.7,.1,1) }
+/* Both faces share one grid cell, so the card is as tall as the taller face (no fixed height). */
+.tp-face { grid-area: 1 / 1; min-width: 0; border-radius: 18px; -webkit-backface-visibility: hidden; backface-visibility: hidden }
+.tp-front { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 22px; transform: rotateY(0deg);
+  border: 1px solid rgba(255,255,255,.08); background: linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease }
+.tp-back { position: relative; overflow: hidden; display: flex; transform: rotateY(180deg); background: #0b0d12; box-shadow: 0 18px 40px -18px rgba(111,227,239,.35) }
+/* Spinning cyan border: a bright bar rotating behind an inner panel inset by 1.5px. Runs only while flipped. */
+.tp-back::before { content: ""; position: absolute; left: 50%; top: 50%; width: 46%; height: 220%;
+  background: linear-gradient(90deg, transparent, #6fe3ef, #8fe9f2, #6fe3ef, transparent);
+  transform: translate(-50%,-50%) rotate(0deg); animation: tpSpin 5s linear infinite paused }
+@keyframes tpSpin { to { transform: translate(-50%,-50%) rotate(360deg) } }
+.tp-back-inner { position: relative; z-index: 1; flex: 1; margin: 1.5px; border-radius: 16.5px; background: #0e1116;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 20.5px }
+.tp-icon.tp-icon-on { background: #6fe3ef; color: #07131a }
+.tp-back-label { margin-top: 4px; font-family: var(--font-geist-mono),ui-monospace,monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #8a939e }
+.tp-back-list { display: flex; flex-direction: column; gap: 8px }
+.tp-back-item { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.4; color: #dfe4ea }
+.tp-back-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: #6fe3ef; box-shadow: 0 0 8px rgba(111,227,239,.7) }
+
+/* Flip only with a real mouse (touch: tap opens the details popup) and when motion is OK. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  /* One card at a time: while the mouse is over the grid only the hovered card turns; keyboard
+     focus flips a card only when the mouse isn't over the grid (e.g. the card focused after its popup closes). */
+  .tp-card:hover .tp-flip, .tp-cards:not(:hover) .tp-card:focus-visible .tp-flip { transform: rotateY(180deg) }
+  .tp-card:hover .tp-back::before, .tp-cards:not(:hover) .tp-card:focus-visible .tp-back::before { animation-play-state: running }
+  .tp-card:hover .tp-back .tp-arrow { transform: translateX(4px) }
+}
+/* Everywhere else the back is never shown: keep the previous hover on the front. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  .tp-card:hover .tp-front { border-color: rgba(111,227,239,.4); box-shadow: 0 18px 40px -18px rgba(111,227,239,.35); background: linear-gradient(180deg,rgba(111,227,239,.06),rgba(255,255,255,.015)) }
   .tp-card:hover .tp-icon { background: #6fe3ef; color: #07131a }
 }
+@media not all and (hover: hover) and (pointer: fine) { .tp-back { visibility: hidden } }
+@media (prefers-reduced-motion: reduce) { .tp-back { visibility: hidden } }
 .tp-card-top { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px }
 .tp-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: rgba(111,227,239,.1); color: #8fe9f2; transition: background .25s ease, color .25s ease }
 .tp-icon-lg { width: 52px; height: 52px; background: #6fe3ef; color: #07131a }
@@ -273,6 +354,6 @@ const TP_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .tp-enter, .tp-glow-a, .tp-backdrop, .tp-dialog { animation: none !important }
   .tp-cards.tp-armed .tp-card-wrap { opacity: 1; transform: none; transition: none }
-  .tp-card, .tp-arrow { transition: none }
+  .tp-card, .tp-flip, .tp-front, .tp-arrow { transition: none }
 }
 `;

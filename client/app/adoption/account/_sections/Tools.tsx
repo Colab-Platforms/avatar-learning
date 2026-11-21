@@ -85,7 +85,7 @@ export function ToolsSection() {
         {assigned.length === 0 ? (
           <div style={{ ...card, ...muted }}>
             No tools are active on your account yet. Our team sets up access for your business — request a tool or book a demo below.
-            <Link href="/adoption/book-demo" className={`${focusRing} ${primaryHover}`} style={smallBtn}>Book a Demo</Link>
+            <Link href="/book-demo" className={`${focusRing} ${primaryHover}`} style={smallBtn}>Book a Demo</Link>
           </div>
         ) : (
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 12 }}>
@@ -130,7 +130,7 @@ export function ToolsSection() {
                   {inlineError(t.product)}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  <Link href={`/adoption/book-demo?tools=${t.product}`} className={`${focusRing} ${secondaryHover}`} style={smallSecondary}>Request demo</Link>
+                  <Link href={`/book-demo?tools=${t.product}`} className={`${focusRing} ${secondaryHover}`} style={smallSecondary}>Request demo</Link>
                   {t.requestedAt ? (
                     <span style={{ fontSize: 13, color: "#e6d58f", whiteSpace: "nowrap" }}>Access requested {fmtDate(t.requestedAt)}</span>
                   ) : (

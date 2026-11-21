@@ -8,7 +8,7 @@ import { saveDemoConfirmation } from "@/lib/demoConfirmation";
 
 /**
  * The Book a Demo form. One component, used by the homepage "Get in touch"
- * section and by /adoption/book-demo. Requests go to POST /api/adoption/demo-requests,
+ * section and by /book-demo. Requests go to POST /api/adoption/demo-requests,
  * which saves them (linked to the account when signed in, so they show under
  * My Account → Demo requests) and copies them to the admin Contacts inbox.
  */

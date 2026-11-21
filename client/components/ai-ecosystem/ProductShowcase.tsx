@@ -251,7 +251,7 @@ export function ProductDetailPanel({ product, index, titleId }: { product: Produ
           </div>
           {/* "Ask about …": opens the Book a Demo form with this product pre-selected. */}
           <Link
-            href={`/adoption/book-demo?tools=${product.slug}`}
+            href={`/book-demo?tools=${product.slug}`}
             className="pdp-cta"
             style={{ alignSelf: "flex-start", marginTop: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#f4f6f8", color: "#07080b", padding: "15px 22px", borderRadius: 999, fontSize: 15, fontWeight: 500, boxShadow: "0 0 30px rgba(111,227,239,.25)", textDecoration: "none" }}
           >
