@@ -6,6 +6,7 @@ import { createLimiter } from "@/middlewares/rateLimiter.js";
 import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { ApiError } from "@/utils/ApiError.js";
+import { logger } from "@/utils/logger.js";
 import { ContactService } from "@/modules/contact/contact.service.js";
 import { emitAutomationEvent, toWaPhone } from "@/modules/business-admin/automation.emit.js";
 import type { AdoptionProduct, AdoptionDemoStatus } from "@prisma/client";
@@ -140,13 +141,18 @@ profileRouter.get(
 
 export const demoRouter = Router();
 const demoLimiter = createLimiter({ windowMs: 15 * 60_000, max: 10, message: "Too many requests. Please try again in a few minutes." });
+/** Same person + same tools inside this window counts as one request. */
+const DUPLICATE_WINDOW_MS = 10 * 60_000;
+const sameTools = (a: string[], b: string[]) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+/** E.164 allows 8-15 digits; anything else cannot be a WhatsApp number. */
+const isPlausibleWaNumber = (digits: string) => /^[1-9]\d{9,14}$/.test(digits);
 const productName = (k: string) => ADOPTION_PRODUCTS.find((p) => p.key === k)?.name ?? k;
 
 demoRouter.post(
   "/",
   demoLimiter,
   handle(async (req, res) => {
-    const v = validate<{ name: string; email: string; company?: string; phone?: string; role: string; companySize: string; tools: AdoptionProduct[]; customRequirement?: string; message?: string }>(
+    const v = validate<{ name: string; email: string; company?: string; phone?: string; role: string; companySize: string; tools: AdoptionProduct[]; customRequirement?: string; message?: string; whatsappConsent?: boolean }>(
       Joi.object({
         name: Joi.string().trim().min(2).max(120).required().messages({ "any.required": "Name is required.", "string.min": "Name is required." }),
         email: Joi.string().trim().lowercase().email().max(254).required().messages({ "string.email": "Enter a valid email.", "any.required": "Email is required." }),
@@ -157,6 +163,8 @@ demoRouter.post(
         tools: Joi.array().items(Joi.string().valid(...PRODUCT_KEYS)).min(1).unique().required().messages({ "array.min": "Choose at least one tool.", "any.required": "Choose at least one tool." }),
         customRequirement: Joi.string().trim().max(500).allow(""),
         message: Joi.string().trim().max(3000).allow(""),
+        // The visitor ticked "message me on WhatsApp about this demo". Without it no WhatsApp message is sent (opt-in is required).
+        whatsappConsent: Joi.boolean().default(false),
       }),
       req.body,
     );
@@ -171,6 +179,15 @@ demoRouter.post(
       } catch {
         userId = null; // expired session: still accept the request, just unlinked
       }
+    }
+    // Double-click / retry / refresh-and-resubmit: the same person asking for the same tools within a few minutes is the SAME
+    // request. Answer with the one already saved; nothing is stored, e-mailed or WhatsApped twice.
+    const dupe = await prisma.adoptionDemoRequest
+      .findFirst({ where: { email: v.email, phone: v.phone || null, createdAt: { gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) } }, orderBy: { createdAt: "desc" } })
+      .catch(() => null);
+    if (dupe && sameTools(dupe.tools as string[], v.tools)) {
+      sendResponse(res, true, { id: dupe.id, status: dupe.status, tools: dupe.tools, createdAt: dupe.createdAt }, "Demo request received.", STATUS_CODES.CREATED);
+      return;
     }
     const request = await prisma.adoptionDemoRequest.create({
       data: {
@@ -189,8 +206,20 @@ demoRouter.post(
     // WhatsApp automation hook (demo.requested): only after the request is saved. Fire-and-forget and a no-op unless
     // WHATSAPP_AUTOMATION_ENABLED=true, so it can never fail or slow the customer's submission. The engine still enforces
     // recorded opt-in, the 24-hour window and approved templates. The request id is the event id (one message per request).
-    if (toWaPhone(v.phone).length >= 10) {
-      emitAutomationEvent({ event: "demo.requested", eventId: request.id, phone: v.phone, fields: { name: v.name, email: v.email } });
+    const waPhone = toWaPhone(v.phone);
+    if (!v.phone) {
+      logger.info("[adoption-demo] no phone number on this request: no WhatsApp message");
+    } else if (!isPlausibleWaNumber(waPhone)) {
+      logger.warn("[adoption-demo] phone number is not a valid WhatsApp number: no WhatsApp message"); // never log the number
+    } else {
+      emitAutomationEvent({
+        event: "demo.requested",
+        eventId: request.id,
+        phone: v.phone,
+        // Only a ticked consent box is recorded as opt-in; without it the engine skips with OPT_IN_REQUIRED (visible in Automation history).
+        optIn: v.whatsappConsent ? { evidence: `demo request ${request.id}`, name: v.name, email: v.email, company: v.company || null } : undefined,
+        fields: { name: v.name, email: v.email, company: v.company || "", tools: v.tools.map(productName).join(", ") },
+      });
     }
     // Same request in the existing Contacts inbox, so the sales workflow is unchanged.
     const toolNames = v.tools.map(productName).join(", ");

@@ -241,6 +241,8 @@ export type DemoRequestInput = {
   tools: string[];
   customRequirement?: string;
   message?: string;
+  /** The visitor ticked "message me on WhatsApp": the only thing that lets the server send the WhatsApp confirmation. */
+  whatsappConsent?: boolean;
 };
 
 /** Book a Demo. Linked to the account only when sent with a valid session. */

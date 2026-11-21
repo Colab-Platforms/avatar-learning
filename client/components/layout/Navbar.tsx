@@ -12,7 +12,11 @@ import {
   X,
   Handshake,
   GraduationCap,
+  ShieldCheck,
+  Users,
 } from "lucide-react";
+import { useBusinessAccess } from "@/hooks/queries/useBusinessAccess";
+import { businessNav, ADMIN_PANEL_HREF, MANAGE_ADMINS_HREF } from "@/lib/businessNav";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/data/navigation";
 import { buttonVariants, ConfirmationDialog } from "@/components/ui";
@@ -74,6 +78,9 @@ export function Navbar({
   const pathname = usePathname();
 
   const { user, hasHydrated } = useAppSelector((s) => s.auth);
+  // Business Admin links are drawn only when the SERVER says this account has access; the pages and APIs re-check it.
+  const { data: businessMe } = useBusinessAccess(user?.id);
+  const bnav = businessNav(businessMe);
 
   const showOfferBar = false && !hideOfferBar && !isOfferBarExcluded(pathname);
   const effectiveOffsetTop = offsetTop ?? (showOfferBar ? OFFER_BAR_HEIGHT : 0);
@@ -316,7 +323,7 @@ export function Navbar({
                 {/* dropdown panel */}
                 <div
                   className={cn(
-                    "absolute right-0 top-full mt-2 w-52 rounded-xl border border-border bg-white shadow-lg",
+                    "absolute right-0 top-full mt-2 w-60 rounded-xl border border-border bg-white shadow-lg",
                     "overflow-hidden z-50 transition-all duration-200 origin-top-right",
                     userMenuOpen
                       ? "opacity-100 scale-100 pointer-events-auto"
@@ -333,6 +340,9 @@ export function Navbar({
                     <p className="text-[11px] text-text-subtle truncate mt-0.5">
                       {user.email}
                     </p>
+                    <p className="mt-1.5 inline-block rounded-full bg-brand-50 px-2 py-0.5 text-[10.5px] font-semibold text-brand-600" data-testid="account-role">
+                      {bnav.roleLabel}
+                    </p>
                   </div>
 
                   <div className="py-1.5">
@@ -343,8 +353,30 @@ export function Navbar({
                                  hover:text-text hover:bg-surface-alt transition-all duration-150"
                     >
                       <User className="h-3.5 w-3.5 text-brand-500" />
-                      View Profile
+                      My Profile
                     </Link>
+                    {bnav.showAdminPanel && (
+                      <Link
+                        href={ADMIN_PANEL_HREF}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-text-muted
+                                   hover:text-text hover:bg-surface-alt transition-all duration-150"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
+                        Open Admin Panel
+                      </Link>
+                    )}
+                    {bnav.showManageAdmins && (
+                      <Link
+                        href={MANAGE_ADMINS_HREF}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-text-muted
+                                   hover:text-text hover:bg-surface-alt transition-all duration-150"
+                      >
+                        <Users className="h-3.5 w-3.5 text-brand-500" />
+                        Manage Administrators
+                      </Link>
+                    )}
                     {user && (
                       <Link
                         href="/dashboard"
@@ -374,7 +406,7 @@ export function Navbar({
                                  transition-all duration-150"
                     >
                       <LogOut className="h-3.5 w-3.5" />
-                      Sign out
+                      Logout
                     </button>
                   </div>
                 </div>
@@ -532,8 +564,28 @@ export function Navbar({
                   className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150 flex items-center gap-2"
                 >
                   <User className="h-4 w-4 text-brand-500" />
-                  View Profile ({user.firstName ?? user.email})
+                  My Profile ({user.firstName ?? user.email}, {bnav.roleLabel})
                 </Link>
+                {bnav.showAdminPanel && (
+                  <Link
+                    href={ADMIN_PANEL_HREF}
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150 flex items-center gap-2"
+                  >
+                    <ShieldCheck className="h-4 w-4 text-brand-500" />
+                    Open Admin Panel
+                  </Link>
+                )}
+                {bnav.showManageAdmins && (
+                  <Link
+                    href={MANAGE_ADMINS_HREF}
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-2.5 text-[14px] text-text-muted hover:text-text transition-colors duration-150 flex items-center gap-2"
+                  >
+                    <Users className="h-4 w-4 text-brand-500" />
+                    Manage Administrators
+                  </Link>
+                )}
                 {user && (
                   <Link
                     href="/dashboard"
@@ -562,7 +614,7 @@ export function Navbar({
                   className="px-4 py-2.5 text-[14px] text-left text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign out
+                  Logout
                 </button>
               </>
             ) : (
