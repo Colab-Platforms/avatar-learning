@@ -1741,12 +1741,33 @@ model BusinessAdminAccess {
   roleKey String   @map("role_key")
   // Module keys this admin may use: dashboard, inbox, leads, customers, agents, automations, integrations, analytics, team, settings
   modules String[]
+  // Per-module actions: { "inbox": ["view","create","edit","manage"], ... } (view | create | edit | delete | manage).
+  // NULL = an older row: every action on the modules listed above.
+  permissions Json?
 
   createdByUserId String?   @map("created_by_user_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime? @updatedAt @map("updated_at")
 
   @@map("business_admin_access")
+}
+
+// Who changed which Business Admin account, and how. Never contains passwords or hashes. Target email is copied so the
+// history stays readable even if the account is later removed.
+model BusinessAdminAuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?  @map("actor_user_id")
+  actorEmail   String?  @map("actor_email")
+  // ADMIN_CREATED | PERMISSIONS_CHANGED | ADMIN_RENAMED | ADMIN_ACTIVATED | ADMIN_DEACTIVATED | PASSWORD_RESET | SUPERADMIN_BOOTSTRAPPED
+  action       String
+  targetUserId String?  @map("target_user_id")
+  targetEmail  String?  @map("target_email")
+  details      Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("business_admin_audit_logs")
 }
 
 enum WhatsappOptInStatus {

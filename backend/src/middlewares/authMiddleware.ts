@@ -3,7 +3,9 @@ import jwt from "jsonwebtoken";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 
-export type Role = "USER" | "ADMIN" | "SUPERADMIN";
+// BUSINESS_ADMIN: staff created in Business Admin > Admin Management. No existing route lists it, so it is refused everywhere
+// except the routes that name it explicitly (Business Admin, sign-out).
+export type Role = "USER" | "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
 
 export type AuthRequest = Request & {
     user?: {

@@ -106,9 +106,9 @@ const realRouter = createBusinessAdminRouter({
   findAccount: async (id) => {
     const [user, access] = await Promise.all([
       prisma.user.findUnique({ where: { id }, select: { email: true, isActive: true, isDeleted: true } }),
-      prisma.businessAdminAccess.findUnique({ where: { userId: id }, select: { modules: true } }),
+      prisma.businessAdminAccess.findUnique({ where: { userId: id }, select: { modules: true, permissions: true } }),
     ]);
-    return user ? { email: user.email, isActive: user.isActive, isDeleted: user.isDeleted, modules: access ? access.modules : null } : null;
+    return user ? { email: user.email, isActive: user.isActive, isDeleted: user.isDeleted, modules: access ? access.modules : null, permissions: access ? access.permissions : null } : null;
   },
   admins: new AdminsService({ db: prisma as unknown as AdminsDb }),
 });

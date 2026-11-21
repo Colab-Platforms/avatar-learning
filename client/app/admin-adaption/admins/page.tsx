@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRound, Pencil, Plus, Search } from "lucide-react";
-import { describeApiError, fetchAdminMeta, fetchAdmins, updateAdmin, type AdminAccount } from "@/lib/businessAdminApi";
+import { describeApiError, fetchAdminAudit, fetchAdminMeta, fetchAdmins, updateAdmin, type AdminAccount } from "@/lib/businessAdminApi";
 import { debounce } from "@/lib/inboxLogic";
 import { CreateAdminDialog, DeactivateDialog, EditAdminDialog, ResetPasswordDialog } from "@/components/business-admin/admins/AdminDialogs";
 import { EmptyState, ErrorNote, PageHeader, StatusPill } from "@/components/business-admin/ui";
@@ -12,6 +12,7 @@ import { UserCog } from "lucide-react";
 type Dialog = { kind: "create" } | { kind: "edit" | "reset" | "deactivate"; admin: AdminAccount } | null;
 
 const MAX_CHIPS = 3;
+const summary = (acts: string[] | undefined) => (!acts ? "" : acts.length >= 5 ? "full" : acts.length === 1 ? "view" : acts.filter((x) => x !== "view").join("/"));
 
 function Modules({ a, labels }: { a: AdminAccount; labels: Record<string, string> }) {
   if (a.source === "none") return <span className="text-xs text-white/35">No Business Admin access</span>;
@@ -21,7 +22,7 @@ function Modules({ a, labels }: { a: AdminAccount; labels: Record<string, string
   return (
     <span className="flex flex-wrap gap-1">
       {shown.map((m) => (
-        <span key={m} className="rounded bg-white/6 px-1.5 py-px text-[11px] text-white/60">{labels[m] ?? m}</span>
+        <span key={m} className="rounded bg-white/6 px-1.5 py-px text-[11px] text-white/60">{labels[m] ?? m}<span className="ml-1 text-white/35">{summary(a.permissions[m])}</span></span>
       ))}
       {rest > 0 && <span title={a.modules.slice(MAX_CHIPS).map((m) => labels[m] ?? m).join(", ")} className="rounded bg-white/6 px-1.5 py-px text-[11px] text-white/45">+{rest} more</span>}
     </span>
@@ -29,20 +30,24 @@ function Modules({ a, labels }: { a: AdminAccount; labels: Record<string, string
 }
 
 const roleText = (a: AdminAccount, roles: Record<string, string>) =>
-  a.role === "SUPERADMIN" ? "Super admin" : a.source === "allowlist" ? "Legacy allowlist" : a.roleKey ? (roles[a.roleKey] ?? a.roleKey) : "Learning admin";
+  a.role === "SUPERADMIN" ? "Super admin" : a.source === "allowlist" ? "Legacy allowlist" : a.roleKey ? (roles[a.roleKey] ?? a.roleKey) : "Staff";
 
 export default function AdminManagementPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("");
+  const [moduleFilter, setModuleFilter] = useState("");
+  const [showAudit, setShowAudit] = useState(false);
   const [dialog, setDialog] = useState<Dialog>(null);
 
   const push = useMemo(() => debounce((v: string) => { setQ(v.trim()); setPage(1); }, 300), []);
   useEffect(() => () => push.cancel(), [push]);
 
   const meta = useQuery({ queryKey: ["biz-admins", "meta"], queryFn: fetchAdminMeta, staleTime: 10 * 60_000 });
-  const list = useQuery({ queryKey: ["biz-admins", "list", q, page], queryFn: () => fetchAdmins(q, page, 25), placeholderData: (prev) => prev });
+  const list = useQuery({ queryKey: ["biz-admins", "list", q, page, status, moduleFilter], queryFn: () => fetchAdmins(q, page, 25, { status, module: moduleFilter }), placeholderData: (prev) => prev });
+  const audit = useQuery({ queryKey: ["biz-admins", "audit"], queryFn: () => fetchAdminAudit(1, 25), enabled: showAudit });
   const activate = useMutation({
     mutationFn: (a: AdminAccount) => updateAdmin(a.id, { isActive: true }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["biz-admins"] }),
@@ -91,6 +96,44 @@ export default function AdminManagementPage() {
           className="w-full rounded-lg border border-white/8 bg-ink-900 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/30 focus:border-brand-500/50 focus:outline-none"
         />
       </label>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label className="text-xs text-white/50">
+          <span className="sr-only">Filter by status</span>
+          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} aria-label="Filter by status" className="rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </label>
+        <label className="text-xs text-white/50">
+          <span className="sr-only">Filter by module</span>
+          <select value={moduleFilter} onChange={(e) => { setModuleFilter(e.target.value); setPage(1); }} aria-label="Filter by module" className="rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white">
+            <option value="">Any module</option>
+            {(meta.data?.modules ?? []).map((m) => (
+              <option key={m.key} value={m.key}>{m.label}</option>
+            ))}
+          </select>
+        </label>
+        <button type="button" onClick={() => setShowAudit((v) => !v)} aria-pressed={showAudit} className="ml-auto rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/5">{showAudit ? "Hide" : "Show"} audit log</button>
+      </div>
+
+      {showAudit && (
+        <section aria-label="Audit log" className="mb-5 rounded-2xl border border-white/6 bg-ink-900 p-4" data-testid="audit-log">
+          <h2 className="mb-2 text-sm font-semibold text-white">Recent account and permission changes</h2>
+          {audit.isLoading && <p className="text-sm text-white/45">Loading…</p>}
+          {audit.isError && <ErrorNote message={describeApiError(audit.error)} />}
+          {audit.data && audit.data.items.length === 0 && <p className="text-sm text-white/45">Nothing recorded yet.</p>}
+          <ul className="divide-y divide-white/5 text-sm">
+            {(audit.data?.items ?? []).map((e) => (
+              <li key={e.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
+                <span className="text-white/80">{e.action.replace(/_/g, " ").toLowerCase()} <span className="text-white/45">· {e.targetEmail ?? "—"}</span></span>
+                <span className="text-xs text-white/45">by {e.actorEmail ?? "system"} · {new Date(e.at).toLocaleString("en-IN")}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {(list.isError || meta.isError) && <div className="mb-4"><ErrorNote message={describeApiError(list.error ?? meta.error)} onRetry={() => { void list.refetch(); void meta.refetch(); }} /></div>}
       {activate.isError && <div className="mb-4"><ErrorNote message={describeApiError(activate.error)} /></div>}

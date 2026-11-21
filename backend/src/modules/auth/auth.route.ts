@@ -18,14 +18,14 @@ router.post("/google", authController.googleAuth);
 // Google / incomplete-profile onboarding (authenticated session continues)
 router.post(
   "/complete-profile",
-  auth("USER", "ADMIN", "SUPERADMIN"),
+  auth("USER", "ADMIN", "SUPERADMIN", "BUSINESS_ADMIN"),
   authController.completeProfile,
 );
 
 // Session management
 router.post("/refresh", authController.refresh);
 router.post("/logout", authController.logout);
-router.post("/logout-all", auth("USER", "ADMIN", "SUPERADMIN"), authController.logoutAll);
+router.post("/logout-all", auth("USER", "ADMIN", "SUPERADMIN", "BUSINESS_ADMIN"), authController.logoutAll);
 
 // Password reset
 router.post("/forgot-password", authController.forgotPassword);

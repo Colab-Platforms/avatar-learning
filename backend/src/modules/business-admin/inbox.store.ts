@@ -94,12 +94,12 @@ export class PrismaInboxStore implements InboxStore {
     // Admins a Super Admin granted the Inbox module to.
     const granted = this.db.businessAdminAccess ? await this.db.businessAdminAccess.findMany({ where: { modules: { has: "inbox" } }, select: { userId: true }, take: 500 }) : [];
     if (granted.length > 0) {
-      or.push({ AND: [{ userRoleMappings: { some: { role: { name: "ADMIN" } } } }, { id: { in: granted.map((g: any) => g.userId) } }] });
+      or.push({ AND: [{ userRoleMappings: { some: { role: { name: { in: ["ADMIN", "BUSINESS_ADMIN"] } } } } }, { id: { in: granted.map((g: any) => g.userId) } }] });
     }
     if (emails.length > 0) {
       or.push({
         AND: [
-          { userRoleMappings: { some: { role: { name: "ADMIN" } } } },
+          { userRoleMappings: { some: { role: { name: { in: ["ADMIN", "BUSINESS_ADMIN"] } } } } },
           { OR: emails.map((e) => ({ email: { equals: e, mode: "insensitive" } })) },
         ],
       });

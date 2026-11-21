@@ -6,18 +6,52 @@ import { GeistSans } from "geist/font/sans";
 import { HERO_PROMPTS, MARQUEE_ITEMS } from "./data";
 import styles from "./ecosystem.module.css";
 
-const reveal = (delay = 0) => ({
-  initial: { opacity: 0, y: 28, filter: "blur(8px)" },
-  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: true, margin: "0px 0px 120px 0px" },
-  transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
-});
+/**
+ * Hero entrance: a CSS animation (see HERO_CSS), so the hero is visible and
+ * correctly laid out from the very first paint — not hidden until scripts
+ * load and a scroll-reveal fires (which left phones on slow networks with an
+ * empty or desktop-sized hero for seconds).
+ */
+const enter = (step: number) => ({ initial: false as const, className: `hero-enter hero-enter-${step}` });
+
+/**
+ * Phone layout (< 600px) as CSS, so it applies on first paint. Desktop values
+ * stay in the inline styles exactly as before; these rules only override them
+ * on small screens (hence !important over inline styles).
+ */
+const HERO_CSS = `
+@keyframes heroEnter { from { opacity: 0; transform: translateY(20px); filter: blur(6px) } to { opacity: 1; transform: none; filter: none } }
+.hero-enter { animation: heroEnter .8s cubic-bezier(.2,.7,.1,1) both }
+.hero-enter-2 { animation-delay: .08s } .hero-enter-3 { animation-delay: .16s } .hero-enter-4 { animation-delay: .24s } .hero-enter-5 { animation-delay: .32s }
+@media (prefers-reduced-motion: reduce) { .hero-enter { animation: none } }
+.hero-globe-inline { display: none }
+.hero-pill-row { grid-template-columns: auto minmax(0,1fr) auto; grid-template-areas: "badge text send" }
+@media (max-width: 599px) {
+  .hero-root { padding: 40px var(--ad-gutter) 0 !important }
+  .hero-stack { gap: 18px !important }
+  .hero-badge { flex-wrap: wrap !important; gap: 6px !important; padding: 8px 14px !important; border-radius: 16px !important; font-size: 11.5px !important; max-width: 280px !important }
+  .hero-badge-tag { font-size: 10.5px !important }
+  .hero-badge-text { white-space: normal !important }
+  .hero-h1 { font-size: clamp(30px,10vw,46px) !important; line-height: 1.06 !important }
+  .hero-sub { max-width: 340px !important; font-size: 15px !important; line-height: 1.5 !important }
+  .hero-ctas { flex-direction: column !important; width: 100% !important; max-width: 340px !important }
+  .hero-cta { width: 100% !important }
+  .hero-globe-inline { display: block; position: relative; width: 100%; max-width: 420px; aspect-ratio: 1 / 1; margin: 4px auto -8px; pointer-events: none }
+  .hero-pill-wrap { margin-top: 4px !important }
+  .hero-pill-outer { border-radius: 24px !important }
+  .hero-pill-row { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "badge badge" "text send"; gap: 8px 12px !important; padding: 12px 12px 12px 16px !important; border-radius: 23px !important; align-items: end !important }
+  .hero-pill-text { white-space: normal !important; height: 40px; font-size: 15px !important; line-height: 20px !important }
+  .hero-pill-send { width: 36px !important; height: 36px !important }
+  .hero-spacer { height: 4px !important }
+  .hero-marquee { padding: 16px 0 32px !important }
+}
+`;
 
 /** Rotating point-cloud "globe" rendered on canvas, with lines between nearby
  * points and a handful of labelled anchor nodes that light up near the cursor. */
 const SPHERE_H = 980;
 
-function HeroSphere({ width }: { width: number }) {
+function HeroSphere({ width, height = SPHERE_H, inline = false }: { width: number; height?: number; inline?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ cmx: -9999, cmy: -9999, mx: 0, my: 0, hoverTarget: 0, hover: 0 });
 
@@ -32,7 +66,7 @@ function HeroSphere({ width }: { width: number }) {
     // zoomed / scaled displays.
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(SPHERE_H * dpr);
+    canvas.height = Math.round(height * dpr);
 
     // Same node density, radius, glow and interaction on every breakpoint —
     // the globe is just naturally smaller on a narrower canvas, not a
@@ -298,23 +332,27 @@ function HeroSphere({ width }: { width: number }) {
         header.removeEventListener("touchcancel", onTouchEnd);
       }
     };
-  }, [width]);
+  }, [width, height]);
 
-  const H = SPHERE_H;
+  const H = height;
 
   return (
     <div
       aria-hidden="true"
-      style={{
-        position: "absolute",
-        left: 0,
-        right: 0,
-        top: width < 600 ? -110 : 30,
-        height: H,
-        pointerEvents: "none",
-        WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
-        maskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
-      }}
+      style={
+        inline
+          ? { position: "absolute", inset: 0, pointerEvents: "none" }
+          : {
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 30,
+              height: H,
+              pointerEvents: "none",
+              WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
+              maskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
+            }
+      }
     >
       <div
         className={styles.breathe}
@@ -331,16 +369,14 @@ function HeroSphere({ width }: { width: number }) {
       />
       <canvas
         ref={canvasRef}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: width < 600 ? 0.85 : 0.55 }}
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: inline ? 0.85 : 0.55 }}
       />
     </div>
   );
 }
 
-function HeroPromptPill({ width }: { width: number }) {
+function HeroPromptPill() {
   const promptRef = useRef<HTMLSpanElement>(null);
-  const sm = width < 600;
-  const pw = Math.min(670, width);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -380,6 +416,8 @@ function HeroPromptPill({ width }: { width: number }) {
   const badge = (
     <span
       style={{
+        gridArea: "badge",
+        justifySelf: "start",
         flex: "none",
         fontFamily: "var(--font-geist-mono),monospace",
         fontSize: 12,
@@ -407,10 +445,12 @@ function HeroPromptPill({ width }: { width: number }) {
   );
   const send = (
     <span
+      className="hero-pill-send"
       style={{
+        gridArea: "send",
         flex: "none",
-        width: sm ? 36 : 44,
-        height: sm ? 36 : 44,
+        width: 44,
+        height: 44,
         borderRadius: "50%",
         background: "#f4f6f8",
         color: "#07080b",
@@ -419,77 +459,45 @@ function HeroPromptPill({ width }: { width: number }) {
         justifyContent: "center",
       }}
     >
-      <svg width={sm ? 16 : 18} height={sm ? 16 : 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 19V5M5 12l7-7 7 7" />
       </svg>
     </span>
   );
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: pw,
-        maxWidth: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 14,
-      }}
-    >
+    <div style={{ position: "relative", width: 670, maxWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       <div
+        className="hero-pill-outer"
         style={{
           width: "100%",
           boxSizing: "border-box",
-          borderRadius: sm ? 24 : 999,
+          borderRadius: 999,
           padding: 1,
           background: "linear-gradient(90deg,rgba(107,124,255,.6),rgba(111,227,239,.7))",
           boxShadow: "0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(111,227,239,.2)",
         }}
       >
-        {sm ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              padding: "12px 12px 12px 16px",
-              borderRadius: 23,
-              background: "rgba(10,12,16,.92)",
-              backdropFilter: "blur(10px)",
-              textAlign: "left",
-            }}
-          >
-            <div style={{ display: "flex" }}>{badge}</div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
-              <span style={{ flex: 1, minWidth: 0, height: 40, fontSize: 15, lineHeight: "20px", color: "#f4f6f8", overflow: "hidden" }}>
-                <span ref={promptRef} />
-                {caret}
-              </span>
-              {send}
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              padding: "14px 14px 14px 22px",
-              borderRadius: 999,
-              background: "rgba(10,12,16,.92)",
-              backdropFilter: "blur(10px)",
-              textAlign: "left",
-            }}
-          >
-            {badge}
-            <span style={{ flex: 1, minWidth: 0, fontSize: 17, color: "#f4f6f8", whiteSpace: "nowrap", overflow: "hidden" }}>
-              <span ref={promptRef} />
-              {caret}
-            </span>
-            {send}
-          </div>
-        )}
+        <div
+          className="hero-pill-row"
+          style={{
+            display: "grid",
+            alignItems: "center",
+            gap: 14,
+            padding: "14px 14px 14px 22px",
+            borderRadius: 999,
+            background: "rgba(10,12,16,.92)",
+            backdropFilter: "blur(10px)",
+            textAlign: "left",
+          }}
+        >
+          {badge}
+          <span className="hero-pill-text" style={{ gridArea: "text", minWidth: 0, fontSize: 17, color: "#f4f6f8", whiteSpace: "nowrap", overflow: "hidden" }}>
+            <span ref={promptRef} />
+            {caret}
+          </span>
+          {send}
+        </div>
       </div>
     </div>
   );
@@ -534,20 +542,26 @@ export function EcosystemHero() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const mobile = width < 600;
-  const vizW = Math.min(1000, width - 48);
+  // JS width is only used for the canvas globe (drawn after load). All layout
+  // switching is CSS (HERO_CSS) so the first paint is already right on phones.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const phone = mounted && width < 600;
+  const globeSize = Math.max(200, Math.min(420, width - 48));
 
   return (
     <header
       id="top"
       data-screen-label="01 Hero"
+      className="hero-root"
       style={{
         position: "relative",
         overflowX: "clip",
         overflowY: "visible",
-        padding: mobile ? "40px 24px 0" : "clamp(72px,10vw,112px) 24px 0",
+        padding: "clamp(72px,10vw,112px) var(--ad-gutter) 0",
       }}
     >
+      <style>{HERO_CSS}</style>
       <div
         aria-hidden="true"
         style={{
@@ -597,7 +611,8 @@ export function EcosystemHero() {
         />
       </div>
 
-      <HeroSphere width={width} />
+      {/* Desktop/tablet: globe behind the hero. Phones: it moves below the buttons (see .hero-globe-inline). */}
+      {!phone && <HeroSphere width={width} />}
 
       <div
         aria-hidden="true"
@@ -616,6 +631,7 @@ export function EcosystemHero() {
       />
 
       <div
+        className="hero-stack"
         style={{
           position: "relative",
           maxWidth: 1200,
@@ -624,28 +640,30 @@ export function EcosystemHero() {
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
-          gap: mobile ? 18 : 28,
+          gap: 28,
         }}
       >
         <motion.div
-          {...reveal(0)}
+          initial={false}
+          className="hero-enter hero-enter-1 hero-badge"
           style={{
             display: "flex",
-            flexWrap: mobile ? "wrap" : "nowrap",
+            flexWrap: "nowrap",
             alignItems: "center",
             justifyContent: "center",
-            gap: mobile ? 6 : 10,
-            padding: mobile ? "8px 14px" : "6px 14px 6px 8px",
-            borderRadius: mobile ? 16 : 999,
+            gap: 10,
+            padding: "6px 14px 6px 8px",
+            borderRadius: 999,
             border: "1px solid rgba(255,255,255,.1)",
             background: "rgba(255,255,255,.03)",
-            fontSize: mobile ? 11.5 : 13,
+            fontSize: 13,
             color: "#a3abb5",
-            maxWidth: mobile ? 280 : "none",
+            maxWidth: "100%",
             textAlign: "center",
           }}
         >
           <span
+            className="hero-badge-tag"
             style={{
               flex: "none",
               padding: "2px 8px",
@@ -653,23 +671,24 @@ export function EcosystemHero() {
               background: "rgba(111,227,239,.14)",
               color: "#8fe9f2",
               fontFamily: "var(--font-geist-mono),monospace",
-              fontSize: mobile ? "10.5px" : 12,
+              fontSize: 12,
               letterSpacing: ".06em",
             }}
           >
             AI-POWERED
           </span>
-          <span style={{ minWidth: 0, whiteSpace: mobile ? "normal" : "nowrap" }}>
+          <span className="hero-badge-text" style={{ minWidth: 0, whiteSpace: "nowrap" }}>
             AI Adoption Ecosystem for Indian businesses
           </span>
         </motion.div>
 
-        <motion.div {...reveal(80)} style={{ position: "relative", maxWidth: "100%" }}>
+        <motion.div {...enter(2)} style={{ position: "relative", maxWidth: "100%" }}>
           <h1
+            className="hero-h1"
             style={{
               margin: 0,
-              fontSize: mobile ? "clamp(30px,10vw,46px)" : "clamp(44px,7.2vw,96px)",
-              lineHeight: mobile ? 1.06 : 1.02,
+              fontSize: "clamp(44px,7.2vw,96px)",
+              lineHeight: 1.02,
               letterSpacing: "-0.045em",
               fontWeight: 600,
             }}
@@ -692,12 +711,13 @@ export function EcosystemHero() {
         </motion.div>
 
         <motion.p
-          {...reveal(160)}
+          initial={false}
+          className="hero-enter hero-enter-3 hero-sub"
           style={{
             margin: 0,
-            maxWidth: mobile ? 300 : 560,
-            fontSize: mobile ? 15 : "clamp(17px,1.6vw,20px)",
-            lineHeight: mobile ? 1.45 : 1.5,
+            maxWidth: 560,
+            fontSize: "clamp(17px,1.6vw,20px)",
+            lineHeight: 1.5,
             color: "#a3abb5",
           }}
         >
@@ -705,25 +725,27 @@ export function EcosystemHero() {
         </motion.p>
 
         <motion.div
-          {...reveal(240)}
+          initial={false}
+          className="hero-enter hero-enter-4 hero-ctas"
           style={{
             display: "flex",
-            flexDirection: mobile ? "column" : "row",
+            flexDirection: "row",
             gap: 12,
             flexWrap: "wrap",
             justifyContent: "center",
-            width: mobile ? "100%" : "auto",
-            maxWidth: mobile ? 340 : "none",
+            width: "auto",
+            maxWidth: "100%",
           }}
         >
           <a
             href="#contact"
+            className="hero-cta"
             style={{
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               boxSizing: "border-box",
-              width: mobile ? "100%" : "auto",
+              width: "auto",
               height: 50,
               lineHeight: 1,
               background: "#f4f6f8",
@@ -737,13 +759,14 @@ export function EcosystemHero() {
             Book a free consultation
           </a>
           <a
-            href="#products"
+            href="/tools"
+            className="hero-cta"
             style={{
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               boxSizing: "border-box",
-              width: mobile ? "100%" : "auto",
+              width: "auto",
               height: 50,
               lineHeight: 1,
               border: "1px solid rgba(255,255,255,.16)",
@@ -759,17 +782,23 @@ export function EcosystemHero() {
           </a>
         </motion.div>
 
-        <motion.div {...reveal(320)} style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: mobile ? 20 : 36 }}>
-          <HeroPromptPill width={vizW} />
+        {/* Phones: the globe sits here, below the buttons, in a square that scales with the screen. */}
+        <div className="hero-globe-inline" aria-hidden="true">
+          {phone && <HeroSphere width={globeSize} height={globeSize} inline />}
+        </div>
+
+        <motion.div initial={false} className="hero-enter hero-enter-5 hero-pill-wrap" style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: 36 }}>
+          <HeroPromptPill />
         </motion.div>
 
-        <div style={{ height: mobile ? 4 : "clamp(70px,10vw,140px)" }} />
+        <div className="hero-spacer" style={{ height: "clamp(70px,10vw,140px)" }} />
       </div>
 
       <div
+        className="hero-marquee"
         style={{
           position: "relative",
-          padding: mobile ? "16px 0 32px" : "40px 0 72px",
+          padding: "40px 0 72px",
           overflow: "hidden",
           WebkitMaskImage: "linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)",
           maskImage: "linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)",

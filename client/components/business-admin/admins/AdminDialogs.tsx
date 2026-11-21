@@ -11,6 +11,7 @@ import {
   updateAdmin,
   type AdminAccount,
   type AdminMeta,
+  type Permissions,
   type RoleKey,
 } from "@/lib/businessAdminApi";
 
@@ -71,10 +72,24 @@ function PasswordInput({ value, onChange, name, autoComplete = "new-password" }:
 
 const PASSWORD_HINT = "At least 10 characters, mixing three of: lowercase, uppercase, numbers, symbols. Not a common password, and not containing the person's name or email.";
 
-function RoleAndModules({ meta, roleKey, modules, onRole, onModules }: { meta: AdminMeta; roleKey: RoleKey; modules: string[]; onRole: (r: RoleKey) => void; onModules: (m: string[]) => void }) {
+/** view is the floor: ticking any other action ticks view, unticking view clears the row. */
+export function togglePermission(p: Permissions, module: string, action: string, on: boolean): Permissions {
+  const cur = new Set(p[module] ?? []);
+  if (on) {
+    cur.add(action);
+    cur.add("view");
+  } else if (action === "view") cur.clear();
+  else cur.delete(action);
+  const next = { ...p };
+  if (cur.size === 0) delete next[module];
+  else next[module] = [...cur];
+  return next;
+}
+
+function RoleAndPermissions({ meta, roleKey, perms, onRole, onPerms }: { meta: AdminMeta; roleKey: RoleKey; perms: Permissions; onRole: (r: RoleKey) => void; onPerms: (p: Permissions) => void }) {
   const preset = meta.roles.find((r) => r.key === roleKey);
   const custom = roleKey === "CUSTOM";
-  const shown = custom ? modules : (preset?.modules ?? []);
+  const shown: Permissions = custom ? perms : (preset?.permissions ?? {});
   return (
     <>
       <Field label="Role" hint={preset?.description}>
@@ -84,7 +99,7 @@ function RoleAndModules({ meta, roleKey, modules, onRole, onModules }: { meta: A
           onChange={(e) => {
             const next = e.target.value as RoleKey;
             // Switching to Custom starts from what the current role already allows, so nothing is silently dropped.
-            if (next === "CUSTOM" && modules.length === 0) onModules(preset?.modules ?? []);
+            if (next === "CUSTOM" && Object.keys(perms).length === 0) onPerms(structuredClone(preset?.permissions ?? {}));
             onRole(next);
           }}
           className={input}
@@ -95,24 +110,38 @@ function RoleAndModules({ meta, roleKey, modules, onRole, onModules }: { meta: A
         </select>
       </Field>
       <fieldset className="mt-4">
-        <legend className="mb-1 text-xs font-semibold text-white/60">Module permissions</legend>
-        <p className="mb-2 text-[11px] text-white/35">{custom ? "Tick the modules this admin may use." : "Set by the role. Choose Custom to pick modules yourself."}</p>
-        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          {meta.modules.map((m) => {
-            const on = shown.includes(m.key);
-            return (
-              <label key={m.key} className={`flex items-center gap-2 rounded-lg border border-white/8 px-3 py-2 text-sm ${custom ? "cursor-pointer text-white/80" : "text-white/50"}`}>
-                <input
-                  type="checkbox"
-                  name={`module-${m.key}`}
-                  checked={on}
-                  disabled={!custom}
-                  onChange={(e) => onModules(e.target.checked ? [...modules, m.key] : modules.filter((x) => x !== m.key))}
-                />
-                {m.label}
-              </label>
-            );
-          })}
+        <legend className="mb-1 text-xs font-semibold text-white/60">Permissions</legend>
+        <p className="mb-2 text-[11px] text-white/35">{custom ? "Tick what this admin may do in each module. Any action also grants View." : "Set by the role. Choose Custom to pick permissions yourself."}</p>
+        <div className="overflow-x-auto rounded-lg border border-white/8">
+          <table className="w-full text-left text-sm" data-testid="permission-matrix">
+            <thead>
+              <tr className="border-b border-white/6 text-[11px] uppercase tracking-wider text-white/45">
+                <th className="px-3 py-2 font-semibold">Module</th>
+                {meta.actions.map((a) => (
+                  <th key={a.key} className="px-2 py-2 text-center font-semibold">{a.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {meta.modules.map((m) => (
+                <tr key={m.key}>
+                  <th scope="row" className="px-3 py-2 font-medium text-white/80">{m.label}</th>
+                  {meta.actions.map((a) => (
+                    <td key={a.key} className="px-2 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        name={`perm-${m.key}-${a.key}`}
+                        aria-label={`${m.label}: ${a.label}`}
+                        checked={(shown[m.key] ?? []).includes(a.key)}
+                        disabled={!custom}
+                        onChange={(e) => onPerms(togglePermission(perms, m.key, a.key, e.target.checked))}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </fieldset>
     </>
@@ -123,10 +152,10 @@ export function CreateAdminDialog({ meta, onClose }: { meta: AdminMeta; onClose:
   const qc = useQueryClient();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [roleKey, setRoleKey] = useState<RoleKey>("SUPPORT_AGENT");
-  const [modules, setModules] = useState<string[]>([]);
+  const [perms, setPerms] = useState<Permissions>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const m = useMutation({
-    mutationFn: () => createAdmin({ ...form, roleKey, ...(roleKey === "CUSTOM" ? { modules } : {}) }),
+    mutationFn: () => createAdmin({ ...form, roleKey, ...(roleKey === "CUSTOM" ? { permissions: perms } : {}) }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["biz-admins"] });
       onClose();
@@ -142,7 +171,7 @@ export function CreateAdminDialog({ meta, onClose }: { meta: AdminMeta; onClose:
     if (form.name.trim().length < 2) errs.name = "Enter the person's name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) errs.email = "Enter a valid email address.";
     if (!form.password) errs.password = "Enter a password.";
-    if (roleKey === "CUSTOM" && modules.length === 0) errs.modules = "Select at least one module.";
+    if (roleKey === "CUSTOM" && Object.keys(perms).length === 0) errs.modules = "Select at least one permission.";
     setFieldErrors(errs);
     if (Object.keys(errs).length === 0) m.mutate();
   };
@@ -152,7 +181,7 @@ export function CreateAdminDialog({ meta, onClose }: { meta: AdminMeta; onClose:
         <Field label="Full name" error={fieldErrors.name}><input name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="off" className={input} /></Field>
         <Field label="Email ID" error={fieldErrors.email}><input name="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} autoComplete="off" className={input} /></Field>
         <Field label="Password" error={fieldErrors.password} hint={PASSWORD_HINT}><PasswordInput name="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} /></Field>
-        <RoleAndModules meta={meta} roleKey={roleKey} modules={modules} onRole={setRoleKey} onModules={setModules} />
+        <RoleAndPermissions meta={meta} roleKey={roleKey} perms={perms} onRole={setRoleKey} onPerms={setPerms} />
         {fieldErrors.modules && <p role="alert" className="text-xs text-red-300">{fieldErrors.modules}</p>}
         {fieldErrors.form && <p role="alert" className="text-sm text-red-300">{fieldErrors.form}</p>}
         <p className="text-[11px] text-white/35">The new admin signs in with this email and password. They cannot be made a Super Admin from here.</p>
@@ -169,10 +198,10 @@ export function EditAdminDialog({ admin, meta, onClose }: { admin: AdminAccount;
   const qc = useQueryClient();
   const [name, setName] = useState(admin.name);
   const [roleKey, setRoleKey] = useState<RoleKey>(admin.roleKey ?? (admin.source === "allowlist" ? "MANAGER" : "SUPPORT_AGENT"));
-  const [modules, setModules] = useState<string[]>(admin.roleKey === "CUSTOM" ? admin.modules : []);
+  const [perms, setPerms] = useState<Permissions>(admin.roleKey === "CUSTOM" ? structuredClone(admin.permissions) : {});
   const [error, setError] = useState("");
   const m = useMutation({
-    mutationFn: () => updateAdmin(admin.id, { name: name.trim(), roleKey, ...(roleKey === "CUSTOM" ? { modules } : {}) }),
+    mutationFn: () => updateAdmin(admin.id, { name: name.trim(), roleKey, ...(roleKey === "CUSTOM" ? { permissions: perms } : {}) }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["biz-admins"] });
       onClose();
@@ -182,7 +211,7 @@ export function EditAdminDialog({ admin, meta, onClose }: { admin: AdminAccount;
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 2) return setError("Enter the person's name.");
-    if (roleKey === "CUSTOM" && modules.length === 0) return setError("Select at least one module.");
+    if (roleKey === "CUSTOM" && Object.keys(perms).length === 0) return setError("Select at least one permission.");
     setError("");
     m.mutate();
   };
@@ -192,7 +221,7 @@ export function EditAdminDialog({ admin, meta, onClose }: { admin: AdminAccount;
         <p className="text-xs text-white/40">{admin.email}</p>
         {admin.source === "allowlist" && <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">This admin currently has full access through the server allowlist. Saving gives them the permissions below instead.</p>}
         <Field label="Full name"><input name="name" value={name} onChange={(e) => setName(e.target.value)} className={input} /></Field>
-        <RoleAndModules meta={meta} roleKey={roleKey} modules={modules} onRole={setRoleKey} onModules={setModules} />
+        <RoleAndPermissions meta={meta} roleKey={roleKey} perms={perms} onRole={setRoleKey} onPerms={setPerms} />
         {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/5">Cancel</button>

@@ -275,7 +275,7 @@ export function EcosystemOverviewSection() {
     <section
       id="why"
       data-screen-label="02 Why Avatar"
-      style={{ scrollMarginTop: 68, position: "relative", padding: "clamp(56px,7vw,96px) 24px" }}
+      style={{ scrollMarginTop: 68, position: "relative", padding: "var(--ad-section-y) var(--ad-gutter)" }}
     >
       <div
         style={{
@@ -457,8 +457,8 @@ export function EcosystemOverviewSection() {
               gap: 16,
               overflowX: "auto",
               scrollSnapType: "x mandatory",
-              margin: "0 -24px",
-              padding: "0 24px",
+              margin: "0 calc(-1 * var(--ad-gutter))",
+              padding: "0 var(--ad-gutter)",
             }}
           >
             {GAP_CARDS.map((c, i) => {
