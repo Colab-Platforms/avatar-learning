@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ABOUT_TEXT, PILLARS } from "./data";
+import { ABOUT_SUBTITLE, ABOUT_TEXT, PILLARS } from "./data";
 import styles from "./ecosystem.module.css";
 
 const reveal = (delay = 0) => ({
-  initial: { opacity: 0, y: 28, filter: "blur(8px)" },
-  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
@@ -57,7 +57,7 @@ function OrbitBg() {
 
 export function AboutSection() {
   const words = ABOUT_TEXT.split(" ");
-  const paraRef = useRef<HTMLParagraphElement>(null);
+  const paraRef = useRef<HTMLHeadingElement>(null);
 
   // Continuous scroll-linked word reveal (not per-word viewport triggers,
   // which read as a laggy "line by line" pop-in) — the lit word count
@@ -133,19 +133,27 @@ export function AboutSection() {
           About Avatar AI
         </motion.div>
 
-        <p
-          ref={paraRef}
-          data-words
-          style={{ margin: 0, fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.2, letterSpacing: "-0.03em", fontWeight: 500, color: "#f4f6f8" }}
-        >
-          {words.map((w, i) => (
-            <span key={i} style={{ display: "inline-block", marginRight: "0.28em", opacity: 0.18, transition: "opacity .25s" }}>
-              {w}
-            </span>
-          ))}
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+          <h2
+            ref={paraRef}
+            data-words
+            style={{ margin: 0, fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.2, letterSpacing: "-0.03em", fontWeight: 500, color: "#f4f6f8" }}
+          >
+            {/* Real spaces between the words (so search engines and screen readers read
+                the heading correctly); the margin tops each gap up to the same 0.28em as before. */}
+            {words.map((w, i) => (
+              <span key={i} style={{ display: "inline-block", marginRight: "0.067em", opacity: 0.18, transition: "opacity .25s" }}>
+                {w}
+              </span>
+            )).flatMap((s, i) => (i ? [" ", s] : [s]))}
+          </h2>
+          <motion.p {...reveal(160)} style={{ margin: 0, maxWidth: 520, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>
+            {ABOUT_SUBTITLE}
+          </motion.p>
+        </div>
 
-        <motion.div {...reveal(0)} data-avoid-sticky="" className="grid grid-cols-2 min-[1000px]:grid-cols-4" style={{ rowGap: 20, width: "100%" }}>
+        {/* 4 columns on desktop, 2 on tablet, stacked on phones. */}
+        <motion.div {...reveal(0)} data-avoid-sticky="" className="grid grid-cols-1 min-[560px]:grid-cols-2 min-[1000px]:grid-cols-4" style={{ rowGap: 20, width: "100%" }}>
           {PILLARS.map((p) => (
             <div
               key={p.n}

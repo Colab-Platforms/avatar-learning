@@ -9,8 +9,9 @@
  *  2. Add one entry below. Title, excerpt, reading time and body all come from
  *     the markdown file, so nothing is written twice.
  *
- * `category` drives the "Blogs" / "Case studies" filter. `featured` picks the
- * large card on the left (falls back to the first article in the filter).
+ * `category`: only "blog" articles are published (at /blogs); "case" entries are
+ * kept for future use but hidden (see PUBLISHED_CATEGORIES in lib/insights.ts).
+ * `featured` picks the large card on the left (falls back to the first article).
  */
 export type InsightCategory = "blog" | "case";
 

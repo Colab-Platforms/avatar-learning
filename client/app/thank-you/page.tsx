@@ -44,7 +44,7 @@ export default function ThankYouPage() {
     const c = readDemoConfirmation();
     if (!c) {
       // Not a confirmed submission: don't render the conversion page at all.
-      window.location.replace("/adoption/book-demo");
+      window.location.replace("/book-demo");
       return;
     }
     setConfirmation(c);

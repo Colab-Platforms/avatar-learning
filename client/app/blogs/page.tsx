@@ -3,13 +3,14 @@ import { InsightsShell } from "@/components/ai-ecosystem/InsightsShell";
 import { InsightsSection } from "@/components/ai-ecosystem/InsightsSection";
 
 export const metadata: Metadata = {
-  title: "Blogs and Case Studies | Avatar India",
+  title: "Blogs | Avatar India",
   description:
-    "Guides and stories from businesses putting AI to work. Read Avatar India's blogs and case studies on AI adoption, business automation and operational efficiency.",
-  alternates: { canonical: "https://www.avatarindia.com/insights" },
+    "Guides from businesses putting AI to work. Read Avatar India's blogs on AI adoption, business automation and operational efficiency.",
+  alternates: { canonical: "https://www.avatarindia.com/blogs" },
 };
 
-export default function InsightsPage() {
+/** AI Adoption Blogs listing (the old /insights URL redirects here, see next.config.ts). */
+export default function BlogsPage() {
   return (
     <InsightsShell>
       {/* Top spacing comes from the section itself (--ad-page-top when showAll). */}

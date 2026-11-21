@@ -73,16 +73,26 @@ function loadArticle(entry: (typeof INSIGHT_REGISTRY)[number]): InsightArticle {
   };
 }
 
+/**
+ * Categories shown on the public site (/blogs listing, article pages, homepage
+ * preview, sitemap). Case studies are kept in the registry/content for future
+ * use but are not published; add "case" here to bring them back.
+ */
+const PUBLISHED_CATEGORIES: readonly InsightCategory[] = ["blog"];
+const PUBLISHED = INSIGHT_REGISTRY.filter((e) => PUBLISHED_CATEGORIES.includes(e.category));
+
+/** All published articles (blogs only). */
 export function getAllInsights(): InsightArticle[] {
-  return INSIGHT_REGISTRY.map(loadArticle);
+  return PUBLISHED.map(loadArticle);
 }
 
+/** A published article by slug; unpublished (case-study) slugs return undefined → 404. */
 export function getInsightBySlug(slug: string): InsightArticle | undefined {
-  const entry = INSIGHT_REGISTRY.find((e) => e.slug === slug);
+  const entry = PUBLISHED.find((e) => e.slug === slug);
   return entry ? loadArticle(entry) : undefined;
 }
 
-/** Shape consumed by the (client-side) Insights section. */
+/** Shape consumed by the (client-side) Blogs section. */
 export function getInsightPosts(): InsightPost[] {
   return getAllInsights().map((a) => ({
     slug: a.slug,

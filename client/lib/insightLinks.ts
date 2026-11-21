@@ -50,7 +50,7 @@ const BLOCKS = new Set(["paragraph"]);
  */
 export function remarkInsightLinks(opts: { used: Set<string>; selfSlug: string }) {
   const { used, selfSlug } = opts;
-  const keywords = KEYWORDS.filter((k) => k.href !== `/insights/${selfSlug}`);
+  const keywords = KEYWORDS.filter((k) => k.href !== `/blogs/${selfSlug}` && k.href !== `/insights/${selfSlug}`);
 
   const linkInParagraph = (children: RootContent[]): RootContent[] => {
     let added = false;

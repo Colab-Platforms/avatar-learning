@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { STEPS } from "./data";
 import styles from "./ecosystem.module.css";
 
 const reveal = (delay = 0) => ({
-  initial: { opacity: 0, y: 28, filter: "blur(8px)" },
-  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
@@ -37,8 +37,9 @@ function Chip({ t, d, hot }: { t: string; d: number; hot?: boolean }) {
 
 /** Faithful port of the reference's `howStage()` — the large visualization
  * shown next to the step list, one distinct scene per step. */
-function StepViz({ index, scale }: { index: number; scale: number }) {
+function StepViz({ index, scale, box }: { index: number; scale: number; box: { w: number; h: number } }) {
   let content: React.ReactNode;
+  let netScale: number | null = null; // step 2 fits itself to the panel; steps 1 and 3 keep `scale`
 
   if (index === 0) {
     const items = ["Leads", "Follow-ups", "Orders", "Stock", "Content", "Reports"];
@@ -88,23 +89,34 @@ function StepViz({ index, scale }: { index: number; scale: number }) {
       </div>
     );
   } else if (index === 1) {
-    const W = 460;
-    const H = 350;
-    const cx = 230;
-    const cy = 165;
-    const nodes = ["CRM", "OMS", "AI Content", "LMS", "Your systems"];
+    // The eight Avatar tools on a ring around the hub. Long labels sit on the
+    // diagonals (most horizontal room); short ones on the sides, top and bottom.
+    // Narrow panels use a compact ring where long labels wrap onto two lines.
+    // Pick whichever layout shows the labels larger in this panel (keep the wide one while it stays comfortable).
+    const fit = (w: number, h: number) => Math.min(1, (box.w - 24) / w, (box.h - 48) / h);
+    const wideText = fit(540, 380) * 13;
+    const compact = wideText < 11.5 && fit(300, 300) * 12 > wideText;
+    const W = compact ? 300 : 540;
+    const H = compact ? 300 : 380;
+    const cx = W / 2;
+    const cy = compact ? 128 : 170;
+    const rx = compact ? 112 : 200;
+    const ry = compact ? 100 : 135;
+    const nodes = ["CRM", "Script Automation", "OMS", "Recruitment CRM", "LMS", "Custom Tools", "HRMS", "IMS"];
     const pos = nodes.map((_, j) => {
-      const a = -Math.PI / 2 + (j * 2 * Math.PI) / 5;
-      return [cx + Math.cos(a) * 170, cy + Math.sin(a) * 128] as const;
+      const a = -Math.PI / 2 + (j * 2 * Math.PI) / nodes.length;
+      return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry] as const;
     });
+    // Fit the stage inside the panel (keeps every label inside the container, no overflow).
+    netScale = fit(W, H);
     content = (
       <div style={{ position: "relative", width: W, height: H }}>
-        <svg width={W} height={H} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: "absolute", inset: 0, overflow: "visible" }} aria-hidden="true">
           {pos.map(([x, y], j) => (
-            <g key={nodes[j]}>
+            <g key={nodes[j]} className={styles.linePulse} style={{ animationDelay: `${j * 0.35}s` }}>
               <line x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(111,227,239,.35)" strokeWidth={1.2} strokeDasharray="4 6" className={styles.dash} />
               <circle r={3} fill="#e9fdff" style={{ filter: "drop-shadow(0 0 4px #6fe3ef)" }}>
-                <animateMotion dur="2.4s" begin={`${j * 0.45}s`} repeatCount="indefinite" path={`M${cx},${cy} L${x.toFixed(1)},${y.toFixed(1)}`} />
+                <animateMotion dur="2.4s" begin={`${j * 0.3}s`} repeatCount="indefinite" path={`M${cx},${cy} L${x.toFixed(1)},${y.toFixed(1)}`} />
               </circle>
             </g>
           ))}
@@ -114,7 +126,23 @@ function StepViz({ index, scale }: { index: number; scale: number }) {
         </div>
         {pos.map(([x, y], j) => (
           <div key={nodes[j]} style={{ position: "absolute", left: x, top: y, transform: "translate(-50%,-50%)" }}>
-            <span className={styles.fadeIn} style={{ display: "block", ...glass, padding: "9px 14px", whiteSpace: "nowrap", fontSize: 13, color: "#e9fdff", borderColor: j === 4 ? "rgba(255,255,255,.18)" : "rgba(111,227,239,.35)", animationDelay: `${0.2 + j * 0.15}s` }}>
+            <span
+              className={styles.fadeIn}
+              style={{
+                display: "block",
+                ...glass,
+                padding: compact ? "7px 10px" : "9px 14px",
+                whiteSpace: compact ? "normal" : "nowrap",
+                maxWidth: compact ? 96 : undefined,
+                width: "max-content",
+                textAlign: "center",
+                lineHeight: 1.25,
+                fontSize: compact ? 12 : 13,
+                color: "#e9fdff",
+                borderColor: "rgba(111,227,239,.35)",
+                animationDelay: `${0.2 + j * 0.1}s`,
+              }}
+            >
               {nodes[j]}
             </span>
           </div>
@@ -176,7 +204,7 @@ function StepViz({ index, scale }: { index: number; scale: number }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }} className={styles.fadeIn}>
-      <div style={{ flex: "none", transform: `scale(${scale})`, transformOrigin: "50% 50%" }}>{content}</div>
+      <div style={{ flex: "none", transform: `scale(${netScale ?? scale})`, transformOrigin: "50% 50%" }}>{content}</div>
     </div>
   );
 }
@@ -197,6 +225,20 @@ export function PathToAdoptionSection() {
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Size of the right-hand visual panel, so the 8-tool network can pick its layout and fit inside it.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 600, h: 500 });
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => {
+      const { width: w, height: h } = e.contentRect;
+      setBox((b) => (Math.abs(b.w - w) < 1 && Math.abs(b.h - h) < 1 ? b : { w, h }));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const wide = width >= 1000;
@@ -300,6 +342,7 @@ export function PathToAdoptionSection() {
             })}
           </div>
           <div
+            ref={panelRef}
             style={{
               order: 1,
               position: "relative",
@@ -320,7 +363,7 @@ export function PathToAdoptionSection() {
               }}
             />
             {STEPS.map((_, i) =>
-              i === active ? <StepViz key={i} index={i} scale={vizScale} /> : null,
+              i === active ? <StepViz key={i} index={i} scale={vizScale} box={box} /> : null,
             )}
             <span style={{ position: "absolute", left: 20, top: 18, fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".1em", color: "#98a1ac" }}>
               STEP 0{active + 1} / 03

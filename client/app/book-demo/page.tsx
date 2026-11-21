@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { DemoRequestForm } from "@/components/ai-ecosystem/DemoRequestForm";
 import { useAdoptionSession } from "@/lib/adoptionSession";
-import { Heading } from "../_components/ui";
-import { BackLink } from "../_components/form";
+import { Heading } from "@/app/adoption/_components/ui";
+import { BackLink } from "@/app/adoption/_components/form";
 
 /**
  * Book a Demo for AI Adoption, as its own page (used from the account
