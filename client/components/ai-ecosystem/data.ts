@@ -213,7 +213,7 @@ export const FAQS: FaqItem[] = [
   },
 ];
 
-/** One card in the Insights section. Built from the markdown articles in client/content/insights (see lib/insights.ts). */
+/** One card in the Blogs section. Built from the markdown articles in client/content/insights (see lib/insights.ts). */
 export interface InsightPost {
   slug: string;
   k: "case" | "blog";
@@ -226,8 +226,9 @@ export interface InsightPost {
   featured?: boolean;
 }
 
-export const ABOUT_TEXT =
-  "Avatar AI is a complete AI partner. Beyond software, we help businesses learn about AI, find the right talent and put solutions into practice.";
+/** Homepage "About Avatar AI" section: heading (word-by-word scroll reveal) and subtitle. */
+export const ABOUT_TEXT = "Grow Your Business Smarter with AI";
+export const ABOUT_SUBTITLE = "From everyday operations to business growth, discover what AI can do for your business.";
 
 export interface Pillar {
   n: string;
@@ -236,10 +237,10 @@ export interface Pillar {
 }
 
 export const PILLARS: Pillar[] = [
-  { n: "01", t: "Learn", d: "AI courses for your whole team" },
-  { n: "02", t: "Talent", d: "Skilled AI experts on demand" },
-  { n: "03", t: "Solutions", d: "Ready-made and custom tools" },
-  { n: "04", t: "Implementation", d: "Setup and ongoing support" },
+  { n: "01", t: "Save Time", d: "Automate repetitive tasks and focus on business growth." },
+  { n: "02", t: "Reduce Costs", d: "Minimize manual work and improve operational efficiency." },
+  { n: "03", t: "Boost Productivity", d: "Empower your team to accomplish more with smarter tools." },
+  { n: "04", t: "Grow Smarter", d: "Use business insights and automation to scale confidently." },
 ];
 
 export interface Step {
@@ -290,8 +291,8 @@ export const NAV_LINKS = [
   // { href: "#how", label: "How it works" },
   // { href: "#who", label: "Who it's for" },
   { href: "/adoption/about", label: "About" },
-  { href: "/insights", label: "Blogs" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/blogs", label: "Blogs" },
+  { href: "/faq", label: "FAQ" },
   { href: "/investors?theme=dark", label: "Investors" },
 ];
 
@@ -322,7 +323,7 @@ export const FOOTER_COMPANY = [
   { label: "About Us", href: "/adoption/about" },
   { label: "Our Solutions", href: "/tools" },
   { label: "How It Works", href: "/#how" },
-  { label: "Blogs", href: "/insights" },
+  { label: "Blogs", href: "/blogs" },
   { label: "Investors", href: "/investors?theme=dark" },
   { label: "Contact Us", href: "/#contact" },
 ];

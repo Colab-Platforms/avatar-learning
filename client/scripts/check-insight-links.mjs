@@ -42,7 +42,8 @@ function routeExists(p) {
 function checkInternal(href, where) {
   const [pathAndQuery, hash] = href.split("#");
   const pathname = pathAndQuery.split("?")[0] || "/";
-  const ins = pathname.match(/^\/insights\/([^/]+)$/);
+  // Articles live at /blogs/<slug> (old /insights/<slug> URLs redirect there).
+  const ins = pathname.match(/^\/(?:blogs|insights)\/([^/]+)$/);
   if (ins) { if (!slugs.includes(ins[1])) errors.push(`${where}: unknown article ${href}`); }
   else if (pathname !== "/" && !routeExists(pathname)) errors.push(`${where}: no page for route ${pathname}`);
   else if (pathname === "/" && !fs.existsSync(path.join(root, "app/page.tsx"))) errors.push(`${where}: no home page`);

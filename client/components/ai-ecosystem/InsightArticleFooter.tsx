@@ -40,7 +40,7 @@ export function InsightArticleFooter({ slug, all }: { slug: string; all: Insight
           <ul className={styles.related}>
             {related.map((a) => (
               <li key={a.slug} style={{ display: "flex" }}>
-                <Link href={`/insights/${a.slug}`} className={styles.card} style={{ width: "100%" }}>
+                <Link href={`/blogs/${a.slug}`} className={styles.card} style={{ width: "100%" }}>
                   {a.image && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={a.image} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }} />

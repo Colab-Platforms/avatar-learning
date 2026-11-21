@@ -169,6 +169,19 @@
 .dash {
   animation: dash 6s linear infinite;
 }
+/* Subtle pulse on the tool-network connector lines (opacity only, no layout or repaint cost). */
+@keyframes linePulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.linePulse {
+  animation: linePulse 2.8s ease-in-out infinite both;
+}
 .marquee {
   animation: marquee 40s linear infinite;
 }
@@ -208,6 +221,7 @@
   .floaty,
   .glow,
   .dash,
+  .linePulse,
   .marquee,
   .fill,
   .fadeIn,

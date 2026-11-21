@@ -9,6 +9,7 @@ import { ToolsLoaderGate } from "@/components/ai-ecosystem/ToolsPageLoader";
 export const metadata: Metadata = {
   title: "Tools | Avatar AI Adoption",
   description: "One ecosystem, endless powerful solutions: CRM, OMS, Script Automation, LMS, Recruitment CRM, HRMS, IMS and Custom Tools for growing businesses.",
+  alternates: { canonical: "https://www.avatarindia.com/tools" },
 };
 
 /** Dedicated AI Adoption Tools page: site navbar + tools showcase + site footer (no homepage sections).

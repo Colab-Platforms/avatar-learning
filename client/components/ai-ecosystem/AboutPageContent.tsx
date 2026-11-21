@@ -160,7 +160,7 @@ export function AboutPageContent() {
 
             <motion.div {...heroIn(4)} style={{ marginTop: "clamp(24px,2.6vw,30px)", display: "flex", gap: 12, flexWrap: "wrap" }}>
               {/* Opens the Book a Demo form page (same shared form). */}
-              <Link href="/adoption/book-demo" className="bg-[#f4f6f8] text-[#07080b] transition-shadow hover:bg-white hover:shadow-[0_0_32px_rgba(111,227,239,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]" style={btnBase}>
+              <Link href="/book-demo" className="bg-[#f4f6f8] text-[#07080b] transition-shadow hover:bg-white hover:shadow-[0_0_32px_rgba(111,227,239,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]" style={btnBase}>
                 Talk to our team
               </Link>
               <Link href="/tools" className="border border-white/[0.14] bg-white/[0.02] text-[#f4f6f8] transition-colors hover:border-white/30 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6fe3ef]" style={btnBase}>

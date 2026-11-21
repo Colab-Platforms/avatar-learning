@@ -35,7 +35,7 @@ export function HelpSection({ user }: { user: AdoptionUser }) {
           <span>Phone: <a href={`tel:+${CONTACT.phone.replace(/\D/g, "")}`} className="text-[#6fe3ef] hover:text-[#8fe9f2]">{CONTACT.phone}</a></span>
           <span>WhatsApp: <a href={`https://wa.me/${CONTACT.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-[#6fe3ef] hover:text-[#8fe9f2]">{CONTACT.whatsapp}</a></span>
         </div>
-        <Link href="/adoption/book-demo" className="text-[#6fe3ef] hover:text-[#8fe9f2]" style={{ fontSize: 14, alignSelf: "flex-start" }}>Prefer a call? Book a demo →</Link>
+        <Link href="/book-demo" className="text-[#6fe3ef] hover:text-[#8fe9f2]" style={{ fontSize: 14, alignSelf: "flex-start" }}>Prefer a call? Book a demo →</Link>
       </section>
     </div>
   );
