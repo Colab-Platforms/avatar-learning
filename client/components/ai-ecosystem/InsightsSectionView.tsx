@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 import type { InsightPost } from "./data";
 
 const reveal = (delay = 0) => ({
-  initial: { opacity: 0, y: 28, filter: "blur(8px)" },
-  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "0px 0px 120px 0px" },
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
@@ -43,7 +43,7 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
             style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "8px 18px", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.03)", fontSize: 15, color: "#a3abb5" }}
           >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fe3ef" }} />
-            Insights
+            Blogs
           </motion.div>
           <motion.h2
             {...reveal(80)}
@@ -110,9 +110,12 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
                     />
                   </>
                 )}
-                <span style={{ position: "absolute", left: 18, top: 18, padding: "5px 10px", borderRadius: 999, background: "rgba(7,8,11,.72)", fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", color: "#bff5fa" }}>
-                  FEATURED
-                </span>
+                {/* Cover images already carry their own "FEATURED" badge; only label the fallback art. */}
+                {!featured.image && (
+                  <span style={{ position: "absolute", left: 18, top: 18, padding: "5px 10px", borderRadius: 999, background: "rgba(7,8,11,.72)", fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", color: "#bff5fa" }}>
+                    FEATURED
+                  </span>
+                )}
               </div>
               <div style={{ flex: 1, padding: "clamp(22px,3vw,30px)", display: "flex", flexDirection: "column", gap: 12 }}>
                 <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "#8fe9f2" }}>{featured.type}</span>

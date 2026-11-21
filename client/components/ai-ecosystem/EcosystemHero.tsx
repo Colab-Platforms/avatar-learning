@@ -20,7 +20,7 @@ const enter = (step: number) => ({ initial: false as const, className: `hero-ent
  * on small screens (hence !important over inline styles).
  */
 const HERO_CSS = `
-@keyframes heroEnter { from { opacity: 0; transform: translateY(20px); filter: blur(6px) } to { opacity: 1; transform: none; filter: none } }
+@keyframes heroEnter { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: none } }
 .hero-enter { animation: heroEnter .8s cubic-bezier(.2,.7,.1,1) both }
 .hero-enter-2 { animation-delay: .08s } .hero-enter-3 { animation-delay: .16s } .hero-enter-4 { animation-delay: .24s } .hero-enter-5 { animation-delay: .32s }
 @media (prefers-reduced-motion: reduce) { .hero-enter { animation: none } }

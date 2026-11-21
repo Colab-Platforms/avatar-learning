@@ -49,7 +49,7 @@ export default async function InsightArticlePage({ params }: Props) {
     <InsightsShell>
       <article style={{ maxWidth: 760, margin: "0 auto", padding: "var(--ad-page-top) var(--ad-gutter) var(--ad-section-y)" }}>
         <Link href="/insights" style={backLink}>
-          ← Back to Insights
+          ← Back to Blogs
         </Link>
 
         <header style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -90,7 +90,7 @@ export default async function InsightArticlePage({ params }: Props) {
 
         <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,.08)" }}>
           <Link href="/insights" style={backLink}>
-            ← Back to Insights
+            ← Back to Blogs
           </Link>
         </div>
       </article>
