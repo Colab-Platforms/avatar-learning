@@ -4,6 +4,8 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { hashPassword, comparePassword } from "@/utils/auth.js";
 import { verifyGoogleIdToken } from "@/utils/googleAuth.js";
+import { emitUserRegistered } from "../email-automation/email.emit.js";
+import { resolveGoogleAccount } from "./adoption.google.js";
 import { sendAdoptionVerifyEmail, sendAdoptionResetEmail, sendAdoptionChangeEmail } from "./adoption.mailer.js";
 import { effectiveStatus } from "./adoption.products.js";
 
@@ -141,6 +143,7 @@ export class AdoptionAuthService {
     if (user.emailVerified) throw new ApiError("This email is already verified. Please sign in.", STATUS_CODES.CONFLICT);
     await consumeCode(user.id, "VERIFY_EMAIL", data.code);
     await prisma.adoptionUser.update({ where: { id: user.id }, data: { emailVerified: true } });
+    emitUserRegistered(user.id); // email automation (welcome / follow-ups); no-op unless enabled
     return createSession(user.id, userAgent);
   }
 
@@ -194,21 +197,9 @@ export class AdoptionAuthService {
     const email = profile.email.trim().toLowerCase();
     const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || email.split("@")[0];
 
-    let user = await prisma.adoptionUser.findUnique({ where: { googleId: profile.googleId } });
-    if (!user) {
-      const byEmail = await prisma.adoptionUser.findUnique({ where: { email } });
-      if (byEmail) {
-        user = await prisma.adoptionUser.update({
-          where: { id: byEmail.id },
-          data: byEmail.emailVerified
-            ? { googleId: profile.googleId }
-            : { googleId: profile.googleId, emailVerified: true, passwordHash: null, fullName },
-        });
-        if (!byEmail.emailVerified) await prisma.adoptionSession.deleteMany({ where: { userId: byEmail.id } });
-      } else {
-        user = await prisma.adoptionUser.create({ data: { email, fullName, googleId: profile.googleId, emailVerified: true } });
-      }
-    }
+    // Find-or-create lives in adoption.google.ts. It fires the registration event for a new account and for an existing
+    // unverified one that Google verifies (never for an already verified account).
+    const user = await resolveGoogleAccount(prisma, { googleId: profile.googleId, email, fullName }, emitUserRegistered);
     if (!user.isActive) throw new ApiError("This account has been deactivated.", STATUS_CODES.FORBIDDEN);
     return createSession(user.id, userAgent);
   }

@@ -9,6 +9,7 @@ import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 import compression from "compression";
 import { startSessionCleanupJob } from "./jobs/sessionCleanup.job.js";
 import { startAutomationWorker } from "./jobs/automation.job.js";
+import { startEmailWorker } from "./jobs/email.job.js";
 import { startPartnerCommissionJob } from "./jobs/partnerCommission.job.js";
 const app = express();
 dotenv.config();
@@ -71,4 +72,5 @@ app.listen(PORT, () => {
   startSessionCleanupJob();
   startPartnerCommissionJob();
   startAutomationWorker();
+  startEmailWorker();
 });

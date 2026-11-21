@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { describeApiError, fetchBusinessOverview } from "@/lib/businessAdminApi";
 import { ErrorNote, PageHeader, Panel, StatusPill } from "@/components/business-admin/ui";
+import { EmailAutomation } from "@/components/business-admin/email/EmailAutomation";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -54,7 +55,7 @@ export default function IntegrationsPage() {
                 <StatusPill tone={email.configured ? "ok" : "off"}>{email.configured ? "Configured" : "Not configured"}</StatusPill>
               </Row>
             </ul>
-            <p className="mt-3 text-xs text-white/30">Used by the existing learning platform for OTPs and receipts.</p>
+            <p className="mt-3 text-xs text-white/30">Used by the existing learning platform for OTPs and receipts, and by Email Automation below.</p>
           </Panel>
 
           <Panel title="Not connected yet" className="lg:col-span-2">
@@ -69,6 +70,8 @@ export default function IntegrationsPage() {
           </Panel>
         </div>
       )}
+
+      <EmailAutomation />
     </>
   );
 }

@@ -54,3 +54,17 @@ Data scripts (`backend/scripts/*.ts`): `sync-exist-{users,leads,enrollments,webi
 - `automation_rules` (`AutomationRule`): trigger event, template name+language, `variable_mapping` JSON, `is_active` (default false).
 - `automation_executions` (`AutomationExecution`, enum `AutomationExecutionStatus`): unique `idempotency_key` (rule+event), attempts/backoff (`next_attempt_at`), `expires_at`, `skip_reason`, `history` JSON, links to the `whatsapp_messages` row (`message_id`).
 Apply with `npm run db:deploy` only against a verified database; `prisma validate` passes.
+
+## Email Automation (migration `20261121150000_add_email_automation` — created, **NOT applied** anywhere)
+- `adoption_users` gains `marketing_email_opt_in` (default **false**; nothing in the UI sets it yet) and `email_unsubscribed_at`.
+- `email_templates` (`EmailTemplate`; enums `EmailTemplateType` TRANSACTIONAL|PROMOTIONAL, `EmailTemplateStatus` ACTIVE|INACTIVE|ARCHIVED): subject, `html_body`, optional `text_body`.
+- `email_automations` (`EmailAutomation`; enum `EmailTrigger`): trigger, template, `anchor_event`, `delay_minutes`, `scheduled_at` (UTC), `fired_at`/`expired_at`, `is_active` (default false).
+- `email_messages` (`EmailMessage`; enum `EmailMessageStatus`): the queue, activity log and execution history in one table. Unique `dedupe_key` (automation+event+person, or manual template+person+time window) and unique `resend_id`; `scheduled_for` (UTC) doubles as the retry time; `attempts`, `retry_epoch` (Resend idempotency key = id + epoch), `locked_at`, `failure_reason`, `is_test`.
+Apply with `npm run db:deploy` only against a verified database; `prisma validate` passes.
+
+### Email Automation fixes (migration `20261121170000_email_automation_snapshots_and_events` — created, **NOT applied** anywhere; apply AFTER `20261121150000_add_email_automation`)
+Generated with `prisma migrate diff` from the schema of the first migration; additive only (no DROP/UPDATE/DELETE).
+- Enum `EmailMessageStatus` gains `UNCONFIRMED` (`ALTER TYPE ... ADD VALUE`).
+- `email_messages` gains `body_html`, `body_text`, `list_unsubscribe` (the exact queued content, cleared once SENT), `content_hash` (SHA-256 checked before every send), `template_type` (type when queued; default TRANSACTIONAL), `maybe_accepted` (default false), `first_attempt_at`.
+- New `email_webhook_events` (`EmailWebhookEvent`): unique `svix_id`, `resend_id` (indexed), `type`, `detail`, `occurred_at`, `received_at`, `applied_at`. A short-lived buffer for delivery events that arrive before the message is recorded as SENT; pruned by the worker.
+Existing rows (none yet if migration 1 is still unapplied) would get the column defaults; a message queued before this migration has no snapshot and is cancelled as `NO_SNAPSHOT` rather than sent.

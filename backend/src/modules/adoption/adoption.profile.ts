@@ -7,6 +7,7 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { ApiError } from "@/utils/ApiError.js";
 import { ContactService } from "@/modules/contact/contact.service.js";
+import { emitDemoRequested } from "@/modules/email-automation/email.emit.js";
 import { emitAutomationEvent, toWaPhone } from "@/modules/business-admin/automation.emit.js";
 import type { AdoptionProduct, AdoptionDemoStatus } from "@prisma/client";
 import { requireAdoptionSession } from "./adoption.controller.js";
@@ -192,6 +193,8 @@ demoRouter.post(
     if (toWaPhone(v.phone).length >= 10) {
       emitAutomationEvent({ event: "demo.requested", eventId: request.id, phone: v.phone, fields: { name: v.name, email: v.email } });
     }
+    // Email automation hook: only for a request made by a signed-in account (never to a typed, unverified address).
+    if (userId) emitDemoRequested(userId, request.id);
     // Same request in the existing Contacts inbox, so the sales workflow is unchanged.
     const toolNames = v.tools.map(productName).join(", ");
     await contactService

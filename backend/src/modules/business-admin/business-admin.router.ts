@@ -13,6 +13,8 @@ import type { BusinessAdminStore, IntegrationStatus } from "./business-admin.typ
 import { createAutomationController, type AutomationControllerDeps } from "./automation.controller.js";
 import type { InboxService } from "./inbox.service.js";
 import type { InboxStore } from "./inbox.types.js";
+import { createEmailAutomationController } from "../email-automation/email-automation.controller.js";
+import type { EmailAutomationService } from "../email-automation/email-automation.service.js";
 
 export interface BusinessAdminRouterDeps {
   store: BusinessAdminStore;
@@ -29,6 +31,8 @@ export interface BusinessAdminRouterDeps {
   extras?: ExtrasDeps;
   /** Template Manager + automation rules/history. When absent those routes do not exist. */
   automation?: AutomationControllerDeps;
+  /** Email Automation (Resend). Lives on the Integrations page, so it needs the "integrations" module. When absent those routes do not exist. */
+  email?: EmailAutomationService;
   /** Admin Management (Super Admin only). When absent the /admins routes do not exist. */
   admins?: AdminsService;
   /** Defaults to auth("ADMIN") (an ADMIN or SUPERADMIN token). Injectable for tests. */
@@ -142,6 +146,37 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
     router.put("/template-manager/templates/:id", tpl, writeLimiter, a.updateTemplate);
     router.post("/template-manager/templates/:id/submit", tpl, writeLimiter, a.submitTemplate);
     router.delete("/template-manager/templates/:id", tpl, writeLimiter, a.deleteTemplate);
+  }
+
+  if (deps.email) {
+    const e = createEmailAutomationController(deps.email);
+    const integ = requireModule("integrations");
+    const writeLimiter = deps.adminWriteLimiter ?? createLimiter({ windowMs: 60_000, max: 30, message: "Too many changes. Wait a moment and try again." });
+    // Real emails leave the building on these two: keep them on the stricter send limit.
+    const mailLimiter = deps.sendLimiter ?? createLimiter({ windowMs: 60_000, max: 10, message: "You are sending too fast. Wait a moment and try again." });
+    router.get("/email/status", integ, e.status);
+    router.post("/email/check", integ, writeLimiter, e.check);
+    router.get("/email/stats", integ, e.stats);
+    router.get("/email/templates", integ, e.listTemplates);
+    router.post("/email/templates", integ, writeLimiter, e.createTemplate);
+    router.post("/email/preview", integ, writeLimiter, e.preview);
+    router.get("/email/templates/:id", integ, e.getTemplate);
+    router.put("/email/templates/:id", integ, writeLimiter, e.updateTemplate);
+    router.delete("/email/templates/:id", integ, writeLimiter, e.archiveTemplate);
+    router.post("/email/templates/:id/test", integ, mailLimiter, e.sendTest);
+    router.get("/email/automations", integ, e.listAutomations);
+    router.post("/email/automations", integ, writeLimiter, e.createAutomation);
+    router.put("/email/automations/:id", integ, writeLimiter, e.updateAutomation);
+    router.put("/email/automations/:id/active", integ, writeLimiter, e.setAutomationActive);
+    router.delete("/email/automations/:id", integ, writeLimiter, e.deleteAutomation);
+    router.get("/email/recipients", integ, e.recipients);
+    router.post("/email/send", integ, mailLimiter, e.manualSend);
+    router.get("/email/scheduled", integ, e.scheduled);
+    router.post("/email/messages/:id/cancel", integ, writeLimiter, e.cancelScheduled);
+    router.post("/email/messages/:id/retry", integ, mailLimiter, e.retry);
+    // Records the admin's finding for an UNCONFIRMED email. It never sends anything.
+    router.post("/email/messages/:id/resolve", integ, writeLimiter, e.resolve);
+    router.get("/email/activity", integ, e.activity);
   }
 
   if (deps.admins) {
