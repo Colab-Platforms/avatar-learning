@@ -136,6 +136,31 @@ export function EcosystemHeader() {
     [goToDemoForm],
   );
 
+  // Logo: always links to "/" (no "#top" in the address bar). On the homepage it
+  // just scrolls back up, and drops any section hash so the URL is the clean root.
+  const onLogoClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (pathname !== "/" || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      setMenuOpen(false);
+      const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+      if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    },
+    [pathname],
+  );
+
+  // Old links ending in "/#top" (the logo used to add it): the page loads at the top
+  // anyway, so remove the obsolete fragment without reloading. Other hashes are left alone.
+  useEffect(() => {
+    const dropTop = () => {
+      if (window.location.hash === "#top") window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    };
+    dropTop();
+    window.addEventListener("hashchange", dropTop);
+    return () => window.removeEventListener("hashchange", dropTop);
+  }, []);
+
   // Arriving from another page via /#demo-form: land on the form the same way.
   useEffect(() => {
     if (window.location.hash !== DEMO_HREF) return;
@@ -181,7 +206,7 @@ export function EcosystemHeader() {
             gap: 24,
           }}
         >
-          <a href={pathname === "/" ? "#top" : "/"} aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
+          <a href="/" onClick={onLogoClick} aria-label="Avatar home" style={{ display: "flex", alignItems: "center", flex: "none" }}>
             <Image
               src="/landingpage-images/Avatar_logo_Light.svg"
               alt="Avatar"

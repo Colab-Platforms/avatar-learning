@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "About Us | Avatar AI Adoption",
   description:
     "Avatar AI is the AI ecosystem of Avatar Industries Limited, helping Indian businesses adopt AI and automation with ready-to-use tools, hands-on team training and support at every step.",
+  alternates: { canonical: "https://www.avatarindia.com/adoption/about" },
 };
 
 /** Dedicated AI Adoption About page: site navbar + About content + site footer (no homepage sections). */

@@ -4,6 +4,7 @@ import { AdoptionShell } from "@/components/ai-ecosystem/AdoptionShell";
 export const metadata: Metadata = {
   title: "Book a Demo | Avatar AI Adoption",
   description: "Book a demo of Avatar AI Adoption tools for your business.",
+  alternates: { canonical: "https://www.avatarindia.com/adoption/book-demo" },
 };
 
 export default function AdoptionBookDemoLayout({ children }: { children: React.ReactNode }) {

@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   title: "AI Adoption Ecosystem | Avatar India",
   description:
     "We bring together AI solutions, technology and talent to help businesses identify opportunities, implement the right solutions and scale measurable outcomes.",
+  alternates: { canonical: "https://www.avatarindia.com/" },
 };
 
 export default function Page() {
