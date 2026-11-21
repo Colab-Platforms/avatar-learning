@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { describeApiError, fetchBusinessOverview } from "@/lib/businessAdminApi";
 import { ErrorNote, PageHeader, Panel, StatusPill } from "@/components/business-admin/ui";
-import { EmailAutomation } from "@/components/business-admin/email/EmailAutomation";
+import Link from "next/link";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -55,7 +55,7 @@ export default function IntegrationsPage() {
                 <StatusPill tone={email.configured ? "ok" : "off"}>{email.configured ? "Configured" : "Not configured"}</StatusPill>
               </Row>
             </ul>
-            <p className="mt-3 text-xs text-white/30">Used by the existing learning platform for OTPs and receipts, and by Email Automation below.</p>
+            <p className="mt-3 text-xs text-white/30">Used by the existing learning platform for OTPs and receipts, and by Email Automation (see the Email Automation page).</p>
           </Panel>
 
           <Panel title="Not connected yet" className="lg:col-span-2">
@@ -71,7 +71,14 @@ export default function IntegrationsPage() {
         </div>
       )}
 
-      <EmailAutomation />
+      <div className="mt-4">
+        <Panel title="Email Automation">
+          <p className="text-sm text-white/55">Templates, automations, scheduled emails and delivery activity now have their own page.</p>
+          <Link href="/admin-adaption/email-automation" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+            Open Email Automation
+          </Link>
+        </Panel>
+      </div>
     </>
   );
 }
