@@ -36,7 +36,7 @@ const getIntegrations = (): IntegrationStatus => {
 };
 
 const inbox = new PrismaInboxStore(prisma as unknown as InboxDb);
-const contacts = new ContactsService(prisma as unknown as ContactsDb);
+export const contacts = new ContactsService(prisma as unknown as ContactsDb);
 // Config is read on every call, so enabling/disabling WhatsApp never needs a restart.
 const client = () => new WhatsappClient({ config: getWhatsappConfig() });
 const templates = new TemplatesService({ fetchTemplates: () => client().listTemplates() });

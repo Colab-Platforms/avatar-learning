@@ -22,6 +22,8 @@ const { startInboxApp, call, SUPER } = await import("../business-admin/app.js");
 const PASSWORD = "Violet!Marble#8472Orbit"; // test-only
 const EMAIL = "super.admin@example.com";
 const db: any = prisma;
+// These tests exercise the Learning login only: no AI Adoption account exists for the email (unified-login lookup).
+db.adoptionUser.findUnique = async () => null;
 const patched: Array<() => void> = [];
 const fake = (p: string, fn: (...a: any[]) => any) => {
   const [model, method] = p.split(".");

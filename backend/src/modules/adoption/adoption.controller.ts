@@ -3,6 +3,7 @@ import { sendResponse } from "@/utils/responseUtils.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { ApiError } from "@/utils/ApiError.js";
 import { AdoptionAuthService } from "./adoption.service.js";
+import { rawPasswordOf } from "@/utils/rawPassword.js";
 import {
   validateRegister,
   validateLogin,
@@ -64,7 +65,7 @@ export const resendVerification = handle(async (req, res) => {
 export const login = handle(async (req, res) => {
   const v = body(res, validateLogin(req.body));
   if (!v) return;
-  const data = await service.login(v as { email: string; password: string }, ua(req));
+  const data = await service.login({ ...(v as { email: string; password: string }), rawPassword: rawPasswordOf(req) }, ua(req));
   sendResponse(res, true, data, "requiresVerification" in data ? "Verify your email to continue." : "Signed in.");
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import HeaderBanner from "./_components/HeaderBanner";
 import HeroSection from "./_components/HeroSection";
 import AiGapSection from "./_components/AiGapSection";
@@ -17,10 +17,14 @@ import FooterCtaSection from "./_components/FooterCtaSection";
 import StickyBottomBar from "./_components/StickyBottomBar";
 import { Navbar } from "@/components/layout";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+// Self-hosted copy of Plus Jakarta Sans (SIL Open Font License), the same variable latin file Google serves,
+// so the build never depends on fetching fonts from Google (that fetch fails intermittently on Vercel builds).
+const plusJakarta = localFont({
+  src: "./fonts/PlusJakartaSans-latin.woff2",
+  weight: "400 800",
+  style: "normal",
   display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export default function WebinarPage() {
