@@ -110,9 +110,12 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
                     />
                   </>
                 )}
-                <span style={{ position: "absolute", left: 18, top: 18, padding: "5px 10px", borderRadius: 999, background: "rgba(7,8,11,.72)", fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", color: "#bff5fa" }}>
-                  FEATURED
-                </span>
+                {/* Cover images already carry their own "FEATURED" badge; only label the fallback art. */}
+                {!featured.image && (
+                  <span style={{ position: "absolute", left: 18, top: 18, padding: "5px 10px", borderRadius: 999, background: "rgba(7,8,11,.72)", fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", color: "#bff5fa" }}>
+                    FEATURED
+                  </span>
+                )}
               </div>
               <div style={{ flex: 1, padding: "clamp(22px,3vw,30px)", display: "flex", flexDirection: "column", gap: 12 }}>
                 <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "#8fe9f2" }}>{featured.type}</span>
