@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
-import { adoptionAuth, useAdoptionSession, AdoptionApiError } from "@/lib/adoptionSession";
+import { adoptionAuth, useAdoptionSession, AdoptionApiError, consumeStaffRedirect } from "@/lib/adoptionSession";
 
 /** Where people land after signing in: their AI Adoption account page. */
 export const AFTER_LOGIN = "/adoption/account";
@@ -87,6 +87,11 @@ export function useSignedInRedirect() {
   const { status } = useAdoptionSession();
   useEffect(() => {
     if (status !== "signedIn") return;
+    // Business Admin staff: a full page load, so the Learning store picks up the session that came with this sign-in.
+    if (consumeStaffRedirect()) {
+      window.location.assign("/admin-adaption");
+      return;
+    }
     const next = new URLSearchParams(window.location.search).get("next");
     router.replace(next && next.startsWith("/adoption/") ? next : AFTER_LOGIN);
   }, [status, router]);

@@ -345,6 +345,27 @@ export class ContactsService {
     });
   }
 
+  /**
+   * The customer ticked the WhatsApp consent box on a website form: record opt-in with that as the evidence. Idempotent.
+   * A STOP always wins (a withdrawn contact is never silently re-opted-in by a form), and an existing GRANTED keeps its
+   * first evidence. Returns what the register says afterwards.
+   */
+  async registerWebsiteOptIn(input: { waId: string; name?: string | null; email?: string | null; company?: string | null; evidence: string }): Promise<"granted" | "withdrawn"> {
+    const now = this.clock();
+    const existing = await this.db.whatsappContact.findUnique({ where: { waId: input.waId } });
+    if (existing?.optInStatus === "WITHDRAWN") return "withdrawn";
+    if (existing?.optInStatus === "GRANTED") return "granted";
+    const evidence = `website_form: ${input.evidence}`.slice(0, 300);
+    if (existing) {
+      await this.db.whatsappContact.update({ where: { id: existing.id }, data: { optInStatus: "GRANTED", optInEvidence: evidence, optInAt: now, optOutAt: null, optStatusByUserId: null } });
+    } else {
+      await this.db.whatsappContact.create({
+        data: { waId: input.waId, name: (input.name || `+${input.waId}`).slice(0, 80), email: input.email ?? null, company: input.company ?? null, tags: [], source: "website_form", optInStatus: "GRANTED", optInEvidence: evidence, optInAt: now, optStatusByUserId: null },
+      });
+    }
+    return "granted";
+  }
+
   /** Consent guard for the send path: only an explicit WITHDRAWN blocks; GRANTED lets business-initiated templates through. */
   async consentFor(waId: string): Promise<"granted" | "withdrawn" | "unknown"> {
     const r = await this.db.whatsappContact.findUnique({ where: { waId } });

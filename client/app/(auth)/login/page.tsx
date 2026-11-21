@@ -9,6 +9,7 @@ import { OtpInput } from "../OtpInput";
 import { GoogleAuthButton } from "../GoogleAuthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, verifyOtp, resendOtp, clearError } from "@/store/authSlice";
+import { postLoginPath } from "@/lib/postLogin";
 
 const primaryBtn = [
   "w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl",
@@ -53,7 +54,7 @@ function LoginForm() {
       );
       return;
     }
-    router.push(redirect || "/direct2hire");
+    router.push(postLoginPath(user, redirect));
   }, [user, router, searchParams]);
 
   useEffect(() => {

@@ -28,6 +28,7 @@ const ACCESS_TOKEN_TTL = "1d";
 const MIN_PROFILE_AGE_YEARS = 10;
 
 import { emitAutomationEvent } from "@/modules/business-admin/automation.emit.js";
+import { ensureLearningUser, findAdoptionUser, matchCredentials, syncPassword, endAllSessions, isBcryptHash } from "./identity.service.js";
 
 async function notifyPabblyOnSignup(user: {
   firstName: string | null;
@@ -129,6 +130,19 @@ const issueAuthTokens = async (
 };
 
 /**
+ * Learning tokens for an already-authenticated person (used when an Adoption sign-in belongs to Business Admin staff, so they
+ * land in /admin-adaption without a second login). Returns null unless the account is active, verified and not deleted.
+ */
+export const issueLearningLogin = async (userId: string, device?: string) => {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, isDeleted: false, isActive: true },
+    include: { userRoleMappings: { include: { role: true } } },
+  });
+  if (!user || !(user.isEmailVerified || user.isPhoneVerified)) return null;
+  return issueAuthTokens(user, device);
+};
+
+/**
  * Existing email/password accounts created before profileCompleted existed
  * should not be forced through Google onboarding. Google-only accounts
  * (no password) must complete the dedicated profile step.
@@ -161,6 +175,11 @@ class AuthService {
     });
 
     if (existingUser?.isEmailVerified || existingUser?.isPhoneVerified) {
+      throw new ApiError("Email already registered", STATUS_CODES.CONFLICT);
+    }
+    // One identity per email: an AI Adoption account with a verified inbox already owns this email. Sign in with it instead.
+    const adoptionOwner = await findAdoptionUser(data.email);
+    if (adoptionOwner?.emailVerified) {
       throw new ApiError("Email already registered", STATUS_CODES.CONFLICT);
     }
 
@@ -383,10 +402,22 @@ class AuthService {
   }
 
   async login(data: LoginBody, device?: string) {
-    const user = await prisma.user.findFirst({
-      where: { email: data.email, isDeleted: false },
-      include: { userRoleMappings: { include: { role: true } } },
-    });
+    const loadUser = () =>
+      prisma.user.findFirst({
+        where: { email: data.email, isDeleted: false },
+        include: { userRoleMappings: { include: { role: true } } },
+      });
+    let user = await loadUser();
+
+    // Registered through AI Adoption only? That verified account is the same person: create the shared identity now
+    // (same email, same password hash, plain USER role) instead of asking them to register twice.
+    if (!user) {
+      const ad = await findAdoptionUser(data.email);
+      if (ad?.emailVerified && ad.isActive && isBcryptHash(ad.passwordHash)) {
+        await ensureLearningUser({ email: ad.email, fullName: ad.fullName, passwordHash: ad.passwordHash, emailVerified: true });
+        user = await loadUser();
+      }
+    }
 
     if (!user)
       throw new ApiError(
@@ -394,14 +425,29 @@ class AuthService {
         STATUS_CODES.NOT_FOUND,
       );
 
-    if (!user || !user.password) {
-      throw new ApiError(
-        "Invalid email or password",
-        STATUS_CODES.UNAUTHORIZED,
-      );
+    // Accounts made by the bootstrap script or Admin Management store the password exactly as typed; accounts made through
+    // registration or password reset store the sanitizer-altered text (the sanitizer only changes `<` and `>`). Accept either
+    // stored form, and nothing else: the typed text must match a hash, or the sanitized text must (as before).
+    let isPasswordValid = false;
+    if (user.password) {
+      if (data.rawPassword !== undefined && data.rawPassword !== data.password) {
+        isPasswordValid = await comparePassword(data.rawPassword, user.password);
+      }
+      if (!isPasswordValid) isPasswordValid = await comparePassword(data.password, user.password);
     }
-
-    const isPasswordValid = await comparePassword(data.password, user.password);
+    // Same person, password set in AI Adoption (accounts created separately before unification can differ): accept it when that
+    // Adoption account has a verified inbox. Nothing is overwritten; an empty hash on this side is filled, nothing more.
+    if (!isPasswordValid) {
+      const m = await matchCredentials(data.email, [data.password, ...(data.rawPassword ? [data.rawPassword] : [])]);
+      if (m?.via === "adoption") {
+        const ad = await findAdoptionUser(data.email);
+        if (ad?.emailVerified && ad.isActive) {
+          await ensureLearningUser({ email: ad.email, fullName: ad.fullName, passwordHash: ad.passwordHash, emailVerified: true });
+          user = (await loadUser()) ?? user;
+          isPasswordValid = true;
+        }
+      }
+    }
     if (!isPasswordValid) {
       throw new ApiError(
         "Invalid email or password",
@@ -665,9 +711,17 @@ class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await prisma.user.findFirst({
+    let user = await prisma.user.findFirst({
       where: { email, isDeleted: false },
     });
+    // Adoption-only person: the shared identity is created from their verified Adoption account so the reset works here too.
+    if (!user) {
+      const ad = await findAdoptionUser(email);
+      if (ad?.emailVerified && ad.isActive) {
+        await ensureLearningUser({ email: ad.email, fullName: ad.fullName, passwordHash: ad.passwordHash, emailVerified: true });
+        user = await prisma.user.findFirst({ where: { email, isDeleted: false } });
+      }
+    }
 
     if (!user)
       throw new ApiError(
@@ -729,6 +783,10 @@ class AuthService {
         data: { used: true },
       }),
     ]);
+
+    // One password for the whole identity: AI Adoption gets the same hash, and every session in every module ends.
+    await syncPassword(resetToken.user.email, hashed);
+    await endAllSessions(resetToken.user.email);
 
     return { message: "Password reset successfully. You can now log in." };
   }
