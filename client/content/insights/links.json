@@ -1,0 +1,46 @@
+{
+  "_readme": "Internal-link config for Insights articles. keywords: first mention of each term per article is linked (see lib/insightLinks.ts). related: slugs shown in the Related Articles block. cta: end-of-article call to action. Validate with `npm run check:links`.",
+  "keywords": [
+    { "term": "Recruitment CRM", "href": "/#demo-form", "caseSensitive": true },
+    { "term": "Script Automation", "href": "/#demo-form", "caseSensitive": true },
+    { "term": "HRMS", "href": "/#demo-form", "caseSensitive": true },
+    { "term": "OMS", "href": "/#demo-form", "caseSensitive": true },
+    { "term": "IMS", "href": "/#demo-form", "caseSensitive": true },
+    { "term": "CRM", "href": "/#demo-form", "caseSensitive": true },
+    { "term": "business automation", "href": "/#demo-form" },
+    { "term": "workforce management", "href": "/#demo-form" },
+    { "term": "inventory visibility", "href": "/#demo-form" },
+    { "term": "candidate management", "href": "/#demo-form" },
+    { "term": "repetitive tasks", "href": "/#demo-form" },
+    { "term": "customer relationships", "href": "/#demo-form" },
+    { "term": "order management", "href": "/#demo-form" },
+    { "term": "smarter operations", "href": "/#demo-form" },
+    { "term": "AI adoption", "href": "/#demo-form" }
+  ],
+  "related": {
+    "business-needs-smarter-operations-not-more-software": ["lead-to-delivery-connected-business-crm-ims-oms", "avatar-crm-turn-customer-relationships-into-business-opportunities", "where-ai-fits-into-business-automation"],
+    "lead-to-delivery-connected-business-crm-ims-oms": ["avatar-crm-turn-customer-relationships-into-business-opportunities", "avatar-ims-improve-inventory-visibility-and-control", "avatar-oms-bring-structure-to-the-entire-order-journey"],
+    "avatar-crm-turn-customer-relationships-into-business-opportunities": ["lead-to-delivery-connected-business-crm-ims-oms", "avatar-oms-bring-structure-to-the-entire-order-journey", "business-needs-smarter-operations-not-more-software"],
+    "avatar-hrms-make-workforce-management-more-efficient": ["avatar-recruitment-crm-organize-hiring-and-candidate-management", "avatar-script-automation-reduce-repetitive-business-tasks", "business-needs-smarter-operations-not-more-software"],
+    "avatar-ims-improve-inventory-visibility-and-control": ["avatar-oms-bring-structure-to-the-entire-order-journey", "lead-to-delivery-connected-business-crm-ims-oms", "avatar-crm-turn-customer-relationships-into-business-opportunities"],
+    "avatar-oms-bring-structure-to-the-entire-order-journey": ["avatar-ims-improve-inventory-visibility-and-control", "avatar-crm-turn-customer-relationships-into-business-opportunities", "lead-to-delivery-connected-business-crm-ims-oms"],
+    "avatar-recruitment-crm-organize-hiring-and-candidate-management": ["avatar-hrms-make-workforce-management-more-efficient", "avatar-script-automation-reduce-repetitive-business-tasks", "business-needs-smarter-operations-not-more-software"],
+    "avatar-script-automation-reduce-repetitive-business-tasks": ["where-ai-fits-into-business-automation", "avatar-hrms-make-workforce-management-more-efficient", "business-automation-and-ai-adoption-faqs"],
+    "where-ai-fits-into-business-automation": ["business-automation-and-ai-adoption-faqs", "avatar-script-automation-reduce-repetitive-business-tasks", "business-needs-smarter-operations-not-more-software"],
+    "business-automation-and-ai-adoption-faqs": ["where-ai-fits-into-business-automation", "building-a-business-ready-for-tomorrow", "avatar-script-automation-reduce-repetitive-business-tasks"],
+    "building-a-business-ready-for-tomorrow": ["business-needs-smarter-operations-not-more-software", "business-automation-and-ai-adoption-faqs", "lead-to-delivery-connected-business-crm-ims-oms"]
+  },
+  "cta": {
+    "business-needs-smarter-operations-not-more-software": { "heading": "See which tools fit your operations", "body": "Explore the Avatar tools or talk to us about where to start.", "primaryLabel": "Explore our solutions", "secondaryLabel": "Book a demo" },
+    "lead-to-delivery-connected-business-crm-ims-oms": { "heading": "Connect sales, stock and orders", "body": "See how CRM, IMS and OMS work together for your business.", "primaryLabel": "Explore CRM, IMS and OMS", "secondaryLabel": "Book a demo" },
+    "avatar-crm-turn-customer-relationships-into-business-opportunities": { "heading": "Ready to organise your sales pipeline?", "body": "See how CRM keeps leads, customers and follow-ups in one place.", "primaryLabel": "Explore CRM", "secondaryLabel": "Book a CRM demo" },
+    "avatar-hrms-make-workforce-management-more-efficient": { "heading": "Ready to simplify HR operations?", "body": "See how HRMS handles attendance, leave and employee records.", "primaryLabel": "Explore HRMS", "secondaryLabel": "Book an HRMS demo" },
+    "avatar-ims-improve-inventory-visibility-and-control": { "heading": "Want clearer stock visibility?", "body": "See how IMS tracks inventory and flags what to reorder.", "primaryLabel": "Explore IMS", "secondaryLabel": "Book an IMS demo" },
+    "avatar-oms-bring-structure-to-the-entire-order-journey": { "heading": "Want every order tracked end to end?", "body": "See how OMS follows an order from purchase to delivery.", "primaryLabel": "Explore OMS", "secondaryLabel": "Book an OMS demo" },
+    "avatar-recruitment-crm-organize-hiring-and-candidate-management": { "heading": "Ready to organise your hiring?", "body": "See how Recruitment CRM tracks candidates from application to offer.", "primaryLabel": "Explore Recruitment CRM", "secondaryLabel": "Book a Recruitment CRM demo" },
+    "avatar-script-automation-reduce-repetitive-business-tasks": { "heading": "Ready to automate repetitive work?", "body": "See how Script Automation runs routine steps on its own.", "primaryLabel": "Explore Script Automation", "secondaryLabel": "Book a Script Automation demo" },
+    "where-ai-fits-into-business-automation": { "heading": "Find where automation fits your business", "body": "Explore the tools, or book a demo to talk through your processes.", "primaryLabel": "Explore our solutions", "secondaryLabel": "Book a demo" },
+    "business-automation-and-ai-adoption-faqs": { "heading": "Still have questions?", "body": "Talk to us about your business and the right place to start.", "primaryLabel": "Explore our solutions", "secondaryLabel": "Book a demo" },
+    "building-a-business-ready-for-tomorrow": { "heading": "Start building for what's next", "body": "Explore the tools, or book a demo to plan your first step.", "primaryLabel": "Explore our solutions", "secondaryLabel": "Book a demo" }
+  }
+}

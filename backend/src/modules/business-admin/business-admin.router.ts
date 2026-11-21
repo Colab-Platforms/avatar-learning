@@ -2,8 +2,8 @@ import { Router, type NextFunction, type Request, type RequestHandler, type Resp
 import { auth } from "@/middlewares/authMiddleware.js";
 import { createLimiter } from "@/middlewares/rateLimiter.js";
 import { createBusinessAdminController } from "./business-admin.controller.js";
-import { requireBusinessAdmin, requireModule, type BusinessAccount, type BusinessRequest } from "./business-admin.access.js";
-import { MODULE_KEYS } from "./business-admin.modules.js";
+import { requireAccess, requireBusinessAdmin, requireModule, type BusinessAccount, type BusinessRequest } from "./business-admin.access.js";
+import { ACTIONS, MODULE_KEYS } from "./business-admin.modules.js";
 import { createAdminsController } from "./admins.controller.js";
 import type { AdminsService } from "./admins.service.js";
 import { createExtrasController, type ExtrasDeps } from "./whatsapp-extras.controller.js";
@@ -13,6 +13,8 @@ import type { BusinessAdminStore, IntegrationStatus } from "./business-admin.typ
 import { createAutomationController, type AutomationControllerDeps } from "./automation.controller.js";
 import type { InboxService } from "./inbox.service.js";
 import type { InboxStore } from "./inbox.types.js";
+import { createEmailAutomationController } from "../email-automation/email-automation.controller.js";
+import type { EmailAutomationService } from "../email-automation/email-automation.service.js";
 
 export interface BusinessAdminRouterDeps {
   store: BusinessAdminStore;
@@ -29,6 +31,8 @@ export interface BusinessAdminRouterDeps {
   extras?: ExtrasDeps;
   /** Template Manager + automation rules/history. When absent those routes do not exist. */
   automation?: AutomationControllerDeps;
+  /** Email Automation (Resend). Lives on the Integrations page, so it needs the "integrations" module. When absent those routes do not exist. */
+  email?: EmailAutomationService;
   /** Admin Management (Super Admin only). When absent the /admins routes do not exist. */
   admins?: AdminsService;
   /** Defaults to auth("ADMIN") (an ADMIN or SUPERADMIN token). Injectable for tests. */
@@ -49,7 +53,8 @@ export interface BusinessAdminRouterDeps {
 export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router {
   const c = createBusinessAdminController(deps);
   const router = Router();
-  router.use(deps.authMiddleware ?? auth("ADMIN"));
+  // ADMIN and SUPERADMIN (as before) plus BUSINESS_ADMIN staff. Learning Admin routes never list BUSINESS_ADMIN.
+  router.use(deps.authMiddleware ?? auth("ADMIN", "BUSINESS_ADMIN"));
 
   if (deps.accessMiddleware) {
     // An injected access check (tests / dev sandbox) may not compute modules; treat that as every delegable module
@@ -60,6 +65,7 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
         const r = req as BusinessRequest;
         if (!err && !r.businessModules) {
           r.businessModules = [...MODULE_KEYS];
+          r.businessPermissions = Object.fromEntries(MODULE_KEYS.map((m) => [m, [...ACTIONS]]));
           r.businessAccess ??= "allowlist";
         }
         next(err as never);
@@ -82,8 +88,9 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
   router.get("/whatsapp/conversations/:waId/messages", inbox, c.messages);
   router.post("/whatsapp/conversations/:waId/messages", inbox, sendLimiter, c.send);
   router.post("/whatsapp/messages/:messageId/retry", inbox, sendLimiter, c.retry);
-  router.post("/whatsapp/conversations/:waId/read", inbox, c.markRead);
-  router.put("/whatsapp/conversations/:waId/assignment", inbox, c.assign);
+  // Marking read is part of viewing, whatever the HTTP method says.
+  router.post("/whatsapp/conversations/:waId/read", requireAccess("view", "inbox"), c.markRead);
+  router.put("/whatsapp/conversations/:waId/assignment", requireAccess("manage", "inbox"), c.assign);
   router.get("/whatsapp/conversations/:waId/events", inbox, c.events);
   router.post("/whatsapp/conversations/:waId/notes", inbox, c.addNote);
 
@@ -103,7 +110,7 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
     router.get("/whatsapp/contacts/:id", inbox, x.getContact);
     router.patch("/whatsapp/contacts/:id", inbox, x.updateContact);
     router.delete("/whatsapp/contacts/:id", inbox, x.deleteContact);
-    router.put("/whatsapp/contacts/:id/opt-in", inbox, x.setOptIn);
+    router.put("/whatsapp/contacts/:id/opt-in", requireAccess("manage", "inbox"), x.setOptIn);
   }
 
   if (deps.clarity) {
@@ -140,8 +147,39 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
     router.post("/template-manager/example", tpl, writeLimiter, a.upload, a.uploadTemplateExample);
     router.get("/template-manager/templates/:id", tpl, a.getTemplate);
     router.put("/template-manager/templates/:id", tpl, writeLimiter, a.updateTemplate);
-    router.post("/template-manager/templates/:id/submit", tpl, writeLimiter, a.submitTemplate);
+    router.post("/template-manager/templates/:id/submit", requireAccess("manage", "automations", "inbox"), writeLimiter, a.submitTemplate);
     router.delete("/template-manager/templates/:id", tpl, writeLimiter, a.deleteTemplate);
+  }
+
+  if (deps.email) {
+    const e = createEmailAutomationController(deps.email);
+    const integ = requireModule("integrations");
+    const writeLimiter = deps.adminWriteLimiter ?? createLimiter({ windowMs: 60_000, max: 30, message: "Too many changes. Wait a moment and try again." });
+    // Real emails leave the building on these two: keep them on the stricter send limit.
+    const mailLimiter = deps.sendLimiter ?? createLimiter({ windowMs: 60_000, max: 10, message: "You are sending too fast. Wait a moment and try again." });
+    router.get("/email/status", integ, e.status);
+    router.post("/email/check", integ, writeLimiter, e.check);
+    router.get("/email/stats", integ, e.stats);
+    router.get("/email/templates", integ, e.listTemplates);
+    router.post("/email/templates", integ, writeLimiter, e.createTemplate);
+    router.post("/email/preview", integ, writeLimiter, e.preview);
+    router.get("/email/templates/:id", integ, e.getTemplate);
+    router.put("/email/templates/:id", integ, writeLimiter, e.updateTemplate);
+    router.delete("/email/templates/:id", integ, writeLimiter, e.archiveTemplate);
+    router.post("/email/templates/:id/test", integ, mailLimiter, e.sendTest);
+    router.get("/email/automations", integ, e.listAutomations);
+    router.post("/email/automations", integ, writeLimiter, e.createAutomation);
+    router.put("/email/automations/:id", integ, writeLimiter, e.updateAutomation);
+    router.put("/email/automations/:id/active", integ, writeLimiter, e.setAutomationActive);
+    router.delete("/email/automations/:id", integ, writeLimiter, e.deleteAutomation);
+    router.get("/email/recipients", integ, e.recipients);
+    router.post("/email/send", integ, mailLimiter, e.manualSend);
+    router.get("/email/scheduled", integ, e.scheduled);
+    router.post("/email/messages/:id/cancel", integ, writeLimiter, e.cancelScheduled);
+    router.post("/email/messages/:id/retry", integ, mailLimiter, e.retry);
+    // Records the admin's finding for an UNCONFIRMED email. It never sends anything.
+    router.post("/email/messages/:id/resolve", integ, writeLimiter, e.resolve);
+    router.get("/email/activity", integ, e.activity);
   }
 
   if (deps.admins) {
@@ -151,6 +189,7 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
     const writeLimiter = deps.adminWriteLimiter ?? createLimiter({ windowMs: 60_000, max: 30, message: "Too many changes. Wait a moment and try again." });
     router.get("/admins/meta", adminsOnly, a.meta);
     router.get("/admins", adminsOnly, a.list);
+    router.get("/admins/audit-log", adminsOnly, a.auditLog);
     router.post("/admins", adminsOnly, writeLimiter, a.create);
     router.patch("/admins/:id", adminsOnly, writeLimiter, a.update);
     router.post("/admins/:id/reset-password", adminsOnly, writeLimiter, a.resetPassword);

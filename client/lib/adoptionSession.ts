@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { API_BASE_URL, API_BASE_ERROR } from "./apiBase";
 
 /**
  * AI Adoption account session — separate from the learning platform's auth
@@ -29,7 +30,7 @@ export type AdoptionUser = {
 type State = { status: "loading" | "signedOut" | "signedIn"; user: AdoptionUser | null };
 
 const TOKEN_KEY = "adoption_session";
-const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/+$/, "");
+const base = API_BASE_URL.replace(/\/+$/, "");
 /** Backend API root (handles NEXT_PUBLIC_API_BASE_URL with or without a trailing /api). */
 export const API_ROOT = base.endsWith("/api") ? base : `${base}/api`;
 const API = `${API_ROOT}/adoption/auth`;
@@ -66,6 +67,7 @@ export class AdoptionApiError extends Error {
 }
 
 async function call<T>(path: string, body?: unknown, token?: string | null, root = API): Promise<T> {
+  if (API_BASE_ERROR) throw new AdoptionApiError(API_BASE_ERROR, 0); // Preview without a valid development API: refuse, never call production
   let res: Response;
   try {
     res = await fetch(root + path, {
@@ -83,9 +85,31 @@ async function call<T>(path: string, body?: unknown, token?: string | null, root
   return json.data as T;
 }
 
-type SessionData = { token: string; user: AdoptionUser };
-const signIn = ({ token, user }: SessionData) => {
+/** Business Admin staff (Super Admin / Business Admin) also receive a Learning session so /admin-adaption opens without a second login. */
+type LearningSession = { user: unknown; accessToken: string; refreshToken: string };
+type SessionData = { token: string; user: AdoptionUser; learning?: LearningSession };
+
+const LEARNING_KEY = "auth";
+const BRIDGE_KEY = "auth_via_adoption";
+let staffRedirect = false;
+/** True once, right after a staff sign-in: the caller should do a FULL page load to the admin panel (the Learning store reads its session at load). */
+export const consumeStaffRedirect = () => {
+  const v = staffRedirect;
+  staffRedirect = false;
+  return v;
+};
+
+const signIn = ({ token, user, learning }: SessionData) => {
   writeToken(token);
+  if (learning?.accessToken && learning.refreshToken) {
+    try {
+      localStorage.setItem(LEARNING_KEY, JSON.stringify({ user: learning.user, accessToken: learning.accessToken, refreshToken: learning.refreshToken }));
+      localStorage.setItem(BRIDGE_KEY, "1"); // remembers that this Learning session came from the Adoption sign-in
+      staffRedirect = true;
+    } catch {
+      /* storage unavailable: the Adoption session still works; staff can sign in at /login */
+    }
+  }
   set({ status: "signedIn", user });
 };
 
@@ -144,6 +168,19 @@ export const adoptionAuth = {
     const token = readToken();
     writeToken(null);
     set({ status: "signedOut", user: null });
+    // A Learning session that came from this Adoption sign-in ends with it (signing out must not leave an admin session behind).
+    try {
+      if (localStorage.getItem(BRIDGE_KEY) === "1") {
+        const stored = JSON.parse(localStorage.getItem(LEARNING_KEY) ?? "null") as { refreshToken?: string } | null;
+        localStorage.removeItem(LEARNING_KEY);
+        localStorage.removeItem(BRIDGE_KEY);
+        if (stored?.refreshToken) {
+          await fetch(`${API_ROOT}/auth/logout`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refreshToken: stored.refreshToken }) }).catch(() => {});
+        }
+      }
+    } catch {
+      /* storage unavailable */
+    }
     if (token) await call<null>("/logout", {}, token).catch(() => {}); // revoke on the server
   },
 };
@@ -241,6 +278,8 @@ export type DemoRequestInput = {
   tools: string[];
   customRequirement?: string;
   message?: string;
+  /** The visitor ticked "message me on WhatsApp": the only thing that lets the server send the WhatsApp confirmation. */
+  whatsappConsent?: boolean;
 };
 
 /** Book a Demo. Linked to the account only when sent with a valid session. */

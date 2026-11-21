@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { SITE } from "@/data/site";
 import { StoreProvider } from "@/store/StoreProvider";
@@ -11,18 +11,25 @@ import { AnalyticsConsent } from "@/components/ui/AnalyticsConsent";
 import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
 import { WebinarPopup } from "@/app/direct2hire/WebinarPopup";
 
-const inter = Inter({
-  subsets: ["latin"],
+// Self-hosted (SIL Open Font License): the same variable latin files Google serves, so the build never depends on fetching
+// fonts from Google (that fetch fails intermittently on Vercel builds: "Cannot read properties of null (reading '1')").
+const inter = localFont({
+  src: "./fonts/Inter-latin.woff2",
+  weight: "100 900",
+  style: "normal",
   variable: "--font-inter",
   display: "swap",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
 // Used only for the AI Adoption Ecosystem hero headline.
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const spaceGrotesk = localFont({
+  src: "./fonts/SpaceGrotesk-latin.woff2",
+  weight: "500 700",
+  style: "normal",
   variable: "--font-space-grotesk",
   display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export const metadata: Metadata = {

@@ -16,6 +16,7 @@ import { PrismaAutomationStore, type AutomationDb } from "./automation.store.js"
 import { TemplateManagerService } from "./template-manager.service.js";
 import { PrismaTemplateStore, type TemplateDb } from "./template-manager.store.js";
 import { withDevTestLogin } from "./devtest/devtest.router.js";
+import { emailAutomation } from "../email-automation/email-automation.runtime.js";
 
 const getIntegrations = (): IntegrationStatus => {
   const c = getWhatsappConfig();
@@ -35,7 +36,7 @@ const getIntegrations = (): IntegrationStatus => {
 };
 
 const inbox = new PrismaInboxStore(prisma as unknown as InboxDb);
-const contacts = new ContactsService(prisma as unknown as ContactsDb);
+export const contacts = new ContactsService(prisma as unknown as ContactsDb);
 // Config is read on every call, so enabling/disabling WhatsApp never needs a restart.
 const client = () => new WhatsappClient({ config: getWhatsappConfig() });
 const templates = new TemplatesService({ fetchTemplates: () => client().listTemplates() });
@@ -97,6 +98,7 @@ const realRouter = createBusinessAdminRouter({
   service,
   extras: { inbox, service, contacts, templates, media },
   automation: { automation, templates: templateManager, approved: templates },
+  email: emailAutomation,
   // Read per request so the token can be set or rotated without a restart.
   clarity: new ClarityService({ store: new PrismaSnapshotStore(prisma as unknown as ClarityDb), getConfig: () => readClarityConfig() }),
   getIntegrations,
@@ -104,9 +106,9 @@ const realRouter = createBusinessAdminRouter({
   findAccount: async (id) => {
     const [user, access] = await Promise.all([
       prisma.user.findUnique({ where: { id }, select: { email: true, isActive: true, isDeleted: true } }),
-      prisma.businessAdminAccess.findUnique({ where: { userId: id }, select: { modules: true } }),
+      prisma.businessAdminAccess.findUnique({ where: { userId: id }, select: { modules: true, permissions: true } }),
     ]);
-    return user ? { email: user.email, isActive: user.isActive, isDeleted: user.isDeleted, modules: access ? access.modules : null } : null;
+    return user ? { email: user.email, isActive: user.isActive, isDeleted: user.isDeleted, modules: access ? access.modules : null, permissions: access ? access.permissions : null } : null;
   },
   admins: new AdminsService({ db: prisma as unknown as AdminsDb }),
 });

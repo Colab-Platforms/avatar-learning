@@ -69,6 +69,18 @@ export const resendOtp = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
+/** The password as typed: the global sanitizer HTML-escapes `<` and `>` in req.body, the raw JSON text is untouched. */
+const rawPasswordOf = (req: Request): string | undefined => {
+    const raw = (req as Request & { rawBody?: string }).rawBody;
+    if (typeof raw !== "string" || raw.length === 0) return undefined;
+    try {
+        const v = (JSON.parse(raw) as { password?: unknown })?.password;
+        return typeof v === "string" && v.length > 0 ? v : undefined;
+    } catch {
+        return undefined;
+    }
+};
+
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
         const { error, value } = validateLoginSchema(req.body);
@@ -77,7 +89,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
         const device = req.headers["user-agent"];
-        const result = await authService.login(value, device);
+        const result = await authService.login({ ...value, rawPassword: rawPasswordOf(req) }, device);
         if ("requiresVerification" in result) {
             sendResponse(res, true, { requiresVerification: true }, result.message, STATUS_CODES.OK);
             return;

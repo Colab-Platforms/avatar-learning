@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
+import { checkApiBase, API_BASE_VAR } from "./lib/apiBaseCheck";
+
+// Vercel Preview builds must have their own development API. Fail the BUILD (clearly) rather than ship a Preview that
+// would silently call the production backend. Production, local dev and non-Vercel builds are not affected.
+const apiCheck = checkApiBase(process.env.VERCEL_ENV, process.env[API_BASE_VAR]);
+if (!apiCheck.ok) {
+  throw new Error(`\n\n[avatar-learning] Preview build blocked: ${apiCheck.reason}\n`);
+}
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Lets the browser bundle know which Vercel environment it was built for (see lib/apiBase.ts).
+  env: { NEXT_PUBLIC_DEPLOY_ENV: process.env.VERCEL_ENV ?? "" },
   // /home serves the revamped homepage exported from the design tool, as-is
   // (static files in public/home-revamp). beforeFiles so it wins over app routes.
   // The AI Adoption Ecosystem page (/) and Avatar Learning (/learning) are untouched.

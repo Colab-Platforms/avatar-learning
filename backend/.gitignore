@@ -5,3 +5,5 @@ dist
 build
 *.md
 !README.md
+
+.env.local-test

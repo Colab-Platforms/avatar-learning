@@ -11,7 +11,7 @@ let app: InboxApp;
 
 const newAdmin = (over: Record<string, unknown> = {}) => ({ name: "Rohan Mehta", email: "Rohan@Example.com", password: GOOD, roleKey: "SUPPORT_AGENT", ...over });
 const create = (body: Record<string, unknown> = newAdmin()) => asSuper(app, "POST", "/admins", body);
-const adminToken = (id: string) => tokenFor("ADMIN", id);
+const adminToken = (id: string) => tokenFor("BUSINESS_ADMIN", id);
 
 before(async () => {
   app = await startInboxApp({ env: {} });
@@ -96,9 +96,9 @@ describe("Admin Management is Super Admin only (server-enforced)", () => {
     assert.equal((await create(newAdmin({ email: "s1@example.com", roleKey: "SUPERADMIN" }))).status, 400);
     const r = await create(newAdmin({ email: "s2@example.com", role: "SUPERADMIN", roles: ["SUPERADMIN"], isSuperAdmin: true }));
     assert.equal(r.status, 201);
-    assert.equal(r.json.data.role, "ADMIN");
+    assert.equal(r.json.data.role, "BUSINESS_ADMIN");
     const row = app.db.users.find((u) => u.email === "s2@example.com")!;
-    assert.deepEqual(row.roles, ["ADMIN"]);
+    assert.deepEqual(row.roles, ["BUSINESS_ADMIN"]);
   });
 
   it("a deactivated Super Admin loses access immediately, whatever their token says", async () => {
@@ -115,7 +115,7 @@ describe("creating admins", () => {
     const d = r.json.data;
     assert.equal(d.email, "rohan@example.com");
     assert.equal(d.name, "Rohan Mehta");
-    assert.equal(d.role, "ADMIN");
+    assert.equal(d.role, "BUSINESS_ADMIN");
     assert.equal(d.roleKey, "SUPPORT_AGENT");
     assert.deepEqual(d.modules, ["dashboard", "inbox", "customers"]);
     assert.equal(d.isActive, true);
@@ -237,8 +237,8 @@ describe("creating admins", () => {
     assert.equal((await create(newAdmin({ email: "ROHAN@example.com" }))).status, 409);
   });
 
-  it("fails cleanly if the ADMIN role is missing from the database", async () => {
-    const saved = app.db.rolesTable.splice(1, 1);
+  it("fails cleanly if the BUSINESS_ADMIN role is missing from the database", async () => {
+    const saved = app.db.rolesTable.splice(app.db.rolesTable.findIndex((r) => r.name === "BUSINESS_ADMIN"), 1);
     try {
       const r = await create();
       assert.equal(r.status, 503);
@@ -398,7 +398,7 @@ describe("editing permissions, activation and passwords", () => {
 
   it("an admin cannot be promoted to Super Admin through any field", async () => {
     await patch({ role: "SUPERADMIN", roles: ["SUPERADMIN"], roleKey: "MANAGER" });
-    assert.deepEqual(app.db.users.find((u) => u.id === id)!.roles, ["ADMIN"]);
+    assert.deepEqual(app.db.users.find((u) => u.id === id)!.roles, ["BUSINESS_ADMIN"]);
     assert.equal((await patch({ roleKey: "SUPERADMIN" })).status, 400);
   });
 

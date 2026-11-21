@@ -22,6 +22,7 @@ import webinarRoutes from "./modules/webinar/webinar.route.js";
 import adminWebinarRoutes from "./modules/webinar/admin.route.js";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.route.js";
 import businessAdminRoutes from "./modules/business-admin/business-admin.route.js";
+import emailAutomationPublicRoutes from "./modules/email-automation/email-automation.public.route.js";
 import adoptionAuthRoutes from "./modules/adoption/adoption.route.js";
 import { accountRouter as adoptionAccountRoutes, adminRouter as adminAdoptionRoutes } from "./modules/adoption/adoption.access.js";
 import { profileRouter as adoptionProfileRoutes, demoRouter as adoptionDemoRoutes, adminDemoRouter as adminAdoptionDemoRoutes } from "./modules/adoption/adoption.profile.js";
@@ -59,6 +60,8 @@ router.use("/webinar", webinarRoutes);
 router.use("/admin", adminWebinarRoutes);
 router.use("/whatsapp", whatsappRoutes);
 router.use("/business-admin", businessAdminRoutes);
+// Public: Resend webhook (signature-verified) and the signed unsubscribe link.
+router.use("/email-automation", emailAutomationPublicRoutes);
 router.use("/admin", adminAdoptionRoutes); // AI Adoption tool access (admin only)
 router.use("/admin", adminAdoptionDemoRoutes); // AI Adoption demo requests (admin only)
 

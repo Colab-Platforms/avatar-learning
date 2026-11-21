@@ -1,9 +1,10 @@
 import axios from "axios";
+import { API_BASE_URL, API_BASE_ERROR } from "./apiBase";
 
 const STORAGE_KEY = "auth";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -16,6 +17,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   refreshPromise = (async () => {
     try {
+      if (API_BASE_ERROR) return null; // Preview without a valid development API: never call anything
       const auth = localStorage.getItem(STORAGE_KEY);
       if (!auth) return null;
 
@@ -61,6 +63,8 @@ async function refreshAccessToken(): Promise<string | null> {
 
 apiClient.interceptors.request.use(
   (config) => {
+    // Preview deployment with a missing/invalid/production API URL: refuse the request instead of contacting the wrong server.
+    if (API_BASE_ERROR) return Promise.reject(new Error(API_BASE_ERROR));
     if (typeof window !== "undefined") {
       try {
         const auth = localStorage.getItem(STORAGE_KEY);

@@ -9,6 +9,7 @@ import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 import compression from "compression";
 import { startSessionCleanupJob } from "./jobs/sessionCleanup.job.js";
 import { startAutomationWorker } from "./jobs/automation.job.js";
+import { startEmailWorker } from "./jobs/email.job.js";
 import { startPartnerCommissionJob } from "./jobs/partnerCommission.job.js";
 const app = express();
 dotenv.config();
@@ -68,7 +69,15 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  // Which database this process uses (host and name only, never credentials), so a wrong target is obvious at a glance.
+  try {
+    const u = new URL(process.env.DATABASE_URL ?? "");
+    console.log(`Database: ${u.hostname}${u.port ? `:${u.port}` : ""}${u.pathname}`);
+  } catch {
+    console.log("Database: DATABASE_URL is not set or not a valid URL");
+  }
   startSessionCleanupJob();
   startPartnerCommissionJob();
   startAutomationWorker();
+  startEmailWorker();
 });

@@ -1,6 +1,6 @@
 import prisma from "../../prisma.js";
 
-const roles = ["USER", "ADMIN", "SUPERADMIN"];
+const roles = ["USER", "ADMIN", "SUPERADMIN", "BUSINESS_ADMIN"];
 
 async function main() {
     console.log("Seeding roles...");

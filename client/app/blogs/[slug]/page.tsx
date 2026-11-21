@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InsightsShell } from "@/components/ai-ecosystem/InsightsShell";
 import { InsightMarkdown } from "@/components/ai-ecosystem/InsightMarkdown";
+import { InsightArticleFooter } from "@/components/ai-ecosystem/InsightArticleFooter";
+import { seedUsedTerms } from "@/lib/insightLinks";
 import { getAllInsights, getInsightBySlug } from "@/lib/insights";
 
 // Only slugs from the registry exist; anything else is a 404 (works on direct load and refresh).
@@ -44,6 +46,8 @@ export default async function InsightArticlePage({ params }: Props) {
   const { slug } = await params;
   const article = getInsightBySlug(slug);
   if (!article) notFound();
+  // One shared set so each keyword is auto-linked at most once across the overview and body.
+  const used = seedUsedTerms(article.overview, article.body);
 
   return (
     <InsightsShell>
@@ -81,12 +85,14 @@ export default async function InsightArticlePage({ params }: Props) {
           <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "#98a1ac" }}>
             Overview
           </span>
-          <InsightMarkdown>{article.overview}</InsightMarkdown>
+          <InsightMarkdown used={used} slug={article.slug}>{article.overview}</InsightMarkdown>
         </section>
 
         <div style={{ marginTop: 8 }}>
-          <InsightMarkdown>{article.body}</InsightMarkdown>
+          <InsightMarkdown used={used} slug={article.slug}>{article.body}</InsightMarkdown>
         </div>
+
+        <InsightArticleFooter slug={article.slug} all={getAllInsights()} />
 
         <div style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,.08)" }}>
           <Link href="/blogs" style={backLink}>

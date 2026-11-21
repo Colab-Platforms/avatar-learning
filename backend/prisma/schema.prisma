@@ -1741,12 +1741,33 @@ model BusinessAdminAccess {
   roleKey String   @map("role_key")
   // Module keys this admin may use: dashboard, inbox, leads, customers, agents, automations, integrations, analytics, team, settings
   modules String[]
+  // Per-module actions: { "inbox": ["view","create","edit","manage"], ... } (view | create | edit | delete | manage).
+  // NULL = an older row: every action on the modules listed above.
+  permissions Json?
 
   createdByUserId String?   @map("created_by_user_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime? @updatedAt @map("updated_at")
 
   @@map("business_admin_access")
+}
+
+// Who changed which Business Admin account, and how. Never contains passwords or hashes. Target email is copied so the
+// history stays readable even if the account is later removed.
+model BusinessAdminAuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?  @map("actor_user_id")
+  actorEmail   String?  @map("actor_email")
+  // ADMIN_CREATED | PERMISSIONS_CHANGED | ADMIN_RENAMED | ADMIN_ACTIVATED | ADMIN_DEACTIVATED | PASSWORD_RESET | SUPERADMIN_BOOTSTRAPPED
+  action       String
+  targetUserId String?  @map("target_user_id")
+  targetEmail  String?  @map("target_email")
+  details      Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("business_admin_audit_logs")
 }
 
 enum WhatsappOptInStatus {
@@ -1947,6 +1968,10 @@ model AdoptionUser {
   companySize   String?  @map("company_size")
   /// New email waiting for its verification code; the email only changes once confirmed.
   pendingEmail  String?  @map("pending_email")
+  /// Consent for promotional email. Defaults to false: no promotional email goes out without it.
+  marketingEmailOptIn Boolean   @default(false) @map("marketing_email_opt_in")
+  /// Set when the person unsubscribed (link in the email, or a spam complaint). Blocks all promotional email.
+  emailUnsubscribedAt DateTime? @map("email_unsubscribed_at")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -2072,4 +2097,146 @@ model AdoptionDemoRequest {
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@map("adoption_demo_requests")
+}
+
+// ─── Email Automation (Avatar AI Adoption) ───────────────────────────────────
+// Sends through the existing Resend client. email_messages is the queue, the activity log and the execution history.
+enum EmailTemplateType {
+  TRANSACTIONAL
+  PROMOTIONAL
+}
+
+enum EmailTemplateStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum EmailTrigger {
+  USER_REGISTERED
+  FOLLOW_UP
+  SCHEDULED_EMAIL
+  MANUAL_SEND
+}
+
+enum EmailMessageStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  BOUNCED
+  COMPLAINED
+  FAILED
+  CANCELLED
+  SKIPPED
+  /// The provider may or may not have accepted it. Never retried automatically; an admin must reconcile it.
+  UNCONFIRMED
+}
+
+model EmailTemplate {
+  id          String              @id @default(cuid())
+  name        String
+  subject     String
+  htmlBody    String              @map("html_body")
+  textBody    String?             @map("text_body")
+  type        EmailTemplateType   @default(TRANSACTIONAL)
+  status      EmailTemplateStatus @default(ACTIVE)
+  createdById String?             @map("created_by_id")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @default(now()) @updatedAt @map("updated_at")
+
+  automations EmailAutomation[]
+  messages    EmailMessage[]
+
+  @@index([status])
+  @@map("email_templates")
+}
+
+model EmailAutomation {
+  id           String        @id @default(cuid())
+  name         String
+  trigger      EmailTrigger
+  templateId   String        @map("template_id")
+  template     EmailTemplate @relation(fields: [templateId], references: [id])
+  /// FOLLOW_UP only: the real application event the delay counts from (USER_REGISTERED or DEMO_REQUESTED).
+  anchorEvent  String?       @map("anchor_event")
+  /// USER_REGISTERED / FOLLOW_UP: minutes after the event.
+  delayMinutes Int           @default(0) @map("delay_minutes")
+  /// SCHEDULED_EMAIL only: when to send (UTC). Goes to every active, verified Adoption user the template's consent rules allow.
+  scheduledAt  DateTime?     @map("scheduled_at")
+  /// SCHEDULED_EMAIL only: set once the audience was queued, so it can never be queued twice.
+  firedAt      DateTime?     @map("fired_at")
+  /// SCHEDULED_EMAIL only: set when the time passed by more than the grace period without running.
+  expiredAt    DateTime?     @map("expired_at")
+  isActive     Boolean       @default(false) @map("is_active")
+  createdById  String?       @map("created_by_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  messages EmailMessage[]
+
+  @@index([trigger, isActive])
+  @@map("email_automations")
+}
+
+model EmailMessage {
+  id            String             @id @default(cuid())
+  toEmail       String             @map("to_email")
+  userId        String?            @map("user_id")
+  templateId    String?            @map("template_id")
+  template      EmailTemplate?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  automationId  String?            @map("automation_id")
+  automation    EmailAutomation?   @relation(fields: [automationId], references: [id], onDelete: SetNull)
+  trigger       EmailTrigger
+  subject       String
+  status        EmailMessageStatus @default(QUEUED)
+  /// Not sent before this moment (UTC). Also the retry time after a temporary failure.
+  scheduledFor  DateTime           @default(now()) @map("scheduled_for")
+  attempts      Int                @default(0)
+  /// Bumped by an explicit manual retry so it gets a fresh Resend idempotency key (automatic retries reuse the same key).
+  retryEpoch    Int                @default(0) @map("retry_epoch")
+  lockedAt      DateTime?          @map("locked_at")
+  /// One row per (automation, recipient, event) or manual-send window: a second insert is rejected by the database.
+  dedupeKey     String             @unique @map("dedupe_key")
+  resendId      String?            @unique @map("resend_id")
+  sentAt        DateTime?          @map("sent_at")
+  deliveredAt   DateTime?          @map("delivered_at")
+  failureReason String?            @map("failure_reason")
+  /// The exact content queued (rendered at queue time). Retries and crash recovery send exactly this. Cleared once SENT.
+  bodyHtml      String?            @map("body_html")
+  bodyText      String?            @map("body_text")
+  listUnsubscribe String?          @map("list_unsubscribe")
+  /// SHA-256 of recipient + subject + html + text + unsubscribe header. Checked before every send.
+  contentHash   String?            @map("content_hash")
+  /// Template type when queued. Consent is checked against this, so a later relabel cannot weaken it.
+  templateType  EmailTemplateType  @default(TRANSACTIONAL) @map("template_type")
+  /// True once any attempt had an outcome we cannot interpret (timeout, network, 5xx, in-flight conflict).
+  maybeAccepted Boolean            @default(false) @map("maybe_accepted")
+  firstAttemptAt DateTime?         @map("first_attempt_at")
+  isTest        Boolean            @default(false) @map("is_test")
+  createdById   String?            @map("created_by_id")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at")
+
+  @@index([status, scheduledFor])
+  @@index([automationId, createdAt])
+  @@index([createdAt])
+  @@map("email_messages")
+}
+
+/// Resend delivery events that arrived before their message reached SENT (or for emails this module did not send).
+/// Applied as soon as the message is known; unmatched ones are pruned. svix_id makes provider retries harmless.
+model EmailWebhookEvent {
+  id         String    @id @default(cuid())
+  svixId     String    @unique @map("svix_id")
+  resendId   String    @map("resend_id")
+  type       String
+  detail     String?
+  occurredAt DateTime  @map("occurred_at")
+  receivedAt DateTime  @default(now()) @map("received_at")
+  appliedAt  DateTime? @map("applied_at")
+
+  @@index([resendId])
+  @@index([receivedAt])
+  @@map("email_webhook_events")
 }

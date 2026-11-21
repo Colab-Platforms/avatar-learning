@@ -89,7 +89,7 @@ export function createBusinessAdminController({ store, inbox, service, getIntegr
       sendResponse(
         res,
         true,
-        { role: a.user?.role, access: a.businessAccess ?? null, userId: a.user?.id, modules: a.businessModules ?? [], isSuperAdmin: a.businessIsSuper === true },
+        { role: a.user?.role, access: a.businessAccess ?? null, userId: a.user?.id, modules: a.businessModules ?? [], permissions: a.businessPermissions ?? {}, isSuperAdmin: a.businessIsSuper === true },
         "OK",
       );
     },

@@ -257,6 +257,8 @@ export function DemoRequestForm({ prefill, initialTools = [] }: { prefill?: Pref
         tools: tools.map((t) => SLUG_TO_KEY[t]).filter(Boolean),
         customRequirement: tools.includes("custom") ? val("customRequirements") : undefined,
         message: val("message") || undefined,
+        // Consent only counts with a phone number; the server records it as opt-in evidence.
+        whatsappConsent: f.get("whatsappConsent") === "on" && !!val("phone"),
       });
       // Only after the server has saved it: hand the confirmation to /thank-you.
       saveDemoConfirmation({ id: saved.id, tools: saved.tools, createdAt: saved.createdAt });
@@ -368,6 +370,12 @@ export function DemoRequestForm({ prefill, initialTools = [] }: { prefill?: Pref
                   onFocus={onFocusGlow}
                   onBlur={onBlurGlow}
                 />
+              </label>
+              <label style={{ gridColumn: "1 / -1", display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, lineHeight: 1.45, color: "#c3cad2", cursor: "pointer" }}>
+                <input type="checkbox" name="whatsappConsent" style={{ marginTop: 3, width: 16, height: 16, flex: "none" }} />
+                <span>
+                  Send me a WhatsApp confirmation about this demo on the phone number above. <span style={{ color: "#8a939e" }}>(optional; reply STOP any time to opt out)</span>
+                </span>
               </label>
               {submitError && (
                 <div role="alert" style={{ gridColumn: "1 / -1", borderRadius: 12, padding: "12px 14px", fontSize: 14, lineHeight: 1.45, color: ERROR_COLOR, border: "1px solid rgba(255,138,138,.3)", background: "rgba(255,138,138,.06)" }}>

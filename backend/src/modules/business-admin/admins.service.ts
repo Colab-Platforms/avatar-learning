@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { businessAdminEmails } from "./business-admin.access.js";
-import { ADMINS_MODULE, MODULE_KEYS, modulesForRole, normalizeModules, type RoleKey } from "./business-admin.modules.js";
+import { ACTIONS, ADMINS_MODULE, MODULE_KEYS, modulesOfPermissions, normalizePermissions, permissionsForRole, permissionsFromModules, type Action, type PermissionMap, type RoleKey } from "./business-admin.modules.js";
 
 /** Cost 12 for new admin passwords (the shared helper in utils/auth.ts uses 8). Injectable so tests stay fast. */
 export const ADMIN_BCRYPT_COST = 12;
@@ -33,6 +33,12 @@ export interface AdminsDb {
     findMany(args?: any): Promise<any[]>;
     upsert(args: any): Promise<any>;
   };
+  /** Append-only history of account and permission changes. */
+  businessAdminAuditLog: {
+    create(args: any): Promise<any>;
+    findMany(args?: any): Promise<any[]>;
+    count(args?: any): Promise<number>;
+  };
   session: { deleteMany(args: any): Promise<{ count: number }> };
   $transaction<T>(fn: (tx: AdminsDb) => Promise<T>): Promise<T>;
 }
@@ -42,17 +48,26 @@ export interface AdminDto {
   name: string;
   email: string;
   isActive: boolean;
-  /** Learning-platform role: ADMIN or SUPERADMIN. */
-  role: "ADMIN" | "SUPERADMIN";
+  /** Platform role: BUSINESS_ADMIN (staff created here), ADMIN (older accounts) or SUPERADMIN. */
+  role: "BUSINESS_ADMIN" | "ADMIN" | "SUPERADMIN";
   roleKey: RoleKey | null;
   modules: string[];
+  /** What this person may do in each module. */
+  permissions: Record<string, Action[]>;
   /** Where the Business Admin access comes from. */
   source: "superadmin" | "permissions" | "allowlist" | "none";
   createdAt: string;
 }
 
+/** The platform role given to staff created here. It is accepted by Business Admin only, never by Learning Admin. */
+export const STAFF_ROLE = "BUSINESS_ADMIN";
 const SUPER_NAMES = ["SUPERADMIN", "SUPER_ADMIN"];
-const ADMIN_ROLE_NAMES = ["ADMIN", ...SUPER_NAMES];
+const ADMIN_ROLE_NAMES = ["ADMIN", STAFF_ROLE, ...SUPER_NAMES];
+
+export type AuditAction = "ADMIN_CREATED" | "PERMISSIONS_CHANGED" | "ADMIN_RENAMED" | "ADMIN_ACTIVATED" | "ADMIN_DEACTIVATED" | "PASSWORD_RESET" | "SUPERADMIN_BOOTSTRAPPED";
+
+/** Only these keys ever reach the audit log: nothing secret can be added by accident. */
+const safeDetails = (d: Record<string, unknown>): Record<string, unknown> => JSON.parse(JSON.stringify(d, (k, v) => (/pass|hash|secret|token/i.test(k) ? undefined : v)));
 
 const splitName = (name: string): { firstName: string; lastName: string | null } => {
   const parts = name.trim().split(/\s+/);
@@ -79,6 +94,10 @@ export function passwordProblem(password: unknown, ctx: { email?: string; name?:
   return null;
 }
 
+/** Per-action permissions of an access row; older rows (no permissions column value) mean every action on their modules. */
+export const effectivePermissions = (access: { modules?: unknown; permissions?: unknown }): PermissionMap =>
+  access.permissions ? normalizePermissions(access.permissions) : permissionsFromModules(access.modules);
+
 export interface AdminsServiceDeps {
   db: AdminsDb;
   env?: Record<string, string | undefined>;
@@ -101,35 +120,43 @@ export class AdminsService {
     const isSuper = roles.some((r) => SUPER_NAMES.includes(r));
     const allowlisted = businessAdminEmails(this.deps.env ?? process.env).includes(String(u.email).toLowerCase());
     let source: AdminDto["source"] = "none";
-    let modules: string[] = [];
+    let permissions: Record<string, Action[]> = {};
+    const everything = (keys: readonly string[]) => Object.fromEntries(keys.map((m) => [m, [...ACTIONS]])) as Record<string, Action[]>;
     if (isSuper) {
       source = "superadmin";
-      modules = [...MODULE_KEYS, ADMINS_MODULE];
+      permissions = everything([...MODULE_KEYS, ADMINS_MODULE]);
     } else if (access) {
       source = "permissions";
-      modules = normalizeModules(access.modules);
-    } else if (allowlisted) {
+      permissions = effectivePermissions(access) as Record<string, Action[]>;
+    } else if (allowlisted && roles.includes("ADMIN")) {
       source = "allowlist";
-      modules = [...MODULE_KEYS];
+      permissions = everything(MODULE_KEYS);
     }
+    const modules = Object.keys(permissions);
     return {
       id: u.id,
       name: fullName(u),
       email: u.email,
       isActive: u.isActive,
-      role: isSuper ? "SUPERADMIN" : "ADMIN",
+      role: isSuper ? "SUPERADMIN" : roles.includes(STAFF_ROLE) ? "BUSINESS_ADMIN" : "ADMIN",
       roleKey: isSuper ? null : (access?.roleKey ?? null),
       modules,
+      permissions,
       source,
       createdAt: new Date(u.createdAt).toISOString(),
     };
   }
 
-  async list(opts: { q?: string; page: number; pageSize: number }): Promise<{ items: AdminDto[]; total: number }> {
+  async list(opts: { q?: string; page: number; pageSize: number; status?: "active" | "inactive"; module?: string }): Promise<{ items: AdminDto[]; total: number }> {
     const q = opts.q?.trim();
+    // Module filter: people granted that module (a Super Admin has every module, so they are always included).
+    let moduleIds: string[] | null = null;
+    if (opts.module) moduleIds = (await this.db.businessAdminAccess.findMany({ where: { modules: { has: opts.module } } })).map((r) => r.userId);
     const where: any = {
       isDeleted: false,
+      ...(opts.status ? { isActive: opts.status === "active" } : {}),
       userRoleMappings: { some: { role: { name: { in: ADMIN_ROLE_NAMES } } } },
+      ...(moduleIds ? { id: { in: moduleIds } } : {}),
       ...(q
         ? {
             OR: [
@@ -155,7 +182,7 @@ export class AdminsService {
     return { items: users.map((u) => this.toDto(u, byUser.get(u.id))), total };
   }
 
-  async create(input: { name: string; email: string; password: string; roleKey: RoleKey; modules?: unknown }, actorId: string): Promise<AdminDto> {
+  async create(input: { name: string; email: string; password: string; roleKey: RoleKey; modules?: unknown; permissions?: unknown }, actorId: string): Promise<AdminDto> {
     const email = input.email.trim().toLowerCase();
     const problem = passwordProblem(input.password, { email, name: input.name });
     if (problem) throw new AdminError("WEAK_PASSWORD", problem, STATUS_CODES.BAD_REQUEST);
@@ -165,16 +192,17 @@ export class AdminsService {
     if (existing) throw new AdminError("EMAIL_EXISTS", "An account with this email already exists.", STATUS_CODES.CONFLICT);
 
     // Only the ADMIN role can be created here. Super Admin accounts are not creatable through this API at all.
-    const role = await this.db.role.findUnique({ where: { name: "ADMIN" } });
-    if (!role) throw new AdminError("ROLE_MISSING", "The ADMIN role is not set up in this database.", STATUS_CODES.SERVICE_UNAVAILABLE);
+    const role = await this.db.role.findUnique({ where: { name: STAFF_ROLE } });
+    if (!role) throw new AdminError("ROLE_MISSING", "The BUSINESS_ADMIN role is not set up in this database (run the roles seed).", STATUS_CODES.SERVICE_UNAVAILABLE);
 
-    const modules = modulesForRole(input.roleKey, input.modules);
+    const permissions = permissionsForRole(input.roleKey, input.permissions ?? input.modules);
+    const modules = modulesOfPermissions(permissions);
     const passwordHash = await this.hash(input.password);
     const { firstName, lastName } = splitName(input.name);
 
     let created: { user: any; access: any };
     try {
-      created = await this.createInTransaction(email, input, role.id, modules, passwordHash, firstName, lastName, actorId);
+      created = await this.createInTransaction(email, input, role.id, modules, permissions, passwordHash, firstName, lastName, actorId);
     } catch (err) {
       // Two creates for the same email racing past the check above: the unique index decides, the loser gets a clean 409.
       if (typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002") {
@@ -182,7 +210,28 @@ export class AdminsService {
       }
       throw err;
     }
+    await this.audit(actorId, "ADMIN_CREATED", { id: created.user.id, email }, { roleKey: input.roleKey, permissions });
     return this.toDto(created.user, created.access);
+  }
+
+  /** Best effort and secret-free: a logging failure never blocks or undoes the change that was already made. */
+  private async audit(actorId: string, action: AuditAction, target: { id: string; email: string }, details: Record<string, unknown> = {}): Promise<void> {
+    try {
+      const actor = await this.db.user.findFirst({ where: { id: actorId, isDeleted: false } });
+      await this.db.businessAdminAuditLog.create({ data: { actorUserId: actorId, actorEmail: actor?.email ?? null, action, targetUserId: target.id, targetEmail: target.email, details: safeDetails(details) } });
+    } catch {
+      /* the audit write must never expose or break the account change */
+    }
+  }
+
+  /** Newest first. Super Admin only (the route enforces it). */
+  async auditLog(opts: { page: number; pageSize: number; targetUserId?: string }): Promise<{ items: any[]; total: number }> {
+    const where = opts.targetUserId ? { targetUserId: opts.targetUserId } : {};
+    const [rows, total] = await Promise.all([
+      this.db.businessAdminAuditLog.findMany({ where, orderBy: { createdAt: "desc" }, skip: (opts.page - 1) * opts.pageSize, take: opts.pageSize }),
+      this.db.businessAdminAuditLog.count({ where }),
+    ]);
+    return { items: rows.map((r) => ({ id: r.id, at: new Date(r.createdAt).toISOString(), actorEmail: r.actorEmail, action: r.action, targetEmail: r.targetEmail, targetUserId: r.targetUserId, details: r.details ?? null })), total };
   }
 
   private createInTransaction(
@@ -190,6 +239,7 @@ export class AdminsService {
     input: { roleKey: RoleKey },
     roleId: string,
     modules: string[],
+    permissions: PermissionMap,
     passwordHash: string,
     firstName: string,
     lastName: string | null,
@@ -213,8 +263,8 @@ export class AdminsService {
       });
       const access = await tx.businessAdminAccess.upsert({
         where: { userId: user.id },
-        create: { userId: user.id, roleKey: input.roleKey, modules, createdByUserId: actorId },
-        update: { roleKey: input.roleKey, modules },
+        create: { userId: user.id, roleKey: input.roleKey, modules, permissions, createdByUserId: actorId },
+        update: { roleKey: input.roleKey, modules, permissions },
       });
       return { user, access };
     });
@@ -231,13 +281,13 @@ export class AdminsService {
     if (roles.some((r) => SUPER_NAMES.includes(r))) {
       throw new AdminError("PROTECTED", "Super Admin accounts cannot be changed here.", STATUS_CODES.FORBIDDEN);
     }
-    if (!roles.includes("ADMIN")) throw new AdminError("NOT_AN_ADMIN", "This account is not an admin.", STATUS_CODES.UNPROCESSIBLE_ENTITY);
+    if (!roles.includes("ADMIN") && !roles.includes(STAFF_ROLE)) throw new AdminError("NOT_AN_ADMIN", "This account is not an admin.", STATUS_CODES.UNPROCESSIBLE_ENTITY);
     return user;
   }
 
   async update(
     id: string,
-    patch: { name?: string; roleKey?: RoleKey; modules?: unknown; isActive?: boolean },
+    patch: { name?: string; roleKey?: RoleKey; modules?: unknown; permissions?: unknown; isActive?: boolean },
     actorId: string,
   ): Promise<AdminDto> {
     const user = await this.target(id);
@@ -253,10 +303,12 @@ export class AdminsService {
 
       let access: any;
       if (patch.roleKey !== undefined) {
+        const permissions = permissionsForRole(patch.roleKey, patch.permissions ?? patch.modules);
+        const modules = modulesOfPermissions(permissions);
         access = await tx.businessAdminAccess.upsert({
           where: { userId: id },
-          create: { userId: id, roleKey: patch.roleKey, modules: modulesForRole(patch.roleKey, patch.modules), createdByUserId: actorId },
-          update: { roleKey: patch.roleKey, modules: modulesForRole(patch.roleKey, patch.modules) },
+          create: { userId: id, roleKey: patch.roleKey, modules, permissions, createdByUserId: actorId },
+          update: { roleKey: patch.roleKey, modules, permissions },
         });
       }
       // Deactivation also ends every refresh session so the person cannot get a new access token.
@@ -264,6 +316,9 @@ export class AdminsService {
       if (!access) access = (await tx.businessAdminAccess.findMany({ where: { userId: id } }))[0];
       return this.toDto(u, access);
     });
+    if (patch.name !== undefined) await this.audit(actorId, "ADMIN_RENAMED", { id, email: user.email }, {});
+    if (patch.roleKey !== undefined) await this.audit(actorId, "PERMISSIONS_CHANGED", { id, email: user.email }, { roleKey: patch.roleKey, permissions: updated.permissions });
+    if (patch.isActive !== undefined) await this.audit(actorId, patch.isActive ? "ADMIN_ACTIVATED" : "ADMIN_DEACTIVATED", { id, email: user.email }, {});
     return updated;
   }
 
@@ -278,6 +333,7 @@ export class AdminsService {
       // Existing sessions were opened with the old password.
       await tx.session.deleteMany({ where: { userId: id } });
     });
+    await this.audit(actorId, "PASSWORD_RESET", { id, email: user.email }, {});
   }
 }
 

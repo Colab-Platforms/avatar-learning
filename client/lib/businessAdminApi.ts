@@ -5,11 +5,13 @@ import apiClient from "./apiClient";
 export type BusinessAccess = "superadmin" | "permissions" | "allowlist";
 
 export interface BusinessAdminMe {
-  role: "ADMIN" | "SUPERADMIN";
+  role: "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
   access: BusinessAccess;
   userId?: string;
   /** Modules this person may use (the server enforces the same list on every endpoint). */
   modules: string[];
+  /** What they may do in each module (view | create | edit | delete | manage). */
+  permissions?: Record<string, string[]>;
   isSuperAdmin: boolean;
 }
 
@@ -306,16 +308,30 @@ export interface AdminAccount {
   name: string;
   email: string;
   isActive: boolean;
-  role: "ADMIN" | "SUPERADMIN";
+  role: "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN";
   roleKey: RoleKey | null;
   modules: string[];
+  permissions: Record<string, string[]>;
   source: "superadmin" | "permissions" | "allowlist" | "none";
   createdAt: string;
 }
 
+export type Permissions = Record<string, string[]>;
+
 export interface AdminMeta {
+  actions: { key: string; label: string }[];
   modules: { key: string; label: string }[];
-  roles: { key: RoleKey; label: string; description: string; modules: string[] }[];
+  roles: { key: RoleKey; label: string; description: string; modules: string[]; permissions: Permissions }[];
+}
+
+export interface AuditEntry {
+  id: string;
+  at: string;
+  actorEmail: string | null;
+  action: string;
+  targetEmail: string | null;
+  targetUserId: string | null;
+  details: Record<string, unknown> | null;
 }
 
 export interface AdminList {
@@ -327,13 +343,16 @@ export interface AdminList {
 
 export const fetchAdminMeta = (): Promise<AdminMeta> => apiClient.get("/business-admin/admins/meta").then((r) => r.data.data);
 
-export const fetchAdmins = (q: string, page = 1, pageSize = 25): Promise<AdminList> =>
-  apiClient.get("/business-admin/admins", { params: { page, pageSize, ...(q && { q }) } }).then((r) => r.data.data);
+export const fetchAdmins = (q: string, page = 1, pageSize = 25, filters: { status?: string; module?: string } = {}): Promise<AdminList> =>
+  apiClient.get("/business-admin/admins", { params: { page, pageSize, ...(q && { q }), ...(filters.status && { status: filters.status }), ...(filters.module && { module: filters.module }) } }).then((r) => r.data.data);
 
-export const createAdmin = (input: { name: string; email: string; password: string; roleKey: RoleKey; modules?: string[] }): Promise<AdminAccount> =>
+export const fetchAdminAudit = (page = 1, pageSize = 25): Promise<{ items: AuditEntry[]; total: number; page: number; pageSize: number }> =>
+  apiClient.get("/business-admin/admins/audit-log", { params: { page, pageSize } }).then((r) => r.data.data);
+
+export const createAdmin = (input: { name: string; email: string; password: string; roleKey: RoleKey; permissions?: Permissions }): Promise<AdminAccount> =>
   apiClient.post("/business-admin/admins", input).then((r) => r.data.data);
 
-export const updateAdmin = (id: string, patch: { name?: string; roleKey?: RoleKey; modules?: string[]; isActive?: boolean }): Promise<AdminAccount> =>
+export const updateAdmin = (id: string, patch: { name?: string; roleKey?: RoleKey; permissions?: Permissions; isActive?: boolean }): Promise<AdminAccount> =>
   apiClient.patch(`/business-admin/admins/${encodeURIComponent(id)}`, patch).then((r) => r.data.data);
 
 export const resetAdminPassword = (id: string, password: string): Promise<{ reset: boolean }> =>
@@ -595,3 +614,120 @@ export const retryExecution = (id: string): Promise<AutomationExecution> => apiC
 /** DEV SANDBOX ONLY (the route does not exist in production). Stands in for a customer action; sends only to the mock sender. */
 export const simulateActivity = (input: { event: string; phone: string; eventId?: string }): Promise<{ matched: number; queued: number; skipped: number; duplicates: number }> =>
   apiClient.post(`${au}/simulate`, input).then((r) => r.data.data);
+
+// ─── Email Automation (Resend) ───────────────────────────────────────────────
+export type EmailTemplateType = "TRANSACTIONAL" | "PROMOTIONAL";
+export type EmailTrigger = "USER_REGISTERED" | "FOLLOW_UP" | "SCHEDULED_EMAIL" | "MANUAL_SEND";
+export type EmailMessageStatus = "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "CANCELLED" | "SKIPPED" | "UNCONFIRMED";
+
+export interface EmailStatus {
+  provider: string;
+  configured: boolean;
+  engineEnabled: boolean;
+  webhookConfigured: boolean;
+}
+export interface EmailStats {
+  totalSent: number;
+  delivered: number;
+  failed: number;
+  pendingScheduled: number;
+  skipped: number;
+  /** Emails whose outcome is unknown. Never retried automatically; an admin reconciles each one. */
+  needsReview: number;
+  activeAutomations: number;
+  templates: number;
+}
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  htmlBody: string;
+  textBody: string | null;
+  type: EmailTemplateType;
+  status: "ACTIVE" | "INACTIVE" | "ARCHIVED";
+  createdAt: string;
+  updatedAt: string;
+}
+export interface EmailTemplateInput {
+  name: string;
+  subject: string;
+  htmlBody: string;
+  textBody?: string;
+  type: EmailTemplateType;
+  status: "ACTIVE" | "INACTIVE";
+}
+export interface EmailAutomation {
+  id: string;
+  name: string;
+  trigger: EmailTrigger;
+  templateId: string;
+  template: { id: string; name: string; type: EmailTemplateType; status: string };
+  anchorEvent: string | null;
+  delayMinutes: number;
+  scheduledAt: string | null;
+  firedAt: string | null;
+  expiredAt: string | null;
+  isActive: boolean;
+  runs: { queued: number; sent: number; failed: number; skipped: number; needsReview: number };
+}
+export interface EmailAutomationInput {
+  name: string;
+  trigger: Exclude<EmailTrigger, "MANUAL_SEND">;
+  templateId: string;
+  anchorEvent?: string;
+  delayMinutes?: number;
+  scheduledAt?: string;
+}
+export interface EmailMessage {
+  id: string;
+  toEmail: string;
+  subject: string;
+  status: EmailMessageStatus;
+  trigger: EmailTrigger;
+  scheduledFor: string;
+  attempts: number;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  failureReason: string | null;
+  resendId: string | null;
+  isTest: boolean;
+  maybeAccepted?: boolean;
+  createdAt: string;
+  template: { name: string } | null;
+  automation: { name: string } | null;
+}
+export interface EmailRecipient {
+  id: string;
+  name: string;
+  email: string;
+  marketingOptIn: boolean;
+  unsubscribed: boolean;
+}
+export interface EmailSendResult {
+  results: { userId: string; email?: string; outcome: "queued" | "sent" | "skipped" | "duplicate" | "failed" | "needs_review"; reason?: string }[];
+}
+
+const E = "/business-admin/email";
+export const fetchEmailStatus = (): Promise<EmailStatus> => apiClient.get(`${E}/status`).then((r) => r.data.data);
+export const checkEmailConnection = (): Promise<{ ok: boolean; message: string }> => apiClient.post(`${E}/check`).then((r) => r.data.data);
+export const fetchEmailStats = (): Promise<EmailStats> => apiClient.get(`${E}/stats`).then((r) => r.data.data);
+export const fetchEmailTemplates = (): Promise<EmailTemplate[]> => apiClient.get(`${E}/templates`).then((r) => r.data.data);
+export const createEmailTemplate = (b: EmailTemplateInput): Promise<EmailTemplate> => apiClient.post(`${E}/templates`, b).then((r) => r.data.data);
+export const updateEmailTemplate = (id: string, b: EmailTemplateInput): Promise<EmailTemplate> => apiClient.put(`${E}/templates/${id}`, b).then((r) => r.data.data);
+export const archiveEmailTemplate = (id: string): Promise<void> => apiClient.delete(`${E}/templates/${id}`).then(() => undefined);
+export const previewEmail = (b: { templateId?: string; draft?: EmailTemplateInput }): Promise<{ subject: string; html: string; text: string; type: EmailTemplateType }> => apiClient.post(`${E}/preview`, b).then((r) => r.data.data);
+export const sendTestEmail = (id: string): Promise<{ status: string; reason?: string }> => apiClient.post(`${E}/templates/${id}/test`).then((r) => r.data.data);
+export const fetchEmailAutomations = (): Promise<EmailAutomation[]> => apiClient.get(`${E}/automations`).then((r) => r.data.data);
+export const createEmailAutomation = (b: EmailAutomationInput): Promise<EmailAutomation> => apiClient.post(`${E}/automations`, b).then((r) => r.data.data);
+export const updateEmailAutomation = (id: string, b: EmailAutomationInput): Promise<EmailAutomation> => apiClient.put(`${E}/automations/${id}`, b).then((r) => r.data.data);
+export const setEmailAutomationActive = (id: string, active: boolean): Promise<EmailAutomation> => apiClient.put(`${E}/automations/${id}/active`, { active }).then((r) => r.data.data);
+export const deleteEmailAutomation = (id: string): Promise<void> => apiClient.delete(`${E}/automations/${id}`).then(() => undefined);
+export const searchEmailRecipients = (q: string): Promise<EmailRecipient[]> => apiClient.get(`${E}/recipients`, { params: { q } }).then((r) => r.data.data);
+export const sendEmailManually = (b: { templateId: string; userIds: string[]; scheduledFor?: string }): Promise<EmailSendResult> => apiClient.post(`${E}/send`, b).then((r) => r.data.data);
+export const fetchScheduledEmails = (): Promise<EmailMessage[]> => apiClient.get(`${E}/scheduled`).then((r) => r.data.data);
+export const cancelScheduledEmail = (id: string): Promise<void> => apiClient.post(`${E}/messages/${id}/cancel`).then(() => undefined);
+export const retryEmail = (id: string): Promise<void> => apiClient.post(`${E}/messages/${id}/retry`).then(() => undefined);
+/** Records what an admin found in Resend for an email that needs review. Sends nothing. */
+export const resolveEmail = (id: string, outcome: "SENT" | "NOT_SENT"): Promise<void> => apiClient.post(`${E}/messages/${id}/resolve`, { outcome }).then(() => undefined);
+export const fetchEmailActivity = (p: { search?: string; status?: string; page?: number; automationId?: string }): Promise<{ total: number; page: number; limit: number; items: EmailMessage[] }> =>
+  apiClient.get(`${E}/activity`, { params: p }).then((r) => r.data.data);
