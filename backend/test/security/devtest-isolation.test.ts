@@ -163,6 +163,10 @@ const PUBLIC = [
   /^GET \/api\/coupons/,
   /^(GET|POST) \/api\/payment\/(webhook|cashfree|razorpay)/,
   /^(GET|POST) \/api\/whatsapp\/webhook$/,
+  // Email Automation: Resend delivery webhook (401 unless its Svix signature verifies) and the unsubscribe link (400 unless
+  // its HMAC token verifies; GET only shows a confirm page). Neither uses a bearer token.
+  /^POST \/api\/email-automation\/webhook$/,
+  /^(GET|POST) \/api\/email-automation\/unsubscribe$/,
   /^POST \/api\/business-admin\/dev-login$/,
   // Reviewed (from main): the AI Adoption customer site has its OWN accounts, separate from this platform's users.
   // Sign-up, sign-in (email and Google), email verification and password reset must be public; each is rate limited and

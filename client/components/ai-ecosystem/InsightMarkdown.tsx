@@ -1,8 +1,10 @@
+import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
+import { isExternalHref, normalizeHref, remarkInsightLinks } from "@/lib/insightLinks";
+import styles from "./insightLinks.module.css";
 
 const TEXT = "#c4cad2";
 const MUTED = "#a3abb5";
-const CYAN = "#8fe9f2";
 
 const h2Style: React.CSSProperties = {
   margin: "clamp(36px,5vw,52px) 0 0",
@@ -38,21 +40,36 @@ const components: Components = {
   strong: ({ children }) => <strong style={{ color: "#f4f6f8", fontWeight: 600 }}>{children}</strong>,
   em: ({ children }) => <em style={{ color: MUTED }}>{children}</em>,
   hr: () => <hr style={{ border: 0, borderTop: "1px solid rgba(255,255,255,.08)", margin: "32px 0" }} />,
-  a: ({ href, children }) => {
-    const external = !!href && /^https?:\/\//.test(href);
+  a: ({ href: rawHref, children }) => {
+    // Internal links stay in the same tab (client-side navigation); external ones open a new tab safely.
+    const href = normalizeHref(rawHref);
+    if (!href) return <>{children}</>;
+    if (isExternalHref(href)) {
+      return (
+        <a href={href} target="_blank" rel="noopener noreferrer" className={styles.link}>
+          {children}
+          <span className={styles.sr}> (opens in a new tab)</span>
+        </a>
+      );
+    }
     return (
-      <a
-        href={href}
-        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-        style={{ color: CYAN, textDecoration: "underline", textUnderlineOffset: 3, textDecorationColor: "rgba(143,233,242,.4)" }}
-      >
+      <Link href={href} className={styles.link}>
         {children}
-      </a>
+      </Link>
     );
   },
 };
 
-/** Renders supplied article markdown verbatim (headings, paragraphs, lists, bold/italic, links) in the dark theme. */
-export function InsightMarkdown({ children }: { children: string }) {
-  return <ReactMarkdown components={components}>{children}</ReactMarkdown>;
+/**
+ * Renders supplied article markdown (headings, paragraphs, lists, bold/italic, links) in the dark theme.
+ * Pass the same `used` set (see seedUsedTerms) and `slug` for every block of one article so each keyword
+ * is auto-linked only once per article.
+ */
+export function InsightMarkdown({ children, used, slug }: { children: string; used?: Set<string>; slug?: string }) {
+  const plugins = used && slug ? [[remarkInsightLinks, { used, selfSlug: slug }] as [typeof remarkInsightLinks, { used: Set<string>; selfSlug: string }]] : [];
+  return (
+    <ReactMarkdown components={components} remarkPlugins={plugins}>
+      {children}
+    </ReactMarkdown>
+  );
 }
