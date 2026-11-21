@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:logic": "node ../backend/node_modules/tsx/dist/cli.mjs --test lib/inboxLogic.test.ts lib/businessTheme.test.ts lib/clarityConsent.test.ts lib/analyticsMetrics.test.ts lib/templateLogic.test.ts lib/businessNav.test.ts"
+    "test:logic": "node ../backend/node_modules/tsx/dist/cli.mjs --test lib/inboxLogic.test.ts lib/businessTheme.test.ts lib/clarityConsent.test.ts lib/analyticsMetrics.test.ts lib/templateLogic.test.ts lib/businessNav.test.ts lib/apiBaseCheck.test.ts"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.8",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { API_BASE_URL, API_BASE_ERROR } from "./apiBase";
 
 /**
  * AI Adoption account session — separate from the learning platform's auth
@@ -29,7 +30,7 @@ export type AdoptionUser = {
 type State = { status: "loading" | "signedOut" | "signedIn"; user: AdoptionUser | null };
 
 const TOKEN_KEY = "adoption_session";
-const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/+$/, "");
+const base = API_BASE_URL.replace(/\/+$/, "");
 /** Backend API root (handles NEXT_PUBLIC_API_BASE_URL with or without a trailing /api). */
 export const API_ROOT = base.endsWith("/api") ? base : `${base}/api`;
 const API = `${API_ROOT}/adoption/auth`;
@@ -66,6 +67,7 @@ export class AdoptionApiError extends Error {
 }
 
 async function call<T>(path: string, body?: unknown, token?: string | null, root = API): Promise<T> {
+  if (API_BASE_ERROR) throw new AdoptionApiError(API_BASE_ERROR, 0); // Preview without a valid development API: refuse, never call production
   let res: Response;
   try {
     res = await fetch(root + path, {
