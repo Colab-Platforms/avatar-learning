@@ -111,7 +111,7 @@ export function createDevTestRouter(env: Env = process.env): Router {
   for (const e of EVENTS) {
     autoStore.rules.push({
       id: `rule_${e.key.replace(".", "_")}`, name: e.activity, triggerEvent: e.key, templateName: e.suggested.name, templateLanguage: "en", isActive: true,
-      variableMapping: Object.fromEntries(e.suggested.mapping.map((k, i) => [String(i + 1), { source: "field" as const, key: k, ...(k === "name" ? { fallback: "there" } : {}) }])),
+      variableMapping: Object.fromEntries(e.suggested.mapping.map((k, i) => [String(i + 1), { source: "field" as const, key: k, ...(k === "name" ? { fallback: "there" } : k === "tools" ? { fallback: "our AI tools" } : {}) }])),
       createdByUserId: null, updatedByUserId: null, createdAt: now, updatedAt: null,
     });
   }

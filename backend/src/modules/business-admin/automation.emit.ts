@@ -13,7 +13,16 @@ export interface AutomationEventInput {
   /** The customer's phone as stored on our side (10-digit Indian numbers get the 91 country code). */
   phone: string | null | undefined;
   fields?: Record<string, unknown>;
+  /** The customer ticked the WhatsApp consent box on the form: record opt-in (with this evidence) BEFORE the event runs. */
+  optIn?: { evidence: string; name?: string | null; email?: string | null; company?: string | null };
 }
+
+type OptInRecorder = (i: { waId: string; name?: string | null; email?: string | null; company?: string | null; evidence: string }) => Promise<unknown>;
+let optInOverride: OptInRecorder | null = null;
+/** Tests inject the opt-in recorder. */
+export const setOptInRecorder = (fn: OptInRecorder | null): void => {
+  optInOverride = fn;
+};
 
 type Trigger = (input: { event: string; eventId: string; phone: string; fields?: Record<string, unknown> }) => Promise<unknown>;
 let override: Trigger | null = null;
@@ -46,6 +55,16 @@ export function emitAutomationEvent(input: AutomationEventInput): void {
     try {
       const phone = toWaPhone(input.phone);
       if (!phone) return;
+      if (input.optIn) {
+        // Consent must be on record before the template is attempted, or the engine skips it (OPT_IN_REQUIRED).
+        // A failure here is logged and the event still runs, so the Automation history shows exactly why it was skipped.
+        try {
+          const record: OptInRecorder = optInOverride ?? (async (i) => (await import("./business-admin.route.js")).contacts.registerWebsiteOptIn(i));
+          await record({ waId: phone, ...input.optIn });
+        } catch (err) {
+          logger.error(`[Automation] could not record WhatsApp opt-in for ${input.event}: ${err instanceof Error ? err.name : "unknown error"}`);
+        }
+      }
       const trigger: Trigger = sandboxTrigger ?? override ?? (async (i) => (await import("./business-admin.route.js")).automation.trigger(i));
       await trigger({ event: input.event, eventId: String(input.eventId), phone, fields: input.fields });
     } catch (err) {

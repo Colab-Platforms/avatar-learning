@@ -13,6 +13,11 @@ export interface RegisterBody {
 export interface LoginBody {
     email: string;
     password: string;
+    /**
+     * The password exactly as typed (read from the raw request body). The global XSS sanitizer rewrites `<` and `>` in
+     * `password`, but the bootstrap script and Admin Management hash the typed text, so login tries this first.
+     */
+    rawPassword?: string;
 }
 
 export interface VerifyOtpBody {

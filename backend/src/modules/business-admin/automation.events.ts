@@ -34,12 +34,12 @@ const person: EventField[] = [
   { key: "name", label: "Customer name" },
   { key: "email", label: "Customer email" },
 ];
-const demo: EventField[] = [...person, { key: "demo_date", label: "Demo date" }, { key: "demo_time", label: "Demo time" }];
+const demo: EventField[] = [...person, { key: "company", label: "Company" }, { key: "tools", label: "Selected tools" }, { key: "demo_date", label: "Demo date" }, { key: "demo_time", label: "Demo time" }];
 
 export const EVENTS: EventDef[] = [
   {
     key: "demo.requested", activity: "Book a demo", label: "Demo requested", description: "A customer asked to book a demo.", fields: demo,
-    suggested: { name: "demo_requested_thanks", category: "UTILITY", body: "Hi {{1}}, thank you for booking a demo with Avatar. Our team will be in touch shortly to confirm the details.", mapping: ["name"], examples: ["Asha"] },
+    suggested: { name: "demo_requested_thanks", category: "UTILITY", body: "Hi {{1}}, thank you for booking a demo with Avatar for {{2}}. Our team will be in touch shortly to confirm the date and time.", mapping: ["name", "tools"], examples: ["Asha", "CRM, HRMS"] },
   },
   {
     key: "user.registered", activity: "New registration", label: "New registration", description: "A new account was created and its email verified.", fields: person,
