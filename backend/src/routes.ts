@@ -22,6 +22,7 @@ import webinarRoutes from "./modules/webinar/webinar.route.js";
 import adminWebinarRoutes from "./modules/webinar/admin.route.js";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.route.js";
 import businessAdminRoutes from "./modules/business-admin/business-admin.route.js";
+import trackRoutes from "./modules/monitoring/monitoring.route.js";
 import adoptionAuthRoutes from "./modules/adoption/adoption.route.js";
 import { accountRouter as adoptionAccountRoutes, adminRouter as adminAdoptionRoutes } from "./modules/adoption/adoption.access.js";
 import { profileRouter as adoptionProfileRoutes, demoRouter as adoptionDemoRoutes, adminDemoRouter as adminAdoptionDemoRoutes } from "./modules/adoption/adoption.profile.js";
@@ -33,6 +34,7 @@ router.get("/health", (_req: Request, res: Response) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/track", trackRoutes); // Live Monitoring: public, anonymous, rate-limited collection
 router.use("/adoption/auth", adoptionAuthRoutes); // AI Adoption accounts (separate from /auth)
 router.use("/adoption/account", adoptionAccountRoutes); // AI Adoption: my tools, open tool, request access
 router.use("/adoption/account", adoptionProfileRoutes); // AI Adoption: profile, email, password, my demo requests

@@ -106,7 +106,7 @@ describe("authentication and permissions: every endpoint, reads and writes", () 
     const r = await call(app, "GET", "/me", { token: tokenFor("ADMIN", "admin-user-1") });
     assert.equal(r.status, 200);
     const { permissions, ...rest } = r.json.data;
-    assert.equal(Object.keys(permissions).length, 10, "every delegable module, no Admin Management");
+    assert.equal(Object.keys(permissions).length, 10, "every delegable module EXCEPT Live Monitoring (explicit grant only), no Admin Management");
     assert.ok(Object.values(permissions).every((a: any) => a.length === 5));
     assert.deepEqual(rest, { role: "ADMIN", access: "allowlist", userId: "admin-user-1", modules: ["dashboard", "inbox", "leads", "customers", "agents", "automations", "integrations", "analytics", "team", "settings"], isSuperAdmin: false });
   });

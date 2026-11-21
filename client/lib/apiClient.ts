@@ -79,6 +79,13 @@ apiClient.interceptors.request.use(
       } catch (error) {
         console.error("Failed to read auth from localStorage", error);
       }
+      // Lets the server tie a sign-in to this browser's anonymous visit history (Live Monitoring). Present only after analytics consent.
+      try {
+        const vid = localStorage.getItem("av_vid");
+        if (vid && /^[A-Za-z0-9_-]{20,64}$/.test(vid)) config.headers["X-Visitor-Id"] = vid;
+      } catch {
+        /* storage blocked */
+      }
     }
 
     return config;

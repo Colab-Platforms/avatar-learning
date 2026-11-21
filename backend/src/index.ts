@@ -10,6 +10,8 @@ import compression from "compression";
 import { startSessionCleanupJob } from "./jobs/sessionCleanup.job.js";
 import { startAutomationWorker } from "./jobs/automation.job.js";
 import { startPartnerCommissionJob } from "./jobs/partnerCommission.job.js";
+import { requestContext } from "./modules/monitoring/request-context.js";
+import { startMonitoringJob } from "./modules/monitoring/monitoring.job.js";
 const app = express();
 dotenv.config();
 
@@ -46,6 +48,7 @@ app.use(
       "Authorization",
       "X-Requested-With",
       "Accept",
+      "X-Visitor-Id",
     ],
   }),
 );
@@ -59,6 +62,8 @@ app.use(
   }),
 );
 app.use(sanitizeMiddleware);
+// Who is calling (IP, browser, visitor id), available to services without passing it around. Holds no body, password or token.
+app.use(requestContext);
 
 app.use("/api", routes);
 
@@ -78,4 +83,5 @@ app.listen(PORT, () => {
   startSessionCleanupJob();
   startPartnerCommissionJob();
   startAutomationWorker();
+  startMonitoringJob();
 });

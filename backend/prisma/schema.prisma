@@ -2094,3 +2094,92 @@ model AdoptionDemoRequest {
   @@index([status, createdAt])
   @@map("adoption_demo_requests")
 }
+
+// ─── Live User Monitoring & Activity Tracking ─────────────────────────────────────────────────────
+// First-party only (no fingerprinting). user_id columns are plain strings (no FK) so audit rows survive account changes; they point at
+// users.id. Online/offline is DERIVED from last_activity_at (heartbeat), never stored as a flag.
+
+/// One browser profile (first-party random id kept in localStorage). Linked to a user the first time that browser signs in.
+model MonitoringVisitor {
+  id            String   @id @default(cuid())
+  /// The random id the browser holds. Never derived from device characteristics.
+  visitorKey    String   @unique @map("visitor_key")
+  userId        String?  @map("user_id")
+  firstSeenAt   DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt    DateTime @default(now()) @map("last_seen_at")
+  firstPath     String?  @map("first_path")
+  firstReferrer String?  @map("first_referrer")
+  /// Only from a CDN/proxy country header when present; never from IP geolocation lookups.
+  country       String?
+  deviceType    String?  @map("device_type")
+  browser       String?
+  os            String?
+  pageViews     Int      @default(0) @map("page_views")
+
+  sessions MonitoringSession[]
+
+  @@index([userId])
+  @@index([lastSeenAt])
+  @@map("monitoring_visitors")
+}
+
+/// A period of activity by one visitor. At most one is "open" (ended_at null) per visitor in normal operation.
+model MonitoringSession {
+  id             String            @id @default(cuid())
+  visitorId      String            @map("visitor_id")
+  visitor        MonitoringVisitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  userId         String?           @map("user_id")
+  startedAt      DateTime          @default(now()) @map("started_at")
+  lastActivityAt DateTime          @default(now()) @map("last_activity_at")
+  endedAt        DateTime?         @map("ended_at")
+  /// LOGOUT | TIMEOUT | EXPIRED | TERMINATED
+  endReason      String?           @map("end_reason")
+  currentPath    String?           @map("current_path")
+  referrer       String?
+  deviceType     String?           @map("device_type")
+  browser        String?
+  os             String?
+  pageViews      Int               @default(0) @map("page_views")
+  /// sessions.id (the refresh-token row) while signed in; used to terminate. No FK: that table is cleaned up independently.
+  authSessionId  String?           @map("auth_session_id")
+
+  @@index([endedAt, lastActivityAt])
+  @@index([userId, startedAt])
+  @@index([visitorId, startedAt])
+  @@index([authSessionId])
+  @@index([startedAt])
+  @@map("monitoring_sessions")
+}
+
+/// Everything that happened: page views, feature use, course/test activity, business events (category ACTIVITY) and
+/// sign-in / security events (category AUTH). Never holds passwords, tokens, cookies, OTPs or payment credentials.
+model MonitoringEvent {
+  id         String   @id @default(cuid())
+  /// ACTIVITY | AUTH
+  category   String
+  type       String
+  visitorId  String?  @map("visitor_id")
+  sessionId  String?  @map("session_id")
+  userId     String?  @map("user_id")
+  path       String?
+  module     String?
+  deviceType String?  @map("device_type")
+  browser    String?
+  os         String?
+  /// AUTH events only, shown to Super Admins only (masked for others) and deleted on the security retention schedule.
+  ip         String?
+  /// SUCCESS | FAILURE (AUTH events)
+  outcome    String?
+  reason     String?
+  /// Email typed on a failed sign-in (never a password).
+  identifier String?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([category, type, createdAt])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("monitoring_events")
+}

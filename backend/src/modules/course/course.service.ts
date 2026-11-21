@@ -1,5 +1,6 @@
 import prisma from "@root/prisma.js";
 import { emitUserAutomationEvent } from "@/modules/business-admin/automation.emit.js";
+import { track } from "@/modules/monitoring/monitoring.track.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import {
@@ -510,6 +511,7 @@ export class PublicCourseService {
     });
     // WhatsApp automation hook: only after the enrolment row exists.
     emitUserAutomationEvent(userId, "course.enrolled", `${userId}:${course.id}`, { course_name: course.title });
+    track.account("ENROLLMENT", userId, { module: "courses", metadata: { courseId: course.id, course: course.title } }); // Live Monitoring
     return enrollment;
   }
 
@@ -1141,6 +1143,7 @@ export class PublicCourseService {
     });
 
     await this.recalculateProgress(userId, lesson.courseId);
+    track.account("LESSON_COMPLETED", userId, { module: "courses", metadata: { courseId: lesson.courseId, topicId } }); // Live Monitoring
 
     return prisma.courseUserMapper.findUnique({
       where: { userId_courseId: { userId, courseId: lesson.courseId } },

@@ -16,6 +16,7 @@ import { PrismaAutomationStore, type AutomationDb } from "./automation.store.js"
 import { TemplateManagerService } from "./template-manager.service.js";
 import { PrismaTemplateStore, type TemplateDb } from "./template-manager.store.js";
 import { withDevTestLogin } from "./devtest/devtest.router.js";
+import { monitoring } from "../monitoring/monitoring.track.js";
 
 const getIntegrations = (): IntegrationStatus => {
   const c = getWhatsappConfig();
@@ -109,6 +110,7 @@ const realRouter = createBusinessAdminRouter({
     return user ? { email: user.email, isActive: user.isActive, isDeleted: user.isDeleted, modules: access ? access.modules : null, permissions: access ? access.permissions : null } : null;
   },
   admins: new AdminsService({ db: prisma as unknown as AdminsDb }),
+  monitoring,
 });
 
 export default withDevTestLogin(realRouter);

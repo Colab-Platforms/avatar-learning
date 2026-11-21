@@ -99,3 +99,19 @@ Exact request/response bodies for non-auth endpoints; pagination parameters (use
 
 ### Unified login (2026-11-21)
 `POST /api/adoption/auth/login` and `POST /api/auth/login` accept the same email + password for the same person (see ARCHITECTURE.md, Unified authentication). Adoption responses to Super Admin / Business Admin staff include `data.learning = { user, accessToken, refreshToken }` (a normal Learning session); other users get only `{ token, user }`. Adoption password reset/change now also changes the Learning password and ends sessions in both modules; Learning reset does the same for Adoption. No new endpoints, no schema change.
+
+## Live Monitoring (2026-11-24)
+**Public collection** (`/api/track`, anonymous, rate limited 240/min/IP, never returns an error page for bad input; sends only `{ visitorId, path, referrer? }`):
+- `POST /track/pageview` `{ visitorId, path, referrer? }` -> `{ tracked }`. Bots, admin paths and invalid ids are ignored. A valid Bearer token links the visit to the account.
+- `POST /track/heartbeat` `{ visitorId, path }` -> `{ tracked, terminated? }` (`terminated: true` = an admin ended this sign-in; the client signs out).
+- `POST /track/event` `{ visitorId, type: "FEATURE_USED", path, metadata }` (only whitelisted types; secret-looking metadata keys are dropped).
+The browser also sends `X-Visitor-Id` on API calls (CORS-allowed) so a sign-in can attach the browser's anonymous history to the account.
+
+**Admin** (`/api/business-admin/monitoring/*`; login + Business Admin access + the **Monitoring** module permission: `view` for every GET, `manage` for terminating):
+- `GET /stats`; `GET /stream` (Server-Sent Events: `event: snapshot` every 5s with `{stats, live, total}`).
+- `GET /sessions?status=online|active|offline|all&kind=guest|registered&search&sort=last|started|pages&from&to&page&pageSize`.
+- `POST /sessions/:id/terminate` (**manage**): deletes that sign-in's refresh token, blocks its access token, ends the session. Refuses guests, your own session, already-ended sessions; only a Super Admin can end a Super Admin's.
+- `GET /people?kind=registered|guest&search&online=1&sort&page&pageSize`; `GET /users/:userId`; `GET /users/:userId/timeline`; `GET /visitors/:id`; `GET /visitors/:id/timeline` (`types=A,B`, `category=AUTH|ACTIVITY`, `from`, `to`, paging).
+- `GET /security?status=success|failed&type&search&userId&device&from&to&page&pageSize` (IP shown in full only to a Super Admin, otherwise masked).
+- `GET /analytics?from&to` (max 90 days).
+Ordinary users and Learning Admins get 403 on all of these; no token gets 401.

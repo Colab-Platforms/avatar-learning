@@ -3,7 +3,7 @@ import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { logger } from "@/utils/logger.js";
 import type { AuthRequest } from "@/middlewares/authMiddleware.js";
-import { ACTIONS, ADMINS_MODULE, MODULE_KEYS, normalizePermissions, modulesOfPermissions, permissionsFromModules, type Action, type PermissionMap } from "./business-admin.modules.js";
+import { ACTIONS, ADMINS_MODULE, EXPLICIT_GRANT_ONLY, MODULE_KEYS, normalizePermissions, modulesOfPermissions, permissionsFromModules, type Action, type PermissionMap } from "./business-admin.modules.js";
 
 type Env = Record<string, string | undefined>;
 
@@ -62,7 +62,9 @@ export function resolveAccess(role: string | undefined, account: BusinessAccount
     return modules.length > 0 ? { via: "permissions", isSuperAdmin: false, modules, permissions: perms as Record<string, Action[]> } : null;
   }
   if (role === "ADMIN" && account.email && businessAdminEmails(env).includes(account.email.trim().toLowerCase())) {
-    return { via: "allowlist", isSuperAdmin: false, modules: [...MODULE_KEYS], permissions: full(MODULE_KEYS) };
+    // The allowlist predates Live Monitoring and must not silently hand out personal activity data: those modules need an explicit grant.
+    const implicit = MODULE_KEYS.filter((m) => !EXPLICIT_GRANT_ONLY.includes(m));
+    return { via: "allowlist", isSuperAdmin: false, modules: [...implicit], permissions: full(implicit) };
   }
   return null;
 }

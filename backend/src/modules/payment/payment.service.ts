@@ -15,6 +15,7 @@ import { couponService } from "@/modules/coupon/coupon.service.js";
 import { googleSheetsService } from "@/services/googleSheets.service.js";
 import { sendPaymentConfirmationEmail } from "./payment.mail.js";
 import { emitUserAutomationEvent } from "@/modules/business-admin/automation.emit.js";
+import { track } from "@/modules/monitoring/monitoring.track.js";
 import type {
   CreateOrderResponse,
   CreatePaymentLinkResponse,
@@ -238,6 +239,7 @@ function emitPaymentAutomation(
         productName = "Direct2Hire Assessment + Counselling";
       }
       // Keyed on the ORDER (not the gateway payment id) so verify, Razorpay and Cashfree webhooks for the same order always share one event id.
+      track.account("PAYMENT", order.userId, { module: "payments", metadata: { status: "PAID", product: order.productType, amount: order.amount / 100, currency: "INR" } }); // Live Monitoring: never the gateway ids or card data
       emitUserAutomationEvent(order.userId, "payment.succeeded", order.gatewayOrderId, { amount: order.amount / 100, product_name: productName, payment_id: gatewayPaymentId });
       if (newlyEnrolledCourse && order.courseId) {
         emitUserAutomationEvent(order.userId, "course.enrolled", `${order.userId}:${order.courseId}`, { course_name: courseName ?? "your course" });

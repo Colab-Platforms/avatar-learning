@@ -1,4 +1,5 @@
 import {
+  Activity,
   BarChart3,
   Bot,
   LayoutDashboard,
@@ -31,6 +32,7 @@ export const BUSINESS_NAV: BusinessNavItem[] = [
   { href: `${BASE}/automations`, label: "Automations", icon: Workflow, module: "automations" },
   { href: `${BASE}/integrations`, label: "Integrations", icon: Plug, module: "integrations" },
   { href: `${BASE}/analytics`, label: "Analytics", icon: BarChart3, module: "analytics" },
+  { href: `${BASE}/monitoring`, label: "Live Monitoring", icon: Activity, module: "monitoring" },
   { href: `${BASE}/team`, label: "Team Management", icon: ShieldCheck, module: "team" },
   { href: `${BASE}/admins`, label: "Admin Management", icon: UserCog, module: "admins" },
   { href: `${BASE}/settings`, label: "Settings", icon: Settings, module: "settings" },
