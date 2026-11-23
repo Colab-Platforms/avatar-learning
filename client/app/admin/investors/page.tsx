@@ -12,6 +12,7 @@ import {
     updateInvestorDocument,
     deleteInvestorDocument,
     uploadInvestorDocumentFile,
+    validateInvestorPdf,
     type AdminInvestorCategory,
     type AdminInvestorDocument,
 } from "@/lib/adminApi";
@@ -32,8 +33,10 @@ export default function AdminInvestorsPage() {
     const [savingDoc, setSavingDoc] = useState(false);
     const [docMode, setDocMode] = useState<"url" | "upload">("url");
     const [docForm, setDocForm] = useState({ categoryId: "", name: "", url: "" });
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
+    type UploadItem = { file: File; name: string; progress: number; status: "pending" | "uploading" | "done" | "error"; error?: string };
+    const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [success, setSuccess] = useState("");
     const [editingDocId, setEditingDocId] = useState<string | null>(null);
 
     const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
@@ -122,32 +125,86 @@ export default function AdminInvestorsPage() {
         finally { setDeletingCategoryId(null); }
     };
 
+    const patchItem = (i: number, patch: Partial<UploadItem>) =>
+        setUploadItems((items) => items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+
+    const onPickFiles = (list: FileList | null) => {
+        const files = Array.from(list ?? []);
+        setUploadItems(files.map((file) => {
+            const err = validateInvestorPdf(file);
+            return {
+                file,
+                name: file.name.replace(/\.pdf$/i, "").replace(/_+/g, " ").trim(),
+                progress: 0,
+                status: err ? "error" : "pending",
+                error: err ?? undefined,
+            } as UploadItem;
+        }));
+    };
+
+    const resetDocForm = () => {
+        setDocForm({ categoryId: "", name: "", url: "" });
+        setUploadItems([]);
+        setEditingDocId(null);
+        setDocMode("url");
+        setShowDocForm(false);
+    };
+
     const submitDocument = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setSuccess("");
         if (!docForm.categoryId) { setError("Select a category"); return; }
-        if (docMode === "upload" && !uploadFile) { setError("Choose a PDF to upload"); return; }
+        if (docMode === "url" && !docForm.name.trim()) { setError("Enter a document name"); return; }
         if (docMode === "url" && !docForm.url.trim()) { setError("Enter a document URL"); return; }
+        if (docMode === "upload" && uploadItems.length === 0) { setError("Choose at least one PDF to upload"); return; }
+        if (docMode === "upload" && uploadItems.some((it) => it.status !== "done" && !it.name.trim())) { setError("Every file needs a title"); return; }
 
         setSavingDoc(true);
         try {
-            let url = docForm.url.trim();
-            if (docMode === "upload" && uploadFile) {
-                setUploading(true);
-                url = await uploadInvestorDocumentFile(uploadFile);
-                setUploading(false);
+            if (docMode === "url") {
+                const url = docForm.url.trim();
+                if (editingDocId) {
+                    const original = documents.find((d) => d.id === editingDocId);
+                    await updateInvestorDocument(editingDocId, {
+                        categoryId: docForm.categoryId,
+                        name: docForm.name.trim(),
+                        ...(original?.url !== url && { url }),
+                    });
+                    setSuccess("Document updated");
+                } else {
+                    await createInvestorDocument({ categoryId: docForm.categoryId, name: docForm.name.trim(), url });
+                    setSuccess("Document added");
+                }
+                resetDocForm();
+                await load();
+                return;
             }
-            if (editingDocId) {
-                await updateInvestorDocument(editingDocId, { categoryId: docForm.categoryId, name: docForm.name, url });
-            } else {
-                await createInvestorDocument({ categoryId: docForm.categoryId, name: docForm.name, url });
+
+            // Upload mode: one file at a time; failed files stay listed so they can be fixed or retried.
+            setUploading(true);
+            let ok = 0;
+            let failed = 0;
+            for (let i = 0; i < uploadItems.length; i++) {
+                const it = uploadItems[i];
+                if (it.status === "done") continue;
+                const pre = validateInvestorPdf(it.file);
+                if (pre) { failed++; continue; }
+                patchItem(i, { status: "uploading", progress: 0, error: undefined });
+                try {
+                    const url = await uploadInvestorDocumentFile(it.file, (p) => patchItem(i, { progress: p }));
+                    await createInvestorDocument({ categoryId: docForm.categoryId, name: it.name.trim(), url });
+                    patchItem(i, { status: "done", progress: 100 });
+                    ok++;
+                } catch (err: any) {
+                    failed++;
+                    patchItem(i, { status: "error", error: err?.response?.data?.message ?? "Upload failed" });
+                }
             }
-            setDocForm({ categoryId: "", name: "", url: "" });
-            setUploadFile(null);
-            setEditingDocId(null);
-            setDocMode("url");
-            setShowDocForm(false);
             await load();
+            if (ok > 0) setSuccess(`${ok} document${ok === 1 ? "" : "s"} uploaded`);
+            if (failed > 0) setError(ok === 0 ? "No files were uploaded. See the errors below." : "Some files failed. Fix or remove them and try again.");
+            else resetDocForm();
         } catch (err: any) {
             setError(err?.response?.data?.message ?? `Failed to ${editingDocId ? "update" : "create"} document`);
         } finally {
@@ -159,24 +216,19 @@ export default function AdminInvestorsPage() {
     const startEditDocument = (doc: AdminInvestorDocument) => {
         setEditingDocId(doc.id);
         setDocForm({ categoryId: doc.categoryId, name: doc.name, url: doc.url });
-        setUploadFile(null);
+        setUploadItems([]);
         setDocMode("url");
+        setSuccess("");
         setShowDocForm(true);
     };
 
-    const cancelDocForm = () => {
-        setShowDocForm(false);
-        setEditingDocId(null);
-        setUploadFile(null);
-        setDocMode("url");
-        setDocForm({ categoryId: "", name: "", url: "" });
-    };
+    const cancelDocForm = () => { if (!uploading) resetDocForm(); };
 
     const handleDeleteDocument = async (id: string, name: string) => {
         if (!confirm(`Delete "${name}"?`)) return;
         setDeletingDocId(id);
-        try { await deleteInvestorDocument(id); await load(); }
-        catch { setError("Failed to delete document"); }
+        try { await deleteInvestorDocument(id); setSuccess("Document deleted"); await load(); }
+        catch (err: any) { setError(err?.response?.data?.message ?? "Failed to delete document"); }
         finally { setDeletingDocId(null); }
     };
 
@@ -189,6 +241,12 @@ export default function AdminInvestorsPage() {
                     Manage the categories and documents shown on the public investors page.
                 </p>
             </div>
+
+            {success && (
+                <div role="status" className="bg-emerald-500/8 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-emerald-400">
+                    {success}
+                </div>
+            )}
 
             {error && (
                 <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
@@ -325,6 +383,7 @@ export default function AdminInvestorsPage() {
                                     {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </Field>
+                            {docMode === "url" && (
                             <Field label="Document Name" required>
                                 <input
                                     value={docForm.name}
@@ -334,6 +393,7 @@ export default function AdminInvestorsPage() {
                                     required
                                 />
                             </Field>
+                            )}
 
                             <div className="sm:col-span-2 flex gap-2">
                                 <button
@@ -346,9 +406,10 @@ export default function AdminInvestorsPage() {
                                 <button
                                     type="button"
                                     onClick={() => setDocMode("upload")}
+                                    disabled={!!editingDocId}
                                     className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${docMode === "upload" ? "border-brand-500/40 bg-brand-500/10 text-brand-400" : "border-white/8 text-white/45"}`}
                                 >
-                                    <Upload size={13} /> Upload PDF
+                                    <Upload size={13} /> Upload PDFs
                                 </button>
                             </div>
 
@@ -363,19 +424,51 @@ export default function AdminInvestorsPage() {
                                     />
                                 </Field>
                             ) : (
-                                <Field label="PDF File" required className="sm:col-span-2">
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-                                        className={inputCls}
-                                    />
-                                </Field>
+                                <div className="sm:col-span-2 space-y-3">
+                                    <Field label="PDF Files (max 20 MB each)" required>
+                                        <input
+                                            type="file"
+                                            accept="application/pdf,.pdf"
+                                            multiple
+                                            disabled={uploading}
+                                            onChange={(e) => onPickFiles(e.target.files)}
+                                            className={inputCls}
+                                        />
+                                    </Field>
+                                    {uploadItems.map((it, i) => (
+                                        <div key={i} className="rounded-xl border border-white/8 p-3 space-y-2">
+                                            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                                                <input
+                                                    value={it.name}
+                                                    onChange={(e) => patchItem(i, { name: e.target.value })}
+                                                    disabled={uploading || it.status === "done"}
+                                                    aria-label={`Title for ${it.file.name}`}
+                                                    placeholder="Document title"
+                                                    maxLength={300}
+                                                    className={inputCls}
+                                                />
+                                                <span className="text-[11px] text-white/35 shrink-0 truncate sm:max-w-48">{it.file.name}</span>
+                                                {!uploading && it.status !== "done" && (
+                                                    <button type="button" onClick={() => setUploadItems((x) => x.filter((_, k) => k !== i))} className="p-1.5 text-white/35 hover:text-red-400" title="Remove">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {(it.status === "uploading" || it.status === "done") && (
+                                                <div className="h-1.5 rounded-full bg-white/8 overflow-hidden" role="progressbar" aria-valuenow={it.progress} aria-valuemin={0} aria-valuemax={100}>
+                                                    <div className={`h-full ${it.status === "done" ? "bg-emerald-400" : "bg-brand-500"} transition-all`} style={{ width: `${it.progress}%` }} />
+                                                </div>
+                                            )}
+                                            {it.status === "done" && <p className="text-xs text-emerald-400">Uploaded</p>}
+                                            {it.status === "error" && <p className="text-xs text-red-400">{it.error}</p>}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
 
                             <div className="sm:col-span-2 flex gap-3">
                                 <button type="submit" disabled={savingDoc} className={`${primaryBtn} disabled:opacity-50`}>
-                                    {uploading ? "Uploading…" : savingDoc ? "Saving…" : editingDocId ? "Save Changes" : "Add Document"}
+                                    {uploading ? "Uploading…" : savingDoc ? "Saving…" : editingDocId ? "Save Changes" : docMode === "upload" ? (uploadItems.length === 1 ? "Upload document" : "Upload documents") : "Add Document"}
                                 </button>
                                 <button type="button" onClick={cancelDocForm} className={ghostBtn}>
                                     Cancel

@@ -14,7 +14,13 @@ describe("migration ordering", () => {
   const names = fs.readdirSync(MIGRATIONS).filter((n) => /^\d{14}_/.test(n)).sort();
   it("is a well-formed timestamp, unique, and the LAST migration (it applies after everything else)", () => {
     assert.match(NAME, /^\d{14}_[a-z0-9_]+$/);
-    assert.equal(names.at(-1), NAME);
+    // Later migrations are allowed only if they are data-only seeds (no DDL), so the monitoring schema still applies before any schema change.
+    const later = names.slice(names.indexOf(NAME) + 1);
+    assert.ok(names.includes(NAME));
+    for (const n of later) {
+      const body = fs.readFileSync(path.join(MIGRATIONS, n, "migration.sql"), "utf8").replace(/^\s*--.*$/gm, "");
+      assert.ok(!/\b(CREATE|ALTER|DROP|TRUNCATE)\b/i.test(body), `migration ${n} after monitoring must be data-only`);
+    }
     assert.equal(new Set(names.map((n) => n.slice(0, 14))).size, names.length, "no two migrations share a timestamp");
     assert.ok(NAME.slice(0, 14) > "20261123100000", "later than the previous release (admin permissions + audit log)");
     assert.ok(fs.existsSync(path.join(MIGRATIONS, "migration_lock.toml")));

@@ -7,6 +7,28 @@ import {
   CreateDocumentBody,
   UpdateDocumentBody,
 } from "./investor.types.js";
+import { v2 as cloudinary } from "cloudinary";
+import { checkInvestorDocUrl, INVESTOR_DOC_MAX_BYTES } from "./investor.url.js";
+
+/** Rejects unsafe/broken URLs; for files on our Cloudinary account also verifies they exist and are within the size limit. */
+export async function assertInvestorDocUrl(url: string): Promise<void> {
+  const check = checkInvestorDocUrl(url, process.env.CLOUDINARY_CLOUD_NAME);
+  if (!check.ok) throw new ApiError(check.reason, STATUS_CODES.BAD_REQUEST);
+  if (!check.cloudinaryPublicId) return;
+  let bytes: number;
+  try {
+    const r = await cloudinary.api.resource(check.cloudinaryPublicId, { resource_type: "raw" });
+    bytes = Number(r.bytes);
+  } catch (e: any) {
+    if (e?.http_code === 404 || e?.error?.http_code === 404)
+      throw new ApiError("Uploaded file was not found in storage", STATUS_CODES.BAD_REQUEST);
+    throw new ApiError("Could not verify the uploaded file, please try again", STATUS_CODES.SERVICE_UNAVAILABLE);
+  }
+  if (bytes > INVESTOR_DOC_MAX_BYTES) {
+    await cloudinary.uploader.destroy(check.cloudinaryPublicId, { resource_type: "raw" }).catch(() => {});
+    throw new ApiError("File is too large (max 20 MB)", STATUS_CODES.BAD_REQUEST);
+  }
+}
 
 const slugify = (text: string): string =>
   text
@@ -113,6 +135,8 @@ export class AdminInvestorService {
     if (!category)
       throw new ApiError("Category not found", STATUS_CODES.NOT_FOUND);
 
+    await assertInvestorDocUrl(data.url);
+
     return prisma.investorDocument.create({
       data: {
         name: data.name,
@@ -138,6 +162,8 @@ export class AdminInvestorService {
       if (!category)
         throw new ApiError("Category not found", STATUS_CODES.NOT_FOUND);
     }
+
+    if (data.url !== undefined && data.url !== document.url) await assertInvestorDocUrl(data.url);
 
     return prisma.investorDocument.update({
       where: { id },

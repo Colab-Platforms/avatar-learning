@@ -861,8 +861,19 @@ export const generateD2HPaymentLink = (
     .post(`/admin/direct2hire/students/${userId}/payment-link`)
     .then((r) => r.data.data);
 
+export const INVESTOR_DOC_MAX_BYTES = 20 * 1024 * 1024;
+
+/** Client-side pre-check only (the server re-validates the stored file). Returns an error message or null. */
+export const validateInvestorPdf = (file: File): string | null => {
+  if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) return "Only PDF files are allowed";
+  if (file.size === 0) return "File is empty";
+  if (file.size > INVESTOR_DOC_MAX_BYTES) return "File is larger than 20 MB";
+  return null;
+};
+
 export const uploadInvestorDocumentFile = async (
   file: File,
+  onProgress?: (percent: number) => void,
 ): Promise<string> => {
   const { data: signRes } = await apiClient.get<{
     status: boolean;
@@ -884,6 +895,11 @@ export const uploadInvestorDocumentFile = async (
   const res = await axios.post<{ secure_url: string }>(
     `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
     form,
+    {
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+      },
+    },
   );
   return res.data.secure_url;
 };

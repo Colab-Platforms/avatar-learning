@@ -20,13 +20,13 @@ const updateCategorySchema = Joi.object({
 const createDocumentSchema = Joi.object({
   categoryId: Joi.string().required().messages({ "any.required": "Category is required" }),
   name: Joi.string().trim().max(300).required().messages({ "any.required": "Name is required" }),
-  url: Joi.string().uri().required().messages({ "any.required": "URL is required" }),
+  url: Joi.string().uri({ scheme: ["https"] }).max(2048).required().messages({ "any.required": "URL is required" }),
 });
 
 const updateDocumentSchema = Joi.object({
   categoryId: Joi.string().optional(),
   name: Joi.string().trim().max(300).optional(),
-  url: Joi.string().uri().optional(),
+  url: Joi.string().uri({ scheme: ["https"] }).max(2048).optional(),
 }).min(1);
 
 export const validateCreateCategory = (data: unknown) =>
