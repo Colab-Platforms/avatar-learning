@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
 import { businessAdminEmails } from "./business-admin.access.js";
+import { track } from "@/modules/monitoring/monitoring.track.js";
 import { ACTIONS, ADMINS_MODULE, MODULE_KEYS, modulesOfPermissions, normalizePermissions, permissionsForRole, permissionsFromModules, type Action, type PermissionMap, type RoleKey } from "./business-admin.modules.js";
 
 /** Cost 12 for new admin passwords (the shared helper in utils/auth.ts uses 8). Injectable so tests stay fast. */
@@ -318,6 +319,7 @@ export class AdminsService {
     });
     if (patch.name !== undefined) await this.audit(actorId, "ADMIN_RENAMED", { id, email: user.email }, {});
     if (patch.roleKey !== undefined) await this.audit(actorId, "PERMISSIONS_CHANGED", { id, email: user.email }, { roleKey: patch.roleKey, permissions: updated.permissions });
+    if (patch.isActive !== undefined) track.account(patch.isActive ? "ACCOUNT_ACTIVATED" : "ACCOUNT_DEACTIVATED", id, { reason: "admin-management", metadata: { byAdminId: actorId } }); // Live Monitoring
     if (patch.isActive !== undefined) await this.audit(actorId, patch.isActive ? "ADMIN_ACTIVATED" : "ADMIN_DEACTIVATED", { id, email: user.email }, {});
     return updated;
   }

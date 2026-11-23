@@ -1,6 +1,7 @@
 import prisma from "@root/prisma.js";
 import { ApiError } from "@/utils/ApiError.js";
 import STATUS_CODES from "@/utils/statusCodes.js";
+import { track } from "@/modules/monitoring/monitoring.track.js";
 import type { Assessment, AssessmentAttempt, AssessmentAttemptStatus } from "@prisma/client";
 import {
   contentFilterForTrack,
@@ -386,6 +387,8 @@ export class UserAssessmentService {
         isPassed,
       },
     });
+
+    track.account("TEST_COMPLETED", attempt.userId, { module: "assessments", metadata: { status, scorePercent: Math.round(scorePercent), passed: isPassed } }); // Live Monitoring
 
     if (assessment) {
       const { PublicCourseService } = await import("../course.service.js");
@@ -837,7 +840,7 @@ export class UserAssessmentService {
     });
     const attemptNumber = (last?.attemptNumber ?? 0) + 1;
 
-    return prisma.assessmentAttempt.create({
+    const started = await prisma.assessmentAttempt.create({
       data: {
         userId,
         assessmentId: assessment.id,
@@ -845,6 +848,8 @@ export class UserAssessmentService {
         timeLimitMinutes: assessment.timeLimitMinutes,
       },
     });
+    track.account("TEST_STARTED", userId, { module: "assessments", metadata: { courseId, assessmentId: assessment.id, attempt: attemptNumber } }); // Live Monitoring
+    return started;
   }
 
   async getAttemptState(attemptId: string, userId: string) {

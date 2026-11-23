@@ -13,6 +13,8 @@ import type { BusinessAdminStore, IntegrationStatus } from "./business-admin.typ
 import { createAutomationController, type AutomationControllerDeps } from "./automation.controller.js";
 import type { InboxService } from "./inbox.service.js";
 import type { InboxStore } from "./inbox.types.js";
+import { createMonitoringAdminRouter } from "../monitoring/monitoring.admin.js";
+import type { MonitoringService } from "../monitoring/monitoring.service.js";
 import { createEmailAutomationController } from "../email-automation/email-automation.controller.js";
 import type { EmailAutomationService } from "../email-automation/email-automation.service.js";
 
@@ -31,6 +33,8 @@ export interface BusinessAdminRouterDeps {
   extras?: ExtrasDeps;
   /** Template Manager + automation rules/history. When absent those routes do not exist. */
   automation?: AutomationControllerDeps;
+  /** Live Monitoring & Activity Tracking. When absent the /monitoring routes do not exist. */
+  monitoring?: MonitoringService;
   /** Email Automation (Resend). Lives on the Integrations page, so it needs the "integrations" module. When absent those routes do not exist. */
   email?: EmailAutomationService;
   /** Admin Management (Super Admin only). When absent the /admins routes do not exist. */
@@ -120,6 +124,11 @@ export function createBusinessAdminRouter(deps: BusinessAdminRouterDeps): Router
     router.get("/analytics/overview", analytics, a.overview);
     router.get("/analytics/breakdown", analytics, a.breakdown);
     router.get("/analytics/history", analytics, a.history);
+  }
+
+  if (deps.monitoring) {
+    // Reading needs the Monitoring module's view action; ending a sign-in needs its manage action. Both are checked on every route here.
+    router.use("/monitoring", createMonitoringAdminRouter({ service: deps.monitoring, view: requireAccess("view", "monitoring"), manage: requireAccess("manage", "monitoring"), emailOf: deps.findEmail }));
   }
 
   if (deps.automation) {

@@ -6,6 +6,7 @@ import { googleSheetsService } from "@/services/googleSheets.service.js";
 import { userSelectFields, CreateUserBody, UpdateUserBody, SetUserRoleBody, CompleteQuizBody, Role, ROLE_LEVEL } from "./user.types.js";
 import { getPaginationOptions, formatPaginationResponse } from "@/utils/paginationUtils.js";
 import { buildPrismaQuery } from "prisma-qb";
+import { track } from "@/modules/monitoring/monitoring.track.js";
 import { deleteFromCloudinary, RESUME_FOLDER, PROFILE_IMAGES_FOLDER, uploadToCloudinary } from "@/utils/cloudinary.js";
 
 const getHighestRole = (userRoleMappings: { role: { name: string } }[]): string => {
@@ -165,6 +166,9 @@ class UserService {
             },
             select: userSelectFields,
         });
+        // Live Monitoring: what changed in general (never the values), and an explicit activation/deactivation record.
+        track.account("PROFILE_UPDATED", targetId, { module: "profile", metadata: { byAdmin: callerId !== targetId } });
+        if (data.isActive !== undefined) track.account(data.isActive ? "ACCOUNT_ACTIVATED" : "ACCOUNT_DEACTIVATED", targetId, { reason: "admin", metadata: { byAdminId: callerId } });
 
         return updatedUser;
     }

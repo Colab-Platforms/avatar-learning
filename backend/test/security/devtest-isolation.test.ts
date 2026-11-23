@@ -150,6 +150,9 @@ after(() => new Promise<void>((resolve) => server.close(() => resolve())));
 // Routes that are PUBLIC by design (they answer without a token). Anything else must refuse a dev token with 401/403.
 const PUBLIC = [
   /^GET \/api\/health$/,
+  // Reviewed: Live Monitoring collection. Anonymous by design (guests have no token); first-party, rate limited, write-only to the
+  // monitoring tables, and it ignores a dev token (it only reads a real one to link a visit to the account).
+  /^POST \/api\/track\/(pageview|heartbeat|event)$/,
   /^(GET|POST) \/api\/auth\//,
   /^POST \/api\/contact$/,
   /^POST \/api\/chatbot/,

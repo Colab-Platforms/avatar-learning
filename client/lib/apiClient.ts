@@ -79,6 +79,13 @@ apiClient.interceptors.request.use(
       } catch (error) {
         console.error("Failed to read auth from localStorage", error);
       }
+      // Lets the server tie a sign-in to this browser's anonymous visit history (Live Monitoring). Present only after analytics consent.
+      try {
+        const vid = localStorage.getItem("av_vid");
+        if (vid && /^[A-Za-z0-9_-]{20,64}$/.test(vid)) config.headers["X-Visitor-Id"] = vid;
+      } catch {
+        /* storage blocked */
+      }
     }
 
     return config;
@@ -107,6 +114,9 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       }
+
+      // Background probes (e.g. the public header checking Business Admin access) must never sign the person out or navigate away.
+      if ((originalRequest as { skipAuthRedirect?: boolean }).skipAuthRedirect) return Promise.reject(error);
 
       // The local dev sandbox login (dev only, 8-hour token, no refresh token): send an expired sandbox session back to the
       // sandbox sign-in page; the normal /login cannot sign that account in.

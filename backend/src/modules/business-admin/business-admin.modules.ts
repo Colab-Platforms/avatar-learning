@@ -8,10 +8,17 @@ export const MODULE_KEYS = [
   "automations",
   "integrations",
   "analytics",
+  "monitoring",
   "team",
   "settings",
 ] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
+
+/**
+ * Modules that hold personal activity and security records. They are NEVER granted implicitly (not by the legacy
+ * BUSINESS_ADMIN_EMAILS allowlist): a Super Admin must grant them to a person on purpose (or the person is a Super Admin).
+ */
+export const EXPLICIT_GRANT_ONLY: readonly string[] = ["monitoring"];
 
 /** Admin Management is never delegable: only a SUPERADMIN has it. */
 export const ADMINS_MODULE = "admins";
@@ -37,6 +44,7 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   automations: "Automations",
   integrations: "Integrations",
   analytics: "Analytics",
+  monitoring: "Live Monitoring",
   team: "Team Management",
   settings: "Settings",
 };

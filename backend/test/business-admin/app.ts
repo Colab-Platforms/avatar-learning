@@ -50,7 +50,7 @@ export const SUPER: AdminFakeUser = { id: "superadmin-user-1", firstName: "Sam",
 export const ADMIN_OK: AdminFakeUser = { id: "admin-user-1", firstName: "Asha", lastName: "Ops", email: "ops@example.com", roles: ["ADMIN"] };
 
 /** Real Express + real sanitize/auth/access/error handling over the fake database; only WhatsApp itself is faked. */
-export async function startInboxApp(opts: { users?: AdminFakeUser[]; env?: Record<string, string | undefined>; hash?: (p: string) => Promise<string> } = {}): Promise<InboxApp> {
+export async function startInboxApp(opts: { users?: AdminFakeUser[]; env?: Record<string, string | undefined>; hash?: (p: string) => Promise<string>; monitoring?: any } = {}): Promise<InboxApp> {
   const db = new AdminFakeDb();
   db.users = opts.users ?? [SUPER, ADMIN_OK];
   const env: Record<string, string | undefined> = opts.env ?? { BUSINESS_ADMIN_EMAILS: "ops@example.com" };
@@ -111,6 +111,7 @@ export async function startInboxApp(opts: { users?: AdminFakeUser[]; env?: Recor
       getIntegrations: () => integrations,
       findAccount,
       admins,
+      ...(opts.monitoring ? { monitoring: opts.monitoring } : {}),
       accessMiddleware: (req, res, next) => requireBusinessAdmin({ findAccount, env })(req, res, next),
       sendLimiter: (_req, _res, next) => next(),
       adminWriteLimiter: (_req, _res, next) => next(),

@@ -28,6 +28,7 @@ const ACCESS_TOKEN_TTL = "1d";
 const MIN_PROFILE_AGE_YEARS = 10;
 
 import { emitAutomationEvent } from "@/modules/business-admin/automation.emit.js";
+import { track } from "@/modules/monitoring/monitoring.track.js";
 import { ensureLearningUser, findAdoptionUser, matchCredentials, syncPassword, endAllSessions, isBcryptHash } from "./identity.service.js";
 
 async function notifyPabblyOnSignup(user: {
@@ -77,10 +78,12 @@ const getHighestRole = (
 const signAccessToken = (
   userId: string,
   role: "USER" | "ADMIN" | "SUPERADMIN" | "BUSINESS_ADMIN",
+  sid?: string,
 ): string => {
   if (!process.env.JWT_SECRET)
     throw new ApiError("JWT secret is not defined", STATUS_CODES.SERVER_ERROR);
-  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
+  // sid = the refresh-token row of this sign-in. It lets an administrator end THIS sign-in (see monitoring/session-revocation.ts).
+  return jwt.sign({ id: userId, role, ...(sid ? { sid } : {}) }, process.env.JWT_SECRET, {
     expiresIn: ACCESS_TOKEN_TTL,
   });
 };
@@ -98,10 +101,10 @@ const generateOtp = (): string =>
 const createSession = async (
   userId: string,
   device?: string,
-): Promise<string> => {
+): Promise<{ rawToken: string; id: string | undefined }> => {
   const rawToken = crypto.randomBytes(32).toString("hex");
 
-  await prisma.session.create({
+  const row = await prisma.session.create({
     data: {
       userId,
       refreshToken: hashToken(rawToken),
@@ -110,7 +113,7 @@ const createSession = async (
     },
   });
 
-  return rawToken;
+  return { rawToken, id: (row as { id?: string } | undefined)?.id };
 };
 
 const issueAuthTokens = async (
@@ -123,8 +126,9 @@ const issueAuthTokens = async (
   device?: string,
 ) => {
   const roleNames = user.userRoleMappings.map((ur) => ur.role.name);
-  const accessToken = signAccessToken(user.id, getHighestRole(roleNames));
-  const refreshToken = await createSession(user.id, device);
+  const { rawToken: refreshToken, id: sessionId } = await createSession(user.id, device);
+  const accessToken = signAccessToken(user.id, getHighestRole(roleNames), sessionId);
+  if (sessionId) track.login(user.id, sessionId); // Live Monitoring: fire-and-forget, never affects the sign-in
   const { password: _, ...safeUser } = user;
   return { user: safeUser, accessToken, refreshToken };
 };
@@ -263,6 +267,7 @@ class AuthService {
 
       // Secondary reporting — never blocks registration
       void googleSheetsService.appendUser(created);
+      track.account("REGISTERED", created.id, { reason: "email" });
     }
 
     return {
@@ -309,6 +314,7 @@ class AuthService {
         data: { isEmailVerified: true },
       });
       user.isEmailVerified = true;
+      track.account("EMAIL_VERIFIED", user.id);
       void notifyPabblyOnSignup(user);
       // WhatsApp automation hook: only after the email OTP really verified a new account.
       emitAutomationEvent({ event: "user.registered", eventId: user.id, phone: user.phoneNo, fields: { name: user.firstName, email: user.email } });
@@ -419,11 +425,13 @@ class AuthService {
       }
     }
 
-    if (!user)
+    if (!user) {
+      track.loginFailed({ identifier: data.email, reason: "UNKNOWN_EMAIL" });
       throw new ApiError(
         "User with this Email doesn't exist",
         STATUS_CODES.NOT_FOUND,
       );
+    }
 
     // Accounts made by the bootstrap script or Admin Management store the password exactly as typed; accounts made through
     // registration or password reset store the sanitizer-altered text (the sanitizer only changes `<` and `>`). Accept either
@@ -449,6 +457,7 @@ class AuthService {
       }
     }
     if (!isPasswordValid) {
+      track.loginFailed({ identifier: data.email, userId: user.id, reason: "BAD_PASSWORD" });
       throw new ApiError(
         "Invalid email or password",
         STATUS_CODES.UNAUTHORIZED,
@@ -456,6 +465,7 @@ class AuthService {
     }
 
     if (!user.isActive) {
+      track.loginFailed({ identifier: data.email, userId: user.id, reason: "ACCOUNT_DEACTIVATED" });
       throw new ApiError(
         "Your account has been deactivated. Contact support.",
         STATUS_CODES.FORBIDDEN,
@@ -627,14 +637,16 @@ class AuthService {
     await prisma.session.delete({ where: { id: session.id } });
 
     const roleNames = session.user.userRoleMappings.map((ur) => ur.role.name);
-    const accessToken = signAccessToken(
-      session.user.id,
-      getHighestRole(roleNames),
-    );
-    const newRefreshToken = await createSession(
+    const { rawToken: newRefreshToken, id: newSessionId } = await createSession(
       session.user.id,
       device ?? session.device ?? undefined,
     );
+    const accessToken = signAccessToken(
+      session.user.id,
+      getHighestRole(roleNames),
+      newSessionId,
+    );
+    if (newSessionId) track.sessionRotated(session.id, newSessionId); // keep the monitoring session pointing at the live sign-in
 
     return { accessToken, refreshToken: newRefreshToken };
   }
@@ -642,7 +654,9 @@ class AuthService {
   async logout(rawRefreshToken: string) {
     const hashed = hashToken(rawRefreshToken);
 
+    const existing = await prisma.session.findFirst({ where: { refreshToken: hashed } });
     await prisma.session.deleteMany({ where: { refreshToken: hashed } });
+    if (existing) track.logout(existing.id, existing.userId);
 
     return { message: "Logged out successfully." };
   }
@@ -787,6 +801,7 @@ class AuthService {
     // One password for the whole identity: AI Adoption gets the same hash, and every session in every module ends.
     await syncPassword(resetToken.user.email, hashed);
     await endAllSessions(resetToken.user.email);
+    track.account("PASSWORD_CHANGED", resetToken.userId, { reason: "reset" });
 
     return { message: "Password reset successfully. You can now log in." };
   }

@@ -7,6 +7,7 @@ import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
 import { DeferredWidgets } from "@/components/ui/DeferredWidgets";
 import { AnalyticsConsent } from "@/components/ui/AnalyticsConsent";
+import { ActivityTracker } from "@/components/analytics/ActivityTracker";
 // import { IndependenceDayPromo } from "@/components/ui/IndependenceDayPromo";
 import { ProfileCompletionGuard } from "@/components/auth/ProfileCompletionGuard";
 import { WebinarPopup } from "@/app/direct2hire/WebinarPopup";
@@ -58,6 +59,8 @@ export default function RootLayout({
             <DeferredWidgets />
             {/* Clarity, Google Tag Manager and Meta Pixel: public pages only, after the visitor accepts (see lib/clarityConsent.ts) */}
             <AnalyticsConsent />
+            {/* Live Monitoring: first-party visit tracking, only after the visitor accepted analytics (lib/activityTracker.ts) */}
+            <ActivityTracker />
             {/* <IndependenceDayPromo /> */}
             <WebinarPopup />
             <Toaster richColors position="top-right" />
