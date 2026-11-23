@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSharedPageDark } from "@/lib/siteContext";
 import Link from "next/link";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -97,7 +97,7 @@ const GRIEVANCE_REDRESSAL = {
   // Horizontal scroller for the dark tables. On narrow screens the table keeps a
   // readable minimum width (columns are no longer crushed) and a soft fade on the
   // right edge shows there is more to swipe; the fade is hidden once tables fit.
-  // Used only by the dark (?theme=dark) view; the light view below is unchanged.
+  // Used only by the dark (AI Adoption) view; the light view below is unchanged.
   function DarkTableScroll({ children }: { children: React.ReactNode }) {
     return (
       <div className="relative after:pointer-events-none after:absolute after:inset-y-px after:right-px after:w-10 after:rounded-r-2xl after:bg-[linear-gradient(to_left,#0c0e13,transparent)] after:content-[''] min-[760px]:after:hidden">
@@ -351,8 +351,12 @@ const GRIEVANCE_REDRESSAL = {
 }
 
             function BoardOfDirectorsContent() {
-              const searchParams = useSearchParams();
-              const isDark = searchParams.get("theme") === "dark";
+              // Dark = visitor came from AI Adoption, light = Avatar Learning (saved per visitor, not in the URL).
+              const dark = useSharedPageDark();
+              const isDark = dark === true;
+
+              // Site not known yet (first client render): same placeholder as the Suspense fallback.
+              if (dark === undefined) return <div className="min-h-screen bg-white" />;
 
               // ─── DARK THEME ───────────────────────────────────────────────────────────
               if (isDark) {
@@ -389,7 +393,7 @@ const GRIEVANCE_REDRESSAL = {
                           }}
                         >
                           <Link
-                            href="/investors?theme=dark"
+                            href="/investors"
                             style={{
                               display: "inline-flex",
                               alignItems: "center",

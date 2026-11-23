@@ -73,7 +73,7 @@ export function CompanyBacking() {
           </motion.p>
 
           <motion.div {...reveal(240)} style={{ marginTop: "clamp(22px,2.6vw,32px)" }}>
-            <Link href="/investors?theme=dark" className="text-[#6fe3ef] transition-colors hover:text-[#8fe9f2] focus-visible:underline" style={{ fontSize: 15, fontWeight: 600, textDecoration: "none" }}>
+            <Link href="/investors" className="text-[#6fe3ef] transition-colors hover:text-[#8fe9f2] focus-visible:underline" style={{ fontSize: 15, fontWeight: 600, textDecoration: "none" }}>
               Investor information ↗
             </Link>
           </motion.div>

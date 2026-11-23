@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getLastSite, setLastSite, siteFromThemeParam } from "@/lib/siteContext";
 
 // Routes where the chatbot / help widget / career-quiz prompt should never
 // mount (e.g. standalone prototype pages with their own dark theme/CTAs).
@@ -13,17 +14,15 @@ import { useEffect, useState } from "react";
 const EXCLUDED_PATHS = ["/", "/tools", "/blogs", "/insights", "/thank-you", "/faq", "/book-demo"];
 // /admin-adaption is the internal Business Admin: no public-site chatbot, help bubble or quiz prompt there.
 const EXCLUDED_PATH_PREFIXES = ["/ai-adaption-ecosystem", "/admin-adaption", "/adoption/", "/blogs/", "/insights/"];
-// Shared with Avatar Learning: /investors is the Adoption version only with ?theme=dark
-// (every Adoption link adds it; Learning links don't).
+// Pages shared with Avatar Learning (/investors/*, legal pages): they belong to whichever
+// site the visitor came from (lib/siteContext), so they read the recorded site and never
+// overwrite it. Old /investors?theme=dark|light links still say which site.
 const SHARED_INVESTORS_PREFIX = "/investors";
-// Shared legal pages: hide the widgets only when the visitor came from an Adoption page in this tab.
 const SHARED_LEGAL_PATHS = ["/privacy-policy", "/terms-and-conditions"];
-const SITE_KEY = "avatar-last-site"; // "adoption" | "learning", sessionStorage
 
-function isAdoptionRoute(pathname: string, search: string) {
+function isAdoptionRoute(pathname: string) {
   if (EXCLUDED_PATHS.includes(pathname) || EXCLUDED_PATH_PREFIXES.some((p) => pathname.startsWith(p))) return true;
-  if (pathname === "/adoption") return true;
-  return pathname.startsWith(SHARED_INVESTORS_PREFIX) && new URLSearchParams(search).get("theme") === "dark";
+  return pathname === "/adoption";
 }
 
 // These three widgets (chatbot, help bubble, career-quiz prompt) are global
@@ -52,21 +51,23 @@ export function DeferredWidgets() {
   // Paths alone decide most routes on the first render (no flash on Adoption pages).
   const pathExcluded =
     EXCLUDED_PATHS.includes(pathname) || EXCLUDED_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || pathname === "/adoption";
-  // Query/session-dependent cases (Adoption /investors?theme=dark, legal pages reached from Adoption)
-  // are read from window in an effect — useSearchParams here would need a Suspense boundary in the root layout.
+  // Shared pages (investors, legal) depend on the recorded site, read from window in an effect —
+  // useSearchParams here would need a Suspense boundary in the root layout.
   const [contextExcluded, setContextExcluded] = useState<boolean | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const search = window.location.search;
-    const adoption = isAdoptionRoute(pathname, search);
-    const legal = SHARED_LEGAL_PATHS.includes(pathname);
-    let lastSite: string | null = null;
-    try {
-      if (!legal) sessionStorage.setItem(SITE_KEY, adoption ? "adoption" : "learning");
-      else lastSite = sessionStorage.getItem(SITE_KEY);
-    } catch {}
-    setContextExcluded(adoption || (legal && lastSite === "adoption"));
+    const shared = SHARED_LEGAL_PATHS.includes(pathname) || pathname.startsWith(SHARED_INVESTORS_PREFIX);
+    if (!shared) {
+      const adoption = isAdoptionRoute(pathname);
+      setLastSite(adoption ? "adoption" : "learning");
+      setContextExcluded(adoption);
+      return;
+    }
+    const legacy = pathname.startsWith(SHARED_INVESTORS_PREFIX)
+      ? siteFromThemeParam(new URLSearchParams(window.location.search).get("theme"))
+      : null;
+    setContextExcluded((legacy ?? getLastSite()) === "adoption");
   }, [pathname]);
 
   const isExcluded = pathExcluded || contextExcluded !== false;

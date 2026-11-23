@@ -19,7 +19,7 @@ const OLD_HASH_PAGES: Record<string, string> = {
   "#tools": "/tools",
   "#blogs": "/blogs",
   "#insights": "/blogs",
-  "#investors": "/investors?theme=dark",
+  "#investors": "/investors",
   "#book-demo": "/book-demo",
 };
 /** AI Adoption sign-in page (separate from the learning platform's /login). */
@@ -97,7 +97,7 @@ export function EcosystemHeader() {
       if (href === "#investors" || href === "/#investors" || href.includes("investors")) {
         e.preventDefault();
         setMenuOpen(false);
-        router.push("/investors?theme=dark");
+        router.push("/investors");
         return;
       }
       if (href.startsWith("#")) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSharedPageDark } from "@/lib/siteContext";
 import Link from "next/link";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -28,8 +28,9 @@ import {
 } from "@/lib/investorsApi";
 
   function InvestorsContent() {
-    const searchParams = useSearchParams();
-    const isDark = searchParams.get("theme") === "dark";
+    // Dark = visitor came from AI Adoption, light = Avatar Learning (saved per visitor, not in the URL).
+    const dark = useSharedPageDark();
+    const isDark = dark === true;
 
     const [categories, setCategories] = useState<InvestorCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,6 +39,7 @@ import {
     const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
 
     useEffect(() => {
+      if (dark === undefined) return;
       fetchInvestorCategories()
         .then((cats) => {
           setCategories(cats || []);
@@ -52,7 +54,7 @@ import {
           console.error("Failed to fetch investor categories:", err);
         })
         .finally(() => setLoading(false));
-  }, [isDark]);
+  }, [dark, isDark]);
 
   const selectedCategory = categories.find((c) => c.id === selectedId) ?? null;
 
@@ -90,6 +92,9 @@ const toggleYear = (year: string) =>
     else next.add(year);
     return next;
   });
+
+  // Site not known yet (first client render): same placeholder as the Suspense fallback.
+  if (dark === undefined) return <div className="min-h-screen bg-[#07080b]" />;
 
   // ─── DARK THEME (Navigated from AI Adoption Ecosystem) ────────────────────
   if (isDark) {
@@ -175,7 +180,7 @@ const toggleYear = (year: string) =>
 
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <Link
-                  href="/investors/board-of-directors?theme=dark"
+                  href="/investors/board-of-directors"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
