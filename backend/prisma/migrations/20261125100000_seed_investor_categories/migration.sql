@@ -1,61 +1,23 @@
--- Data-only, additive and idempotent. No schema change; no category or document is ever deleted, renamed or re-slugged.
+-- Data-only, additive and idempotent. No schema change. INSERT only: no existing row is updated, renamed, re-slugged,
+-- re-ordered or deleted, and no document is touched (existing sort_order values are preserved exactly).
 --
--- Goal: the public Investors page lists categories by sort_order, and the three new ones must sit immediately after
--- "Press Releases", in this order: Subsidiary Financial, MOA & AOA, Annual Return.
---
--- Step 1: add whichever of the three is missing (matched by slug OR case-insensitive name, so a category an admin
---         already created by hand is reused, never duplicated).
--- Step 2: renumber sort_order (1..n) so the order is: everything up to and including Press Releases, then the three
---         new categories, then every category that used to come after Press Releases (their relative order is kept).
---         Only sort_order changes. Re-running produces the identical result and updates nothing.
---         If there is no "Press Releases" category, the three are placed after all existing categories.
+-- Adds the three new investor categories after "Press Releases", in this order, at the next free positions:
+--   Subsidiary Financial -> 136, MOA & AOA -> 137, Annual Return -> 138
+-- (position = the larger of 135 and the current highest sort_order, plus 1, 2, 3 for the categories that are missing).
+-- Production's current highest is Press Releases = 135, so the result there is exactly 136 / 137 / 138.
+-- A category is considered present if one with the same slug OR the same name (case-insensitive) already exists; it is then
+-- left exactly as it is. Re-running therefore inserts nothing.
 
 INSERT INTO "investor_categories" ("id", "name", "slug", "sort_order", "is_active", "created_at")
-SELECT 'seed_inv_' || v.slug, v.name, v.slug, 0, true, CURRENT_TIMESTAMP
+SELECT 'seed_inv_' || m.slug, m.name, m.slug,
+       GREATEST(135, COALESCE((SELECT MAX("sort_order") FROM "investor_categories"), 0)) + row_number() OVER (ORDER BY m.pos),
+       true, CURRENT_TIMESTAMP
 FROM (VALUES
-  ('Subsidiary Financial', 'subsidiary-financial'),
-  ('MOA & AOA',            'moa-aoa'),
-  ('Annual Return',        'annual-return')
-) AS v(name, slug)
+  (1, 'Subsidiary Financial', 'subsidiary-financial'),
+  (2, 'MOA & AOA',            'moa-aoa'),
+  (3, 'Annual Return',        'annual-return')
+) AS m(pos, name, slug)
 WHERE NOT EXISTS (
   SELECT 1 FROM "investor_categories" c
-  WHERE c."slug" = v.slug OR lower(c."name") = lower(v.name)
+  WHERE c."slug" = m.slug OR lower(c."name") = lower(m.name)
 );
-
-WITH base AS (
-  SELECT c."id", c."sort_order", c."created_at",
-         CASE
-           WHEN c."slug" = 'subsidiary-financial' OR lower(c."name") = 'subsidiary financial' THEN 1
-           WHEN c."slug" = 'moa-aoa'              OR lower(c."name") = 'moa & aoa'            THEN 2
-           WHEN c."slug" = 'annual-return'        OR lower(c."name") = 'annual return'        THEN 3
-         END AS new_rank,
-         (c."slug" = 'press-releases' OR lower(c."name") = 'press releases') AS is_pr
-  FROM "investor_categories" c
-),
-anchor AS (
-  SELECT b."id", b."sort_order", b."created_at"
-  FROM base b
-  WHERE b.is_pr AND b.new_rank IS NULL
-  ORDER BY b."sort_order", b."created_at", b."id"
-  LIMIT 1
-),
-ordered AS (
-  SELECT b."id",
-         row_number() OVER (
-           ORDER BY
-             CASE
-               WHEN b.new_rank IS NOT NULL THEN CASE WHEN a."id" IS NOT NULL THEN 1 ELSE 3 END
-               WHEN a."id" IS NULL THEN 0
-               WHEN (b."sort_order", b."created_at", b."id") <= (a."sort_order", a."created_at", a."id") THEN 0
-               ELSE 2
-             END,
-             b.new_rank,
-             b."sort_order", b."created_at", b."id"
-         ) AS rn
-  FROM base b
-  LEFT JOIN anchor a ON true
-)
-UPDATE "investor_categories" c
-SET "sort_order" = o.rn
-FROM ordered o
-WHERE c."id" = o."id" AND c."sort_order" IS DISTINCT FROM o.rn;
