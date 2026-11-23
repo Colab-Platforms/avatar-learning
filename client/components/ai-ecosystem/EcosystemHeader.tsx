@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NAV_LINKS } from "./data";
 import { AccountMenu } from "./AccountMenu";
+import { ADMIN_PANEL_HREF, useBusinessAdminLink } from "./useBusinessAdminLink";
 import { adoptionAuth, useAdoptionSession } from "@/lib/adoptionSession";
 import pillStyles from "../ui/hoverPill.module.css";
 
@@ -86,6 +87,7 @@ export function EcosystemHeader() {
 
   // Signed-in AI Adoption visitors see an account menu instead of Login.
   const { user: signedInUser } = useAdoptionSession();
+  const showBusinessAdmin = useBusinessAdminLink(signedInUser);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -537,6 +539,27 @@ export function EcosystemHeader() {
               My Account
               <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
             </Link>
+          )}
+          {signedInUser && showBusinessAdmin && (
+            <a
+              href={ADMIN_PANEL_HREF}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                minHeight: 60,
+                borderBottom: "1px solid rgba(255,255,255,.08)",
+                color: "#f4f6f8",
+                fontSize: 22,
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+                textDecoration: "none",
+              }}
+            >
+              Business Admin Panel
+              <span style={{ color: "#6fe3ef", fontSize: 16 }}>→</span>
+            </a>
           )}
           {signedInUser ? (
             <button
