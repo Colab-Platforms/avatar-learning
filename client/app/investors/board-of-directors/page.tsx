@@ -93,20 +93,35 @@ const GRIEVANCE_REDRESSAL = {
   email: "infoaslindustries@gmail.com",
 };
 
+  // ─── Dark theme (AI Adoption) table frame ──────────────────────────────────
+  // Horizontal scroller for the dark tables. On narrow screens the table keeps a
+  // readable minimum width (columns are no longer crushed) and a soft fade on the
+  // right edge shows there is more to swipe; the fade is hidden once tables fit.
+  // Used only by the dark (?theme=dark) view; the light view below is unchanged.
+  function DarkTableScroll({ children }: { children: React.ReactNode }) {
+    return (
+      <div className="relative after:pointer-events-none after:absolute after:inset-y-px after:right-px after:w-10 after:rounded-r-2xl after:bg-[linear-gradient(to_left,#0c0e13,transparent)] after:content-[''] min-[760px]:after:hidden">
+        <div
+          style={{
+            overflowX: "auto",
+            borderRadius: 16,
+            border: "1px solid rgba(255,255,255,.08)",
+            background: "rgba(12,14,19,.75)",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   // ─── Dark Theme Member Table ────────────────────────────────────────────────
   function DarkMemberTable({ rows }: { rows: MemberRow[] }) {
     const [openRow, setOpenRow] = useState<string | null>(null);
 
     return (
-      <div
-        style={{
-          overflowX: "auto",
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,.08)",
-          background: "rgba(12,14,19,.75)",
-        }}
-      >
-        <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse", textAlign: "left" }}>
+      <DarkTableScroll>
+        <table style={{ width: "100%", minWidth: 600, fontSize: 14, borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,.03)", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
               <th style={{ padding: "14px 18px", fontWeight: 600, color: "#d0d6de", whiteSpace: "nowrap" }}>
@@ -239,7 +254,7 @@ const GRIEVANCE_REDRESSAL = {
             })}
           </tbody>
         </table>
-      </div>
+      </DarkTableScroll>
     );
   }
 
@@ -444,15 +459,8 @@ const GRIEVANCE_REDRESSAL = {
                             <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "#8fe9f2" }}>
                               5. Grievance Redressal
                             </h2>
-                            <div
-                              style={{
-                                overflowX: "auto",
-                                borderRadius: 16,
-                                border: "1px solid rgba(255,255,255,.08)",
-                                background: "rgba(12,14,19,.75)",
-                              }}
-                            >
-                              <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse", textAlign: "left" }}>
+                            <DarkTableScroll>
+                              <table style={{ width: "100%", minWidth: 640, fontSize: 14, borderCollapse: "collapse", textAlign: "left" }}>
                                 <thead>
                                   <tr
                                     style={{
@@ -488,7 +496,7 @@ const GRIEVANCE_REDRESSAL = {
                                   </tr>
                                 </tbody>
                               </table>
-                            </div>
+                            </DarkTableScroll>
                           </div>
                         </div>
                       </div>

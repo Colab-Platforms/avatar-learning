@@ -24,14 +24,13 @@ const HERO_CSS = `
 .hero-enter { animation: heroEnter .8s cubic-bezier(.2,.7,.1,1) both }
 .hero-enter-2 { animation-delay: .08s } .hero-enter-3 { animation-delay: .16s } .hero-enter-4 { animation-delay: .24s } .hero-enter-5 { animation-delay: .32s }
 @media (prefers-reduced-motion: reduce) { .hero-enter { animation: none } }
-.hero-globe-inline { display: none }
 .hero-pill-row { grid-template-columns: auto minmax(0,1fr) auto; grid-template-areas: "badge text send" }
-/* Tablet/desktop: the hero fills the screen below the 69px sticky navbar (a minimum, never a fixed height, so nothing is clipped). */
-@media (min-width: 600px) {
-  .hero-root { min-height: calc(100vh - 69px); min-height: calc(100svh - 69px) }
-}
+/* The hero fills the screen below the 69px sticky navbar (a minimum, never a fixed height, so nothing is clipped). */
+.hero-root { min-height: calc(100vh - 69px); min-height: calc(100svh - 69px) }
 @media (max-width: 599px) {
-  .hero-area { --hero-pt: 40px !important; --hero-pb: 4px !important }
+  .hero-area { --hero-pt: 32px !important; --hero-pb: 16px !important }
+  /* Smaller shade on phones so the globe behind the text still shows around it (desktop keeps its 1200x720 shade). */
+  .hero-shade { height: 540px !important; margin-top: -270px !important; max-width: 115% !important }
   .hero-stack { gap: 18px !important }
   .hero-badge { flex-wrap: wrap !important; gap: 6px !important; padding: 8px 14px !important; border-radius: 16px !important; font-size: 11.5px !important; max-width: 280px !important }
   .hero-badge-tag { font-size: 10.5px !important }
@@ -40,7 +39,6 @@ const HERO_CSS = `
   .hero-sub { max-width: 340px !important; font-size: 15px !important; line-height: 1.5 !important }
   .hero-ctas { flex-direction: column !important; width: 100% !important; max-width: 340px !important }
   .hero-cta { width: 100% !important }
-  .hero-globe-inline { display: block; position: relative; width: 100%; max-width: 420px; aspect-ratio: 1 / 1; margin: 4px auto -8px; pointer-events: none }
   .hero-pill-wrap { margin-top: 4px !important }
   .hero-pill-outer { border-radius: 24px !important }
   .hero-pill-row { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "badge badge" "text send"; gap: 8px 12px !important; padding: 12px 12px 12px 16px !important; border-radius: 23px !important; align-items: end !important }
@@ -54,7 +52,11 @@ const HERO_CSS = `
  * points and a handful of labelled anchor nodes that light up near the cursor. */
 const SPHERE_H = 980;
 
-function HeroSphere({ width, height = SPHERE_H, inline = false }: { width: number; height?: number; inline?: boolean }) {
+/** Phones: globe diameter as a share of the screen width (a little wider than the
+ * screen, like desktop where the globe is larger than the text block). */
+const PHONE_GLOBE = 1.2;
+
+function HeroSphere({ width, height = SPHERE_H, radius }: { width: number; height?: number; /** Globe radius as a share of canvas width (default: desktop/tablet rule). */ radius?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ cmx: -9999, cmy: -9999, mx: 0, my: 0, hoverTarget: 0, hover: 0 });
 
@@ -125,7 +127,7 @@ function HeroSphere({ width, height = SPHERE_H, inline = false }: { width: numbe
       const ease = (f: number) => 1 - Math.pow(1 - f, dt);
       m.hover += (m.hoverTarget - m.hover) * ease(0.06);
       const hv = m.hover;
-      const R = Math.min(w * (w < 600 * dp ? 0.5 : 0.42), hh * 0.5);
+      const R = Math.min(w * (radius ?? (w < 600 * dp ? 0.5 : 0.42)), hh * 0.5);
       const cx = w / 2;
       const cy = hh * 0.5;
       const t = (now || 0) / 1000;
@@ -335,29 +337,26 @@ function HeroSphere({ width, height = SPHERE_H, inline = false }: { width: numbe
         header.removeEventListener("touchcancel", onTouchEnd);
       }
     };
-  }, [width, height]);
+  }, [width, height, radius]);
 
   const H = height;
 
   return (
     <div
       aria-hidden="true"
-      style={
-        inline
-          ? { position: "absolute", inset: 0, pointerEvents: "none" }
-          : {
-              // Centred on the hero content area (its parent), independent of the content itself.
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: "50%",
-              marginTop: -H / 2,
-              height: H,
-              pointerEvents: "none",
-              WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
-              maskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
-            }
-      }
+      style={{
+        // Centred on the hero content area (its parent), independent of the content itself.
+        // Absolutely positioned, so it never adds page height, and never takes taps/clicks.
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: "50%",
+        marginTop: -H / 2,
+        height: H,
+        pointerEvents: "none",
+        WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
+        maskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
+      }}
     >
       <div
         className={styles.breathe}
@@ -374,7 +373,8 @@ function HeroSphere({ width, height = SPHERE_H, inline = false }: { width: numbe
       />
       <canvas
         ref={canvasRef}
-        style={{ position: "absolute", inset: 0, width, height: H, opacity: inline ? 0.85 : 0.55 }}
+        // Phones (explicit radius) a touch brighter: the globe sits behind more text there.
+        style={{ position: "absolute", inset: 0, width, height: H, opacity: radius ? 0.7 : 0.55 }}
       />
     </div>
   );
@@ -553,8 +553,6 @@ export function EcosystemHero() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const phone = mounted && width < 600;
-  // Phone globe fills its box (screen width minus the 20px phone gutters), so it stays centred.
-  const globeSize = Math.max(200, Math.min(420, width - 40));
 
   return (
     <header
@@ -641,12 +639,14 @@ export function EcosystemHero() {
       {/* Background layer = the padded box the content group is centred in, so the globe's
           centre is the group's centre. Its size never affects the content's position. */}
       <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: "var(--hero-pt)", bottom: "var(--hero-pb)", pointerEvents: "none" }}>
-      {/* Desktop/tablet: globe behind the hero. Phones: it moves below the buttons (see .hero-globe-inline). */}
-      {!phone && <HeroSphere width={width} />}
+      {/* Globe behind the hero on every screen size. Desktop/tablet: unchanged (980px box, default
+          radius). Phones: a box sized to the screen and a globe a little wider than the screen. */}
+      {phone ? <HeroSphere width={width} height={Math.round(width * PHONE_GLOBE + 40)} radius={PHONE_GLOBE / 2} /> : <HeroSphere width={width} />}
 
       {/* Darkens the globe directly behind the text so it stays readable; centred with the globe. */}
       <div
         aria-hidden="true"
+        className="hero-shade"
         style={{
           position: "absolute",
           left: "50%",
@@ -816,11 +816,6 @@ export function EcosystemHero() {
             Explore products →
           </a>
         </motion.div>
-
-        {/* Phones: the globe sits here, below the buttons, in a square that scales with the screen. */}
-        <div className="hero-globe-inline" aria-hidden="true">
-          {phone && <HeroSphere width={globeSize} height={globeSize} inline />}
-        </div>
 
         {/* Slightly more space than the other gaps (28 + 12), so it reads as the next step after the buttons. */}
         <motion.div initial={false} className="hero-enter hero-enter-5 hero-pill-wrap" style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: 12 }}>

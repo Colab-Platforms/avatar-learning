@@ -174,8 +174,8 @@ export function Divider() {
 export function LegalNote() {
   return (
     <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: "#8a939e", textAlign: "center" }}>
-      By continuing, you agree to our <TextLink href="/terms-and-conditions">Terms &amp; Conditions</TextLink> and{" "}
-      <TextLink href="/privacy-policy">Privacy Policy</TextLink>.
+      By continuing, you agree to our <TextLink href="/adoption/terms-and-conditions">Terms &amp; Conditions</TextLink> and{" "}
+      <TextLink href="/adoption/privacy-policy">Privacy Policy</TextLink>.
     </p>
   );
 }

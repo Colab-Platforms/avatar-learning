@@ -110,8 +110,8 @@ export default function AdoptionSignupPage() {
               style={{ width: 16, height: 16, margin: "3px 0 0", flex: "none", accentColor: "#6fe3ef", cursor: "pointer" }}
             />
             <span>
-              I agree to the <TextLink href="/terms-and-conditions">Terms &amp; Conditions</TextLink> and{" "}
-              <TextLink href="/privacy-policy">Privacy Policy</TextLink>.
+              I agree to the <TextLink href="/adoption/terms-and-conditions">Terms &amp; Conditions</TextLink> and{" "}
+              <TextLink href="/adoption/privacy-policy">Privacy Policy</TextLink>.
             </span>
           </label>
           {errors.terms && <span id="terms-error" style={{ fontSize: 13, color: ERROR_COLOR }}>{errors.terms}</span>}

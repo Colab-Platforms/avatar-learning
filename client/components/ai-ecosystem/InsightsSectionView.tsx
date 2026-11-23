@@ -60,7 +60,11 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
           {featured && (
             <Link
               href={`/blogs/${featured.slug}`}
-              style={{ display: "flex", flexDirection: "column", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)", color: "#f4f6f8", ...(showAll ? { alignSelf: "start", position: "sticky", top: 88 } : {}) }}
+              // /blogs: the featured card stays in view beside the list — only when they really are
+              // side by side (two grid columns from ~990px). In the single-column phone/tablet layout a
+              // sticky card pinned itself over the list below and blocked taps on it.
+              className={showAll ? "min-[1000px]:sticky min-[1000px]:top-[88px]" : undefined}
+              style={{ display: "flex", flexDirection: "column", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.02)", color: "#f4f6f8", ...(showAll ? { alignSelf: "start" } : {}) }}
             >
               <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
                 {featured.image ? (
@@ -106,17 +110,17 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
               <Link
                 key={p.slug}
                 href={`/blogs/${p.slug}`}
+                // ≥480px: unchanged (112px image · title · 32px arrow). Small phones: smaller
+                // image and no arrow (the whole row is the link), so the title isn't squeezed.
+                className="grid grid-cols-[88px_minmax(0,1fr)] gap-[14px] min-[480px]:grid-cols-[112px_minmax(0,1fr)_32px] min-[480px]:gap-[18px]"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "112px minmax(0,1fr) 32px",
-                  gap: 18,
                   alignItems: "center",
                   padding: "16px 4px",
                   borderBottom: "1px solid rgba(255,255,255,.08)",
                   color: "#f4f6f8",
                 }}
               >
-                <span style={{ position: "relative", display: "block", height: 84, borderRadius: 12, overflow: "hidden" }}>
+                <span className="h-[72px] min-[480px]:h-[84px]" style={{ position: "relative", display: "block", borderRadius: 12, overflow: "hidden" }}>
                   {p.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
@@ -128,9 +132,9 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
                   <span style={{ fontFamily: "var(--font-geist-mono),monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "#98a1ac" }}>
                     {p.type} &middot; {p.meta}
                   </span>
-                  <strong style={{ fontSize: 17, lineHeight: 1.3, fontWeight: 500, letterSpacing: "-0.01em" }}>{p.t}</strong>
+                  <strong className="text-[15.5px] min-[480px]:text-[17px]" style={{ lineHeight: 1.3, fontWeight: 500, letterSpacing: "-0.01em" }}>{p.t}</strong>
                 </span>
-                <span style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8fe9f2" }}>→</span>
+                <span aria-hidden="true" className="hidden min-[480px]:flex" style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,.12)", alignItems: "center", justifyContent: "center", color: "#8fe9f2" }}>→</span>
               </Link>
             ))}
             {!showAll && (

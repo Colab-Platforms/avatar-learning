@@ -171,11 +171,12 @@ export function EcosystemFooter() {
             &copy; {new Date().getFullYear()} {COMPANY.name}. All rights reserved.
           </span>
           <span>
-            <a href="/privacy-policy" style={{ color: "#8a939e" }}>
+            {/* AI Adoption's own legal pages (Avatar Learning keeps /privacy-policy and /terms-and-conditions). */}
+            <a href="/adoption/privacy-policy" style={{ color: "#8a939e" }}>
               Privacy Policy
             </a>
             <span aria-hidden="true" style={{ margin: "0 10px", color: "rgba(255,255,255,.18)" }}>|</span>
-            <a href="/terms-and-conditions" style={{ color: "#8a939e" }}>
+            <a href="/adoption/terms-and-conditions" style={{ color: "#8a939e" }}>
               Terms &amp; Conditions
             </a>
           </span>
