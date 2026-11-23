@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { adoptionAuth, type AdoptionUser } from "@/lib/adoptionSession";
+import { ADMIN_PANEL_HREF, useBusinessAdminLink } from "./useBusinessAdminLink";
 
 /** Navbar "My Account" button shown in place of "Login" once signed in. */
 export function AccountMenu({ user }: { user: AdoptionUser }) {
@@ -10,6 +11,7 @@ export function AccountMenu({ user }: { user: AdoptionUser }) {
   const [busy, setBusy] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const showBusinessAdmin = useBusinessAdminLink(user);
   const name = user.fullName;
   const initial = (user.fullName || user.email || "?").trim().charAt(0).toUpperCase();
 
@@ -80,6 +82,18 @@ export function AccountMenu({ user }: { user: AdoptionUser }) {
           >
             My account
           </Link>
+          {showBusinessAdmin && (
+            // A full page load, like the staff sign-in redirect: the admin panel always starts from the saved session.
+            <a
+              href={ADMIN_PANEL_HREF}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="text-[#f4f6f8] hover:bg-white/[0.05] focus-visible:bg-white/[0.07] focus-visible:outline-none"
+              style={{ display: "block", padding: "10px 12px", borderRadius: 8, fontSize: 14, textDecoration: "none" }}
+            >
+              Business Admin Panel
+            </a>
+          )}
           <button
             type="button"
             role="menuitem"

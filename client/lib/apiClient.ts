@@ -115,6 +115,9 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       }
 
+      // Background probes (e.g. the public header checking Business Admin access) must never sign the person out or navigate away.
+      if ((originalRequest as { skipAuthRedirect?: boolean }).skipAuthRedirect) return Promise.reject(error);
+
       // The local dev sandbox login (dev only, 8-hour token, no refresh token): send an expired sandbox session back to the
       // sandbox sign-in page; the normal /login cannot sign that account in.
       let isDevSandbox = false;

@@ -42,7 +42,9 @@ export interface BusinessOverview {
   integrations: IntegrationStatus;
 }
 
-export const fetchBusinessMe = (): Promise<BusinessAdminMe> => apiClient.get("/business-admin/me").then((r) => r.data.data);
+/** `quiet`: a background probe. If the session is dead it just fails; it never signs the person out or redirects (see apiClient). */
+export const fetchBusinessMe = (opts: { quiet?: boolean } = {}): Promise<BusinessAdminMe> =>
+  apiClient.get("/business-admin/me", opts.quiet ? ({ skipAuthRedirect: true } as object) : undefined).then((r) => r.data.data);
 
 export const fetchBusinessOverview = (): Promise<BusinessOverview> => apiClient.get("/business-admin/overview").then((r) => r.data.data);
 
