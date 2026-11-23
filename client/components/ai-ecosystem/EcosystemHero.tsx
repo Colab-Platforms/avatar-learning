@@ -26,8 +26,12 @@ const HERO_CSS = `
 @media (prefers-reduced-motion: reduce) { .hero-enter { animation: none } }
 .hero-globe-inline { display: none }
 .hero-pill-row { grid-template-columns: auto minmax(0,1fr) auto; grid-template-areas: "badge text send" }
+/* Tablet/desktop: the hero fills the screen below the 69px sticky navbar (a minimum, never a fixed height, so nothing is clipped). */
+@media (min-width: 600px) {
+  .hero-root { min-height: calc(100vh - 69px); min-height: calc(100svh - 69px) }
+}
 @media (max-width: 599px) {
-  .hero-root { padding: 40px var(--ad-gutter) 0 !important }
+  .hero-area { --hero-pt: 40px !important; --hero-pb: 4px !important }
   .hero-stack { gap: 18px !important }
   .hero-badge { flex-wrap: wrap !important; gap: 6px !important; padding: 8px 14px !important; border-radius: 16px !important; font-size: 11.5px !important; max-width: 280px !important }
   .hero-badge-tag { font-size: 10.5px !important }
@@ -42,7 +46,6 @@ const HERO_CSS = `
   .hero-pill-row { grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "badge badge" "text send"; gap: 8px 12px !important; padding: 12px 12px 12px 16px !important; border-radius: 23px !important; align-items: end !important }
   .hero-pill-text { white-space: normal !important; height: 40px; font-size: 15px !important; line-height: 20px !important }
   .hero-pill-send { width: 36px !important; height: 36px !important }
-  .hero-spacer { height: 4px !important }
   .hero-marquee { padding: 16px 0 32px !important }
 }
 `;
@@ -343,10 +346,12 @@ function HeroSphere({ width, height = SPHERE_H, inline = false }: { width: numbe
         inline
           ? { position: "absolute", inset: 0, pointerEvents: "none" }
           : {
+              // Centred on the hero content area (its parent), independent of the content itself.
               position: "absolute",
               left: 0,
               right: 0,
-              top: 30,
+              top: "50%",
+              marginTop: -H / 2,
               height: H,
               pointerEvents: "none",
               WebkitMaskImage: "linear-gradient(180deg,transparent 0%,#000 16%,#000 80%,transparent 100%)",
@@ -536,7 +541,8 @@ function Marquee() {
 export function EcosystemHero() {
   const [width, setWidth] = useState(1440);
   useEffect(() => {
-    const onResize = () => setWidth(window.innerWidth);
+    // Page width without the scrollbar, so the globe shares the content's centre line.
+    const onResize = () => setWidth(document.documentElement.clientWidth || window.innerWidth);
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -547,7 +553,8 @@ export function EcosystemHero() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const phone = mounted && width < 600;
-  const globeSize = Math.max(200, Math.min(420, width - 48));
+  // Phone globe fills its box (screen width minus the 20px phone gutters), so it stays centred.
+  const globeSize = Math.max(200, Math.min(420, width - 40));
 
   return (
     <header
@@ -558,7 +565,9 @@ export function EcosystemHero() {
         position: "relative",
         overflowX: "clip",
         overflowY: "visible",
-        padding: "clamp(72px,10vw,112px) var(--ad-gutter) 0",
+        // Two stacked layers: the content area (centred group + globe behind it) and the ticker.
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <style>{HERO_CSS}</style>
@@ -611,15 +620,38 @@ export function EcosystemHero() {
         />
       </div>
 
+      {/* Content area: fills the hero above the ticker and centres the content group in it.
+          The bottom padding is smaller because the ticker adds its own 40px on top, so the
+          visible space above and below the group matches. */}
+      <div
+        className="hero-area"
+        style={
+          {
+            "--hero-pt": "clamp(56px,6vw,88px)",
+            "--hero-pb": "clamp(16px,3.2vw,48px)",
+            position: "relative",
+            flex: "1 0 auto",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "var(--hero-pt) var(--ad-gutter) var(--hero-pb)",
+          } as React.CSSProperties
+        }
+      >
+      {/* Background layer = the padded box the content group is centred in, so the globe's
+          centre is the group's centre. Its size never affects the content's position. */}
+      <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: "var(--hero-pt)", bottom: "var(--hero-pb)", pointerEvents: "none" }}>
       {/* Desktop/tablet: globe behind the hero. Phones: it moves below the buttons (see .hero-globe-inline). */}
       {!phone && <HeroSphere width={width} />}
 
+      {/* Darkens the globe directly behind the text so it stays readable; centred with the globe. */}
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
           left: "50%",
-          top: 20,
+          top: "50%",
+          marginTop: -360,
           width: 1200,
           maxWidth: "130%",
           height: 720,
@@ -629,11 +661,14 @@ export function EcosystemHero() {
           pointerEvents: "none",
         }}
       />
+      </div>
 
       <div
         className="hero-stack"
         style={{
           position: "relative",
+          // Full width of the area (it is a flex item; auto margins alone would shrink it to its content).
+          width: "100%",
           maxWidth: 1200,
           margin: "0 auto",
           display: "flex",
@@ -787,11 +822,11 @@ export function EcosystemHero() {
           {phone && <HeroSphere width={globeSize} height={globeSize} inline />}
         </div>
 
-        <motion.div initial={false} className="hero-enter hero-enter-5 hero-pill-wrap" style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: 36 }}>
+        {/* Slightly more space than the other gaps (28 + 12), so it reads as the next step after the buttons. */}
+        <motion.div initial={false} className="hero-enter hero-enter-5 hero-pill-wrap" style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: 12 }}>
           <HeroPromptPill />
         </motion.div>
-
-        <div className="hero-spacer" style={{ height: "clamp(70px,10vw,140px)" }} />
+      </div>
       </div>
 
       <div

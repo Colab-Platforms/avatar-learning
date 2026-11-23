@@ -1,0 +1,410 @@
+/* About page "Connected AI Ecosystem" visual. Scoped to this component only.
+   Sizes use container-query units (cqw = 1% of the panel width), so the whole
+   scene scales with the panel on desktop, tablet and phone. Continuous motion
+   uses only transform/opacity (and SVG dash offsets written by the JS loop). */
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: inline-size;
+}
+
+/* Very soft teal light behind the core; drifts slowly once the scene is live. */
+.backLight {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 78%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(22, 184, 172, 0.11), rgba(18, 56, 61, 0.05) 55%, transparent);
+  opacity: 0;
+}
+.live .backLight {
+  animation:
+    caeFade 2s ease 0.2s both,
+    caeAmbient 14s ease-in-out 10s infinite alternate;
+}
+@keyframes caeAmbient {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.65;
+  }
+}
+
+/* Lines and nodes share one small parallax offset (set by the animation loop). */
+.parallax {
+  position: absolute;
+  inset: 0;
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.webgl .canvas {
+  opacity: 1;
+}
+
+/* Soft edge fade so the scene melts into the panel instead of looking boxed. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 75% 66% at 50% 50%, transparent 58%, rgba(9, 11, 15, 0.7) 100%);
+}
+
+/* ---------- Connections ---------- */
+.link {
+  fill: none;
+  transition: opacity 0.25s ease;
+}
+.linkLine {
+  fill: none;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-width 0.25s ease;
+}
+.linkGlow {
+  fill: none;
+  stroke: #58c4dc;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-opacity: 0;
+  transition: stroke-opacity 0.25s ease;
+}
+/* Soft pulse that travels out from the core every 10 s. */
+.linkPulse {
+  fill: none;
+  stroke: #8fe9f2;
+  stroke-opacity: 0.85;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 0.22 1.3;
+  stroke-dashoffset: 0.22;
+  opacity: 0;
+}
+/* Particle = bright dot + short trail that lights the line as it passes. */
+.particle {
+  opacity: 0;
+}
+.dot {
+  fill: #d9fbfe;
+}
+.trail {
+  fill: none;
+  stroke: #8fe9f2;
+  stroke-opacity: 0.62;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 0.12 2;
+  stroke-dashoffset: 0.12;
+}
+.linkActive .linkLine {
+  stroke-width: 1.8;
+}
+.linkActive .linkGlow {
+  stroke-opacity: 0.14;
+}
+/* While a module is hovered, the other connections step back slightly. */
+.hasActive .link:not(.linkActive) {
+  opacity: 0.45;
+}
+
+.live .linkLine {
+  animation: caeDraw var(--dur) cubic-bezier(0.45, 0.05, 0.25, 1) var(--d) both;
+}
+@keyframes caeDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.fallbackCore {
+  opacity: 0;
+}
+.live .fallbackCore {
+  animation: caeFade 1.6s ease 0.25s both;
+}
+
+/* ---------- AVATAR logo on the core ---------- */
+.logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(5px, 1.6cqw, 9px);
+  pointer-events: none;
+  opacity: 0;
+}
+.logoMark {
+  position: relative;
+  display: block;
+  width: 11cqw;
+  aspect-ratio: 40.6 / 32;
+  overflow: hidden;
+  /* Only a faint halo, so the mark stays crisp. */
+  filter: brightness(1) drop-shadow(0 0 2px rgba(88, 196, 220, 0.18));
+}
+.logoImg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100% !important;
+  width: auto !important;
+  max-width: none;
+}
+.logoText {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(7px, 1.75cqw, 9.5px);
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
+  color: rgba(226, 241, 244, 0.86);
+  white-space: nowrap;
+}
+.live .logo {
+  animation: caeFade 1.3s ease 0.7s both;
+}
+/* Logo is lit gently as the core appears, then settles. */
+.live .logoMark {
+  animation: caeLogoIn 1.8s cubic-bezier(0.2, 0.7, 0.1, 1) 0.6s both;
+}
+@keyframes caeLogoIn {
+  0% {
+    transform: scale(0.92);
+    filter: brightness(0.6) drop-shadow(0 0 0 rgba(88, 196, 220, 0));
+  }
+  60% {
+    filter: brightness(1.15) drop-shadow(0 0 7px rgba(88, 196, 220, 0.4));
+  }
+  100% {
+    transform: none;
+    filter: brightness(1) drop-shadow(0 0 2px rgba(88, 196, 220, 0.18));
+  }
+}
+
+/* ---------- Nodes ---------- */
+.nodes {
+  position: absolute;
+  inset: 0;
+}
+.nodeSlot {
+  position: absolute;
+  width: clamp(70px, 25.5cqw, 130px);
+  transform: translate(-50%, -50%) scale(var(--s, 1));
+  transition: transform 0.25s ease;
+}
+/* Hover: lift the card 4 px (the slot moves, so the entrance/float animations are untouched). */
+.slotActive {
+  transform: translate(-50%, calc(-50% - 4px)) scale(var(--s, 1));
+}
+.node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(5px, 1.4cqw, 8px);
+  padding: clamp(7px, 2.2cqw, 11px) clamp(3px, 1.2cqw, 8px) clamp(7px, 2.1cqw, 11px);
+  border-radius: clamp(10px, 2.8cqw, 14px);
+  /* Opaque, so the line and particles ending under the card never show through. */
+  background: linear-gradient(180deg, #141e24, #0a0f13);
+  border: 1px solid rgba(88, 196, 220, 0.2);
+  box-shadow:
+    0 16px 28px -18px rgba(0, 0, 0, 0.95),
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  visibility: hidden;
+}
+/* Bright 1 px border overlays (same thickness as the real border, so nothing shifts):
+   ::before = entrance light + ambient breathing, ::after = pulse arrival + hover. */
+.node::before,
+.node::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(111, 227, 239, 0.55);
+  pointer-events: none;
+  opacity: 0;
+}
+.node::after {
+  box-shadow: 0 0 14px rgba(88, 196, 220, 0.16);
+  opacity: var(--pulse, 0);
+  transition: opacity 0.25s ease;
+}
+.nodeActive::after {
+  opacity: 1;
+}
+.nodeIcon {
+  display: grid;
+  place-items: center;
+  width: clamp(24px, 6.4cqw, 32px);
+  aspect-ratio: 1;
+  border-radius: clamp(7px, 1.8cqw, 9px);
+  background: rgba(22, 184, 172, 0.1);
+  border: 1px solid rgba(88, 196, 220, 0.24);
+  color: #6fd6e6;
+  transition:
+    color 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+.nodeIcon svg {
+  width: 58%;
+  height: 58%;
+}
+.nodeActive .nodeIcon {
+  color: #b5f4fa;
+  background: rgba(22, 184, 172, 0.18);
+  border-color: rgba(111, 227, 239, 0.5);
+}
+.nodeLabel {
+  font-size: clamp(10.5px, 2.5cqw, 12.5px);
+  line-height: 1.2;
+  font-weight: 500;
+  color: #e8eef1;
+  text-align: center;
+  white-space: nowrap;
+}
+/* Narrow panels: labels may wrap, and every card reserves two lines so all cards match. */
+.compact .nodeLabel {
+  white-space: normal;
+  text-wrap: balance;
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live .node {
+  animation:
+    caeNodeIn 0.7s cubic-bezier(0.2, 0.7, 0.1, 1) var(--d) both,
+    caeBob var(--bob, 7s) ease-in-out calc(var(--d) + 1s) infinite;
+}
+.live .node::before {
+  animation: caeNodeLit 1.4s ease-out calc(var(--d) + 0.45s) both;
+}
+/* A few borders breathe softly once the whole scene is in place. */
+.live .breathe::before {
+  animation:
+    caeNodeLit 1.4s ease-out calc(var(--d) + 0.45s) both,
+    caeBreathe 7.8s ease-in-out calc(10s + var(--breathe, 0s)) infinite;
+}
+@keyframes caeNodeIn {
+  from {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(var(--fx, 0), var(--fy, 0)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+}
+@keyframes caeNodeLit {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes caeBreathe {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+@keyframes caeBob {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+@keyframes caeFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* On very narrow panels keep only the symbol on the core. */
+@container (max-width: 359px) {
+  .logoText {
+    display: none;
+  }
+}
+
+/* Off-screen or hidden tab: the loop stops and the CSS animations wait with it. */
+.root[data-paused] *,
+.root[data-paused] *::before,
+.root[data-paused] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Reduced motion: the finished scene, no movement. */
+.static .linkLine {
+  stroke-dashoffset: 0;
+}
+.static .node,
+.static .logo,
+.static .fallbackCore,
+.static .backLight {
+  opacity: 1;
+  visibility: visible;
+}
+.static .particle,
+.static .linkPulse {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

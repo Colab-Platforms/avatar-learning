@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { PRODUCTS, STEPS } from "./data";
-import styles from "./ecosystem.module.css";
+import { ConnectedAIEcosystem } from "./connected-ecosystem/ConnectedAIEcosystem";
 import { OurStory } from "./OurStory";
 import { CompanyBacking } from "./CompanyBacking";
 import { VisionMission } from "./VisionMission";
@@ -15,50 +15,6 @@ import { AboutFaq } from "./AboutFaq";
  * CSS-only fade-in keeps the polish; it runs before hydration.
  */
 const heroIn = (step: number) => ({ initial: false as const, className: `about-enter about-enter-${step}` });
-
-function Ring({ size, duration, reverse, dot }: { size: number; duration: number; reverse?: boolean; dot: string }) {
-  const offset = (900 - size) / 2;
-  return (
-    <div
-      className={reverse ? styles.spinr : styles.spin}
-      style={{
-        position: "absolute",
-        left: offset,
-        top: offset,
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        border: "1px solid rgba(255,255,255,.07)",
-        animationDuration: `${duration}s`,
-      }}
-    >
-      <span
-        style={{
-          position: "absolute",
-          left: "calc(50% - 4px)",
-          top: -4,
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: dot,
-          boxShadow: `0 0 16px 4px ${dot}`,
-        }}
-      />
-    </div>
-  );
-}
-
-/** The section's existing orbit visual (three slowly rotating rings), now shown inside the right-hand panel. */
-function OrbitBg() {
-  return (
-    <div style={{ position: "relative", width: 900, height: 900 }}>
-      <div style={{ position: "absolute", inset: "25%", borderRadius: "50%", background: "radial-gradient(circle,rgba(111,227,239,.16),transparent 65%)" }} />
-      <Ring size={880} duration={50} dot="#6fe3ef" />
-      <Ring size={640} duration={34} reverse dot="#4fb7c9" />
-      <Ring size={400} duration={22} dot="#8fe9f2" />
-    </div>
-  );
-}
 
 // Figures come from the site's own data: the product list, the "How it works"
 // steps, and the FAQ ("Every setup includes hands-on training").
@@ -182,10 +138,11 @@ export function AboutPageContent() {
             </motion.dl>
           </div>
 
-          {/* Right: the visual panel (the section's existing orbit animation) */}
+          {/* Right: the visual panel (Connected AI Ecosystem animation) */}
           <motion.div
             initial={false}
-            aria-hidden="true"
+            role="img"
+            aria-label="Avatar AI connects SaaS, AI tools, automation, consultation, AI adoption, training, analytics and custom solutions into one ecosystem."
             data-avoid-sticky=""
             className="about-enter about-enter-3 max-w-[560px] min-[960px]:max-w-none" // when stacked, don't let the panel dominate
             style={{
@@ -200,22 +157,7 @@ export function AboutPageContent() {
               overflow: "hidden",
             }}
           >
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                width: 900,
-                height: 900,
-                transform: "translate(-50%,-50%) scale(var(--orbit-scale,.62))",
-                opacity: 0.55,
-                WebkitMaskImage: "radial-gradient(circle,#000 35%,transparent 68%)",
-                maskImage: "radial-gradient(circle,#000 35%,transparent 68%)",
-              }}
-              className="[--orbit-scale:.5] min-[960px]:[--orbit-scale:.62]"
-            >
-              <OrbitBg />
-            </div>
+            <ConnectedAIEcosystem />
           </motion.div>
         </div>
 
