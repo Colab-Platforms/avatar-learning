@@ -29,7 +29,7 @@ export function BlogHeader() {
         {/* Desktop Nav Links (Matching video: ABOUT US, PORTFOLIO, BLOG, CONTACT NOW) */}
         <nav className="hidden md:flex items-center gap-8 lg:gap-10">
           <Link
-            href="/about"
+            href="/learning/about"
             className="text-xs lg:text-[13px] font-bold tracking-wider text-slate-700 hover:text-brand-500 uppercase transition-colors duration-200"
           >
             ABOUT US
@@ -88,7 +88,7 @@ export function BlogHeader() {
           >
             <div className="px-6 py-6 flex flex-col space-y-4">
               <Link
-                href="/about"
+                href="/learning/about"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-sm font-bold tracking-wider text-slate-800 uppercase hover:text-brand-500 py-1"
               >

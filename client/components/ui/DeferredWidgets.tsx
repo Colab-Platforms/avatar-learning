@@ -11,7 +11,7 @@ import { getLastSite, setLastSite, siteFromThemeParam } from "@/lib/siteContext"
 // redirects there but is kept here in case anything still links to it mid-flight.
 // The whole Avatar AI Adoption site has no chatbot / help bubble / quiz prompt
 // (those belong to Avatar Learning): its own routes are listed here.
-const EXCLUDED_PATHS = ["/", "/tools", "/blogs", "/insights", "/thank-you", "/faq", "/book-demo"];
+const EXCLUDED_PATHS = ["/", "/about", "/tools", "/blogs", "/insights", "/thank-you", "/faq", "/book-demo"];
 // /admin-adaption is the internal Business Admin: no public-site chatbot, help bubble or quiz prompt there.
 const EXCLUDED_PATH_PREFIXES = ["/ai-adaption-ecosystem", "/admin-adaption", "/adoption/", "/blogs/", "/insights/"];
 // Pages shared with Avatar Learning (/investors/*, legal pages): they belong to whichever

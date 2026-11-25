@@ -29,7 +29,39 @@ const nextConfig: NextConfig = {
       { source: "/insights/:slug", destination: "/blogs/:slug", permanent: true },
       // Book a Demo moved to its clean URL; the query (e.g. ?tools=CRM) is kept automatically.
       { source: "/adoption/book-demo", destination: "/book-demo", permanent: true },
+      // The AI Adoption About page moved to /about (Avatar Learning's About is now /learning/about).
+      { source: "/adoption/about", destination: "/about", permanent: true },
     ];
+  },
+  // Keep private, transactional and utility pages out of search results. A header (rather than robots.txt
+  // Disallow) so crawlers can still fetch the page and see the noindex. Public content pages are not listed.
+  async headers() {
+    const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+    return [
+      // Signed-in areas
+      "/admin/:path*",
+      "/dashboard/:path*",
+      "/partner-dashboard/:path*",
+      "/profile",
+      "/onboarded",
+      "/partners/onboarding",
+      // Sign-in / account flows (Avatar Learning; the /adoption/* ones already set noindex metadata)
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/reset-password",
+      "/complete-profile",
+      // Purchase / course-progress steps
+      "/courses/:id/enroll",
+      "/courses/:id/learn",
+      "/courses/:id/success",
+      "/courses/:id/assessment/:path*",
+      "/direct2hire/success",
+      // Placeholder and design-export pages (/home duplicates the homepage)
+      "/coming-soon",
+      "/home",
+      "/home-revamp/:path*",
+    ].map((source) => ({ source, headers: noindex }));
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],

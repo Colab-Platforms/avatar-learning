@@ -11,8 +11,10 @@ const reveal = (delay = 0) => ({
   transition: { duration: 0.9, delay: delay / 1000, ease: [0.2, 0.7, 0.1, 1] as const },
 });
 
-export function FaqSection() {
+/** `asPage`: rendered as the /faq page itself, so the heading is the page's h1 (h2 on the homepage). Same look. */
+export function FaqSection({ asPage = false }: { asPage?: boolean }) {
   const [open, setOpen] = useState(0);
+  const Heading = asPage ? motion.h1 : motion.h2;
 
   return (
     <section id="faq" data-screen-label="08 FAQ" style={{ scrollMarginTop: 68, padding: "var(--ad-section-y) var(--ad-gutter)" }}>
@@ -25,12 +27,12 @@ export function FaqSection() {
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fe3ef" }} />
             FAQ
           </motion.div>
-          <motion.h2
+          <Heading
             {...reveal(80)}
             style={{ margin: 0, fontSize: "clamp(32px,4.2vw,48px)", lineHeight: 1.05, letterSpacing: "-0.04em", fontWeight: 600, textWrap: "balance", background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
             Questions, answered
-          </motion.h2>
+          </Heading>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", borderTop: "1px solid rgba(255,255,255,.08)" }}>

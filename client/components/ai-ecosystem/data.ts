@@ -290,7 +290,7 @@ export const NAV_LINKS = [
   // sections (#how, #who) are unchanged; uncomment to bring the tabs back.
   // { href: "#how", label: "How it works" },
   // { href: "#who", label: "Who it's for" },
-  { href: "/adoption/about", label: "About" },
+  { href: "/about", label: "About" },
   { href: "/blogs", label: "Blogs" },
   { href: "/faq", label: "FAQ" },
   { href: "/investors", label: "Investors" },
@@ -320,7 +320,7 @@ export const FOOTER_PRODUCTS = [
 ];
 
 export const FOOTER_COMPANY = [
-  { label: "About Us", href: "/adoption/about" },
+  { label: "About Us", href: "/about" },
   { label: "Our Solutions", href: "/tools" },
   { label: "How It Works", href: "/#how" },
   { label: "Blogs", href: "/blogs" },

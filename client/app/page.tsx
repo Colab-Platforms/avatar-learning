@@ -14,13 +14,27 @@ import { BookDemoSection } from "@/components/ai-ecosystem/BookDemoSection";
 import { EcosystemFooter } from "@/components/ai-ecosystem/EcosystemFooter";
 import { StickyCta } from "@/components/ai-ecosystem/StickyCta";
 import { CursorGlow } from "@/components/ai-ecosystem/CursorGlow";
+import { homeJsonLd, jsonLdScript, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "AI Adoption Ecosystem | Avatar India",
+// Primary brand landing page: "Avatar AI" / "Avatar India" searches should land here.
+export const metadata: Metadata = pageMetadata({
+  title: "Avatar AI | AI Adoption & Business Automation Solutions",
   description:
-    "We bring together AI solutions, technology and talent to help businesses identify opportunities, implement the right solutions and scale measurable outcomes.",
-  alternates: { canonical: "https://www.avatarindia.com/" },
-};
+    "Transform your business with Avatar AI Adoption Ecosystem. Explore integrated CRM, HRMS, OMS, AI-powered automation and custom business solutions.",
+  path: "/",
+  keywords: [
+    "Avatar AI",
+    "Avatar India",
+    "Avatar AI Adoption Ecosystem",
+    "AI Adoption",
+    "AI Business Automation",
+    "AI Solutions for Businesses",
+    "Avatar CRM",
+    "Avatar HRMS",
+    "Avatar OMS",
+  ],
+  adoption: true,
+});
 
 export default function Page() {
   return (
@@ -36,6 +50,8 @@ export default function Page() {
         fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
       }}
     >
+      {/* Organization + WebSite structured data (brand identity for search engines). */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(homeJsonLd())} />
       <CursorGlow />
       <EcosystemHeader />
       <main>

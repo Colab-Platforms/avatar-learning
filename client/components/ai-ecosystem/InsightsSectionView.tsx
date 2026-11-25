@@ -22,6 +22,7 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
   const featured = filtered.find((p) => p.featured) ?? filtered[0];
   const others = filtered.filter((p) => p !== featured);
   const rest = others.slice(0, visible);
+  const Heading = showAll ? motion.h1 : motion.h2;
   const hasMore = showAll && others.length > visible;
   const canCollapse = showAll && visible > PREVIEW_LIST_SIZE;
   const collapse = () => {
@@ -40,12 +41,13 @@ export function InsightsSectionView({ posts, showAll = false }: { posts: Insight
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6fe3ef" }} />
             Blogs
           </motion.div>
-          <motion.h2
+          {/* The page heading (h1) on /blogs; a section heading (h2) on the homepage. Same look. */}
+          <Heading
             {...reveal(80)}
             style={{ margin: 0, fontSize: "clamp(34px,4.8vw,58px)", lineHeight: 1.04, letterSpacing: "-0.04em", fontWeight: 600, textWrap: "balance", background: "linear-gradient(180deg,#fff 40%,#8e98a4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
           >
             Blogs
-          </motion.h2>
+          </Heading>
           <motion.p {...reveal(160)} style={{ margin: 0, maxWidth: 520, fontSize: 18, lineHeight: 1.5, color: "#a3abb5" }}>
             Guides and stories from businesses putting AI to work.
           </motion.p>

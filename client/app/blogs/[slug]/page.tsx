@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 type Props = { params: Promise<{ slug: string }> };
 
-const SITE_URL = "https://www.avatarindia.com";
+import { OG_IMAGE, SITE_URL } from "@/lib/seo";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${article.title} | Avatar India`,
     description: article.excerpt,
     alternates: { canonical: url },
-    openGraph: { type: "article", title: article.title, description: article.excerpt, url, siteName: "Avatar India" },
-    twitter: { card: "summary", title: article.title, description: article.excerpt },
+    openGraph: { type: "article", title: article.title, description: article.excerpt, url, siteName: "Avatar India", locale: "en_IN", images: [OG_IMAGE] },
+    twitter: { card: "summary_large_image", site: "@avataradoption", title: article.title, description: article.excerpt, images: [OG_IMAGE.url] },
   };
 }
 

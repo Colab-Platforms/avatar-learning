@@ -1,6 +1,6 @@
 // Three.js part of the About page ecosystem visual: the floating dark-glass
 // AVATAR core plus a little ambient depth (soft halo, slow dust).
-// Loaded with a dynamic import, so `three` only downloads on /adoption/about.
+// Loaded with a dynamic import, so `three` only downloads on /about.
 // The component drives it from its own requestAnimationFrame loop; nothing
 // here touches React state.
 import * as THREE from "three";

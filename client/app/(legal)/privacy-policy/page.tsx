@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy — Avatar India",
   description: "How Avatar India collects, uses, and protects your personal information.",
+  alternates: { canonical: "/privacy-policy" },
 };
 
 /* ── Shared typography helpers ── */

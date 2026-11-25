@@ -7,7 +7,7 @@ export const LA_NAV = [
   { label: "Learning", href: "/learning" },
   { label: "AI Tools", href: "/marketplace" },
   { label: "Services", href: "/" },
-  { label: "About", href: "/about" },
+  { label: "About", href: "/learning/about" },
 ];
 
 export const LA_INVESTORS = { label: "For Investors", href: "/investors" };
@@ -231,7 +231,7 @@ export const LA_FOOTER = [
   {
     title: "Company",
     links: [
-      { label: "About Us", href: "/about" },
+      { label: "About Us", href: "/learning/about" },
       { label: "Investors", href: "/investors" },
       { label: "Contact", href: "/contact" },
     ],

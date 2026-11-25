@@ -4,13 +4,15 @@ import { GeistMono } from "geist/font/mono";
 import { EcosystemHeader } from "@/components/ai-ecosystem/EcosystemHeader";
 import { EcosystemFooter } from "@/components/ai-ecosystem/EcosystemFooter";
 import { FaqSection } from "@/components/ai-ecosystem/FaqSection";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "FAQ | Avatar AI Adoption",
   description:
     "Answers to common questions about Avatar AI Adoption: getting started, pricing, setup, team training, data security and connecting AI tools to your business.",
-  alternates: { canonical: "https://www.avatarindia.com/faq" },
-};
+  path: "/faq",
+  adoption: true,
+});
 
 /** Dedicated AI Adoption FAQ page (the navbar's FAQ link): site navbar + the same FAQ section as the homepage + site footer.
  * Old /#faq links are sent here by EcosystemHeader. */
@@ -22,7 +24,7 @@ export default function FaqRoute() {
     >
       <EcosystemHeader />
       <main>
-        <FaqSection />
+        <FaqSection asPage />
       </main>
       <EcosystemFooter />
     </div>

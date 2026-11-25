@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
-import { SITE } from "@/data/site";
+import { BRAND, OG_IMAGE, SITE_URL } from "@/lib/seo";
 import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
 import { DeferredWidgets } from "@/components/ui/DeferredWidgets";
@@ -33,9 +33,17 @@ const spaceGrotesk = localFont({
   fallback: ["system-ui", "sans-serif"],
 });
 
+// Site-wide defaults. Every indexable public page sets its own title, description and canonical
+// (lib/seo.ts pageMetadata); these only cover pages that don't (sign-in, private and utility pages).
+// metadataBase makes relative canonical/og URLs resolve to the primary www domain on every host.
 export const metadata: Metadata = {
-  title: SITE.tagline,
-  description: SITE.description,
+  metadataBase: new URL(SITE_URL),
+  title: "Avatar India | Avatar AI Adoption Ecosystem & Avatar Learning",
+  description:
+    "Avatar India brings businesses the Avatar AI Adoption Ecosystem (AI tools, automation and custom solutions) and learners Avatar Learning (live AI courses and career programs).",
+  applicationName: BRAND,
+  openGraph: { type: "website", siteName: BRAND, locale: "en_IN", images: [OG_IMAGE] },
+  twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
   icons: {
     icon: [{ url: "/favicon.png", type: "image/png" }],
     shortcut: "/favicon.png",

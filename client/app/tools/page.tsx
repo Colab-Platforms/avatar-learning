@@ -5,12 +5,14 @@ import { EcosystemHeader } from "@/components/ai-ecosystem/EcosystemHeader";
 import { EcosystemFooter } from "@/components/ai-ecosystem/EcosystemFooter";
 import { ToolsPage } from "@/components/ai-ecosystem/ToolsPage";
 import { ToolsLoaderGate } from "@/components/ai-ecosystem/ToolsPageLoader";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Tools | Avatar AI Adoption",
+export const metadata: Metadata = pageMetadata({
+  title: "AI Business Tools: CRM, HRMS, OMS & More | Avatar AI",
   description: "One ecosystem, endless powerful solutions: CRM, OMS, Script Automation, LMS, Recruitment CRM, HRMS, IMS and Custom Tools for growing businesses.",
-  alternates: { canonical: "https://www.avatarindia.com/tools" },
-};
+  path: "/tools",
+  adoption: true,
+});
 
 /** Dedicated AI Adoption Tools page: site navbar + tools showcase + site footer (no homepage sections).
  * The "AVATAR AI" intro loader (ToolsLoaderGate) exists only on this route. */

@@ -486,7 +486,7 @@ export default function ContactPage() {
                       Browse Programs <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                     <Link
-                      href="/about"
+                      href="/learning/about"
                       className="flex items-center justify-between w-full rounded-xl border border-slate-200
                                  px-4 py-2.5 text-[13px] text-slate-650 font-semibold
                                  hover:border-blue-500/30 hover:text-blue-600 hover:bg-blue-50/50

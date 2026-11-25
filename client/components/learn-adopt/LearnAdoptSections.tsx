@@ -83,7 +83,7 @@ export function AboutSection() {
               {p}
             </p>
           ))}
-          <Link href="/about" className={s.btnText} {...rv(4)}>
+          <Link href="/learning/about" className={s.btnText} {...rv(4)}>
             About Us
             <ArrowRight className={s.arrow} />
           </Link>

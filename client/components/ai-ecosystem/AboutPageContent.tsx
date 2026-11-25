@@ -38,7 +38,7 @@ const btnBase: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-/** The full AI Adoption About page content (rendered at /adoption/about). */
+/** The full AI Adoption About page content (rendered at /about). */
 export function AboutPageContent() {
   return (
     <section
@@ -90,7 +90,7 @@ export function AboutPageContent() {
               About us · An Avatar Industries Limited company
             </motion.p>
 
-            <motion.h2
+            <motion.h1
               {...heroIn(2)}
               style={{
                 margin: "clamp(18px,2.4vw,26px) 0 0",
@@ -108,7 +108,7 @@ export function AboutPageContent() {
               <span className="min-[640px]:block">Avatar AI is building </span>
               <span className="min-[640px]:block">an AI ecosystem for </span>
               <span className="min-[640px]:block">Indian businesses</span>
-            </motion.h2>
+            </motion.h1>
 
             <motion.p {...heroIn(3)} style={{ margin: "clamp(20px,2.6vw,30px) 0 0", maxWidth: 540, fontSize: "clamp(16px,1.25vw,18px)", lineHeight: 1.7, color: "#a3abb5" }}>
               Avatar AI is the AI ecosystem of Avatar Industries Limited. We help businesses adopt AI and automation with ready-to-use tools, hands-on team training and support at every step.
