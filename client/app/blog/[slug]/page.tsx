@@ -40,14 +40,14 @@ export async function generateMetadata({
   return {
     title: `${article.metaTitle || article.title} | Avatar Learning`,
     description: article.metaDescription || article.hoverDescription,
-    alternates: { canonical: `/blog/${article.slug}` },
+    alternates: { canonical: `https://www.avatarindia.com/blog/${article.slug}` },
     openGraph: {
       type: "article",
-      url: `/blog/${article.slug}`,
+      url: `https://www.avatarindia.com/blog/${article.slug}`,
       siteName: "Avatar India",
       title: article.metaTitle || article.title,
       description: article.metaDescription || article.hoverDescription,
-      images: [{ url: article.image }],
+      images: [{ url: article.image.startsWith("/") ? `https://www.avatarindia.com${article.image}` : article.image }],
     },
   };
 }

@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   title: "About Avatar Learning | AI Courses & Career Programs",
   description:
     "Avatar Learning, the AI education platform of Avatar India, offers live AI courses, hands-on projects and Direct2Hire career programs for students and working professionals.",
-  alternates: { canonical: "/learning/about" },
+  alternates: { canonical: "https://www.avatarindia.com/learning/about" },
 };
 
 /* ─── data ─────────────────────────────────────────────────────────── */

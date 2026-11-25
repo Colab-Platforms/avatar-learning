@@ -95,7 +95,7 @@ Soft delete on `User` (`isDeleted`) and `InvestorDocument` (`deletedAt`); IDs ar
 
 ## SEO [code] + [runtime, production build]
 - Primary brand site: AI Adoption Ecosystem at `/` (www.avatarindia.com). Avatar Learning lives on the same domain under its own routes (`/learning`, `/learning/about`, `/courses`, `/direct2hire`, `/partners`, `/blog`, …). `/about` = AI Adoption About; Learning's About = `/learning/about`.
-- `client/lib/seo.ts`: `SITE_URL` (www), `pageMetadata()` (title, description, self canonical, Open Graph, Twitter card with `public/og-image.png`), homepage Organization + WebSite JSON-LD. Root layout sets `metadataBase` so relative canonicals resolve to www on every host.
+- `client/lib/seo.ts`: `SITE_URL` (www), `pageMetadata()` (title, description, self canonical, Open Graph, Twitter card with `public/og-image.png`), homepage Organization + WebSite JSON-LD. Root layout sets no `metadataBase` (it would strip the homepage canonical's trailing slash); all canonical/og URLs are absolute www URLs.
 - Client-component pages get metadata from a sibling metadata-only `layout.tsx`. `courses/[id]/layout.tsx` fetches the course title from the public API (1 h cache, 2.5 s timeout, generic fallback).
 - Noindex: private/transactional/utility routes via `X-Robots-Tag` in `client/next.config.ts` `headers()`; `/adoption/(auth)`, `/adoption/account`, `/thank-you`, `/admin-adaption` via metadata. robots.txt allows everything (so crawlers can read the noindex) and points to the sitemap.
 - `client/app/sitemap.ts` lists only indexable canonical URLs. `/adoption/privacy-policy` and `/adoption/terms-and-conditions` canonicalise to `/privacy-policy` / `/terms-and-conditions` (identical text) and are not in the sitemap.

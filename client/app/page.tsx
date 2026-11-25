@@ -18,13 +18,14 @@ import { homeJsonLd, jsonLdScript, pageMetadata } from "@/lib/seo";
 
 // Primary brand landing page: "Avatar AI" / "Avatar India" searches should land here.
 export const metadata: Metadata = pageMetadata({
-  title: "Avatar AI | AI Adoption & Business Automation Solutions",
+  title: "Avatar India | AI Learning, Business Automation & AI Solutions",
   description:
-    "Transform your business with Avatar AI Adoption Ecosystem. Explore integrated CRM, HRMS, OMS, AI-powered automation and custom business solutions.",
+    "Explore Avatar India's AI learning programs, business automation tools, AI adoption ecosystem and recruitment solutions.",
   path: "/",
   keywords: [
-    "Avatar AI",
     "Avatar India",
+    "Avatar AI",
+    "AI Learning",
     "Avatar AI Adoption Ecosystem",
     "AI Adoption",
     "AI Business Automation",

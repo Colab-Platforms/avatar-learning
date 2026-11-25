@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Terms and Conditions — Avatar India",
   description: "Terms governing your use of the Avatar India AI learning platform.",
-  alternates: { canonical: "/terms-and-conditions" },
+  alternates: { canonical: "https://www.avatarindia.com/terms-and-conditions" },
 };
 
 /* ── Shared typography helpers ── */

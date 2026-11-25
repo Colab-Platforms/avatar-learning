@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
-import { BRAND, OG_IMAGE, SITE_URL } from "@/lib/seo";
+import { BRAND, OG_IMAGE } from "@/lib/seo";
 import { StoreProvider } from "@/store/StoreProvider";
 import QueryProvider from "@/store/QueryProvider";
 import { DeferredWidgets } from "@/components/ui/DeferredWidgets";
@@ -35,9 +35,9 @@ const spaceGrotesk = localFont({
 
 // Site-wide defaults. Every indexable public page sets its own title, description and canonical
 // (lib/seo.ts pageMetadata); these only cover pages that don't (sign-in, private and utility pages).
-// metadataBase makes relative canonical/og URLs resolve to the primary www domain on every host.
+// No metadataBase on purpose: every canonical/og URL is written as an absolute www URL (lib/seo.ts),
+// and metadataBase would make Next print the homepage canonical without its trailing slash.
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
   title: "Avatar India | Avatar AI Adoption Ecosystem & Avatar Learning",
   description:
     "Avatar India brings businesses the Avatar AI Adoption Ecosystem (AI tools, automation and custom solutions) and learners Avatar Learning (live AI courses and career programs).",
